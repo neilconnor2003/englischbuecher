@@ -1,0 +1,307 @@
+/* ========================================
+   PROFILE PAGE – FULLY RESPONSIVE & COMPACT
+   ======================================== */
+
+.profile-page {
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #f8f9ff 0%, #eef2ff 100%);
+  min-height: 100vh;
+}
+
+.profile-container {
+  margin: 0 auto;
+  max-width: 900px;
+}
+
+.profile-card {
+  border-radius: 24px;
+  box-shadow: 0 12px 40px rgba(138, 43, 226, 0.15);
+  overflow: hidden;
+  background: white;
+}
+
+/* Header */
+.profile-header {
+  display: flex;
+  align-items: center;
+  padding: 40px;
+  background: linear-gradient(135deg, #8A2BE2, #a855f7);
+  color: white;
+  position: relative;
+}
+
+.avatar-wrapper {
+  position: relative;
+  margin-right: 32px;
+}
+
+.avatar-edit-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.avatar-edit-btn:hover {
+  background: white;
+}
+
+.profile-info h2 {
+  margin: 0 0 8px 0;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.profile-info p {
+  margin: 6px 0;
+  opacity: 0.95;
+  font-size: 1.1rem;
+}
+
+/* Tabs */
+.profile-tabs .ant-tabs-nav {
+  margin: 0 !important;
+  background: #f8f9ff;
+}
+
+.profile-tabs .ant-tabs-tab {
+  font-size: 1.1rem !important;
+  padding: 16px 32px !important;
+  font-weight: 500;
+}
+
+/* Section */
+.profile-section {
+  padding: 32px;
+  text-align: center;
+}
+
+.profile-section h3 {
+  color: #8A2BE2;
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+}
+
+/* Info Grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 20px 0;
+  font-size: 1rem;
+}
+
+.info-grid>div {
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.info-grid strong {
+  color: #8A2BE2;
+  margin-right: 8px;
+}
+
+/* ========================================
+   ORDERS LIST – COMPACT & RESPONSIVE
+   ======================================== */
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.order-card {
+  background: #f8f9ff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 16px;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.order-card:hover {
+  border-color: #8A2BE2;
+  box-shadow: 0 4px 12px rgba(138, 43, 226, 0.12);
+}
+
+/* Header */
+.order-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.order-id-date {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.order-id-date .ant-typography {
+  margin: 0;
+  line-height: 1.3;
+}
+
+.order-id-date .ant-typography-strong {
+  font-size: 1rem;
+}
+
+.order-date {
+  font-size: 0.85rem !important;
+}
+
+.view-btn {
+  font-size: 0.9rem;
+  padding: 0 4px !important;
+}
+
+/* Body */
+.order-card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+.order-thumbnails {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.order-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.order-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Pagination */
+.pagination-wrapper {
+  margin-top: 24px;
+  text-align: center;
+}
+
+/* Empty State */
+.empty-orders {
+  text-align: center;
+  margin: 40px 0;
+}
+
+.empty-orders .ant-typography {
+  font-size: 1.1rem;
+  display: block;
+  margin-bottom: 12px;
+}
+
+/* ========================================
+   MOBILE RESPONSIVE
+   ======================================== */
+
+@media (max-width: 768px) {
+  .profile-section {
+    padding: 16px 12px;
+  }
+
+  .order-card {
+    padding: 10px 12px;
+  }
+
+  .order-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .view-btn {
+    align-self: flex-end;
+  }
+
+  .order-card-body {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .order-info {
+    align-items: flex-start;
+  }
+
+  .order-status {
+    margin-top: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .order-id-date .ant-typography-strong {
+    font-size: 0.95rem;
+  }
+
+  .order-date {
+    font-size: 0.8rem !important;
+  }
+
+  .order-card-body .ant-typography-strong {
+    font-size: 1rem;
+  }
+}
+
+/* Reorder button */
+.order-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.reorder-btn {
+  font-size: 0.85rem;
+  padding: 0 6px !important;
+  height: 24px;
+}
+
+.reorder-btn .anticon {
+  font-size: 0.9rem;
+}
+
+/* Mobile: stack buttons */
+@media (max-width: 480px) {
+  .order-actions {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  .reorder-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+
+/* White background circle + purple text for Avatar */
+.profile-avatar.profile-avatar--white-purple {
+  background-color: #ffffff !important; /* white background */
+  color: #722ed1 !important;            /* purple text (Ant Design purple) */
+  border: 2px solid #722ed1;            /* optional purple ring */
+}
+
+/* Make the initials crisp */
+.profile-avatar.profile-avatar--white-purple .ant-avatar-string {
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+/* Optional: ensure the icon (UserOutlined) is purple when no image */
+.profile-avatar.profile-avatar--white-purple .anticon {
+  color: #722ed1;
+}

@@ -1,0 +1,473 @@
+
+/* frontend/src/pages/Cart/CartPage.css */
+.cart-page {
+  background: #f5f5f5;
+  min-height: 100vh;
+  padding: 20px 0;
+}
+
+.cart-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.cart-title {
+  font-size: 2rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 24px;
+  color: #9333ea !important; /* Deep purple for consistency */
+}
+
+.cart-loading,
+.cart-empty {
+  padding: 80px 20px;
+  text-align: center;
+}
+
+/* ✅ Unified box (table + summary area) */
+.cart-box {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  padding: 20px;
+  margin-bottom: 32px;
+}
+
+/* Desktop line items */
+.cart-line-items .ant-table {
+  background: transparent; /* the outer box provides the white background */
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #eef2f7;
+}
+
+.cart-line-items .ant-table-thead > tr > th {
+  font-size: 1rem; /* 16px */
+  font-weight: 700;
+  color: #4b5563; /* Neutral gray */
+  background: #f9fafb; /* Light background for contrast */
+}
+
+/* Ensure table body cells are left-aligned (stronger specificity than thead) */
+.cart-line-items .ant-table-tbody > tr > td {
+  text-align: left !important;
+  vertical-align: middle !important;
+}
+
+/* Guard against center defaults */
+.cart-line-items .ant-table-cell {
+  vertical-align: middle;
+  text-align: left;
+}
+
+/* First column: image + text wrapper */
+.cart-item-head {
+  display: flex;
+  align-items: flex-start; /* top-align text with the top of the image */
+  gap: 14px;
+  cursor: pointer;
+}
+
+.cart-thumb {
+  width: 64px;
+  height: 86px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  flex: 0 0 auto; /* keep image fixed */
+}
+
+.cart-title-wrap {
+  flex: 1 1 auto; /* let text take remaining width */
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  line-height: 1.35;
+  text-align: left; /* left alignment inside the text column */
+}
+
+.cart-item-title {
+  margin: 0;
+  font-size: 0.95rem; /* Slightly smaller */
+  font-weight: 600;
+  color: #1f2937; /* Dark gray */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2; /* standard property for compatibility */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 460px;
+}
+
+.stock-pill {
+  display: inline-flex;
+  justify-content: flex-start; /* left-align text inside pill */
+  align-items: center;         /* vertically center text */
+  min-width: 80px; /* Fixed minimum width */
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #1e40af;
+  text-align: left; /* extra safeguard */
+}
+
+.stock-pill.out {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.price-stack {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.price-original {
+  text-decoration: line-through;
+  color: #888;
+}
+
+.price-current {
+  font-weight: 800;
+  color: #8A2BE2;
+}
+
+.price-badge {
+  background: #CC0C39;
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+.qty-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qty {
+  min-width: 28px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.line-total {
+  font-weight: 800;
+  color: #111827;
+}
+
+/* =========================
+   ✅ New Checkout-like Summary Layout
+   ========================= */
+
+/* Grid: shipping (left) + summary card (right) */
+.cart-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 18px;
+  margin-top: 22px;
+  align-items: start;
+}
+
+/* Shipping panel on the left */
+.cart-shipping-panel {
+  border: 1px solid #eef2f7;
+  background: linear-gradient(180deg, #fbfbff 0%, #ffffff 100%);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+/* Small note under shipping */
+.shipping-note {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Summary card on the right */
+.cart-summary-card {
+  border-radius: 16px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.09);
+  overflow: hidden;
+}
+
+/* Make summary sticky on desktop */
+@media (min-width: 992px) {
+  .cart-summary-card {
+    position: sticky;
+    top: 92px;
+  }
+}
+
+/* Summary title */
+.summary-title {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #111827;
+  margin-bottom: 14px;
+}
+
+/* Rows in summary */
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px dashed #e5e7eb;
+}
+
+.summary-row:last-of-type {
+  border-bottom: none;
+}
+
+.summary-label {
+  color: #4b5563;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.summary-value {
+  color: #111827;
+  font-weight: 900;
+  font-size: 0.98rem;
+}
+
+/* Divider */
+.summary-divider {
+  margin: 12px 0 !important;
+}
+
+/* Total emphasis */
+.summary-total .summary-label {
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.summary-total .summary-value {
+  font-size: 1.45rem;
+  font-weight: 950;
+  color: #8A2BE2; /* brand purple */
+}
+
+/* Buttons */
+.summary-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.summary-primary,
+.summary-secondary {
+  width: 100%;
+  height: 46px;
+  border-radius: 12px;
+  font-weight: 800;
+}
+
+.summary-secondary {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
+/* Hover polish */
+.summary-secondary:hover {
+  border-color: #c7cbe0;
+  color: #111827;
+}
+
+/* DESKTOP/MOBILE CONTAINERS */
+.desktop-view {
+  display: block;
+}
+
+.mobile-view {
+  display: none;
+}
+
+/* MOBILE CARD */
+.mobile-view .mobile-cart-item {
+  margin-bottom: 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s;
+}
+
+.mobile-view .mobile-cart-item:hover {
+  transform: translateY(-2px);
+}
+
+.mobile-img {
+  width: 70px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.mobile-title {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #1a1a1a;
+}
+
+.mobile-price {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #8A2BE2;
+}
+
+.mobile-qty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-qty span {
+  min-width: 32px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.mobile-total {
+  margin-top: 12px;
+  text-align: right;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #10b981;
+}
+
+/* === FULL-BLEED SECTIONS (boxes span the full viewport width) === */
+.full-bleed {
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  width: 100vw;
+}
+
+/* Inner limiter identical to your global .container */
+.inner-limit {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Wishlist block — visually consistent with recommendations */
+.cart-wishlist {
+  margin-top: 32px;
+  background: linear-gradient(to bottom, #faf8ff 0%, #ffffff 100%);
+  padding: 20px 0;
+}
+
+.cart-wishlist .recommendations-section {
+  margin-top: 16px;
+  padding: 20px 0;
+  background: transparent;
+}
+
+/* Scoped subsection title (won’t affect BookCard.h3) */
+.cart-wishlist .recommendations-section .rec-section-title,
+.cart-recommendations .recommendations-section .rec-section-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #9333ea;
+  text-align: left;
+  margin: 0 0 40px 0;
+  padding-left: 20px;
+}
+
+/* RECOMMENDATIONS BOX (full width) */
+.cart-recommendations {
+  margin-top: 32px;
+  background: linear-gradient(to bottom, #faf8ff 0%, #ffffff 100%);
+  padding: 20px 0;
+}
+
+.cart-recommendations .section-title {
+  margin-top: 24px;
+}
+
+/* Swiper (consistent spacing) */
+.cart-recommendations-swiper .swiper-slide {
+  width: auto;
+  flex-shrink: 0 !important;
+  padding: 0 12px;
+  box-sizing: border-box;
+  margin-right: 30px !important;
+}
+
+.cart-recommendations-swiper .swiper-button-next,
+.cart-recommendations-swiper .swiper-button-prev {
+  background: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  color: #9333ea;
+  top: 50%;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: all !important;
+  z-index: 10 !important;
+}
+
+.cart-recommendations-swiper .swiper-button-next:after,
+.cart-recommendations-swiper .swiper-button-prev:after {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.cart-recommendations-swiper .swiper-pagination {
+  opacity: 1 !important;
+  visibility: visible !important;
+  position: relative !important;
+  margin-top: 24px !important;
+}
+
+.cart-recommendations-swiper .swiper-pagination-bullet-active {
+  background: #9333ea;
+}
+
+/* Wrapper width identical to Home/BookDetails so BookCard renders the same */
+.popular-card-wrapper {
+  width: 300px;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+  .cart-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cart-summary-card {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .desktop-view {
+    display: none;
+  }
+
+  .mobile-view {
+    display: block;
+  }
+
+  .cart-title {
+    font-size: 1.7rem;
+  }
+
+  .cart-recommendations-swiper .swiper-pagination {
+    margin-top: 20px !important;
+  }
+}

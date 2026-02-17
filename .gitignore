@@ -1,0 +1,30 @@
+
+# ===== Environment files =====
+.env
+**/.env
+
+# ===== Dependencies =====
+**/node_modules/
+
+# runtime data
+backend/uploads/
+backend/invoices/
+
+# ===== Build output =====
+frontend/dist
+frontend/build
+
+# ===== Editor / OS =====
+.vscode/
+.DS_Store
+
+# ===== Archives, docs, backups & junk =====
+*.bak
+*.zip
+*.xlsx
+**/*copy*.js
+**/*copy*.jsx
+**/*copy*.css
+tree.txt
+Logo/
+

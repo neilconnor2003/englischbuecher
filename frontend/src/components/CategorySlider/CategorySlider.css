@@ -1,0 +1,30 @@
+.category-slider {
+  margin: 20px 0;
+}
+
+.category-slider h2 {
+  font-size: 22px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.slider {
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  padding-bottom: 10px;
+}
+
+.category-item {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 4px;
+  text-decoration: none;
+  white-space: nowrap;
+  font-size: 16px;
+}
+
+.category-item:hover {
+  background-color: #0056b3;
+}

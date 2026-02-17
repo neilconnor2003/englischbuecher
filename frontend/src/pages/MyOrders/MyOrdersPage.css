@@ -1,0 +1,16 @@
+.my-orders-page {
+  padding: 40px 20px;
+  background: #f9f9ff;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+h1 {
+  text-align: center;
+  color: #8A2BE2;
+  margin-bottom: 32px;
+}

@@ -1,0 +1,230 @@
+/* Clickable area wrapper */
+.book-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* MAIN CARD */
+.book-card {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+.book-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+}
+
+/* VARIANTS - image height only */
+.book-card--default img {
+  height: 260px;
+}
+
+.book-card--compact img {
+  height: 220px;
+}
+
+.book-card--large img {
+  height: 320px;
+}
+
+/* IMAGE */
+.book-card img {
+  width: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.book-card:hover img {
+  transform: scale(1.05);
+}
+
+/* TITLE */
+.book-card h3 {
+  margin: 16px 16px 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #222;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  /* vendor hint is fine */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 64px;
+  max-height: 64px;
+}
+
+/* AUTHOR */
+.book-card .author {
+  margin: 0 16px 8px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* RATING SUMMARY (one line, no wrapping) */
+.rating-summary {
+  margin: 8px 16px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #555;
+  white-space: nowrap;
+  /* force single line */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 22px;
+  /* stable vertical height */
+}
+
+.rating-stars-inline {
+  font-size: 16px !important;
+  color: #9333ea !important;
+}
+
+.rating-info {
+  font-weight: 600;
+  color: #9333ea;
+}
+
+/* PRICE BLOCK */
+.price-block {
+  margin: 8px 16px 16px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.original-price {
+  text-decoration: line-through;
+  color: #888;
+  font-size: 0.95rem;
+}
+
+.current-price {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #8A2BE2;
+}
+
+.discount-badge {
+  background: #CC0C39;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+/* ACTIONS ROW */
+.book-actions {
+  margin: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.book-actions .ant-btn {
+  border-radius: 10px;
+  font-weight: 600;
+  background: #8A2BE2;
+  border-color: #8A2BE2;
+  color: #fff;
+  height: 42px;
+  font-size: 15px;
+  padding: 0 16px;
+}
+
+.book-actions .ant-btn:hover {
+  background: #6A1B9A;
+  border-color: #6A1B9A;
+}
+
+.book-actions .ant-btn:disabled {
+  background: #9ca3af;
+  border-color: #9ca3af;
+}
+
+/* DETAILS LINK */
+.details-link {
+  text-align: center;
+  color: #8A2BE2;
+  font-size: 0.85rem;
+  text-decoration: none;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.details-link:hover {
+  text-decoration: underline;
+}
+
+/* WISHLIST HEART (push further to the right) */
+.wishlist-heart-btn {
+  position: absolute !important;
+  top: 8px;
+  right: 12px;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease;
+}
+
+.wishlist-heart-btn:hover {
+  transform: scale(1.2);
+}
+
+/* MOBILE */
+@media (max-width: 640px) {
+  .book-card--default img {
+    height: 220px;
+  }
+
+  .book-card h3 {
+    margin: 12px 12px 6px;
+    font-size: 1rem;
+  }
+
+  .book-card .author {
+    margin: 0 12px 6px;
+    font-size: 0.85rem;
+  }
+
+  .rating-summary {
+    margin: 8px 12px 10px;
+  }
+
+  .price-block {
+    margin: 8px 12px 12px;
+  }
+
+  .current-price {
+    font-size: 1.15rem;
+  }
+
+  .book-actions {
+    margin: 0 12px 12px;
+    gap: 8px;
+  }
+
+  .book-actions .ant-btn {
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .details-link {
+    font-size: 0.8rem;
+  }
+}

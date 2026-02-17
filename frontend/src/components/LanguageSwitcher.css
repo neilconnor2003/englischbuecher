@@ -1,0 +1,84 @@
+/* frontend/src/components/LanguageSwitcher.css */
+
+/* === FORCE FULL HEIGHT + FLEX === */
+.custom-language-select.ant-select {
+  height: 36px !important;
+}
+
+.custom-language-select .ant-select-selector {
+  height: 36px !important;
+  min-height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 0 10px !important;
+  border: 1px solid #ccc !important;
+  border-radius: 6px !important;
+  background: #fff !important;
+  gap: 20px !important;
+  box-sizing: border-box !important;
+}
+
+/* === KILL LINE-HEIGHT ONCE AND FOR ALL === */
+.custom-language-select .ant-select-selection-item {
+  line-height: 1 !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* === FLAG WRAPPER === */
+.custom-language-select .flag-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 28px !important;
+  height: 28px !important;
+}
+
+.custom-language-select .flag-icon {
+  width: var(--flag-height) !important;
+  height: var(--flag-height) !important;
+  object-fit: contain !important;
+  border-radius: 2px !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* === ARROW === */
+.custom-language-select .ant-select-arrow {
+  color: #007bff !important;
+  margin: 0 !important;
+  font-size: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+}
+
+/* === HOVER / FOCUS === */
+.custom-language-select:hover .ant-select-selector {
+  border-color: #007bff !important;
+}
+
+.custom-language-select.ant-select-open .ant-select-selector {
+  border-color: #007bff !important;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2) !important;
+}
+
+/* === DROPDOWN === */
+.language-select-dropdown .ant-select-item {
+  min-height: 44px !important;
+  height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Add to bottom of LanguageSwitcher.css */
+@media (max-width: 480px) {
+  .custom-language-select .flag-icon {
+    width: 18px !important;
+    height: 18px !important;
+  }
+}

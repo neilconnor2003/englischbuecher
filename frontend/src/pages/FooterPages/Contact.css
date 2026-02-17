@@ -1,0 +1,104 @@
+.contact-page {
+    background: #f8fafc;
+    min-height: 100vh
+}
+
+.contact-hero {
+    background: linear-gradient(rgba(0, 0, 0, .5), rgba(0, 0, 0, .7)), url('/assets/contact-hero.jpg');
+    background-size: cover;
+    height: 50vh;
+    min-height: 350px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #fff
+}
+
+.contact-hero h1 {
+    font-size: 44px;
+    margin-bottom: 16px
+}
+
+.contact-hero p {
+    font-size: 20px;
+    max-width: 700px
+}
+
+.contact-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 80px 20px
+}
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px
+}
+
+.contact-info h2 {
+    font-size: 28px;
+    color: #5b21b6;
+    margin-bottom: 24px
+}
+
+.info-item {
+    margin-bottom: 20px;
+    font-size: 17px
+}
+
+.info-item strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #1e293b
+}
+
+.info-item a {
+    color: #7c3aed;
+    font-weight: 600
+}
+
+.contact-form h2 {
+    font-size: 28px;
+    color: #5b21b6;
+    margin-bottom: 24px
+}
+
+.contact-form input,
+.contact-form textarea {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: inherit
+}
+
+.contact-form textarea {
+    resize: vertical
+}
+
+.submit-btn {
+    background: #7c3aed;
+    color: #fff;
+    padding: 14px 32px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .3s
+}
+
+.submit-btn:hover {
+    background: #6d28d9
+}
+
+@media(max-width:768px) {
+    .contact-grid {
+        grid-template-columns: 1fr
+    }
+}

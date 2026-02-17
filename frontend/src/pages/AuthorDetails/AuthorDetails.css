@@ -1,0 +1,106 @@
+
+/* frontend/src/pages/AuthorDetails/AuthorDetails.css */
+
+.author-details-page {
+  background: #faf9ff;
+  padding: 20px 0 60px;
+  color: #111;
+  min-height: 100vh;
+}
+
+/* Header: fluid and wraps on small screens */
+.author-header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: clamp(16px, 2.5vw, 28px);
+  align-items: start;
+  margin-bottom: clamp(16px, 3vw, 28px);
+}
+
+/* Responsive portrait frame:
+   - width/height scale with viewport (min 96px, pref ~22vw, max 180px)
+   - keeps rounded corners + purple border
+*/
+.author-portrait {
+  position: relative;
+  width: clamp(96px, 22vw, 180px);
+  height: clamp(96px, 22vw, 180px);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid #9333ea;
+  background: #fafafa;
+  flex-shrink: 0;
+}
+
+/* Base initials avatar always present (revealed if image is missing/fails) */
+.author-fallback-avatar {
+  width: 100%;
+  height: 100%;
+  color: #fff;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* font scales a bit with box */
+  font-size: clamp(28px, 6vw, 44px);
+  border-radius: 16px;
+}
+
+/* Photo overlay */
+.author-photo-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Headline block */
+.author-headline {
+  display: grid;
+  gap: 8px;
+}
+
+.author-name-title {
+  margin: 0;
+  color: #9333ea;
+  font-weight: 800;
+  /* fluid type */
+  font-size: clamp(26px, 4.5vw, 40px);
+  line-height: 1.15;
+}
+
+.author-bio {
+  margin: 4px 0 0;
+  font-size: clamp(14px, 2.2vw, 16px);
+  color: #333;
+  line-height: 1.7;
+  white-space: pre-wrap;      /* respect line breaks */
+  word-break: break-word;     /* break long words to keep layout stable */
+}
+
+/* Section title */
+.books-by-author-title {
+  margin: clamp(24px, 4vw, 40px) 0 clamp(16px, 2.5vw, 24px);
+  color: #9333ea;
+  font-weight: 800;
+  font-size: clamp(20px, 3.6vw, 28px);
+}
+
+/* Responsive books grid that works with your centralized BookCard */
+.author-books-grid {
+  display: grid;
+  gap: clamp(16px, 2.4vw, 28px);
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+/* Small screens: stack header vertically */
+@media (max-width: 640px) {
+  .author-header {
+    grid-template-columns: 1fr;
+    align-items: center;
+  }
+  .author-headline {
+    text-align: left;
+  }
+}

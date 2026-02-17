@@ -1,0 +1,71 @@
+
+.request-book-page {
+  background: #f5f5f5;
+  min-height: 100vh;
+  padding: 20px 0;
+}
+
+.request-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.request-title {
+font-size: 2rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 24px;
+  color: #9333ea !important; /* Deep purple for consistency */
+}
+
+.request-box {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  padding: 30px;
+  margin-bottom: 32px;
+}
+
+/* Two-column layout */
+.request-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px 40px;
+}
+
+/* Purple labels */
+.request-form .ant-form-item-label > label {
+  color: #9333ea !important;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+/* Make text area span full width */
+.request-form .ant-form-item-textarea {
+  grid-column: span 2;
+}
+
+/* Submit button alignment */
+.request-actions {
+  grid-column: span 2;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+@media (max-width: 768px) {
+  .request-title {
+    font-size: 1.7rem;
+  }
+  .request-form {
+    grid-template-columns: 1fr;
+  }
+  .request-actions {
+    justify-content: center;
+  }
+  .request-actions .ant-btn {
+    width: 100%;
+    max-width: 300px;
+  }
+}

@@ -1,0 +1,14 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+/* Global half-star support for all Rate components */
+.ant-rate-star-half .ant-rate-star-first {
+  color: #9333ea !important;
+}
+.ant-rate-star-half .ant-rate-star-second {
+  background: linear-gradient(135deg, #9333ea, #c084fc);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

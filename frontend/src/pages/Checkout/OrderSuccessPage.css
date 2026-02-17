@@ -1,0 +1,137 @@
+/* frontend/src/pages/Checkout/OrderSuccessPage.css */
+.invoice-card {
+  margin: 32px 0;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.invoice {
+  padding: 40px;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  background: white;
+  color: #333;
+}
+
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 40px;
+  border-bottom: 2px solid #8A2BE2;
+  padding-bottom: 20px;
+}
+
+.invoice-logo {
+  height: 70px;
+  object-fit: contain;
+}
+
+.invoice-header h3 {
+  margin: 0;
+  color: #8A2BE2;
+  font-size: 1.6rem;
+  font-weight: bold;
+}
+
+.invoice-header p {
+  margin: 4px 0;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.invoice-address {
+  margin: 30px 0;
+  padding: 16px;
+  background: #f8f9ff;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 30px 0;
+  font-size: 0.95rem;
+}
+
+.invoice-table th {
+  background: #f5f0ff;
+  color: #8A2BE2;
+  text-align: left;
+  padding: 12px;
+  border-bottom: 2px solid #8A2BE2;
+}
+
+.invoice-table td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.invoice-table tr:last-child td {
+  border-bottom: none;
+}
+
+.invoice-total {
+  text-align: right;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #8A2BE2;
+  margin: 30px 0;
+  padding-top: 20px;
+  border-top: 3px double #8A2BE2;
+}
+
+.invoice-footer {
+  margin-top: 40px;
+  text-align: center;
+  color: #777;
+  font-size: 0.85rem;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+.success-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 40px;
+  flex-wrap: wrap;
+}
+
+.success-buttons .ant-btn {
+  min-width: 200px;
+  height: 52px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 12px;
+}
+
+/* PRINT ONLY INVOICE */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .invoice-card,
+  .invoice-card * {
+    visibility: visible;
+  }
+
+  .invoice-card {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    box-shadow: none;
+    border: none;
+  }
+
+  .ant-btn {
+    display: none !important;
+  }
+
+  .success-page {
+    background: white;
+  }
+}

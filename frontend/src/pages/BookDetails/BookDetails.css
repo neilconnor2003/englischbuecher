@@ -1,0 +1,1002 @@
+/* frontend/src/pages/BookDetails/BookDetails.css */
+.book-details-page {
+  background: #f8f9fa;
+  min-height: 100vh;
+  padding: 20px 0;
+  font-family: 'Arial', sans-serif;
+  color: #111;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: #9333ea;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.back-btn:hover {
+  text-decoration: underline;
+}
+
+.book-grid {
+  display: grid;
+  grid-template-columns: 380px 1fr 360px;
+  gap: 40px;
+  align-items: start;
+}
+
+/* Images */
+.image-section {
+  position: sticky;
+  top: 20px;
+}
+
+.main-image-wrapper {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  margin-bottom: 16px;
+}
+
+.main-image {
+  width: 100%;
+  display: block;
+}
+
+.sold-out-badge {
+  position: absolute;
+  top: 12px;
+  right: -38px;
+  background: #c40000;
+  color: white;
+  padding: 8px 44px;
+  font-size: 13px;
+  font-weight: bold;
+  transform: rotate(45deg);
+}
+
+.thumbnails {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.thumb {
+  width: 72px;
+  height: 90px;
+  object-fit: cover;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.thumb:hover,
+.thumb.active {
+  border-color: #9333ea;
+  box-shadow: 0 0 0 2px #9333ea44;
+}
+
+/* Info & Buy Box */
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.title {
+  font-size: 38px;
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0;
+  color: #9333ea;
+  max-width: 90%;
+}
+
+.original-title {
+  font-size: 16px;
+  color: #555;
+  font-style: italic;
+  margin: 4px 0 12px;
+}
+
+.author {
+  font-size: 18px;
+  margin: 0;
+  color: #333;
+}
+
+.author-name {
+  color: #9333ea !important;
+  font-weight: 600;
+}
+
+.buy-box {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.price {
+  font-size: 36px;
+  color: #B12704;
+  font-weight: 600;
+}
+
+.list-price {
+  text-decoration: line-through;
+  color: #666;
+  font-size: 16px;
+}
+
+.save-badge {
+  background: #CC0C39;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.stock-info {
+  margin: 16px 0;
+  font-weight: bold;
+  color: #008a00;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.out-of-stock {
+  color: #c40000;
+  font-weight: bold;
+}
+
+.buy-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.add-to-cart,
+.buy-now-btn {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.add-to-cart {
+  /*background: linear-gradient(135deg, #9333ea, #a855f7);
+  color: white;*/
+  box-shadow: 0 4px 16px rgba(147, 51, 234, 0.3);
+  background: white;
+  color: #9333ea;
+  border: 2px solid #9333ea;
+}
+
+.add-to-cart:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(147, 51, 234, 0.4);
+}
+
+/* Only apply our custom in-cart style when the class is present */
+.add-to-cart.in-cart,
+.add-to-cart.secondary.in-cart {
+  background: #722ed1 !important;
+  border-color: #722ed1 !important;
+  color: white !important;
+  font-weight: bold !important;
+  box-shadow: 0 6px 20px rgba(114, 46, 209, 0.4) !important;
+  transform: scale(1.02) !important;
+}
+
+/* NEW STYLE: when book is already in cart */
+.add-to-cart.already-in-cart,
+.add-to-cart.secondary.already-in-cart {
+  background: #16a34a !important;
+  /* ← beautiful green (you can change this) */
+  border-color: #16a34a !important;
+  color: white !important;
+  font-weight: bold !important;
+  box-shadow: 0 6px 20px rgba(22, 163, 74, 0.4) !important;
+  transform: scale(1.02) !important;
+}
+
+/* Optional: tiny checkmark icon when added */
+.add-to-cart.already-in-cart::after,
+.add-to-cart.secondary.already-in-cart::after {
+  content: " ✓";
+  margin-left: 4px;
+}
+
+.add-to-cart.added {
+  background: #008a00;
+}
+
+.add-to-cart.secondary {
+  background: white;
+  color: #9333ea;
+  border: 2px solid #9333ea;
+}
+
+.add-to-cart.secondary:hover {
+  background: #f5f0ff;
+}
+
+.buy-now-btn {
+  background: linear-gradient(#a855f7, #9333ea);
+  color: white;
+  box-shadow: 0 6px 20px rgba(147, 51, 234, 0.4);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.wishlist-btn,
+.share-btn {
+  flex: 1;
+  min-width: 140px;
+  padding: 12px 20px;
+  border: 2px solid #ddd;
+  background: white;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.wishlist-btn:hover {
+  border-color: #e91e63;
+}
+
+.wishlist-btn[style*="background: #fdf2f8"] {
+  background: #fdf2f8 !important;
+  border-color: #e91e63 !important;
+  color: #e91e63 !important;
+}
+
+.share-btn:hover {
+  background: #f0f2f5;
+  border-color: #9333ea;
+  color: #9333ea;
+}
+
+.details-table {
+  margin-top: 32px;
+  font-size: 14.5px;
+  line-height: 2.4;
+}
+
+.details-table .row {
+  display: grid;
+  grid-template-columns: 24px 130px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.details-table svg {
+  color: #9333ea;
+}
+
+.description-section {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 28px;
+  position: sticky;
+  top: 20px;
+}
+
+.description-section h2 {
+  font-size: 22px;
+  margin: 0 0 20px;
+  color: #9333ea;
+  /* Purple */
+  font-weight: 700;
+  /* Bold */
+
+}
+
+.description-content {
+  line-height: 1.7;
+  color: #333;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1100px) {
+  .book-grid {
+    grid-template-columns: 320px 1fr;
+  }
+
+  .description-section {
+    grid-column: 1 / -1;
+    margin-top: 40px;
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .book-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .image-section {
+    position: static;
+  }
+
+  .title {
+    font-size: 32px;
+  }
+}
+
+/* MAKE RECOMMENDATION CARDS EXACTLY SAME AS HOME PAGE — FINAL FIX */
+.recommendations-container {
+  margin-top: 80px;
+}
+
+.recommendations-section {
+  padding: 40px 0;
+  background: #faf8ff;
+}
+
+.recommendations-section .book-item {
+  width: 100%;
+  height: 100%;
+}
+
+.recommendations-section:nth-child(even) {
+  background: white;
+}
+
+.recommendations-section .container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.recommendations-section .book-item {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.recommendations-section .book-item img {
+  height: 260px;
+  object-fit: cover;
+}
+
+.recommendations-section h2 {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #9333ea;
+  text-align: left;
+  margin: 0 0 50px 0;
+  padding-left: 20px;
+}
+
+.recommendations-section .book-item h3 {
+  flex-grow: 1;
+  min-height: 64px;
+  margin: 16px 16px 0;
+  font-size: 1.1rem;
+  line-height: 1.4;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.recommendations-section .book-item .book-actions {
+  margin-top: auto;
+  padding: 16px;
+}
+
+/* Make recommendations EXACTLY like homepage */
+.recommendations-section .books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 32px;
+  padding: 0 20px;
+}
+
+.recommendations-section .book-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+}
+
+.recommendations-section .book-card:hover {
+  transform: translateY(-8px);
+}
+
+.recommendations-section .book-card img {
+  height: 260px;
+  object-fit: cover;
+}
+
+.recommendations-section .book-card h3 {
+  flex-grow: 1;
+  min-height: 64px;
+  margin: 16px 16px 0;
+  font-size: 1.1rem;
+  line-height: 1.4;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  /* ← missing or not recognized */
+  -webkit-box-orient: vertical;
+}
+
+.recommendations-section .book-actions {
+  margin-top: auto;
+  padding: 16px;
+}
+
+.recommendations-section.container.books-grid.book-item {
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 768px) {
+  .recommendations-section h2 {
+    font-size: 2rem;
+    margin-bottom: 40px;
+  }
+}
+
+.savings-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  /* ← THIS IS THE MISSING SPACE */
+}
+
+.rating-summary-top .ant-rate {
+  pointer-events: none;
+}
+
+.rating-summary-top .text-6xl {
+  color: #9333ea !important;
+}
+
+/* AMAZON-STYLE RATING SUMMARY — CLEAN & RESPONSIVE */
+/* RATING SUMMARY — PERFECT PURPLE THEME + CORRECT HALF STARS */
+.ratings-summary-amazon {
+  margin: 16px 0 24px;
+  padding: 12px 0;
+}
+
+.ratings-summary-amazon .ant-rate {
+  color: #9333ea !important;
+  /* empty stars = your purple */
+  font-size: 19px;
+}
+
+/* Only the background of filled stars gets the gradient */
+.ratings-summary-amazon .ant-rate-star-filled .ant-rate-star-second {
+  background: linear-gradient(135deg, #9333ea, #c084fc);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Half-star: keep left side gradient, right side empty purple */
+.ratings-summary-amazon .ant-rate-star-half .ant-rate-star-first {
+  color: #9333ea !important;
+}
+
+.ratings-summary-amazon .ant-rate-star-half .ant-rate-star-second {
+  background: linear-gradient(135deg, #9333ea, #c084fc);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Full star: both layers gradient */
+.ratings-summary-amazon .ant-rate-star-full .ant-rate-star-second {
+  background: linear-gradient(135deg, #9333ea, #c084fc);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Rating number — gradient text */
+.ratings-summary-amazon .text-lg {
+  font-weight: 800;
+  background: linear-gradient(135deg, #9333ea, #d946ef);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Review count */
+.ratings-summary-amazon .text-gray-600 {
+  color: #9333ea !important;
+  font-weight: 600;
+}
+
+/* "See all reviews" link */
+.ratings-summary-amazon .ant-btn-link {
+  color: #9333ea !important;
+  font-weight: 600;
+}
+
+.ratings-summary-amazon .ant-btn-link:hover {
+  color: #c084fc !important;
+  text-decoration: underline;
+}
+
+/* "Be the first" text */
+.ratings-summary-amazon p.text-sm {
+  color: #9333ea;
+  font-weight: 500;
+  margin-top: 8px;
+}
+
+/* Mobile: stack vertically */
+@media (max-width: 768px) {
+  .ratings-summary-amazon .flex {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .ratings-summary-amazon .ant-rate {
+    font-size: 20px;
+  }
+}
+
+/* FORCE 5-STAR DISTRIBUTION IN ONE ROW */
+.book-reviews .ant-rate {
+  display: inline-flex !important;
+  flex-wrap: nowrap !important;
+}
+
+.book-reviews .ant-rate-star {
+  margin-right: 4px !important;
+}
+
+.book-reviews .ant-rate-star:last-child {
+  margin-right: 0 !important;
+}
+
+/* Mobile: smaller stars but still in one row */
+@media (max-width: 768px) {
+  .book-reviews .ant-rate {
+    font-size: 16px !important;
+  }
+}
+
+
+/* Reviewer avatar — same style as header avatar, sized to your current 56px */
+.review-avatar {
+  border: 2px solid #8A2BE2;
+  /* purple ring, same as header */
+  background: #ffffff;
+  /* white background */
+  color: #8A2BE2;
+  /* purple initials */
+  font-weight: 700;
+  /* bold initials */
+  box-shadow: 0 2px 8px rgba(138, 43, 226, 0.20);
+  /* subtle purple shadow */
+  /* AntD Avatar with size={56} already sets width/height & circle shape */
+}
+
+/* === NEW: RECOMMENDATIONS SLIDER (Book Details) — Consistent with Home === */
+
+/* Slide sizing + spacing */
+.recommendations-swiper .swiper-slide {
+  width: auto;
+  flex-shrink: 0 !important;
+  padding: 0 12px;
+  box-sizing: border-box;
+  margin-right: 30px !important;
+}
+
+/* Ensure the BookCard wrapper uses the same fixed width as Home */
+.book-details-page .popular-card-wrapper {
+  width: 300px;
+  /* same as .home-page-v2 .popular-card-wrapper */
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Navigation buttons (match Home) */
+.recommendations-swiper .swiper-button-next,
+.recommendations-swiper .swiper-button-prev {
+  background: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  color: #9333ea;
+  top: 50%;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: all !important;
+  z-index: 10 !important;
+}
+
+.recommendations-swiper .swiper-button-next:after,
+.recommendations-swiper .swiper-button-prev:after {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* Pagination bullets (match Home) */
+.recommendations-swiper .swiper-pagination {
+  opacity: 1 !important;
+  visibility: visible !important;
+  position: relative !important;
+  margin-top: 30px !important;
+}
+
+.recommendations-swiper .swiper-pagination-bullet-active {
+  background: #9333ea;
+}
+
+/* Optional: neutralize the old grid wrapper in this section since we now use Swiper */
+.recommendations-section .books-grid {
+  display: contents;
+  /* keep previous markup harmless; Swiper handles layout */
+}
+
+
+
+.other-editions-block {
+  margin-top: 24px;
+}
+
+.editions-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.edition-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edition-item img {
+  width: 50px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.edition-item .format {
+  font-weight: 600;
+  color: #333;
+}
+
+.edition-item .edition {
+  color: #666;
+  font-size: 13px;
+}
+
+.edition-item .price {
+  display: block;
+  font-weight: bold;
+  color: #9333ea;
+  margin-top: 4px;
+}
+
+.edition-item:hover {
+  border-color: #9333ea;
+  box-shadow: 0 2px 8px rgba(147, 51, 234, 0.2);
+}
+
+.edition-item.selected {
+  border: 2px solid #9333ea;
+  background: #fdf4ff;
+}
+
+
+/* ===== Formats & Editions ===== */
+
+.formats-block {
+  margin-top: 24px;
+}
+
+.formats-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #9333ea; /* purple heading */
+  margin-bottom: 12px;
+}
+
+/* Format tiles row */
+.format-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.format-tile {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.format-tile .fmt-label {
+  font-weight: 600;
+}
+.format-tile .fmt-count {
+  font-size: 12px;
+  background: #f3f4f6;
+  color: #555;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+}
+.format-tile:hover {
+  border-color: #9333ea;
+  box-shadow: 0 2px 8px rgba(147, 51, 234, 0.16);
+}
+.format-tile.active {
+  border-color: #9333ea;
+  background: #fdf4ff;
+  color: #6b21a8;
+}
+
+/* Edition chips list */
+.edition-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.edition-chip {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.edition-chip img {
+  width: 64px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.edition-chip .chip-meta {
+  display: grid;
+  gap: 2px;
+}
+.edition-chip .chip-title {
+  font-weight: 600;
+  color: #111;
+  line-height: 1.3;
+}
+.edition-chip .chip-price {
+  font-weight: 700;
+  color: #9333ea;
+}
+.edition-chip .chip-stock {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.edition-chip .chip-action {
+  font-weight: 700;
+  color: #6b21a8;
+  border: 1px solid #9333ea;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #fdf4ff;
+}
+
+.edition-chip:hover {
+  border-color: #9333ea;
+  box-shadow: 0 2px 10px rgba(147, 51, 234, 0.18);
+}
+
+/* Current edition (non-clickable) */
+.edition-chip.current {
+  cursor: default;
+  border-color: #9333ea;
+  background: #fdf4ff;
+}
+.edition-chip.current .chip-action.selected {
+  color: #fff;
+  background: #9333ea;
+  border-color: #9333ea;
+}
+
+/* Empty state */
+.edition-empty {
+  grid-column: 1 / -1;
+  font-size: 14px;
+  color: #6b7280;
+  padding: 8px 4px;
+}
+
+/* Mobile-friendly tiles */
+@media (max-width: 640px) {
+  .format-tiles {
+    gap: 6px;
+  }
+  .format-tile {
+    padding: 6px 10px;
+  }
+  
+  .edition-list {
+    grid-template-columns: 1fr; /* single-column chips */
+  }
+ 
+  .edition-chip {
+    grid-template-columns: 48px 1fr auto;
+    padding: 8px 10px;
+  }
+  .edition-chip img {
+    width: 48px;
+    height: 68px;
+  }
+}
+
+
+.author-bio-section {
+  margin-top: 20px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.author-bio-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #9333ea;
+  margin-bottom: 12px;
+}
+
+.author-bio-content {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.author-bio-photo {
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 2px solid #9333ea;
+  background: #fafafa;
+}
+
+.author-bio-text p {
+  margin: 6px 0;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .author-bio-content {
+    grid-template-columns: 64px 1fr;
+  }
+  .author-bio-photo {
+    width: 64px;
+    height: 64px;
+  }
+}
+
+
+/* Avatar+image stack for author bio */
+.author-bio-avatar {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid #9333ea; /* matches your purple */
+  background: #fafafa;       /* subtle bg when no image */
+}
+
+/* The overlay image sits on top; avatar is the base */
+.author-bio-photo-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+/* Optional: if you want to target the avatar itself */
+.initials-avatar {
+  width: 100%;
+  height: 100%;
+  display: flex;            /* (redundant, but safe) */
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+
+@media (max-width: 640px) {
+  .author-bio-avatar {
+    width: 64px;
+    height: 64px;
+  }
+}
+
+
+/* Shippo estimator */
+.shipping-estimator .ship-dest { font-size: 14px; }
+.shipping-estimator .ant-radio-wrapper { display: block; margin-top: 6px; }
+
