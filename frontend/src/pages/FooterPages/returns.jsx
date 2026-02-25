@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import './Returns.css';
+//import './Returns.css';
+import './returns.css';
 
 const Returns = () => {
   const { t } = useTranslation();
