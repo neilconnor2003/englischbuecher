@@ -2,7 +2,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGetPrivacyQuery } from '../../admin/features/privacy/privacyApiSlice';
-import './Legal.css';
+//import './Legal.css';
+import './legal.css';
 
 const Privacy = () => {
   const { t, i18n } = useTranslation();

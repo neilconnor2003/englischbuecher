@@ -2,7 +2,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGetImprintQuery } from '../../admin/features/imprint/imprintApiSlice';
-import './Legal.css';
+//import './Legal.css';
+import './legal.css';
 
 const Imprint = () => {
   const { t, i18n } = useTranslation();

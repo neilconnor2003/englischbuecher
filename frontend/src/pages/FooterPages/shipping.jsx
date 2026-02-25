@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import './Legal.css';
+//import './Legal.css';
+import './legal.css';
 
 const Shipping = () => {
   const { t } = useTranslation();

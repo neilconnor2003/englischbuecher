@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGetFaqsQuery } from '../../admin/features/faq/faqApiSlice';
-import './FAQ.css';
+import './faq.css';
 
 const FAQ = () => {
   const { t, i18n } = useTranslation();
