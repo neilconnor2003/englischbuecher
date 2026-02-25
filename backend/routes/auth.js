@@ -2,7 +2,8 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
-const { ACTIVE_SENTINEL } = require('../../frontend/src/constants');
+//const { ACTIVE_SENTINEL } = require('../../frontend/src/constants');
+const FRONTEND_URL = process.env.FRONTEND_URL;
 
 //const { sendWelcomeEmail } = require('../utils/email');
 const { sendWelcomeEmail, sendPasswordResetEmail } = require('../utils/email');

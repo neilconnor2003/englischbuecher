@@ -31,7 +31,7 @@ export default function CartShippingSummary({ t, i18n, onShippingChange }) {
     try {
       const raw = localStorage.getItem('ship_dest') || localStorage.getItem('shippo_dest');
       if (raw) setDest(JSON.parse(raw));
-    } catch {}
+    } catch { }
   }, []);
 
   // Step 1: build light items (bookId, quantity) to fetch missing weights/dimensions
@@ -65,13 +65,13 @@ export default function CartShippingSummary({ t, i18n, onShippingChange }) {
         const resolved = requestItems.map(it => {
           const row = map.get(it.bookId) || {};
           const w = Number(row?.weight_grams);
-          const width     = Number(row?.width_cm);
-          const height    = Number(row?.height_cm);
+          const width = Number(row?.width_cm);
+          const height = Number(row?.height_cm);
           const thickness = Number(row?.thickness_cm);
           return {
             weight_grams: (Number.isFinite(w) && w > 0 ? w : 500),     // fallback weight
-            width_cm:     (Number.isFinite(width)     && width > 0 ? width : 13),
-            height_cm:    (Number.isFinite(height)    && height > 0 ? height : 20),
+            width_cm: (Number.isFinite(width) && width > 0 ? width : 13),
+            height_cm: (Number.isFinite(height) && height > 0 ? height : 20),
             thickness_cm: (Number.isFinite(thickness) && thickness > 0 ? thickness : 3),
             quantity: it.quantity
           };
@@ -100,7 +100,7 @@ export default function CartShippingSummary({ t, i18n, onShippingChange }) {
   const fetchCartRate = useRef(null);
   const abortRef = useRef(null);
 
-  const doFetch = async (signal) => {
+  /*const doFetch = async (signal) => {
     if (!dest.postal) return;
     if (!weightedItems.length) return;
     setLoading(true);
@@ -110,6 +110,7 @@ export default function CartShippingSummary({ t, i18n, onShippingChange }) {
         {
           to_zip: dest.postal,
           to_city: dest.city || 'Berlin',
+          estimate_only: true,
           items: weightedItems
         },
         { withCredentials: true, signal }
@@ -127,19 +128,60 @@ export default function CartShippingSummary({ t, i18n, onShippingChange }) {
     } finally {
       setLoading(false);
     }
+  };*/
+
+
+
+  const doFetch = async (signal) => {
+    if (!dest?.postal) return;
+    if (!weightedItems?.length) return;
+
+    setLoading(true);
+    try {
+      const { data } = await axios.post(
+        `${config.API_URL}/api/shippo/rates`,
+        {
+          to_zip: dest.postal,
+          to_city: (dest.city || 'Berlin').trim(),
+          estimate_only: true,
+          items: weightedItems
+        },
+        { withCredentials: true, signal }
+      );
+
+      setQuote(data || null);
+    } catch (e) {
+      if (axios.isCancel?.(e) || e?.name === 'CanceledError') return;
+
+      if (axios.isAxiosError?.(e) && e.response?.status === 429) {
+        message.warning(t?.('shipping_rate_limited') || 'Too many shipping requests. Please wait and try again.');
+        return;
+      }
+
+      console.error('Shippo rates error:', e?.response?.data || e?.message || e);
+      setQuote(null);
+      message.error(
+        e?.response?.data?.details ||
+        t?.('shipping_error') ||
+        'Could not fetch shipping rates'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
+
 
   // create debounced version once (and whenever deps change meaningfully)
   useEffect(() => {
     const debounced = simpleDebounce(() => {
-      try { abortRef.current?.abort?.(); } catch {}
+      try { abortRef.current?.abort?.(); } catch { }
       abortRef.current = new AbortController();
       doFetch(abortRef.current.signal);
     }, 350);
     fetchCartRate.current = debounced;
     return () => {
       debounced.cancel?.();
-      try { abortRef.current?.abort?.(); } catch {}
+      try { abortRef.current?.abort?.(); } catch { }
     };
     // stringify items so effect runs when contents change (not just ref)
   }, [dest.postal, dest.city, JSON.stringify(weightedItems)]);
@@ -177,7 +219,7 @@ export default function CartShippingSummary({ t, i18n, onShippingChange }) {
   };
 
   const info = quote?.cheapest;
-  const wb   = quote?.weight_breakdown;
+  const wb = quote?.weight_breakdown;
   const dims = quote?.parcel_dimensions_cm;
 
   // Notify parent (CartPage) whenever shipping changes
@@ -228,11 +270,10 @@ export default function CartShippingSummary({ t, i18n, onShippingChange }) {
                 wb
                   ? `Total ${fmtKg((wb.books_grams || 0) + (wb.packaging_grams || 0))} kg
 • Books ${fmtKg(wb.books_grams)} kg
-• Packaging ${fmtKg(wb.packaging_grams)} kg${
-                      dims
-                        ? `\n• Parcel ${dims.length_cm}×${dims.width_cm}×${dims.height_cm} cm`
-                        : ''
-                    }`
+• Packaging ${fmtKg(wb.packaging_grams)} kg${dims
+                    ? `\n• Parcel ${dims.length_cm}×${dims.width_cm}×${dims.height_cm} cm`
+                    : ''
+                  }`
                   : (dims ? `Parcel ${dims.length_cm}×${dims.width_cm}×${dims.height_cm} cm` : '')
               }
             >
@@ -276,7 +317,7 @@ export default function CartShippingSummary({ t, i18n, onShippingChange }) {
               city: (vals.city || '').trim()
             };
             setDest(next);
-            try { localStorage.setItem('ship_dest', JSON.stringify(next)); } catch {}
+            try { localStorage.setItem('ship_dest', JSON.stringify(next)); } catch { }
             setOpen(false);
           }}
         >

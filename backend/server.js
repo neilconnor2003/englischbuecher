@@ -368,7 +368,15 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
 
   app.use(cors({
-    origin: `${FRONTEND_URL}`,
+    //  origin: `${FRONTEND_URL}`,
+
+    origin: [
+      "http://localhost:4173",        // Vite preview
+      "http://localhost:5173",        // Vite dev (sometimes)
+      "https://englischbuecher.de",   // Production
+      "https://www.englischbuecher.de"
+    ],
+
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],  // ← ADD PATCH + OPTIONS
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -3045,7 +3053,8 @@ const computeWorkId = (titleEn, titleDe, author) => {
   app.post('/api/checkout/quote', async (req, res) => {
     try {
       const BASE_URL = process.env.BASE_URL || 'http://localhost:3001';
-      const { to_zip, to_city, items } = req.body || {};
+      //const { to_zip, to_city, items, email } = req.body || {};
+      const { to_zip, to_city, to_street, items, email } = req.body || {};
       if (!to_zip || !Array.isArray(items) || !items.length) {
         return res.status(400).json({ error: 'bad_request' });
       }
@@ -3068,7 +3077,9 @@ const computeWorkId = (titleEn, titleDe, author) => {
       // 2) Ask Shippo via your own rates route (cache + dims already handled)
       const ratesResp = await axios.post(
         `${BASE_URL}/api/shippo/rates`,
-        { to_zip, to_city, items: weighted },
+        //{ to_zip, to_city, items: weighted },
+        //{ to_zip, to_city, email, items: weighted },
+        { to_zip, to_city, to_street, email, items: weighted },
         { timeout: 20000 }
       );
 
@@ -3149,25 +3160,6 @@ const computeWorkId = (titleEn, titleDe, author) => {
     const stripeWebhook = require('./webhook/stripeWebhook');
     await stripeWebhook(req, res, db);
   });
-
-  // === START SERVER ===
-  /*const PORT = 3001;
-
-  //const path = require('path');
-
-  // 1) Serve static frontend
-  const distPath = path.join(__dirname, '..', 'frontend', 'dist');
-  app.use(express.static(distPath));
-
-  // 2) SPA fallback for everything that is NOT an API or static/upload route
-  app.get(/^\/(?!api|uploads|webhook|auth).*//*, (req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
-
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });*/
-
 
   // === START SERVER ===
   const PORT = process.env.PORT || 3001;

@@ -12,12 +12,15 @@ const BOOK_FALLBACK = Number(process.env.BOOK_DEFAULT_WEIGHT_GRAMS ?? 500);
 
 // Packaging padding (dimensions)
 const PAD_LW_CM = Number(process.env.PACKAGING_PAD_LW_CM ?? 2); // +cm to length & width
-const PAD_H_CM  = Number(process.env.PACKAGING_PAD_H_CM  ?? 3); // +cm to height
+const PAD_H_CM = Number(process.env.PACKAGING_PAD_H_CM ?? 3);  // +cm to height
 
 // Dimension defaults if a book is missing them
-const DEF_WIDTH_CM     = Number(process.env.DEF_BOOK_WIDTH_CM     ?? 13);
-const DEF_HEIGHT_CM    = Number(process.env.DEF_BOOK_HEIGHT_CM    ?? 20);
+const DEF_WIDTH_CM = Number(process.env.DEF_BOOK_WIDTH_CM ?? 13);
+const DEF_HEIGHT_CM = Number(process.env.DEF_BOOK_HEIGHT_CM ?? 20);
 const DEF_THICKNESS_CM = Number(process.env.DEF_BOOK_THICKNESS_CM ?? 3);
+
+const TTL_MS = 30000; // 30s cache window
+const rateCache = new Map(); // key -> { data, ts }
 
 /* ----------------- helpers ----------------- */
 function gramsToKg(grams) {
@@ -25,7 +28,7 @@ function gramsToKg(grams) {
   return (g / 1000).toFixed(3);
 }
 
-function makeFrom() {
+/*function makeFrom() {
   return {
     name: process.env.SHIP_FROM_NAME || 'Warehouse',
     street1: process.env.SHIP_FROM_STREET || 'Konrad-Adenauer-Str. 1',
@@ -33,12 +36,36 @@ function makeFrom() {
     zip: process.env.SHIP_FROM_ZIP || '55216',
     country: process.env.SHIP_FROM_COUNTRY || 'DE'
   };
+}*/
+
+
+function makeFrom() {
+  return {
+    name: process.env.SHIP_FROM_NAME || 'Warehouse',
+    street1: process.env.SHIP_FROM_STREET || 'Konrad-Adenauer-Str. 1',
+    city: process.env.SHIP_FROM_CITY || 'Ingelheim am Rhein',
+    zip: process.env.SHIP_FROM_ZIP || '55216',
+    country: process.env.SHIP_FROM_COUNTRY || 'DE',
+    email: process.env.SHIP_FROM_EMAIL || process.env.SHIPPING_FALLBACK_EMAIL || 'orders@example.com',
+    phone: process.env.SHIP_FROM_PHONE || null
+  };
 }
+
 
 function shippoAuthHeader() {
   const key = process.env.SHIPPO_API_KEY;
   if (!key) throw new Error('Missing SHIPPO_API_KEY in .env');
   return { Authorization: `ShippoToken ${key}` };
+}
+
+function safeEmail(value) {
+  const e = String(value || '').trim();
+  return e.includes('@') ? e : null; // IMPORTANT: null, not ''
+}
+
+function safePhone(val) {
+  const p = String(val || '').trim();
+  return p.length >= 6 ? p : null;
 }
 
 /** Compute total shipping weight (grams) + breakdown
@@ -82,7 +109,7 @@ function computeTotalWeight(body = {}) {
 
 /** Compute outer parcel dimensions (cm) for a stack of books
  * Strategy:
- * - Stack all books on top of each other → height = sum(thickness * qty)
+ * - Stack all books on top of each other -> height = sum(thickness * qty)
  * - Footprint takes the max width & height across all books
  * - Add small packaging padding on all axes
  */
@@ -92,7 +119,7 @@ function computeParcelDimensions(body = {}) {
   if (!items.length) {
     // Single-book detail flow (no items array): use provided parcel or defaults
     const length_cm = Number(body?.parcel?.length_cm ?? DEF_HEIGHT_CM + PAD_LW_CM);
-    const width_cm  = Number(body?.parcel?.width_cm  ?? DEF_WIDTH_CM  + PAD_LW_CM);
+    const width_cm = Number(body?.parcel?.width_cm ?? DEF_WIDTH_CM + PAD_LW_CM);
     const height_cm = Number(body?.parcel?.height_cm ?? DEF_THICKNESS_CM + PAD_H_CM);
     return { length_cm, width_cm, height_cm };
   }
@@ -103,8 +130,8 @@ function computeParcelDimensions(body = {}) {
 
   for (const it of items) {
     const q = Math.max(1, Number(it?.quantity ?? 1));
-    const w = Number(it?.width_cm)     || DEF_WIDTH_CM;
-    const h = Number(it?.height_cm)    || DEF_HEIGHT_CM;
+    const w = Number(it?.width_cm) || DEF_WIDTH_CM;
+    const h = Number(it?.height_cm) || DEF_HEIGHT_CM;
     const t = Number(it?.thickness_cm) || DEF_THICKNESS_CM;
 
     maxWidth = Math.max(maxWidth, w);
@@ -113,7 +140,7 @@ function computeParcelDimensions(body = {}) {
   }
 
   const length_cm = Math.max(1, Math.round((maxHeight + PAD_LW_CM) * 10) / 10);
-  const width_cm  = Math.max(1, Math.round((maxWidth  + PAD_LW_CM) * 10) / 10);
+  const width_cm = Math.max(1, Math.round((maxWidth + PAD_LW_CM) * 10) / 10);
   const height_cm = Math.max(1, Math.round((totalThickness + PAD_H_CM) * 10) / 10);
 
   return { length_cm, width_cm, height_cm };
@@ -169,41 +196,83 @@ function normalizeProvider(p = '') {
   return u;
 }
 
-/* ----------------- simple in-memory cache ----------------- */
-// Collapses bursts for same destination/weight. Perfect for dev & low traffic.
-const rateCache = new Map(); // key -> { data, ts }
-const TTL_MS = 30000;        // 30s cache window
+
 
 function makeKey(to_zip, to_city, body) {
   try {
-    const items = Array.isArray(body?.items) ? body.items : [];
-    const totalGrams = items.length
-      ? items.reduce((s, it) => s + (Number(it?.weight_grams) || 0) * (Number(it?.quantity) || 0), 0)
-      : Number(body?.weight_grams || 0) || 0;
-    // Include packaging approximation from computeTotalWeight to be closer to used weight
-    const computed = computeTotalWeight(body)?.total_grams || totalGrams;
-    // Bucket by 25g to avoid cache churn on tiny changes
+    const computed = computeTotalWeight(body)?.total_grams || 0;
     const bucket = Math.round(computed / 25);
-    return `${String(to_zip || '').trim()}|${String(to_city || '').trim()}|${bucket}`;
+    const emailOk = !!safeEmail(body?.email);
+    const est = body?.estimate_only ? 1 : 0;
+    const streetOk =
+      !!String(body?.to_street || '').trim() &&
+      String(body?.to_street).trim().toLowerCase() !== 'unknown';
+
+    return `${String(to_zip || '').trim()}|${String(to_city || '').trim()}|${bucket}|E${emailOk ? 1 : 0}|S${streetOk ? 1 : 0}|EST${est}`;
   } catch {
     return `key|fallback|${Date.now()}`;
   }
 }
 
+
+
 /* -------------------------------------------------------------
  *  1) RATE SHOP (DE -> DE)
- *     - accepts { to_city, to_zip, weight_grams }   // Book page
- *     - or      { to_city, to_zip, items:[{weight_grams,quantity,width_cm,height_cm,thickness_cm}] } // Cart
  * ------------------------------------------------------------- */
 router.post('/rates', async (req, res) => {
   try {
     const {
       to_name = 'Customer',
-      to_street = 'Unknown',
-      to_city = 'Berlin',
-      to_zip = '10115',
+      to_street = '',
+      to_city = '',
+      to_zip = '',
+      email: emailRaw,
+      phone: phoneRaw,
+      estimate_only = false,
       debug = false
     } = req.body || {};
+
+    // ✅ sanitize/validate email (DPDDE requires a real email; NEVER send "")
+    const emailSafe = safeEmail(emailRaw) || process.env.SHIPPING_FALLBACK_EMAIL || null;
+    const phoneSafe = safePhone(phoneRaw);
+
+    /*if (!to_zip || !to_city || !to_street) {
+      return res.status(400).json({
+        error: 'address_required',
+        details: 'to_zip, to_city and to_street are required for shipping quote.'
+      });
+    }
+
+    if (!emailSafe) {
+      return res.status(400).json({
+        error: 'email_required',
+        details: 'Recipient email is required for DPD label creation (cannot be empty).'
+      });
+    }*/
+
+    // For checkout: require full address + valid email (DPDDE needs this)
+    // For cart estimate: allow missing and use placeholders + fallback email
+    if (!estimate_only) {
+      if (!to_zip || !to_city || !to_street) {
+        return res.status(400).json({
+          error: 'address_required',
+          details: 'to_zip, to_city and to_street are required for shipping quote.'
+        });
+      }
+      if (!emailSafe) {
+        return res.status(400).json({
+          error: 'email_required',
+          details: 'Recipient email is required for DPD label creation (cannot be empty).'
+        });
+      }
+    }
+
+    // Apply placeholders for estimate-only mode
+    const toStreetFinal = (to_street || '').trim() || 'Musterstraße 1';
+    const toCityFinal = (to_city || '').trim() || 'Berlin';
+    const toZipFinal = (to_zip || '').trim() || '10115';
+    const emailFinal = emailSafe || process.env.SHIPPING_FALLBACK_EMAIL || 'orders@example.com';
+
 
     // 1) Compute shipping weight (books + packaging)
     const weightInfo = computeTotalWeight(req.body);
@@ -218,19 +287,38 @@ router.post('/rates', async (req, res) => {
     }
 
     const address_from = makeFrom();
-    const address_to = { name: to_name, street1: to_street, city: to_city || 'Berlin', zip: to_zip, country: 'DE' };
+
+    const address_to = {
+      name: to_name || 'Customer',
+      //street1: to_street,
+      //city: to_city,
+      //zip: to_zip,
+      street1: toStreetFinal,
+      city: toCityFinal,
+      zip: toZipFinal,
+      country: 'DE',
+      //email: emailSafe,
+      email: emailFinal,
+      ...(phoneSafe ? { phone: phoneSafe } : {})
+    };
 
     // 2) Compute parcel dimensions from cart items
     const dims = computeParcelDimensions(req.body);
 
     const parcelObj = {
       length: String(dims.length_cm),
-      width:  String(dims.width_cm),
+      width: String(dims.width_cm),
       height: String(dims.height_cm),
       distance_unit: 'cm',
-      weight: gramsToKg(weightGrams),  // Shippo expects kg (string)
+      weight: gramsToKg(weightGrams),
       mass_unit: 'kg'
     };
+
+
+    console.log('[SHIPPO DEBUG] estimate_only=', estimate_only);
+    console.log('[SHIPPO DEBUG] address_from=', address_from);
+    console.log('[SHIPPO DEBUG] address_to.email=', JSON.stringify(address_to.email));
+
 
     // 3) Create Shipment -> returns rates
     const shipmentResp = await axios.post(
@@ -241,18 +329,6 @@ router.post('/rates', async (req, res) => {
 
     const shipment = shipmentResp.data || {};
     const rates = Array.isArray(shipment.rates) ? shipment.rates : [];
-
-    console.log('[Shippo rates raw]', {
-      payload_weight_g: weightGrams,
-      payload_dims_cm: dims,
-      count: rates.length,
-      providers: rates.map(r => ({
-        provider: r.provider,
-        service: r?.servicelevel?.name || r?.servicelevel?.token,
-        amount: r.amount,
-        currency: r.currency
-      }))
-    });
 
     const diagnostics = rates.map(r => ({
       provider: r.provider,
@@ -275,7 +351,8 @@ router.post('/rates', async (req, res) => {
         ALLOWED.has((r.provider || '').toUpperCase())
       )
       .map(r => ({
-        rate_object_id: r.object_id,
+        //rate_object_id: r.object_id,
+        rate_object_id: estimate_only ? null : r.object_id,
         provider: normalizeProvider(r.provider),
         raw_provider: r.provider,
         service: r.servicelevel?.name || r.servicelevel?.token || 'Service',
@@ -284,6 +361,7 @@ router.post('/rates', async (req, res) => {
         estimated_days: Number.isFinite(r.estimated_days) ? r.estimated_days : null
       }));
 
+    // fallback: if none match allowed providers, take all EUR rates
     if (!candidates.length) {
       candidates = rates
         .filter(r => r.currency === 'EUR' && r.amount && Number(r.amount) > 0)
@@ -326,9 +404,8 @@ router.post('/rates', async (req, res) => {
       debug: debug ? diagnostics : undefined
     };
 
-    // store in cache
     rateCache.set(cacheKey, { data: payload, ts: Date.now() });
-    res.json(payload);
+    return res.json(payload);
 
   } catch (err) {
     const data = err?.response?.data;
@@ -341,12 +418,12 @@ router.post('/rates', async (req, res) => {
       const { to_city = 'Berlin', to_zip = '10115' } = req.body || {};
       const key = makeKey(to_zip, to_city, req.body);
       const cached = rateCache.get(key);
-      if ((status === 429) && cached) {
+      if (status === 429 && cached) {
         return res.json(cached.data);
       }
-    } catch {}
+    } catch { }
 
-    res.status(status === 429 ? 429 : 500).json({
+    return res.status(status === 429 ? 429 : 500).json({
       error: 'shippo_rate_error',
       details: data || err.message,
       retry_after: retryAfter
@@ -370,10 +447,13 @@ router.post('/buy-label', async (req, res) => {
 
     const tx = txResp.data || {};
     if (tx.status !== 'SUCCESS') {
-      return res.status(400).json({ error: 'shippo_transaction_failed', details: tx.messages || [] });
+      return res.status(400).json({
+        error: 'shippo_transaction_failed',
+        details: tx.messages || []
+      });
     }
 
-    res.json({
+    return res.json({
       provider: tx.provider,
       amount: tx.amount,
       currency: tx.currency,
@@ -384,19 +464,19 @@ router.post('/buy-label', async (req, res) => {
   } catch (err) {
     const data = err?.response?.data;
     console.error('[Shippo /buy-label] error:', data || err.message || err);
-    res.status(500).json({ error: 'shippo_label_error', details: data || err.message });
+    return res.status(500).json({ error: 'shippo_label_error', details: data || err.message });
   }
 });
 
 /* ------------------ 3) TRACKING WEBHOOK ------------------ */
 router.post('/webhook', express.json({ type: '*/*' }), async (req, res) => {
   try {
-    const ev = req.body;
+    // const ev = req.body;
     // TODO: persist tracking updates (orders table) by ev.tracking_number
-    res.status(200).send('OK');
+    return res.status(200).send('OK');
   } catch (err) {
     console.error('[Shippo /webhook] error:', err);
-    res.status(200).send('OK');
+    return res.status(200).send('OK');
   }
 });
 

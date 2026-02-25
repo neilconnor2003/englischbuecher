@@ -33,6 +33,11 @@ const CheckoutPage = ({ clientSecret }) => {
   const [quoting, setQuoting] = useState(false);
   const [piUpdated, setPiUpdated] = useState(false);
 
+
+  const itemsSignature = cartItems
+    .map(i => `${i.bookId}:${i.quantity}`)
+    .join('|');
+
   const COUNTRY = "DE";
 
   useEffect(() => {
@@ -47,18 +52,32 @@ const CheckoutPage = ({ clientSecret }) => {
     let cancelled = false;
 
     async function quote() {
-      if (!postalCode || cartItems.length === 0) {
+      //if (!postalCode || cartItems.length === 0) {
+      if (!postalCode || cartItems.length === 0 || !email || !email.includes('@')) {
         setShippingQuote(null);
         setPiUpdated(false);
         return;
       }
       setQuoting(true);
       try {
-        const { data } = await axios.post('/api/checkout/quote', {
+        /*const { data } = await axios.post('/api/checkout/quote', {
           to_zip: postalCode,
           to_city: city || 'Berlin',
+          email,
+          items: cartItems.map(i => ({ bookId: i.bookId, quantity: i.quantity }))
+        }, { withCredentials: true });*/
+
+
+        const { data } = await axios.post('/api/checkout/quote', {
+          to_zip: postalCode,
+          to_city: city,
+          to_street: address,
+          to_name: user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : 'Customer',
+          email,
+          //phone: shippingPhone || '',
           items: cartItems.map(i => ({ bookId: i.bookId, quantity: i.quantity }))
         }, { withCredentials: true });
+
 
         const ch = data?.cheapest;
         if (!cancelled && ch) {
@@ -85,7 +104,8 @@ const CheckoutPage = ({ clientSecret }) => {
     quote();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [postalCode, city, cartItems.length]);
+    //}, [postalCode, city, cartItems.length]);
+  }, [postalCode, city, address, email, itemsSignature]);
 
   // Update PaymentIntent amount (subtotal + shipping)
   useEffect(() => {
