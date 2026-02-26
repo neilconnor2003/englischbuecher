@@ -366,21 +366,32 @@ const computeWorkId = (titleEn, titleDe, author) => {
     });
   });
 
+  const allowedOrigins = new Set([
+    "http://localhost:4173",
+    "http://localhost:5173",
+    "https://englischbuecher.netlify.app",
+    "https://englischbuecher.de",
+    "https://www.englischbuecher.de",
+  ]);
 
   app.use(cors({
-    //  origin: `${FRONTEND_URL}`,
+    origin: function (origin, callback) {
+      // allow curl/postman (no Origin header)
+      if (!origin) return callback(null, true);
 
-    origin: [
-      "http://localhost:4173",        // Vite preview
-      "http://localhost:5173",        // Vite dev (sometimes)
-      "https://englischbuecher.de",   // Production
-      "https://www.englischbuecher.de"
-    ],
+      // Allow Netlify branch deploys like https://dev--englischbuecher.netlify.app
+      if (origin.endsWith(".netlify.app")) return callback(null, true);
 
+      if (allowedOrigins.has(origin)) return callback(null, true);
+
+      return callback(new Error("Not allowed by CORS: " + origin));
+    },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],  // ← ADD PATCH + OPTIONS
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 204
   }));
+
   app.options(/^\/api\/.*/i, cors());
 
   app.use(express.json());
