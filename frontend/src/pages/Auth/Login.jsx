@@ -49,7 +49,7 @@ function Login() {
               {t('login_email_not_verified') || 'Please verify your email first.'}
               <Link
                 to="/resend-verification"
-                className="ml-2 text-blue-600 underline hover:text-blue-800"
+                className="ml-2 text-purple-600 underline hover:text-blue-800"
               >
                 {t('resend_link') || 'Resend verification email'}
               </Link>
@@ -110,7 +110,7 @@ function Login() {
         <div className="bg-white rounded-2xl shadow-xl p-8 transform transition-all hover:scale-[1.01]">
           {/* HEADER */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-600 rounded-full mb-4">
               <LogIn className="w-8 h-8 text-white" />
             </div>
             <h2 className="text-3xl font-bold text-gray-800">{t('login')}</h2>
@@ -164,7 +164,7 @@ function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transform transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transform transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>
@@ -207,14 +207,14 @@ function Login() {
           {/* REGISTER LINK */}
           <p className="text-center mt-6 text-sm text-gray-600">
             {t('login_no_account')}{' '}
-            <Link to="/register" className="font-semibold text-blue-600 hover:text-blue-700">
+            <Link to="/register" className="font-semibold text-purple-600 hover:text-blue-700">
               {t('register')}
             </Link>
           </p>
 
           {/* FORGOT PASSWORD */}
           <p className="text-center mt-2 text-sm text-gray-500">
-            <Link to="/forgot-password" className="text-blue-600 hover:text-blue-700 underline">
+            <Link to="/forgot-password" className="text-purple-600 hover:text-blue-700 underline">
               {t('forgot_password') || 'Forgot password?'}
             </Link>
           </p>
