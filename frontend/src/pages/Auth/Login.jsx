@@ -117,6 +117,14 @@ function Login() {
             <p className="text-gray-600 mt-2">{t('login_welcome')}</p>
           </div>
 
+          {/* ERROR / SUCCESS MESSAGES */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
           {/* DIVIDER */}
           <div className="mt-6">
             {/* GOOGLE LOGIN */}
@@ -134,23 +142,18 @@ function Login() {
               {t('login_google')}
             </button>
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500">{t('or')}</span>
+            {/* DIVIDER (same layout as Login.jsx) */}
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-4 bg-white text-gray-500">{t('or') || 'or'}</span>
+                </div>
               </div>
             </div>
           </div>
-
-          {/* ERROR / SUCCESS MESSAGES */}
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          )}
 
           {/* FORM */}
           <form onSubmit={handleSubmit} className="space-y-5">
