@@ -430,6 +430,8 @@
     "submit_error": "Failed to submit review",
     "read_all": "See all reviews"
   },
+  "continue_with_google": "Continue with Google",
+  "google_creates_account": "New here? We’ll create your account automatically.",
   "all_books": "All Books",
   "search_books": "Search books, authors, ISBN...",
   "all_categories": "All Categories",

@@ -370,6 +370,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
     "http://localhost:4173",
     "http://localhost:5173",
     "https://englischbuecher.netlify.app",
+    "https://dev--englischbuecher.netlify.app/",
     "https://englischbuecher.de",
     "https://www.englischbuecher.de",
   ]);
@@ -3175,14 +3176,33 @@ const computeWorkId = (titleEn, titleDe, author) => {
   // === START SERVER ===
   const PORT = process.env.PORT || 3001;
 
-  // 1) Serve static frontend
-  const distPath = path.join(__dirname, '..', 'frontend', 'dist');
-  app.use(express.static(distPath));
-
-  // 2) SPA fallback for everything that is NOT an API or static/upload route
-  app.get(/^\/(?!api|uploads|webhook|auth).*/, (req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
+  // ✅ 0) Health endpoint BEFORE any SPA/static fallback
+  app.get("/health", (req, res) => {
+    res.json({
+      env: process.env.NODE_ENV,
+      port: process.env.PORT,
+      db: process.env.DB_NAME
+    });
   });
+
+  // ✅ Optional root endpoint (nice for quick checks)
+  app.get("/", (req, res) => {
+    res.status(200).send("OK - EnglischBuecher API");
+  });
+
+  // ✅ API-only 404 (keeps curl results clean)
+  app.use((req, res) => {
+    res.status(404).json({ error: "not_found" });
+  });
+
+  //  // 1) Serve static frontend (optional on VPS, but keep if you want)
+  //  const distPath = path.join(__dirname, '..', 'frontend', 'dist');
+  //  app.use(express.static(distPath));
+
+  //  // 2) SPA fallback for everything that is NOT an API or static/upload route
+  //  app.get(/^\/(?!api|uploads|webhook|auth|health).*/, (req, res) => {
+  //    res.sendFile(path.join(distPath, 'index.html'));
+  //  });
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);

@@ -383,6 +383,8 @@
     "submit_error": "Bewertung konnte nicht gesendet werden",
     "read_all": "Alle Bewertungen ansehen"
   },
+  "continue_with_google": "Mit Google fortfahren",
+  "google_creates_account": "Neu hier? Wir erstellen dein Konto automatisch.",
   "all_books": "Alle Bücher",
   "search_books": "Bücher, Autoren, ISBN suchen…",
   "all_categories": "Alle Kategorien",
