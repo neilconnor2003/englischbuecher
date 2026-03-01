@@ -405,10 +405,10 @@ const computeWorkId = (titleEn, titleDe, author) => {
     saveUninitialized: false,
     store: sessionStore,
     cookie: {
-      secure: false,
+      secure: true,          // ✅ REQUIRED for HTTPS
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000,
-      sameSite: 'lax'
+      sameSite: 'none',      // ✅ REQUIRED for cross-domain
+      maxAge: 24 * 60 * 60 * 1000
     }
   }));
 
