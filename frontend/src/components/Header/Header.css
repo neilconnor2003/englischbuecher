@@ -10,11 +10,16 @@
 .header-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 8px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 70px;
+  flex-wrap: wrap;
+  /* ✅ KEY FIX */
+  height: auto;
+  /* ✅ KEY FIX */
+  row-gap: 8px;
+  /* ✅ spacing between rows */
 }
 
 /* === LOGO === */
@@ -169,90 +174,6 @@
   }
 }
 
-@media (max-width: 768px) {
-  .welcome-text {
-    display: none;
-  }
-
-  .auth-links {
-    gap: 12px;
-  }
-}
-
-@media (max-width: 576px) {
-  .header-container {
-    height: 60px;
-    padding: 0 12px;
-  }
-
-  .logo-img {
-    height: 40px;
-  }
-
-  /* Mobile search bar toggle */
-  .search-bar {
-    position: absolute;
-    top: 60px;
-    left: 0;
-    right: 0;
-    padding: 12px;
-    background: #8A2BE2;
-    border-bottom: 1px solid #B57EDC;
-    display: none;
-  }
-
-  .search-bar.open {
-    display: block;
-  }
-
-  .search-bar input {
-    border: 1px solid #fff;
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-  }
-
-  .search-bar input::placeholder {
-    color: #ddd;
-  }
-
-  .search-icon {
-    color: #fff;
-  }
-
-  /* Hamburger menu */
-  .hamburger {
-    display: block;
-    cursor: pointer;
-  }
-
-  .hamburger .bar {
-    width: 20px;
-    height: 2px;
-    background: #8A2BE2;
-    margin: 4px 0;
-    transition: 0.3s;
-  }
-
-  .mobile-menu {
-    position: absolute;
-    top: 60px;
-    left: 0;
-    right: 0;
-    background: #8A2BE2;
-    border-bottom: 1px solid #B57EDC;
-    padding: 16px;
-    display: none;
-    flex-direction: column;
-    gap: 12px;
-    box-shadow: 0 4px 8px rgba(138, 43, 226, 0.2);
-  }
-
-  .mobile-menu.open {
-    display: flex;
-  }
-}
-
-
 /* Request a Book button (header) */
 .request-book-btn {
   padding: 6px 12px;
@@ -299,7 +220,59 @@
   filter: brightness(1.05);
 }
 
+
 @media (max-width: 768px) {
+
+  /* Header becomes multi-row */
+  .header-container {
+    align-items: flex-start;
+  }
+
+  /* Logo */
+  .logo {
+    flex: 1 1 auto;
+  }
+
+  /* Search bar full width below */
+  .search-bar {
+    order: 3;
+    width: 100%;
+    max-width: 100%;
+    margin: 8px 0 0;
+  }
+
+  /* Right nav wraps */
+  .auth-links {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Smaller buttons */
+  .auth-button,
+  .request-book-btn {
+    padding: 5px 10px;
+    font-size: 13px;
+  }
+
+  /* Hide welcome text */
+  .welcome-text {
+    display: none;
+  }
+
+  /* ✅ KEEP: prevent hover jitter on mobile */
+  .cart-link {
+    transform: none;
+  }
+
+  /* ✅ KEEP: prevent category menu overflow */
+  .category-menu {
+    max-width: 100%;
+    white-space: nowrap;
+  }
+
+  /* FAB visible on mobile */
   .request-book-fab {
     display: inline-flex;
   }
