@@ -1,4 +1,8 @@
-/* === HEADER CONTAINER === */
+
+/* =========================================================
+   HEADER BASE (DESKTOP / LAPTOP — DEFAULT)
+   ========================================================= */
+
 .header {
   background: #E6D9FF;
   box-shadow: 0 2px 8px rgba(138, 43, 226, 0.2);
@@ -10,26 +14,28 @@
 .header-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 8px 16px;
+  padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  /* ✅ KEY FIX */
-  height: auto;
-  /* ✅ KEY FIX */
-  row-gap: 8px;
-  /* ✅ spacing between rows */
+  flex-wrap: nowrap;          /* desktop: single row */
+  height: 70px;               /* desktop height */
 }
 
-/* === LOGO === */
+/* =========================================================
+   LOGO
+   ========================================================= */
+
 .logo-img {
   height: clamp(40px, 6vw, 50px);
   object-fit: contain;
   background: transparent;
 }
 
-/* === SEARCH BAR === */
+/* =========================================================
+   SEARCH BAR (DESKTOP)
+   ========================================================= */
+
 .search-bar {
   flex: 1;
   max-width: 500px;
@@ -64,6 +70,10 @@
   min-width: 420px !important;
 }
 
+/* =========================================================
+   AUTOCOMPLETE ITEMS
+   ========================================================= */
+
 .suggest-item {
   display: inline-flex;
   align-items: baseline;
@@ -84,7 +94,10 @@
   color: #6b7280;
 }
 
-/* === NAV LINKS === */
+/* =========================================================
+   RIGHT NAV (DESKTOP)
+   ========================================================= */
+
 .auth-links {
   display: flex;
   align-items: center;
@@ -92,7 +105,8 @@
   font-size: clamp(12px, 2vw, 14px);
 }
 
-.auth-button {
+.auth-button,
+.request-book-btn {
   padding: 6px 12px;
   background: #fff;
   color: #8A2BE2;
@@ -100,11 +114,11 @@
   border-radius: 8px;
   text-decoration: none;
   font-weight: 600;
-  font-size: clamp(12px, 2vw, 14px);
   transition: all 0.3s ease;
 }
 
-.auth-button:hover {
+.auth-button:hover,
+.request-book-btn:hover {
   background: #8A2BE2;
   color: #fff;
   transform: translateY(-1px);
@@ -113,10 +127,12 @@
 .welcome-text {
   font-weight: 600;
   color: #6a1b9a;
-  font-size: clamp(12px, 2vw, 14px);
 }
 
-/* === CART === */
+/* =========================================================
+   CART
+   ========================================================= */
+
 .cart-link {
   position: relative;
   color: #8A2BE2;
@@ -143,7 +159,10 @@
   justify-content: center;
 }
 
-/* === PROFILE AVATAR === */
+/* =========================================================
+   PROFILE AVATAR
+   ========================================================= */
+
 .profile-avatar {
   width: clamp(32px, 6vw, 40px);
   height: clamp(32px, 6vw, 40px);
@@ -166,34 +185,10 @@
   min-width: 200px;
 }
 
-/* === RESPONSIVE BREAKPOINTS === */
-@media (max-width: 1024px) {
-  .search-bar {
-    max-width: 300px;
-    margin: 0 12px;
-  }
-}
+/* =========================================================
+   REQUEST BOOK FAB (MOBILE ONLY)
+   ========================================================= */
 
-/* Request a Book button (header) */
-.request-book-btn {
-  padding: 6px 12px;
-  background: #fff;
-  color: #8A2BE2;
-  border: 2px solid #8A2BE2;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: clamp(12px, 2vw, 14px);
-  transition: all 0.3s ease;
-}
-
-.request-book-btn:hover {
-  background: #8A2BE2;
-  color: #fff;
-  transform: translateY(-1px);
-}
-
-/* Floating Action Button (mobile) */
 .request-book-fab {
   position: fixed;
   right: 16px;
@@ -203,81 +198,83 @@
   border-radius: 50%;
   background: #8A2BE2;
   color: #fff;
-  border: none;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
   display: none;
-  /* show only on small screens */
   align-items: center;
   justify-content: center;
   font-size: 28px;
   z-index: 999;
   text-decoration: none;
-  line-height: 56px;
-  text-align: center;
 }
 
-.request-book-fab:hover {
-  filter: brightness(1.05);
+/* =========================================================
+   MOBILE ICON BUTTONS (☰ and 👤)
+   ========================================================= */
+
+.mobile-only {
+  display: none;
 }
 
+.header-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 2px solid #8A2BE2;
+  background: #fff;
+  color: #8A2BE2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* =========================================================
+   MOBILE LAYOUT (≤768px) — EXACTLY 2 ROWS
+   ========================================================= */
 
 @media (max-width: 768px) {
 
-  /* Header becomes multi-row */
   .header-container {
-    align-items: flex-start;
+    flex-wrap: wrap;
+    height: auto;
+    padding: 8px 12px;
+    row-gap: 8px;
   }
 
-  /* Logo */
-  .logo {
-    flex: 1 1 auto;
+  /* Row 1 stays compact */
+  .auth-links {
+    flex-wrap: nowrap;
+    gap: 10px;
   }
 
-  /* Search bar full width below */
+  /* Hide desktop-only items */
+  .auth-button,
+  .request-book-btn,
+  .welcome-text,
+  .category-menu {
+    display: none !important;
+  }
+
+  /* Show mobile icons */
+  .mobile-only {
+    display: inline-flex;
+  }
+
+  /* Row 2: search always full width */
   .search-bar {
-    order: 3;
     width: 100%;
     max-width: 100%;
-    margin: 8px 0 0;
+    margin: 6px 0 0;
+    order: 99;
   }
 
-  /* Right nav wraps */
-  .auth-links {
-    flex: 1 1 100%;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  /* Smaller buttons */
-  .auth-button,
-  .request-book-btn {
-    padding: 5px 10px;
-    font-size: 13px;
-  }
-
-  /* Hide welcome text */
-  .welcome-text {
-    display: none;
-  }
-
-  /* ✅ KEEP: prevent hover jitter on mobile */
+  /* Disable hover transform on touch */
   .cart-link {
     transform: none;
   }
 
-  /* ✅ KEEP: prevent category menu overflow */
-  .category-menu {
-    max-width: 100%;
-    white-space: nowrap;
-  }
-
-  /* FAB visible on mobile */
+  /* FAB visible */
   .request-book-fab {
     display: inline-flex;
-  }
-
-  .request-book-btn {
-    display: none;
   }
 }
