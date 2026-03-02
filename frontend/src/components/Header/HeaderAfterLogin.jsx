@@ -11,15 +11,15 @@ import {
   LogoutOutlined,
   HeartOutlined,
   UserOutlined,
-  SettingOutlined
+  SettingOutlined,
+  MenuOutlined
 } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
-import { AutoComplete, Avatar, Dropdown } from 'antd';
+import { AutoComplete, Avatar, Dropdown, Drawer } from 'antd';
 import CategoryMenu from '../CategoryMenu/CategoryMenu';
 import axios from 'axios';
 import config from '../../config';
 import './Header.css';
-//import RequestBookTrigger from '../RequestBook/RequestBookTrigger';
 
 function HeaderAfterLogin() {
   const { t } = useTranslation();
@@ -31,6 +31,9 @@ function HeaderAfterLogin() {
 
   const navigate = useNavigate();
 
+  // ✅ Mobile drawer state (☰ categories)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   // --- Autocomplete state ---
   const [term, setTerm] = useState('');
   const [options, setOptions] = useState([]);
@@ -39,7 +42,6 @@ function HeaderAfterLogin() {
   const cancelRef = useRef(null);
 
   const fetchSuggestions = async (q) => {
-    // cancel previous request if still in flight
     if (cancelRef.current) cancelRef.current.cancel('New query');
     cancelRef.current = axios.CancelToken.source();
 
@@ -98,7 +100,7 @@ function HeaderAfterLogin() {
     navigate(`/books?q=${encodeURIComponent(val)}`);
   };
 
-  // --- Profile avatar + dropdown ---
+  // --- Logout handler ---
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try { await logout(); } finally { setIsLoggingOut(false); }
@@ -111,18 +113,29 @@ function HeaderAfterLogin() {
     .slice(0, 2)
     .toUpperCase();
 
+  // ✅ Account dropdown items (desktop avatar + mobile 👤 use the same menu)
   const profileMenuItems = [
     {
       key: 'profile',
       icon: <UserOutlined />,
       label: <Link to="/profile">{t('profile')}</Link>
     },
+    {
+      key: 'wishlist',
+      icon: <HeartOutlined style={{ color: '#e91e63' }} />,
+      label: <Link to="/wishlist">{t('header_wishlist')}</Link>
+    },
+    {
+      key: 'orders',
+      icon: <ShoppingCartOutlined />,
+      label: <Link to="/profile">{t('orders') || 'Orders'}</Link> // keep route stable
+    },
     ...(user?.role === 'admin'
       ? [{
-        key: 'admin',
-        icon: <SettingOutlined />,
-        label: <Link to="/admin">{t('header_admin')}</Link>
-      }]
+          key: 'admin',
+          icon: <SettingOutlined />,
+          label: <Link to="/admin">{t('header_admin')}</Link>
+        }]
       : []),
     {
       key: 'logout',
@@ -132,15 +145,23 @@ function HeaderAfterLogin() {
   ];
 
   const onProfileMenuClick = ({ key }) => {
-    if (key === 'logout') {
-      handleLogout();
-    }
-    // 'profile' and 'admin' use <Link> labels — navigation handled by React Router
+    if (key === 'logout') handleLogout();
   };
 
   return (
     <header className="header">
       <div className="header-container">
+
+        {/* ✅ MOBILE ONLY: ☰ menu trigger */}
+        <button
+          type="button"
+          className="mobile-only header-icon-btn"
+          aria-label={t('categories') || 'Menu'}
+          onClick={() => setMobileMenuOpen(true)}
+        >
+          <MenuOutlined />
+        </button>
+
         {/* LOGO */}
         <div className="logo">
           <Link to="/">
@@ -148,7 +169,7 @@ function HeaderAfterLogin() {
           </Link>
         </div>
 
-        {/* SEARCH BAR — AutoComplete styled to match existing input */}
+        {/* SEARCH BAR */}
         <div className="search-bar">
           <AutoComplete
             value={term}
@@ -172,28 +193,56 @@ function HeaderAfterLogin() {
 
         {/* RIGHT NAV */}
         <nav className="auth-links">
-          <CategoryMenu />
 
+          {/* Desktop Categories (hidden on mobile by CSS via wrapper class) */}
+          <div className="category-menu">
+            <CategoryMenu />
+          </div>
+
+          {/* Desktop welcome text (hidden on mobile by your CSS) */}
           <span className="welcome-text">
             {t('header_welcome', { name: user?.displayName || 'User' })}
           </span>
 
+          {/* Language switcher stays visible */}
           <LanguageSwitcher />
 
+          {/* Desktop request book (hidden on mobile by your CSS; FAB still exists) */}
           <Link to="/request-book" className="request-book-btn">{t('request.button')}</Link>
 
-
-          {/* WISHLIST LINK */}
-          <Link to="/wishlist" className="cart-link" style={{ marginRight: 16 }}>
+          {/* Desktop wishlist (we hide on mobile via CSS add-on below) */}
+          <Link to="/wishlist" className="desktop-only cart-link" style={{ marginRight: 16 }}>
             <HeartOutlined style={{ color: '#e91e63' }} /> {t('header_wishlist')} ({wishlistCount})
           </Link>
 
-          {/* CART LINK */}
-          <Link to="/cart" className="cart-link">
+          {/* Desktop cart (we hide on mobile via CSS add-on below) */}
+          <Link to="/cart" className="desktop-only cart-link">
             <ShoppingCartOutlined /> {t('header_cart')} ({cartCount})
           </Link>
 
-          {/* Profile avatar with dropdown (Logout/Admin/Settings) */}
+          {/* ✅ MOBILE ONLY: 👤 account dropdown trigger */}
+          <Dropdown
+            menu={{ items: profileMenuItems, onClick: onProfileMenuClick }}
+            placement="bottomRight"
+            overlayClassName="profile-dropdown"
+            trigger={['click']}
+          >
+            <button
+              type="button"
+              className="mobile-only header-icon-btn"
+              aria-label={t('profile') || 'Account'}
+            >
+              <UserOutlined />
+            </button>
+          </Dropdown>
+
+          {/* ✅ MOBILE ONLY: 🛒 cart icon with badge */}
+          <Link to="/cart" className="mobile-only cart-link" aria-label={t('header_cart') || 'Cart'}>
+            <ShoppingCartOutlined />
+            {cartCount > 0 && <span className="cart-count">{cartCount}</span>}
+          </Link>
+
+          {/* Desktop avatar dropdown (keep unchanged; hide on mobile via CSS add-on below if you want) */}
           <Dropdown
             menu={{ items: profileMenuItems, onClick: onProfileMenuClick }}
             placement="bottomRight"
@@ -201,17 +250,29 @@ function HeaderAfterLogin() {
           >
             <Avatar
               src={user?.photoURL}
-              className="profile-avatar"
+              className="desktop-only profile-avatar"
               alt="Profile"
               style={{ cursor: 'pointer' }}
             >
               {!user?.photoURL && initials}
             </Avatar>
           </Dropdown>
+
         </nav>
 
         {/* Mobile FAB */}
         <Link to="/request-book" className="request-book-fab" aria-label={t('request.button')}>+</Link>
+
+        {/* ✅ MOBILE DRAWER: Categories */}
+        <Drawer
+          title={t('categories') || 'Categories'}
+          placement="left"
+          open={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          bodyStyle={{ padding: 12 }}
+        >
+          <CategoryMenu />
+        </Drawer>
 
       </div>
     </header>

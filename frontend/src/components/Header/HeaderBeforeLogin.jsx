@@ -1,28 +1,28 @@
 
 // src/components/Header/HeaderBeforeLogin.js
-import React, { useContext, useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
-import { AuthContext } from '../../context/AuthContext';
 import LanguageSwitcher from '../LanguageSwitcher';
-import { ShoppingCartOutlined, SearchOutlined } from '@ant-design/icons';
-import { AutoComplete } from 'antd';
+import { ShoppingCartOutlined, SearchOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons';
+import { AutoComplete, Drawer, Dropdown } from 'antd';
 import CategoryMenu from '../CategoryMenu/CategoryMenu';
 import axios from 'axios';
 import config from '../../config';
-import './Header.css';  // keep same file
-//import RequestBookTrigger from '../RequestBook/RequestBookTrigger';
+import './Header.css';
 
 function HeaderBeforeLogin() {
   const { t } = useTranslation();
-  const { checkAuth } = useContext(AuthContext);
   const cartCount = useSelector(state => state.cart.totalItems);
 
   const navigate = useNavigate();
   const [term, setTerm] = useState('');
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // ✅ Mobile drawer state (☰ categories)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const debounceRef = useRef(null);
   const cancelRef = useRef(null);
@@ -45,7 +45,7 @@ function HeaderBeforeLogin() {
         const author = b.author || '';
         const isbn = b.isbn13 || b.isbn10 || '';
         return {
-          value: isbn || title || author || q,           // value used if selected
+          value: isbn || title || author || q, // value used if selected
           label: (
             <div className="suggest-item">
               <span className="suggest-title">{title}</span>
@@ -89,9 +89,28 @@ function HeaderBeforeLogin() {
     navigate(`/books?q=${encodeURIComponent(val)}`);
   };
 
+  // ✅ Mobile account dropdown menu (👤)
+  const accountMenu = {
+    items: [
+      { key: 'login', label: <Link to="/login">{t('login')}</Link> },
+      { key: 'register', label: <Link to="/register">{t('register')}</Link> }
+    ]
+  };
+
   return (
     <header className="header">
       <div className="header-container">
+
+        {/* ✅ MOBILE ONLY: ☰ menu trigger */}
+        <button
+          type="button"
+          className="mobile-only header-icon-btn"
+          aria-label={t('categories') || 'Menu'}
+          onClick={() => setMobileMenuOpen(true)}
+        >
+          <MenuOutlined />
+        </button>
+
         {/* LOGO */}
         <div className="logo">
           <Link to="/">
@@ -108,10 +127,9 @@ function HeaderBeforeLogin() {
             onChange={setTerm}
             onSelect={onSelect}
             placeholder={t('search')}
-            style={{ width: '100%' }}                    // respect container width
-            popupMatchSelectWidth={false}                // dropdown wider than input when needed
+            style={{ width: '100%' }}              // respect container width
+            popupMatchSelectWidth={false}          // dropdown wider than input when needed
             loading={loading}
-            // keep Enter-to-search behavior
             onKeyDown={(e) => { if (e.key === 'Enter') doSearch(); }}
           />
           <SearchOutlined
@@ -124,19 +142,54 @@ function HeaderBeforeLogin() {
 
         {/* RIGHT NAV */}
         <nav className="auth-links">
-          <CategoryMenu />
+
+          {/* Desktop Categories (hidden on mobile by CSS via wrapper class) */}
+          <div className="category-menu">
+            <CategoryMenu />
+          </div>
+
+          {/* Desktop Request Book button (hidden on mobile by CSS) */}
           <Link to="/request-book" className="request-book-btn">{t('request.button')}</Link>
+
+          {/* Desktop auth buttons (hidden on mobile by CSS) */}
           <Link to="/login" className="auth-button">{t('login')}</Link>
           <Link to="/register" className="auth-button">{t('register')}</Link>
+
+          {/* Language switcher (kept visible) */}
           <LanguageSwitcher />
-          <Link to="/cart" className="cart-link">
+
+          {/* ✅ MOBILE ONLY: 👤 account dropdown */}
+          <Dropdown menu={accountMenu} placement="bottomRight" trigger={['click']}>
+            <button
+              type="button"
+              className="mobile-only header-icon-btn"
+              aria-label={t('profile') || 'Account'}
+            >
+              <UserOutlined />
+            </button>
+          </Dropdown>
+
+          {/* Cart (kept visible) */}
+          <Link to="/cart" className="cart-link" aria-label={t('header_cart') || 'Cart'}>
             <ShoppingCartOutlined />
             {cartCount > 0 && <span className="cart-count">{cartCount}</span>}
           </Link>
+
         </nav>
 
         {/* Mobile FAB (fixed), renders on all pages via header mount */}
         <Link to="/request-book" className="request-book-fab" aria-label={t('request.button')}>+</Link>
+
+        {/* ✅ MOBILE DRAWER: Categories */}
+        <Drawer
+          title={t('categories') || 'Categories'}
+          placement="left"
+          open={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          bodyStyle={{ padding: 12 }}
+        >
+          <CategoryMenu />
+        </Drawer>
 
       </div>
     </header>
