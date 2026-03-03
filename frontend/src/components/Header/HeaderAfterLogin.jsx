@@ -41,6 +41,16 @@ function HeaderAfterLogin() {
   const debounceRef = useRef(null);
   const cancelRef = useRef(null);
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  React.useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const apply = () => setIsMobile(mq.matches);
+    apply();
+    mq.addEventListener?.('change', apply);
+    return () => mq.removeEventListener?.('change', apply);
+  }, []);
+
   const fetchSuggestions = async (q) => {
     if (cancelRef.current) cancelRef.current.cancel('New query');
     cancelRef.current = axios.CancelToken.source();
@@ -120,25 +130,19 @@ function HeaderAfterLogin() {
       icon: <UserOutlined />,
       label: <Link to="/profile">{t('profile')}</Link>
     },
-    {
+
+    ...(isMobile ? [{
       key: 'wishlist',
-      icon: (
-        <span className="mobile-only">
-          <HeartOutlined style={{ color: '#e91e63' }} />
-        </span>
-      ),
-      label: (
-        <span className="mobile-only">
-          <Link to="/wishlist">{t('header_wishlist')}</Link>
-        </span>
-      )
-    },
+      icon: <HeartOutlined style={{ color: '#e91e63' }} />,
+      label: <Link to="/wishlist">{t('header_wishlist')}</Link>
+    }] : []),
+
     {
       key: 'orders',
       icon: <ShoppingCartOutlined />,
-      // you said Orders exists in profile; keep route stable
       label: <Link to="/profile">{t('orders') || 'Orders'}</Link>
     },
+
     ...(user?.role === 'admin'
       ? [{
         key: 'admin',
@@ -146,6 +150,7 @@ function HeaderAfterLogin() {
         label: <Link to="/admin">{t('header_admin')}</Link>
       }]
       : []),
+
     {
       key: 'logout',
       icon: <LogoutOutlined />,
