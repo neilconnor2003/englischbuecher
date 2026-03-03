@@ -1,5 +1,5 @@
 
-// src/components/Header/HeaderAfterLogin.js
+// src/components/Header/HeaderAfterLogin.jsx
 import React, { useContext, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -113,7 +113,7 @@ function HeaderAfterLogin() {
     .slice(0, 2)
     .toUpperCase();
 
-  // ✅ Account dropdown items (desktop avatar + mobile 👤 use the same menu)
+  // ✅ Account dropdown items (used by desktop avatar AND mobile 👤)
   const profileMenuItems = [
     {
       key: 'profile',
@@ -128,7 +128,8 @@ function HeaderAfterLogin() {
     {
       key: 'orders',
       icon: <ShoppingCartOutlined />,
-      label: <Link to="/profile">{t('orders') || 'Orders'}</Link> // keep route stable
+      // you said Orders exists in profile; keep route stable
+      label: <Link to="/profile">{t('orders') || 'Orders'}</Link>
     },
     ...(user?.role === 'admin'
       ? [{
@@ -152,7 +153,7 @@ function HeaderAfterLogin() {
     <header className="header">
       <div className="header-container">
 
-        {/* ✅ MOBILE ONLY: ☰ menu trigger */}
+        {/* ✅ MOBILE ONLY: ☰ menu trigger (hidden on desktop by CSS .mobile-only) */}
         <button
           type="button"
           className="mobile-only header-icon-btn"
@@ -194,31 +195,45 @@ function HeaderAfterLogin() {
         {/* RIGHT NAV */}
         <nav className="auth-links">
 
-          {/* Desktop Categories (hidden on mobile by CSS via wrapper class) */}
+          {/* ✅ Desktop ONLY categories (your CSS hides .category-menu on mobile) */}
           <div className="category-menu">
             <CategoryMenu />
           </div>
 
-          {/* Desktop welcome text (hidden on mobile by your CSS) */}
+          {/* Desktop welcome text (hidden on mobile in your CSS) */}
           <span className="welcome-text">
             {t('header_welcome', { name: user?.displayName || 'User' })}
           </span>
 
-          {/* Language switcher stays visible */}
+          {/* Language switcher (visible desktop + mobile) */}
           <LanguageSwitcher />
 
-          {/* Desktop request book (hidden on mobile by your CSS; FAB still exists) */}
+          {/* Desktop Request Book (hidden on mobile in your CSS; FAB is used) */}
           <Link to="/request-book" className="request-book-btn">{t('request.button')}</Link>
 
-          {/* Desktop wishlist (we hide on mobile via CSS add-on below) */}
+          {/* Desktop wishlist/cart + avatar (hide on mobile using desktop-only) */}
           <Link to="/wishlist" className="desktop-only cart-link" style={{ marginRight: 16 }}>
             <HeartOutlined style={{ color: '#e91e63' }} /> {t('header_wishlist')} ({wishlistCount})
           </Link>
 
-          {/* Desktop cart (we hide on mobile via CSS add-on below) */}
           <Link to="/cart" className="desktop-only cart-link">
             <ShoppingCartOutlined /> {t('header_cart')} ({cartCount})
           </Link>
+
+          <Dropdown
+            menu={{ items: profileMenuItems, onClick: onProfileMenuClick }}
+            placement="bottomRight"
+            overlayClassName="profile-dropdown"
+          >
+            <Avatar
+              src={user?.photoURL}
+              className="desktop-only profile-avatar"
+              alt="Profile"
+              style={{ cursor: 'pointer' }}
+            >
+              {!user?.photoURL && initials}
+            </Avatar>
+          </Dropdown>
 
           {/* ✅ MOBILE ONLY: 👤 account dropdown trigger */}
           <Dropdown
@@ -236,34 +251,18 @@ function HeaderAfterLogin() {
             </button>
           </Dropdown>
 
-          {/* ✅ MOBILE ONLY: 🛒 cart icon with badge */}
+          {/* ✅ MOBILE ONLY: 🛒 icon cart with badge */}
           <Link to="/cart" className="mobile-only cart-link" aria-label={t('header_cart') || 'Cart'}>
             <ShoppingCartOutlined />
             {cartCount > 0 && <span className="cart-count">{cartCount}</span>}
           </Link>
 
-          {/* Desktop avatar dropdown (keep unchanged; hide on mobile via CSS add-on below if you want) */}
-          <Dropdown
-            menu={{ items: profileMenuItems, onClick: onProfileMenuClick }}
-            placement="bottomRight"
-            overlayClassName="profile-dropdown"
-          >
-            <Avatar
-              src={user?.photoURL}
-              className="desktop-only profile-avatar"
-              alt="Profile"
-              style={{ cursor: 'pointer' }}
-            >
-              {!user?.photoURL && initials}
-            </Avatar>
-          </Dropdown>
-
         </nav>
 
-        {/* Mobile FAB */}
+        {/* Mobile FAB (unchanged) */}
         <Link to="/request-book" className="request-book-fab" aria-label={t('request.button')}>+</Link>
 
-        {/* ✅ MOBILE DRAWER: Categories */}
+        {/* ✅ MOBILE Drawer shows categories */}
         <Drawer
           title={t('categories') || 'Categories'}
           placement="left"
