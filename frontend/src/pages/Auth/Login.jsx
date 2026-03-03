@@ -70,6 +70,17 @@ function Login() {
   };
 
   const handleGoogleLogin = () => {
+    // iOS detection (Safari + all iOS browsers use WebKit)
+    const ua = navigator.userAgent || '';
+    const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    // ✅ iOS: use full redirect (more reliable than popup)
+    if (isIOS) {
+      window.location.href = `${config.API_URL}/auth/google`;
+      return;
+    }
+
+    // ✅ Desktop/Android: popup flow
     const width = 500, height = 600;
     const left = window.screenX + (window.outerWidth - width) / 2;
     const top = window.screenY + (window.outerHeight - height) / 2;
@@ -80,12 +91,24 @@ function Login() {
       `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );
 
+    // If popup blocked, fall back to redirect
+    if (!popup) {
+      window.location.href = `${config.API_URL}/auth/google`;
+      return;
+    }
+
+    // ✅ Accept messages from backend origin
+    const allowedOrigins = new Set([
+      new URL(config.API_URL).origin,
+      window.location.origin
+    ]);
+
     const handleMessage = (event) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data === 'google-login-success') {
+      if (!allowedOrigins.has(event.origin)) return;
+
+      if (event.data === 'google-login-success' || event.data?.type === 'google-login-success') {
         window.removeEventListener('message', handleMessage);
         clearInterval(checkClosed);
-        // FULL RELOAD → cookies are read → user appears
         window.location.href = '/';
       }
     };
@@ -96,9 +119,11 @@ function Login() {
       if (popup?.closed) {
         clearInterval(checkClosed);
         window.removeEventListener('message', handleMessage);
+
+        // fallback: verify session
         fetch(`${config.API_URL}/api/current-user`, { credentials: 'include' })
           .then(r => r.json())
-          .then(data => { if (data.id) window.location.href = '/'; })
+          .then(data => { if (data?.id) window.location.href = '/'; })
           .catch(() => { });
       }
     }, 500);

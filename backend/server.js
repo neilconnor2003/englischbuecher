@@ -2808,22 +2808,39 @@ const computeWorkId = (titleEn, titleDe, author) => {
         });
 
         // Send success message to frontend
+
         res.send(`
-        <!DOCTYPE html>
-        <html>
-          <head><title>Login Success</title></head>
-          <body>
-            <script>
-              if (window.opener) {
-                window.opener.postMessage('google-login-success', '${process.env.FRONTEND_URL}');
-                window.close();
-              } else {
-                window.location.href = '${process.env.FRONTEND_URL}/dashboard';
-              }
-            </script>
-          </body>
-        </html>
-      `);
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Login Success</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <body>
+    <script>
+      (function () {
+        const FRONTEND = '${process.env.FRONTEND_URL}';
+
+        try {
+          // ✅ Popup flow (desktop / android)
+          if (window.opener && !window.opener.closed) {
+            window.opener.postMessage(
+              { type: 'google-login-success' },
+              FRONTEND
+            );
+            window.close();
+            return;
+          }
+        } catch (e) {}
+
+        // ✅ Redirect flow (iOS Safari)
+        window.location.replace(FRONTEND + '/');
+      })();
+    </script>
+  </body>
+</html>
+`);
+
       } catch (err) {
         console.error('GOOGLE LOGIN AUDIT ERROR:', err);
         res.status(500).send('Login failed');
