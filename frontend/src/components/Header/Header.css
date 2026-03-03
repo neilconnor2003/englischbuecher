@@ -212,10 +212,6 @@
    MOBILE ICON BUTTONS (☰ and 👤)
    ========================================================= */
 
-.mobile-only {
-  display: none;
-}
-
 .header-icon-btn {
   width: 40px;
   height: 40px;
@@ -233,13 +229,6 @@
 .desktop-only {
   display: inline-flex;
 }
-
-@media (max-width: 768px) {
-  .desktop-only {
-    display: none !important;
-  }
-}
-
 
 /* HARD GUARANTEE: mobile-only never appears on desktop */
 .mobile-only {
@@ -273,8 +262,33 @@
 
   /* Row 1 stays compact */
   .auth-links {
-    flex-wrap: nowrap;
-    gap: 10px;
+    flex-wrap: nowrap !important;
+    /*gap: 10px;*/
+    gap: 6px !important;   /*   MOBILE COMPACTION FIX — FORCE 2 ROWS */
+  }
+
+  /* Make logo more compact on mobile */
+  .logo {
+    max-width: 140px;
+    flex-shrink: 1;
+  }
+  
+  .logo-img {
+    height: 36px;
+  }
+  
+  /* Slightly smaller mobile icon buttons */
+  .header-icon-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+  }
+
+  /* Language switcher should not grow */
+  .language-switcher,
+  .language-switcher * {
+    max-width: 48px;
+    flex-shrink: 0;
   }
 
   /* Hide desktop-only items */
@@ -294,7 +308,7 @@
   .search-bar {
     width: 100%;
     max-width: 100%;
-    margin: 6px 0 0;
+    margin: 8px 0 0;
     order: 99;
   }
 
