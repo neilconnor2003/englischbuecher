@@ -120,10 +120,19 @@ function HeaderAfterLogin() {
       icon: <UserOutlined />,
       label: <Link to="/profile">{t('profile')}</Link>
     },
-    {
+    /*{
       key: 'wishlist',
       icon: <HeartOutlined style={{ color: '#e91e63' }} />,
       label: <Link to="/wishlist">{t('header_wishlist')}</Link>
+    },*/
+    {
+      key: 'wishlist',
+      icon: <HeartOutlined style={{ color: '#e91e63' }} />,
+      label: (
+        <span className="mobile-only">
+          <Link to="/wishlist">{t('header_wishlist')}</Link>
+        </span>
+      )
     },
     {
       key: 'orders',
@@ -133,10 +142,10 @@ function HeaderAfterLogin() {
     },
     ...(user?.role === 'admin'
       ? [{
-          key: 'admin',
-          icon: <SettingOutlined />,
-          label: <Link to="/admin">{t('header_admin')}</Link>
-        }]
+        key: 'admin',
+        icon: <SettingOutlined />,
+        label: <Link to="/admin">{t('header_admin')}</Link>
+      }]
       : []),
     {
       key: 'logout',
@@ -246,8 +255,21 @@ function HeaderAfterLogin() {
               type="button"
               className="mobile-only header-icon-btn"
               aria-label={t('profile') || 'Account'}
+              style={{ padding: 0 }}
             >
-              <UserOutlined />
+              <Avatar
+                src={user?.photoURL || null}
+                style={{
+                  width: 28,
+                  height: 28,
+                  background: '#fff',
+                  color: '#8A2BE2',
+                  fontWeight: 700
+                }}
+              >
+                {!user?.photoURL && initials}
+              </Avatar>
+
             </button>
           </Dropdown>
 
