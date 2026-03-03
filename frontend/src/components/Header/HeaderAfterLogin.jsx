@@ -120,14 +120,13 @@ function HeaderAfterLogin() {
       icon: <UserOutlined />,
       label: <Link to="/profile">{t('profile')}</Link>
     },
-    /*{
-      key: 'wishlist',
-      icon: <HeartOutlined style={{ color: '#e91e63' }} />,
-      label: <Link to="/wishlist">{t('header_wishlist')}</Link>
-    },*/
     {
       key: 'wishlist',
-      icon: <HeartOutlined style={{ color: '#e91e63' }} />,
+      icon: (
+        <span className="mobile-only">
+          <HeartOutlined style={{ color: '#e91e63' }} />
+        </span>
+      ),
       label: (
         <span className="mobile-only">
           <Link to="/wishlist">{t('header_wishlist')}</Link>
