@@ -76,7 +76,8 @@ function Login() {
 
     // ✅ iOS: use full redirect (more reliable than popup)
     if (isIOS) {
-      window.location.href = `${config.API_URL}/auth/google`;
+      //window.location.href = `${config.API_URL}/auth/google`;
+      window.location.href = `${config.API_URL}/auth/google` || '/auth/google';
       return;
     }
 
@@ -85,15 +86,21 @@ function Login() {
     const left = window.screenX + (window.outerWidth - width) / 2;
     const top = window.screenY + (window.outerHeight - height) / 2;
 
-    const popup = window.open(
-      `${config.API_URL}/auth/google`,
+    /*const popup = window.open(
+    `${config.API_URL}/auth/google`,
       'google-login',
       `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
-    );
+    );*/
+
+
+    const authUrl = `${config.API_URL}/auth/google` || '/auth/google';
+    const popup = window.open(authUrl, 'google-login', `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`);
+
 
     // If popup blocked, fall back to redirect
     if (!popup) {
-      window.location.href = `${config.API_URL}/auth/google`;
+      //window.location.href = `${config.API_URL}/auth/google`;
+      window.location.href = `${config.API_URL}/auth/google` || '/auth/google';
       return;
     }
 
@@ -128,7 +135,8 @@ function Login() {
         window.removeEventListener('message', handleMessage);
 
         // fallback: verify session
-        fetch(`${config.API_URL}/api/current-user`, { credentials: 'include' })
+        //fetch(`${config.API_URL}/api/current-user`, { credentials: 'include' })
+        fetch(`${config.API_URL}/api/current-user` || '/api/current-user', { credentials: 'include' })
           .then(r => r.json())
           .then(data => { if (data?.id) window.location.href = '/'; })
           .catch(() => { });

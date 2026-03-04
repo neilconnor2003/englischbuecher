@@ -12,7 +12,8 @@ module.exports = function (db) {
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     callbackURL: `${API_URL}/auth/google/callback`,
     scope: ['profile', 'email'],
-    state: true
+    //state: true
+    state: false
   }, async (accessToken, refreshToken, profile, done) => {
     try {
       const email = profile.emails[0].value;
@@ -81,21 +82,26 @@ module.exports = function (db) {
         });
       }
 
+
+
       // CREATE NEW USER
+      const safeFirstName = givenName || 'User';
+      const safeLastName = familyName || '';
+
       const [result] = await db.execute(
         `INSERT INTO users
-         (email, first_name, last_name, photo_url, registration_method, language, created_at, email_verified_at, deleted_at)
-         VALUES (?, ?, ?, ?, 'google', 'de', NOW(), NOW(), '1970-01-01 00:00:01')`,
-        [email, givenName || first_name || 'User', familyName, photoURL]
+   (email, first_name, last_name, photo_url, registration_method, language, created_at, email_verified_at, deleted_at)
+   VALUES (?, ?, ?, ?, 'google', 'de', NOW(), NOW(), '1970-01-01 00:00:01')`,
+        [email, safeFirstName, safeLastName, photoURL]
       );
 
       const newUser = {
         id: result.insertId,
         email,
-        first_name: givenName || first_name || 'User',
-        last_name,
+        first_name: safeFirstName,
+        last_name: safeLastName,
         photoURL,
-        displayName: `${givenName || first_name || 'User'} ${last_name}`.trim(),
+        displayName: `${safeFirstName} ${safeLastName}`.trim(),
         role: 'user',
         language: 'de'
       };
