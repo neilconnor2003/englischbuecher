@@ -98,10 +98,18 @@ function Login() {
     }
 
     // ✅ Accept messages from backend origin
-    const allowedOrigins = new Set([
+    /*const allowedOrigins = new Set([
       new URL(config.API_URL).origin,
       window.location.origin
-    ]);
+    ]);*/
+
+
+    const apiOrigin = config.API_URL
+      ? new URL(config.API_URL).origin
+      : window.location.origin;
+
+    const allowedOrigins = new Set([apiOrigin, window.location.origin]);
+
 
     const handleMessage = (event) => {
       if (!allowedOrigins.has(event.origin)) return;
