@@ -34,7 +34,7 @@ const slugForWork = (s = '') =>
 
 const computeWorkId = (title_en, title_de, author) => {
   const title = (title_en || title_de || '').trim();
-  const auth  = (author || '').trim();
+  const auth = (author || '').trim();
   if (!title) return '';
   const key = `${slugForWork(title)}__${slugForWork(auth)}`;
   return key.slice(0, 64);
@@ -49,10 +49,10 @@ const guessAgeGroup = ({ categories = [], description = '' }) => {
   const ageRangeMatch = text.match(/\b(?:ages?|age range)[:\s]*([0-9]{1,2})\s*(?:[-–to]{1,3}\s*([0-9]{1,2}))?\b/);
   if (ageRangeMatch) {
     const start = parseInt(ageRangeMatch[1], 10);
-    const end   = ageRangeMatch[2] ? parseInt(ageRangeMatch[2], 10) : start;
-    const avg   = Math.round((start + end) / 2);
-    if (avg <= 5)  return '0–5 (Early Childhood)';
-    if (avg <= 8)  return '6–8 (Children)';
+    const end = ageRangeMatch[2] ? parseInt(ageRangeMatch[2], 10) : start;
+    const avg = Math.round((start + end) / 2);
+    if (avg <= 5) return '0–5 (Early Childhood)';
+    if (avg <= 8) return '6–8 (Children)';
     if (avg <= 12) return '9–12 (Middle Grade)';
     if (avg <= 17) return '13–17 (Young Adult)';
     return '18+ (Adult)';
@@ -427,14 +427,14 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
             metaTitleDe = translatedTitle.replace('by', 'von').replace('Buy Now', 'Jetzt kaufen');
           }
           metaDescDe = (translatedDesc || descriptionEn).substring(0, 155) + '...';
-        } catch {}
+        } catch { }
 
         let savedCoverUrl = coverUrl;
         if (coverUrl && !coverUrl.includes('placeholder')) {
           try {
             axios.get(`${config.API_URL}/api/fetch-and-save-cover?url=${encodeURIComponent(coverUrl)}&isbn=${cleanIsbn}`);
             savedCoverUrl = saveRes.data.url;
-          } catch {}
+          } catch { }
         }
 
         const work_id = computeWorkId(fullTitle, fullTitle, authors);
@@ -472,8 +472,15 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
           work_id,
         });
 
+        const forceHttps = (u = '') => u.replace(/^http:\/\//i, 'https://');
+
+        // after axios saveRes
+        savedCoverUrl = saveRes.data?.url || coverUrl;
+        savedCoverUrl = forceHttps(savedCoverUrl);
+
+        // IMPORTANT: if we got an absolute API /uploads url, use ONLY that
         setMainImage(savedCoverUrl);
-        setGalleryImages([savedCoverUrl]);
+        setGalleryImages([savedCoverUrl]);   // do NOT include coverUrl anywhere
         setModalState('edit');
         return;
       }
@@ -497,7 +504,7 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
           try {
             const res = await axios.get(`${config.API_URL}/api/fetch-and-save-cover?url=${encodeURIComponent(cover)}`);
             savedCover = res.data.url;
-          } catch {}
+          } catch { }
 
           const subjects = (bookData.subjects || []).map(s => s.name);
           const description = typeof bookData.description === 'string' ? bookData.description : (bookData.description?.value || '');
@@ -528,7 +535,7 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
           setModalState('edit');
           return;
         }
-      } catch {}
+      } catch { }
 
       const work_id = computeWorkId('', '', '');
       alert('Book not found in any source. Filling basic data...');
@@ -560,9 +567,14 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
     const formData = new FormData();
     formData.append('image', file);
     try {
-      const res = await axios.post(`${config.API_URL}/api/upload-book-image`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const isbnForName =
+        (watch('isbn13') || watch('isbn10') || originalEnteredIsbn || '').replace(/\D/g, '');
+
+      const res = await axios.post(
+        `${config.API_URL}/api/upload-book-image?isbn=${encodeURIComponent(isbnForName)}`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
       const newUrl = res.data.url;
       setGalleryImages(prev => [...prev, newUrl]);
       if (!mainImage) setMainImage(newUrl);
@@ -889,8 +901,8 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
                                 field.name.includes('price') || field.name === 'rating'
                                   ? '0.01'
                                   : field.name === 'weight_grams'
-                                  ? '1'
-                                  : undefined
+                                    ? '1'
+                                    : undefined
                               }
                               {...register(field.name, {
                                 required: field.required ? `${field.label} is required` : false,
@@ -909,8 +921,8 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
                               className="w-full px-8 py-5 border-4 border-gray-300 rounded-2xl focus:outline-none focus:border-purple-600 text-lg"
                               placeholder={field.placeholder || (
                                 field.name === 'publish_date' ? '2025-06-15' :
-                                field.name.includes('price') ? '29.99' :
-                                field.name === 'pages' ? '320' : ''
+                                  field.name.includes('price') ? '29.99' :
+                                    field.name === 'pages' ? '320' : ''
                               )}
                             />
                           )}

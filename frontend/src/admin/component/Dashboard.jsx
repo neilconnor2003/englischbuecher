@@ -157,7 +157,11 @@ const Dashboard = () => {
         showToast("Book added!", "success");
       }
     } catch (err) {
-      showToast("Save failed: " + (err.data?.error || err.message), "error");
+      showToast(
+        "Save failed: " + (err.data?.details || err.data?.error || err.message),
+        "error"
+      );
+      console.error("SAVE ERROR FULL:", err);
     }
     setIsModalOpen(false);
     setModalBook(null);

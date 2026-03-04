@@ -59,6 +59,55 @@ const upload = multer({
   }
 });
 
+// ===== Book image storage: <ISBN>-<counter>.<ext> =====
+const bookImageStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = path.join(__dirname, 'uploads', 'books');
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+
+  filename: (req, file, cb) => {
+    // ✅ Prefer query param because req.body might be empty here (order issue)
+    const cleanIsbn = String(req.query.isbn || req.body?.isbn || '')
+      .replace(/\D/g, '');
+
+    // If ISBN not available, use a safe fallback
+    const base = cleanIsbn || 'manual';
+
+    // ✅ Determine extension (some uploads have no original extension)
+    const extFromOriginal = path.extname(file.originalname || '').toLowerCase();
+    const extFromMime =
+      file.mimetype === 'image/png' ? '.png' :
+        file.mimetype === 'image/webp' ? '.webp' :
+          file.mimetype === 'image/gif' ? '.gif' : '.jpg';
+
+    const ext = extFromOriginal || extFromMime;
+
+    // ✅ Counter to avoid overwriting
+    const dir = path.join(__dirname, 'uploads', 'books');
+    let counter = 1;
+    let filename = `${base}-${counter}${ext}`;
+
+    while (fs.existsSync(path.join(dir, filename))) {
+      counter += 1;
+      filename = `${base}-${counter}${ext}`;
+    }
+
+    cb(null, filename);
+  }
+});
+
+const uploadBookImage = multer({
+  storage: bookImageStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    // mimetype is more reliable than extension
+    if (/^image\/(jpeg|jpg|png|webp|gif)$/.test(file.mimetype)) cb(null, true);
+    else cb(new Error('Images only!'));
+  }
+});
+
 const profileStorage = multer.diskStorage({
   destination: path.join(__dirname, 'uploads/profile-pics'),
   filename: (req, file, cb) => {
@@ -2152,7 +2201,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
   });
 
   // BOOK IMAGE UPLOAD
-  app.post('/api/upload-book-image', upload.single('image'), (req, res) => {
+  app.post('/api/upload-book-image', uploadBookImage.single('image'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     const origin = `${req.protocol}://${req.get('host')}`;
     res.json({ url: `${origin}/uploads/books/${req.file.filename}` });
