@@ -49,7 +49,7 @@ app.set('trust proxy', true);
 });*/
 
 const upload = multer({
-  dest: 'uploads/books/',
+  dest: path.join(__dirname, 'uploads', 'books'),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowed = /jpeg|jpg|png|webp|gif/;
@@ -58,7 +58,6 @@ const upload = multer({
     else cb(new Error('Images only!'));
   }
 });
-
 
 const profileStorage = multer.diskStorage({
   destination: path.join(__dirname, 'uploads/profile-pics'),
@@ -361,7 +360,8 @@ const computeWorkId = (titleEn, titleDe, author) => {
         return res.status(400).json({ error: err.message || 'Upload failed' });
       }
       if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-      const url = `/uploads/authors/${req.file.filename}`;
+      const origin = `${req.protocol}://${req.get('host')}`;
+      const url = `${origin}/uploads/authors/${req.file.filename}`;
       res.json({ url });
     });
   });
@@ -2064,49 +2064,56 @@ const computeWorkId = (titleEn, titleDe, author) => {
     res.json(rows);
   });
 
-
-
   // FETCH THE BOOK COVER AND SAVE IT IN APPL. SERVER FROM GOOGLE BOOKS / OPEN LIBRARY
   app.get('/api/fetch-and-save-cover', async (req, res) => {
-    const { url } = req.query;
+    const { url, isbn } = req.query;   // ✅ accept isbn from frontend
     if (!url || !url.startsWith('http')) {
       return res.status(400).json({ error: 'Valid image URL required' });
     }
 
-    try {
-      //console.log('Downloading cover from:', url);
+    // ✅ sanitize ISBN to digits only (safe filenames)
+    const cleanIsbn = String(isbn || '').replace(/\D/g, '');
+    const baseName = cleanIsbn.length ? cleanIsbn : `cover-${Date.now()}`;
 
+    try {
       const response = await axios.get(url, {
         responseType: 'arraybuffer',
         timeout: 15000,
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; BookstoreBot/1.0)',
-        },
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; BookstoreBot/1.0)' },
       });
 
       const contentType = response.headers['content-type'] || 'image/jpeg';
-      const ext = contentType.includes('png') ? '.png' :
-        contentType.includes('webp') ? '.webp' : '.jpg';
+      const ext =
+        contentType.includes('png') ? '.png' :
+          contentType.includes('webp') ? '.webp' :
+            contentType.includes('gif') ? '.gif' : '.jpg';
 
-      const filename = `cover-${Date.now()}-${Math.floor(Math.random() * 10000)}${ext}`;
-      const filepath = path.join(__dirname, 'uploads', 'books', filename);
+      // ✅ ensure directory exists
+      const dir = path.join(__dirname, 'uploads', 'books');
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-      // Ensure directory exists
-      const dir = path.dirname(filepath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+      // ✅ filename: <ISBN>-<counter>.<ext>
+      let counter = 1;
+      let filename = `${baseName}-${counter}${ext}`;
+      while (fs.existsSync(path.join(dir, filename))) {
+        counter += 1;
+        filename = `${baseName}-${counter}${ext}`;
       }
 
+      const filepath = path.join(dir, filename);
       fs.writeFileSync(filepath, response.data);
 
-      const localUrl = `/uploads/books/${filename}`;
-      //console.log('Cover saved locally:', localUrl);
+      // ✅ return ABSOLUTE URL so Netlify can load it
+      const origin = `${req.protocol}://${req.get('host')}`;
+      const absoluteUrl = `${origin}/uploads/books/${filename}`;
 
-      res.json({ url: localUrl });
+      return res.json({ url: absoluteUrl });
     } catch (err) {
       console.error('Failed to download/save cover:', err.message);
-      // STILL RETURN THE REMOTE URL AS FALLBACK
-      res.json({ url }); // ← This prevents total failure
+
+      // fallback: force https to reduce mixed-content chances
+      const safe = String(url).replace(/^http:\/\//i, 'https://');
+      return res.json({ url: safe });
     }
   });
 
@@ -2147,14 +2154,15 @@ const computeWorkId = (titleEn, titleDe, author) => {
   // BOOK IMAGE UPLOAD
   app.post('/api/upload-book-image', upload.single('image'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    res.json({ url: `/uploads/books/${req.file.filename}` });
+    const origin = `${req.protocol}://${req.get('host')}`;
+    res.json({ url: `${origin}/uploads/books/${req.file.filename}` });
   });
 
   // CATEGORY IMAGE UPLOAD
   app.post('/api/upload-image', uploadCategoryIcon.single('image'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    const url = `/uploads/categories/${req.file.filename}`;
-    res.json({ url });
+    const origin = `${req.protocol}://${req.get('host')}`;
+    res.json({ url: `${origin}/uploads/categories/${req.file.filename}` });
   });
 
   app.delete('/api/books/:id', async (req, res) => {

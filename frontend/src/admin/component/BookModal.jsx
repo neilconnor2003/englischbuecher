@@ -432,7 +432,7 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
         let savedCoverUrl = coverUrl;
         if (coverUrl && !coverUrl.includes('placeholder')) {
           try {
-            const saveRes = await axios.get(`${config.API_URL}/api/fetch-and-save-cover?url=${encodeURIComponent(coverUrl)}`);
+            axios.get(`${config.API_URL}/api/fetch-and-save-cover?url=${encodeURIComponent(coverUrl)}&isbn=${cleanIsbn}`);
             savedCoverUrl = saveRes.data.url;
           } catch {}
         }
