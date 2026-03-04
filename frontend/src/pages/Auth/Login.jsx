@@ -103,7 +103,6 @@ function Login() {
       window.location.origin
     ]);*/
 
-
     const apiOrigin = config.API_URL
       ? new URL(config.API_URL).origin
       : window.location.origin;
