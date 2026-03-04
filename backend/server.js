@@ -370,7 +370,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
     "http://localhost:4173",
     "http://localhost:5173",
     "https://englischbuecher.netlify.app",
-    "https://dev--englischbuecher.netlify.app/",
+    "https://dev--englischbuecher.netlify.app",
     "https://englischbuecher.de",
     "https://www.englischbuecher.de",
   ]);

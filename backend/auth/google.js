@@ -3,7 +3,8 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { sendWelcomeEmail } = require('../utils/email');
 
-const API_URL = process.env.BACKEND_URL;
+//const API_URL = process.env.BACKEND_URL;
+const API_URL = process.env.FRONTEND_URL;
 
 module.exports = function (db) {
   passport.use(new GoogleStrategy({
