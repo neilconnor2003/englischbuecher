@@ -2210,6 +2210,105 @@ const computeWorkId = (titleEn, titleDe, author) => {
     res.json({ url: `${origin}/uploads/books/${req.file.filename}` });
   });
 
+  // DELETE A BOOK IMAGE (DB + file system)
+  // POST is used (instead of DELETE) to avoid issues with proxies dropping DELETE bodies.
+  app.post('/api/books/:id/delete-image', authMiddleware, async (req, res) => {
+    const bookId = Number(req.params.id);
+    const { imageUrl } = req.body || {};
+
+    if (!bookId || !imageUrl) {
+      return res.status(400).json({ error: 'bookId and imageUrl are required' });
+    }
+
+    try {
+      // 1) Load existing book image fields
+      const [[row]] = await db.execute(
+        'SELECT image, images FROM books WHERE id = ? LIMIT 1',
+        [bookId]
+      );
+      if (!row) return res.status(404).json({ error: 'Book not found' });
+
+      const origin = `${req.protocol}://${req.get('host')}`;
+
+      // Helper: normalize any URL to a comparable "basename" (filename)
+      const getBasename = (u) => {
+        try {
+          // If absolute URL, parse it
+          if (String(u).startsWith('http://') || String(u).startsWith('https://')) {
+            const parsed = new URL(u);
+            return path.basename(parsed.pathname);
+          }
+          // If relative path
+          return path.basename(String(u));
+        } catch {
+          return path.basename(String(u));
+        }
+      };
+
+      const targetBase = getBasename(imageUrl);
+
+      // 2) Parse images array safely
+      let imagesArr = [];
+      if (row.images) {
+        try {
+          imagesArr = typeof row.images === 'string' ? JSON.parse(row.images) : row.images;
+          if (!Array.isArray(imagesArr)) imagesArr = [];
+        } catch {
+          imagesArr = [];
+        }
+      }
+
+      // 3) Remove from images array by comparing filename (basename)
+      imagesArr = imagesArr.filter(u => getBasename(u) !== targetBase);
+
+      // 4) If main image matches target, clear it (and reassign later)
+      let mainImage = row.image || null;
+      if (mainImage && getBasename(mainImage) === targetBase) {
+        mainImage = null;
+      }
+
+      // 5) Re-assign main image if needed
+      if (!mainImage) {
+        mainImage = imagesArr.length ? imagesArr[0] : null;
+      }
+
+      // 6) Save back to DB
+      const imagesJson = imagesArr.length ? JSON.stringify(imagesArr) : null;
+      await db.execute(
+        'UPDATE books SET image = ?, images = ? WHERE id = ?',
+        [mainImage, imagesJson, bookId]
+      );
+
+      // 7) Delete the file from disk ONLY if it's a local upload under /uploads/books/
+      // We delete by filename to avoid any path traversal risk.
+      const looksLocal =
+        String(imageUrl).includes('/uploads/books/') ||
+        String(row.image || '').includes('/uploads/books/') ||
+        imagesArr.some(u => String(u).includes('/uploads/books/'));
+
+      // If it looks like a local uploaded image, try deleting the file
+      // (Even if not found, that's OK.)
+      if (looksLocal) {
+        const filePath = path.join(__dirname, 'uploads', 'books', targetBase);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      }
+
+      // 8) Respond with updated values (frontend can update UI)
+      return res.json({
+        success: true,
+        image: mainImage ? (mainImage.startsWith('http') ? mainImage : `${origin}${mainImage.startsWith('/') ? '' : '/'}${mainImage}`) : null,
+        images: imagesArr,
+        deletedFile: looksLocal ? targetBase : null
+      });
+
+    } catch (err) {
+      console.error('delete-image error:', err);
+      return res.status(500).json({ error: 'Failed to delete image', details: err.message });
+    }
+  });
+
   // CATEGORY IMAGE UPLOAD
   app.post('/api/upload-image', uploadCategoryIcon.single('image'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });

@@ -663,14 +663,38 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
     }
   };
 
-  const removeImage = (url) => {
-    setGalleryImages(prev => {
-      const next = prev.filter(img => img !== url);
-      if (mainImage === url) {
-        setMainImage(next[0] || '');
-      }
-      return next;
-    });
+  const removeImage = async (url) => {
+    // If book isn't saved yet, just remove from UI state
+    if (!book?.id) {
+      setGalleryImages(prev => {
+        const next = prev.filter(img => img !== url);
+        if (mainImage === url) setMainImage(next[0] || '');
+        return next;
+      });
+      return;
+    }
+
+    const ok = window.confirm('Delete this image permanently (DB + server file)?');
+    if (!ok) return;
+
+    try {
+      const res = await axios.post(
+        `${config.API_URL}/api/books/${book.id}/delete-image`,
+        { imageUrl: url },
+        { withCredentials: true } // important if your auth uses session cookies
+      );
+
+      setMainImage(res.data.image || '');
+      setGalleryImages(res.data.images || []);
+    } catch (err) {
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.details ||
+        err.message ||
+        'Delete failed';
+      console.error('Delete failed:', err?.response?.data || err);
+      alert('Delete failed: ' + msg);
+    }
   };
 
   const setAsMain = (url) => setMainImage(url);
