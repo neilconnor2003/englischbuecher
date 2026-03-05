@@ -2202,6 +2202,9 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
   // BOOK IMAGE UPLOAD
   app.post('/api/upload-book-image', uploadBookImage.single('image'), (req, res) => {
+    console.log('FILE:', req.file);
+    console.log('MIMETYPE:', req.file?.mimetype);
+    console.log('SIZE:', req.file?.size);
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     const origin = `${req.protocol}://${req.get('host')}`;
     res.json({ url: `${origin}/uploads/books/${req.file.filename}` });

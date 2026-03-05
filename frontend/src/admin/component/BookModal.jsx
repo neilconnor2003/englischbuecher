@@ -572,8 +572,9 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
 
       const res = await axios.post(
         `${config.API_URL}/api/upload-book-image?isbn=${encodeURIComponent(isbnForName)}`,
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
+        formdata
+        //formData,
+        //{ headers: { 'Content-Type': 'multipart/form-data' } }
       );
       const newUrl = res.data.url;
       setGalleryImages(prev => [...prev, newUrl]);
