@@ -204,6 +204,7 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors },
   } = useForm();
 
@@ -376,69 +377,120 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
   // -----------------------------------------------------
   const handleFetchISBN = async () => {
     if (!isbnInput || isbnInput.length < 10) return;
+
     const digitsOnly = isbnInput.replace(/\D/g, '');
     if (digitsOnly.length !== 10 && digitsOnly.length !== 13) {
       alert('Please enter a valid 10 or 13-digit ISBN');
       return;
     }
+
     const cleanIsbn = digitsOnly;
     setOriginalEnteredIsbn(cleanIsbn);
     setIsSavingCover(true);
 
+    const forceHttps = (u = '') => String(u).replace(/^http:\/\//i, 'https://');
+
+    // helper: save cover locally via your backend (names it by ISBN)
+    const saveCoverLocally = async (remoteUrl, isbn) => {
+      const url = forceHttps(remoteUrl || '');
+      if (!url || url.includes('placeholder')) return url;
+
+      try {
+        const saveRes = await axios.get(
+          `${config.API_URL}/api/fetch-and-save-cover?url=${encodeURIComponent(url)}&isbn=${encodeURIComponent(isbn)}`
+        );
+        return forceHttps(saveRes.data?.url || url);
+      } catch {
+        return url; // fallback: keep remote
+      }
+    };
+
     try {
+      // -----------------------------
+      // 1) GOOGLE BOOKS
+      // -----------------------------
       const googleUrl = `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleanIsbn}&country=DE`;
       const googleRes = await fetch(googleUrl);
       const googleData = await googleRes.json();
 
-      if (googleData.totalItems > 0) {
-        const v = googleData.items[0].volumeInfo;
+      if (googleData?.totalItems > 0) {
+        const v = googleData.items[0].volumeInfo || {};
+
         const title = v.title || 'Unknown Title';
         const subtitle = v.subtitle || '';
         const fullTitle = subtitle ? `${title}: ${subtitle}` : title;
-        const authors = v.authors ? v.authors.join(', ') : 'Unknown Author';
-        const descriptionEn = (v.description || 'No description available.').replace(/<[^>]*>/g, '').trim();
+
+        const authors = Array.isArray(v.authors) ? v.authors.join(', ') : 'Unknown Author';
+        const descriptionEn = (v.description || 'No description available.')
+          .replace(/<[^>]*>/g, '')
+          .trim();
+
         const publisher = v.publisher || '';
         const publishedDate = v.publishedDate || '';
         const pageCount = v.pageCount || 350;
+
         const language = (v.language || 'en').toUpperCase();
         const categories = v.categories || [];
         const inferredAge = guessAgeGroup({ categories, description: descriptionEn });
-        let coverUrl = v.imageLinks?.extraLarge || v.imageLinks?.large || v.imageLinks?.medium || v.imageLinks?.smallThumbnail || '/book-placeholder.png';
-        if (coverUrl.includes('zoom=1')) coverUrl = coverUrl.replace('zoom=1', 'zoom=0');
-        const isbn13 = v.industryIdentifiers?.find(i => i.type === 'ISBN_13')?.identifier || cleanIsbn;
-        const isbn10 = v.industryIdentifiers?.find(i => i.type === 'ISBN_10')?.identifier || '';
+
+        // pick best cover url
+        let coverUrl =
+          v.imageLinks?.extraLarge ||
+          v.imageLinks?.large ||
+          v.imageLinks?.medium ||
+          v.imageLinks?.thumbnail ||
+          v.imageLinks?.smallThumbnail ||
+          '/book-placeholder.png';
+
+        // normalize coverUrl
+        coverUrl = forceHttps(coverUrl);
+        coverUrl = coverUrl.replace(/zoom=\d+/g, 'zoom=0');
+
+        const isbn13 =
+          v.industryIdentifiers?.find(i => i.type === 'ISBN_13')?.identifier || cleanIsbn;
+        const isbn10 =
+          v.industryIdentifiers?.find(i => i.type === 'ISBN_10')?.identifier || '';
+
         const isHardcover = fullTitle.toLowerCase().includes('hardcover');
         const baseWeight = pageCount < 300 ? 320 : pageCount < 600 ? 480 : 680;
         const weight_grams = isHardcover ? baseWeight + 280 : baseWeight;
         const dimensions = isHardcover ? '21.6 x 13.8 x 3.8 cm' : '19.8 x 12.9 x 2.6 cm';
-        const slug = fullTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').substring(0, 100);
 
+        const slug = fullTitle
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '')
+          .substring(0, 100);
+
+        // translate (optional)
         let descriptionDe = descriptionEn;
         let metaTitleDe = `${fullTitle} von ${authors} – Jetzt kaufen`;
         let metaDescDe = descriptionEn.substring(0, 155) + '...';
+
         try {
           const translateRes = await axios.post(`${config.API_URL}/api/translate`, {
             text: [descriptionEn, `${fullTitle} by ${authors} – Buy Now`],
             target: 'de'
           });
+
           const [translatedDesc, translatedTitle] = translateRes.data.translated || [];
           if (translatedDesc) descriptionDe = translatedDesc;
           if (translatedTitle) {
-            metaTitleDe = translatedTitle.replace('by', 'von').replace('Buy Now', 'Jetzt kaufen');
+            metaTitleDe = translatedTitle
+              .replace('by', 'von')
+              .replace('Buy Now', 'Jetzt kaufen');
           }
           metaDescDe = (translatedDesc || descriptionEn).substring(0, 155) + '...';
-        } catch { }
-
-        let savedCoverUrl = coverUrl;
-        if (coverUrl && !coverUrl.includes('placeholder')) {
-          try {
-            axios.get(`${config.API_URL}/api/fetch-and-save-cover?url=${encodeURIComponent(coverUrl)}&isbn=${cleanIsbn}`);
-            savedCoverUrl = saveRes.data.url;
-          } catch { }
+        } catch {
+          // ignore translation errors, keep EN
         }
+
+        // ✅ Save cover locally (ISBN-based filename)
+        const savedCoverUrl = await saveCoverLocally(coverUrl, cleanIsbn);
 
         const work_id = computeWorkId(fullTitle, fullTitle, authors);
 
+        // Populate form values (react-hook-form)
         setFetchedBookData({
           title_en: fullTitle,
           title_de: fullTitle,
@@ -472,21 +524,20 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
           work_id,
         });
 
-        const forceHttps = (u = '') => u.replace(/^http:\/\//i, 'https://');
-
-        // after axios saveRes
-        savedCoverUrl = saveRes.data?.url || coverUrl;
-        savedCoverUrl = forceHttps(savedCoverUrl);
-
-        // IMPORTANT: if we got an absolute API /uploads url, use ONLY that
+        // Set images for UI
         setMainImage(savedCoverUrl);
-        setGalleryImages([savedCoverUrl]);   // do NOT include coverUrl anywhere
+        setGalleryImages([savedCoverUrl]);
         setModalState('edit');
         return;
       }
 
+      // If Google had no items, fall through to OpenLibrary:
       throw new Error('Not found in Google Books');
+
     } catch (error) {
+      // -----------------------------
+      // 2) OPENLIBRARY FALLBACK
+      // -----------------------------
       try {
         const olUrl = `https://openlibrary.org/api/books?bibkeys=ISBN:${cleanIsbn}&format=json&jscmd=data`;
         const olRes = await fetch(olUrl);
@@ -500,17 +551,19 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
           const publishDate = bookData.publish_date || '';
           const cover = bookData.cover?.large || bookData.cover?.medium || '/book-placeholder.png';
 
-          let savedCover = cover;
-          try {
-            const res = await axios.get(`${config.API_URL}/api/fetch-and-save-cover?url=${encodeURIComponent(cover)}`);
-            savedCover = res.data.url;
-          } catch { }
+          // ✅ Save OpenLibrary cover locally too (optional but consistent)
+          const savedCover = await saveCoverLocally(cover, cleanIsbn);
 
           const subjects = (bookData.subjects || []).map(s => s.name);
-          const description = typeof bookData.description === 'string' ? bookData.description : (bookData.description?.value || '');
+          const description =
+            typeof bookData.description === 'string'
+              ? bookData.description
+              : (bookData.description?.value || '');
+
           const inferredAge = guessAgeGroup({ categories: subjects, description });
           const work_id = computeWorkId(title, title, authors);
 
+          // ✅ THIS BLOCK IS STILL NEEDED (OpenLibrary often lacks DE text)
           setFetchedBookData({
             title_en: title,
             title_de: title,
@@ -535,8 +588,13 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
           setModalState('edit');
           return;
         }
-      } catch { }
+      } catch {
+        // ignore and go to final fallback
+      }
 
+      // -----------------------------
+      // 3) LAST RESORT: minimal fields
+      // -----------------------------
       const work_id = computeWorkId('', '', '');
       alert('Book not found in any source. Filling basic data...');
       setFetchedBookData({
@@ -552,36 +610,54 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
         work_id,
       });
       setModalState('edit');
+
     } finally {
       setIsSavingCover(false);
     }
   };
 
+
   // -----------------------------------------------------
   // Image Uploads
   // -----------------------------------------------------
   const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append('image', file);
-    try {
-      const isbnForName =
-        (watch('isbn13') || watch('isbn10') || originalEnteredIsbn || '').replace(/\D/g, '');
 
+    setIsUploading(true);
+
+    try {
+      // ✅ ISBN for naming (works for both "ISBN fetch" and manual edit)
+      const isbnForName = (
+        watch('isbn13') ||
+        watch('isbn10') ||
+        originalEnteredIsbn ||
+        ''
+      ).replace(/\D/g, '');
+
+      const formData = new FormData();
+      formData.append('image', file); // ✅ must be "image" because backend uses .single('image')
+
+      // ✅ DO NOT set Content-Type manually; axios will set boundary correctly
       const res = await axios.post(
         `${config.API_URL}/api/upload-book-image?isbn=${encodeURIComponent(isbnForName)}`,
-        formdata
-        //formData,
-        //{ headers: { 'Content-Type': 'multipart/form-data' } }
+        formData
       );
+
       const newUrl = res.data.url;
       setGalleryImages(prev => [...prev, newUrl]);
       if (!mainImage) setMainImage(newUrl);
-    } catch (err) {
-      alert('Image upload failed. Max 5MB, JPG/PNG/WebP/GIF only.');
-    } finally {
+    }
+    catch (err) {
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.details ||
+        err.message ||
+        'Upload failed';
+      console.error('Upload failed:', err?.response?.data || err);
+      alert('Image upload failed: ' + msg);
+    }
+    finally {
       setIsUploading(false);
       e.target.value = '';
     }
