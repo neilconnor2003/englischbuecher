@@ -195,6 +195,10 @@
   .book-card h3 {
     margin: 12px 12px 6px;
     font-size: 1rem;
+    min-height: auto;
+    max-height: none;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
   }
 
   .book-card .author {
@@ -220,11 +224,36 @@
   }
 
   .book-actions .ant-btn {
-    height: 40px;
-    font-size: 14px;
+
+    .book-actions .ant-btn {
+      height: auto !important;
+      min-height: 42px;
+      padding: 8px 14px;
+      line-height: 1.2;
+      white-space: normal;
+      text-align: center;
+    }
   }
 
   .details-link {
     font-size: 0.8rem;
+  }
+}
+
+/* =========================================================
+   MOBILE FIX 3A: Allow cards to grow (no clipping)
+   ========================================================= */
+@media (max-width: 640px) {
+  .book-card {
+    height: auto !important;
+  }
+
+  .price-block {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  .discount-badge {
+    white-space: nowrap;
   }
 }

@@ -76,12 +76,33 @@
   font-weight: 700;
 }
 
+/* =========================================================
+   CATEGORY SCROLLER (mobile-first, desktop-safe)
+   ========================================================= */
 .categories-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 32px;
-  max-width: 1200px;
-  margin: 0 auto;
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  padding: 10px 8px 20px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  justify-content: center;
+}
+
+/* Hide scrollbar (mobile aesthetic) */
+.categories-grid::-webkit-scrollbar {
+  display: none;
+}
+.categories-grid {
+  scrollbar-width: none;
+}
+
+/* Each category card becomes a snap item */
+.category-card {
+  min-width: 160px;
+  max-width: 160px;
+  flex: 0 0 auto;
+  scroll-snap-align: center;
 }
 
 .category-card {
@@ -323,3 +344,24 @@
   transform: translateY(-8px);
 }
 
+
+/* =========================================================
+   MOBILE FIX 1: Hero banner arrows must not overlap text
+   ========================================================= */
+@media (max-width: 768px) {
+  .banner-swiper .swiper-button-next,
+  .banner-swiper .swiper-button-prev {
+    top: auto !important;
+    bottom: 16px !important;
+    transform: none !important;
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  .banner-swiper .swiper-button-prev {
+    left: 16px !important;
+  }
+
+  .banner-swiper .swiper-button-next {
+    right: 16px !important;
+  }
+}
