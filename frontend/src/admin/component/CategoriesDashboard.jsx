@@ -57,7 +57,7 @@ const SortableCategoryItem = ({ category, level = 0, isExpanded, onToggle, onEdi
           {/* ICON */}
           {category.icon_path ? (
             <img
-              src={`${config.API_URL}${category.icon_path}?v=${category.updated_at}`}
+              src={`${config.UPLOADS_BASE_URL}${category.icon_path}?v=${category.updated_at}`}
               alt=""
               className="w-10 h-10 object-contain rounded"
             />

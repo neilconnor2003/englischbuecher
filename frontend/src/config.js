@@ -24,6 +24,9 @@ const DIRECT_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
 // - Local/other: backend URL directly
 const API_URL = isNetlify ? '' : DIRECT_API_URL;
 
+// ✅ Uploads / images MUST always come from backend
+const UPLOADS_BASE_URL = DIRECT_API_URL;
+
 const FRONTEND_URL =
   import.meta.env.VITE_FRONTEND_URL ||
   (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173');
@@ -31,6 +34,7 @@ const FRONTEND_URL =
 export default {
   API_URL,
   DIRECT_API_URL,
+  UPLOADS_BASE_URL,
   FRONTEND_URL,
   isNetlify
 };
