@@ -140,7 +140,7 @@ function HeaderAfterLogin() {
     {
       key: 'orders',
       icon: <ShoppingCartOutlined />,
-      label: <Link to="/profile">{t('orders') || 'Orders'}</Link>
+      label: <Link to="/profile#orders">{t('orders') || 'Orders'}</Link>
     },
 
     ...(user?.role === 'admin'
