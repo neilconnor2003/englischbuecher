@@ -224,15 +224,12 @@
   }
 
   .book-actions .ant-btn {
-
-    .book-actions .ant-btn {
-      height: auto !important;
-      min-height: 42px;
-      padding: 8px 14px;
-      line-height: 1.2;
-      white-space: normal;
-      text-align: center;
-    }
+    height: auto !important;
+    min-height: 42px;
+    padding: 8px 14px;
+    line-height: 1.2;
+    white-space: normal;
+    text-align: center;
   }
 
   .details-link {
@@ -255,5 +252,15 @@
 
   .discount-badge {
     white-space: nowrap;
+  }
+  
+  .swiper-slide {
+    height: auto !important;
+    display: flex;
+    align-items: stretch;
+  }
+
+  .popular-card-wrapper {
+    height: auto !important;
   }
 }

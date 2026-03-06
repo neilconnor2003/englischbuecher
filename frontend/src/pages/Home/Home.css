@@ -83,10 +83,11 @@
   display: flex;
   gap: 24px;
   overflow-x: auto;
-  padding: 10px 8px 20px;
+  padding: 10px 16px 20px;     /* ✅ left padding fixes cut-off */
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
-  justify-content: center;
+  justify-content: flex-start; /* ✅ IMPORTANT */
+  scroll-padding-left: 16px;   /* ✅ snap alignment */
 }
 
 /* Hide scrollbar (mobile aesthetic) */
@@ -346,22 +347,24 @@
 
 
 /* =========================================================
-   MOBILE FIX 1: Hero banner arrows must not overlap text
+   MOBILE FIX 1 — Hero arrows BELOW text
+   (no dependency on banner class names)
    ========================================================= */
 @media (max-width: 768px) {
-  .banner-swiper .swiper-button-next,
-  .banner-swiper .swiper-button-prev {
+  .swiper-button-prev,
+  .swiper-button-next {
     top: auto !important;
-    bottom: 16px !important;
+    bottom: 14px !important;
     transform: none !important;
     background: rgba(255, 255, 255, 0.9);
   }
 
-  .banner-swiper .swiper-button-prev {
-    left: 16px !important;
+  .swiper-button-prev {
+    left: 14px !important;
   }
 
-  .banner-swiper .swiper-button-next {
-    right: 16px !important;
+  .swiper-button-next {
+    right: 14px !important;
   }
 }
+
