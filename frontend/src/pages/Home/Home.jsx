@@ -82,7 +82,7 @@ function Home() {
                   className="category-card"
                 >
                   {cat.icon_path ? (
-                    <img src={`${config.API_URL}${cat.icon_path}`} alt="" className="category-icon" />
+                    <img src={`${config.UPLOADS_BASE_URL}${category.icon_path}?v=${category.updated_at}`} alt="" className="category-icon" />
                   ) : (
                     <div className="category-icon-placeholder">
                       <Image size={40} />
