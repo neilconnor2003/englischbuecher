@@ -227,7 +227,7 @@ const CategoriesDashboard = () => {
     });
     setPreview(
       cat.icon_path
-        ? `${config.API_URL}${cat.icon_path}?v=${cat.updated_at}`
+        ? `${config.UPLOADS_BASE_URL}${cat.icon_path}?v=${cat.updated_at}`
         : null
     );
     setIsModalOpen(true);
