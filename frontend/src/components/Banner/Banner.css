@@ -50,3 +50,25 @@
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+
+/* =========================================================
+   MOBILE ONLY: move hero arrows to bottom (no overlap)
+   Desktop stays unchanged
+   ========================================================= */
+@media (max-width: 768px) {
+  .hero-banner .hero-arrow {
+    top: auto !important;
+    bottom: 16px !important;
+    transform: none !important;
+    padding: 10px !important;
+  }
+
+  .hero-banner .hero-arrow--prev {
+    left: 14px !important;
+  }
+
+  .hero-banner .hero-arrow--next {
+    right: 14px !important;
+  }
+}

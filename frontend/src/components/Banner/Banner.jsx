@@ -42,7 +42,7 @@ const Banner = () => {
   const current = activeBanners[currentIndex];
 
   return (
-    <div className="relative w-full h-96 md:h-[80vh] lg:h-[75vh] max-h-screen overflow-hidden bg-black">
+    <div className="hero-banner relative w-full h-96 md:h-[80vh] lg:h-[75vh] max-h-screen overflow-hidden bg-black">
       {/* HERO BACKGROUND SLIDES */}
       <div className="absolute inset-0">
         {activeBanners.map((banner, i) => (
@@ -87,10 +87,10 @@ const Banner = () => {
       {/* ARROWS & DOTS */}
       {activeBanners.length > 1 && (
         <>
-          <button onClick={goToPrevious} className="absolute left-8 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur p-4 rounded-full transition z-20">
+          <button onClick={goToPrevious} className="hero-arrow hero-arrow--prev absolute left-8 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur p-4 rounded-full transition z-20">
             <ChevronLeft className="w-10 h-10" />
           </button>
-          <button onClick={goToNext} className="absolute right-8 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur p-4 rounded-full transition z-20">
+          <button onClick={goToNext} className="hero-arrow hero-arrow--next absolute right-8 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur p-4 rounded-full transition z-20">
             <ChevronRight className="w-10 h-10" />
           </button>
         </>
