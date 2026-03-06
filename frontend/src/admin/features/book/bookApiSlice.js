@@ -124,6 +124,8 @@ export const bookApi = createApi({
           is_featured: newBook.is_featured ? 1 : 0,
           is_new_release: newBook.is_new_release ? 1 : 0,
           is_bestseller: newBook.is_bestseller ? 1 : 0,
+
+          _authorIds: newBook._authorIds || [],
         },
       }),
       invalidatesTags: ['Books'],
@@ -175,6 +177,7 @@ export const bookApi = createApi({
           is_featured: updatedBook.is_featured ? 1 : 0,
           is_new_release: updatedBook.is_new_release ? 1 : 0,
           is_bestseller: updatedBook.is_bestseller ? 1 : 0,
+          _authorIds: updatedBook._authorIds || [],
         },
       }),
       invalidatesTags: ['Books'],
