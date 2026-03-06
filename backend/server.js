@@ -2328,11 +2328,10 @@ const computeWorkId = (titleEn, titleDe, author) => {
   });
 
   // === CATEGORY APIs (UPDATED WITH ICON) ===
-  // server.js
   app.get('/api/categories', async (req, res) => {
     try {
       const [rows] = await db.execute(`
-      SELECT id, name_en, name_de, slug, icon_path, parent_id, is_visible 
+      SELECT id, name_en, name_de, slug, icon_path, parent_id, is_visible, updated_at 
       FROM categories 
       ORDER BY parent_id, id
     `);
@@ -2370,18 +2369,28 @@ const computeWorkId = (titleEn, titleDe, author) => {
     }
   });
 
-  // server.js → PUT /api/categories/:id
-  // server.js
-  app.put('/api/categories/:id', uploadCategoryIcon.single('icon'), async (req, res) => {
+  // PUT /api/categories/:id
+  app.put('/api/categories/:id', uploadCategoryIcon.fields([
+    { name: 'icon', maxCount: 1 },
+    { name: 'image', maxCount: 1 }
+  ]), async (req, res) => {
+
     const { id } = req.params;
     const { name_en, name_de, slug, is_visible } = req.body;
-    const icon_path = req.file ? `/uploads/categories/${req.file.filename}` : undefined;
+
+    // ✅ accept either field name
+    const file =
+      (req.files?.icon && req.files.icon[0]) ||
+      (req.files?.image && req.files.image[0]) ||
+      null;
+
+    const icon_path = file ? `/uploads/categories/${file.filename}` : undefined;
 
     const updates = {};
     if (name_en !== undefined) updates.name_en = name_en.trim() || 'Untitled';
     if (name_de !== undefined) updates.name_de = name_de.trim() || 'Unbenannt';
-    if (slug !== undefined) updates.slug = slug.trim() || name_en?.toLowerCase().replace(/\s+/g, '-');
-    if (is_visible !== undefined) updates.is_visible = is_visible === '1' ? 1 : 0;
+    if (slug !== undefined) updates.slug = slug.trim() || (name_en ? name_en.toLowerCase().replace(/\s+/g, '-') : undefined);
+    if (is_visible !== undefined) updates.is_visible = String(is_visible) === '1' ? 1 : 0;
     if (icon_path) updates.icon_path = icon_path;
 
     if (Object.keys(updates).length === 0) {
@@ -2399,6 +2408,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
       const [updated] = await db.execute('SELECT * FROM categories WHERE id = ?', [id]);
       res.json(updated[0]);
     } catch (err) {
+      console.error('PUT /api/categories/:id error:', err);
       res.status(500).json({ error: err.message });
     }
   });

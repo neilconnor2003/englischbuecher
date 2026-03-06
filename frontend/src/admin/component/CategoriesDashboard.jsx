@@ -34,9 +34,8 @@ const SortableCategoryItem = ({ category, level = 0, isExpanded, onToggle, onEdi
     <div ref={setNodeRef} style={style} className="mb-2">
       {/* MAIN CARD */}
       <div
-        className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-all p-4 border ${
-          isDragging ? 'border-purple-400 ring-2 ring-purple-300' : 'border-gray-200'
-        }`}
+        className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-all p-4 border ${isDragging ? 'border-purple-400 ring-2 ring-purple-300' : 'border-gray-200'
+          }`}
       >
         <div className="flex items-center gap-3">
           {/* EXPAND BUTTON */}
@@ -58,7 +57,7 @@ const SortableCategoryItem = ({ category, level = 0, isExpanded, onToggle, onEdi
           {/* ICON */}
           {category.icon_path ? (
             <img
-              src={`${config.API_URL}${category.icon_path}`}
+              src={`${config.API_URL}${category.icon_path}?v=${category.updated_at}`}
               alt=""
               className="w-10 h-10 object-contain rounded"
             />
@@ -226,7 +225,11 @@ const CategoriesDashboard = () => {
       icon: cat.icon_path || null,
       is_visible: cat.is_visible == 1
     });
-    setPreview(cat.icon_path ? `${config.API_URL}${cat.icon_path}` : null);
+    setPreview(
+      cat.icon_path
+        ? `${config.API_URL}${cat.icon_path}?v=${cat.updated_at}`
+        : null
+    );
     setIsModalOpen(true);
   };
 
