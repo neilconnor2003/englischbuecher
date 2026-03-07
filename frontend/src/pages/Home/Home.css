@@ -366,5 +366,21 @@
   .swiper-button-next {
     right: 14px !important;
   }
+  
+  .section-title {
+    flex-wrap: wrap;
+    text-align: center;
+    white-space: normal;
+  }
+  
+  .section-title span {
+    display: block;
+    margin: 0;
+  }
+
+  .section-title::before,
+  .section-title::after {
+    display: none;
+  }
 }
 
