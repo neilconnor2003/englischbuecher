@@ -384,3 +384,25 @@
   }
 }
 
+
+/* =========================================================
+   HARD STOP: prevent ANY multilingual overflow on mobile
+   ========================================================= */
+@media (max-width: 768px) {
+  .section-title {
+    display: block;        /* ✅ kill horizontal flex entirely */
+    text-align: center;
+    width: 100%;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  
+  .section-title > * {
+    display: block;
+    margin: 0;
+    max-width: 100%;
+  }
+
+}
