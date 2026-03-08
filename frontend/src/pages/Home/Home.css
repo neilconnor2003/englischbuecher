@@ -388,21 +388,31 @@
 /* =========================================================
    HARD STOP: prevent ANY multilingual overflow on mobile
    ========================================================= */
+
+/* =========================================================
+   FINAL MULTI-LANGUAGE MOBILE HEADING FIX
+   ========================================================= */
 @media (max-width: 768px) {
   .section-title {
-    display: block;        /* ✅ kill horizontal flex entirely */
+    display: block;
     text-align: center;
     width: 100%;
     max-width: 100%;
-    overflow-wrap: break-word;
-    word-break: break-word;
+
+    /* ✅ natural wrapping */
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: anywhere;
+
+    /* ✅ proper German hyphenation */
+    hyphens: auto;
+
+    /* ✅ tighter, readable line spacing */
+    line-height: 1.15;
   }
 
-  
   .section-title > * {
     display: block;
     margin: 0;
-    max-width: 100%;
   }
-
 }
