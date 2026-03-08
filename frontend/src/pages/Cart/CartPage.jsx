@@ -18,7 +18,7 @@ import {
 import { AuthContext } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import './CartPage.css';
-
+import config from '../../config';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -37,6 +37,12 @@ const CartPage = () => {
   const dispatch = useDispatch();
 
   const { items, totalItems, totalPrice, merged } = useSelector((state) => state.cart);
+
+
+  const API_BASE = `${config.API_URL}/api`;
+  // On Netlify config.API_URL === '' so this becomes '/api' ✅
+  // Locally it becomes 'http://localhost:3002/api' ✅
+
 
   /* ------------------------------------------------------------
      🔥 Boot merge (dedupe & server-wins):
@@ -69,7 +75,7 @@ const CartPage = () => {
         })();
 
         // 1) Fetch server cart
-        const res1 = await fetch(`${import.meta.env.VITE_API_URL}/api/cart`, {
+        const res1 = await fetch(`${API_BASE}/cart`, {
           credentials: 'include',
         });
         if (res1.status === 401) return; // Not authed unexpectedly
@@ -88,7 +94,7 @@ const CartPage = () => {
 
         // 4) If there are missing items, merge them once
         if (missing.length > 0) {
-          const resMerge = await fetch(`${import.meta.env.VITE_API_URL}/api/cart/merge`, {
+          const resMerge = await fetch(`${API_BASE}/cart/merge`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -104,7 +110,7 @@ const CartPage = () => {
         try { localStorage.removeItem('cart'); } catch { }
 
         // 6) Re-fetch server cart to get final truth
-        const res2 = await fetch(`${import.meta.env.VITE_API_URL}/api/cart`, {
+        const res2 = await fetch(`${API_BASE}/cart`, {
           credentials: 'include',
         });
         const data2 = await res2.json();
@@ -135,7 +141,7 @@ const CartPage = () => {
 
     (async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/wishlist`, {
+        const res = await fetch(`${API_BASE}/wishlist`, {
           credentials: 'include',
         });
 
@@ -165,7 +171,7 @@ const CartPage = () => {
       try {
         await Promise.all(
           idsNeedingStock.map(async (id) => {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/books/${id}`, {
+            const res = await fetch(`${API_BASE}/books/${id}`, {
               credentials: 'include',
             });
             const data = await res.json();
@@ -284,7 +290,7 @@ const CartPage = () => {
 
     (async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/cart/recommendations`, {
+        const res = await fetch(`${API_BASE}/cart/recommendations`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ bookIds }),
@@ -499,9 +505,8 @@ const CartPage = () => {
                             <div className="cart-item-title">{title}</div>
                             {typeof record.stock === "number" && (
                               <div
-                                className={`stock-pill ${
-                                  record.stock > 0 ? "in" : "out"
-                                }`}
+                                className={`stock-pill ${record.stock > 0 ? "in" : "out"
+                                  }`}
                               >
                                 {t("in_stock")}: {record.stock}
                               </div>

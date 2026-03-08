@@ -22,6 +22,7 @@ const DIRECT_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
 // Browser should use Netlify proxy when on netlify.app
 // - Netlify: ''  -> calls /api/* and /auth/* on same domain (proxy rules apply)
 // - Local/other: backend URL directly
+// Browser API base (proxy-safe)
 const API_URL = isNetlify ? '' : DIRECT_API_URL;
 
 // ✅ Uploads / images MUST always come from backend

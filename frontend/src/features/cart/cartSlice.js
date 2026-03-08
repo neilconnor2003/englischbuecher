@@ -2,6 +2,7 @@
 // frontend/src/features/cart/cartSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import config from '../../config';
 
 /* -------------------------------------------------
    Helper – make sure every price is a number
@@ -47,7 +48,7 @@ const initialState = {
    ------------------------------------------------- */
 const syncAdd = createAsyncThunk('cart/syncAdd', async (payload, { rejectWithValue }) => {
   try {
-    await axios.post(`${import.meta.env.VITE_API_URL}/api/cart/add`, payload, { withCredentials: true });
+    await axios.post(`${config.API_URL}/api/cart/add`, payload, { withCredentials: true });
   } catch (err) {
     console.warn('Cart sync (add) failed', err);
     return rejectWithValue(err);
@@ -56,7 +57,7 @@ const syncAdd = createAsyncThunk('cart/syncAdd', async (payload, { rejectWithVal
 
 const syncUpdate = createAsyncThunk('cart/syncUpdate', async (payload, { rejectWithValue }) => {
   try {
-    await axios.put(`${import.meta.env.VITE_API_URL}/api/cart/update`, payload, { withCredentials: true });
+    await axios.put(`${config.API_URL}/api/cart/update`, payload, { withCredentials: true });
   } catch (err) {
     console.warn('Cart sync (update) failed', err);
     return rejectWithValue(err);
@@ -65,7 +66,7 @@ const syncUpdate = createAsyncThunk('cart/syncUpdate', async (payload, { rejectW
 
 const syncRemove = createAsyncThunk('cart/syncRemove', async (bookId, { rejectWithValue }) => {
   try {
-    await axios.delete(`${import.meta.env.VITE_API_URL}/api/cart/remove/${bookId}`, { withCredentials: true });
+    await axios.delete(`${config.API_URL}/api/cart/remove/${bookId}`, { withCredentials: true });
   } catch (err) {
     console.warn('Cart sync (remove) failed', err);
     return rejectWithValue(err);
@@ -74,7 +75,7 @@ const syncRemove = createAsyncThunk('cart/syncRemove', async (bookId, { rejectWi
 
 const syncClear = createAsyncThunk('cart/syncClear', async (_, { rejectWithValue }) => {
   try {
-    await axios.post(`${import.meta.env.VITE_API_URL}/api/cart/clear`, {}, { withCredentials: true });
+    await axios.post(`${config.API_URL}/api/cart/clear`, {}, { withCredentials: true });
   } catch (err) {
     console.warn('Cart sync (clear) failed', err);
     return rejectWithValue(err);

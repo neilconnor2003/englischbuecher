@@ -3,6 +3,8 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
+import { useContext } from 'react';
+import { AuthContext } from '../../context/AuthContext';
 import { Button, message, Rate } from 'antd';
 import {
   ShoppingCartOutlined,
@@ -36,7 +38,8 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
   const dispatch = useDispatch();
 
   // User from Redux
-  const user = useSelector(state => state.auth?.user || state.auth);
+  //const user = useSelector(state => state.auth?.user || state.auth);
+  const { user } = useContext(AuthContext);
 
   // Robust title selection for mixed payloads
   const title =
