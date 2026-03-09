@@ -118,7 +118,8 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
         );
 
         const res = await axios.get(`${config.API_URL}/api/cart`, { withCredentials: true });
-        dispatch(mergeServerCart({ items: res.data.items || [] }));
+        //dispatch(mergeServerCart({ items: res.data.items || [] }));
+        dispatch(replaceWithServerCart({ items: res.data.items || [] }));
 
         message.success(`${title} ${t('added_to_cart') || 'zum Warenkorb hinzugefügt'}`);
       } catch (err) {
@@ -153,9 +154,9 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
         book: clientBookPayload,
       }));
 
-      dispatch({
+      /*dispatch({
         type: 'cart/forceRecalc'
-      });
+      });*/
 
       message.success(`${title} ${t('added_to_cart') || 'zum Warenkorb hinzugefügt'}`);
     } catch (err) {
