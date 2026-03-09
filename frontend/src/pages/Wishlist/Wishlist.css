@@ -24,3 +24,23 @@
     color: #666;
     padding: 100px 20px;
 }
+
+
+/* =====================================================
+   MOBILE: make wishlist cards consistent with Home
+   ===================================================== */
+@media (max-width: 768px) {
+  .wishlist-grid {
+    grid-template-columns: repeat(2, 1fr); /* force 2 columns */
+    gap: 12px;                              /* tighter like Home */
+  }
+
+  .wishlist-page {
+    padding: 20px 0; /* reduce vertical padding */
+  }
+
+  .wishlist-page h1 {
+    font-size: 1.6rem;
+    margin-bottom: 16px;
+  }
+}
