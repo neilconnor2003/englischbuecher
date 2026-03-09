@@ -31,7 +31,7 @@
    ===================================================== */
 @media (max-width: 768px) {
   .wishlist-grid {
-    grid-template-columns: repeat(2, 1fr); /* force 2 columns */
+    grid-template-columns: repeat(3, 1fr); /* force 2 columns */
     gap: 12px;                              /* tighter like Home */
   }
 
