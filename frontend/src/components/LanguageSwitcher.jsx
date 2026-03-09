@@ -11,13 +11,19 @@ const LanguageSwitcher = () => {
 
   // This forces the flag to update instantly when language changes
   useEffect(() => {
-    const handleChange = () => {};
+    const handleChange = () => { };
     i18n.on('languageChanged', handleChange);
     return () => i18n.off('languageChanged', handleChange);
   }, [i18n]);
 
   const handleChange = (value) => {
+    // 1️⃣ Mark this as an explicit user override (session-only)
+    sessionStorage.setItem('lang_override', value);
+
+    // 2️⃣ Change language
     i18n.changeLanguage(value);
+
+    // 3️⃣ Keep i18next happy (optional but fine)
     localStorage.setItem('i18nextLng', value);
   };
 

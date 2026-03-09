@@ -33,10 +33,25 @@ export const AuthProvider = ({ children }) => {
       });
 
       // LANGUAGE PERSISTENCE
-      if (userData.language) {
+      /*if (userData.language) {
+        i18n.changeLanguage(userData.language);
+        localStorage.setItem('i18nextLng', userData.language);
+      }*/
+
+
+      // LANGUAGE PERSISTENCE (profile default, session override aware)
+      const overrideLang = sessionStorage.getItem('lang_override');
+
+      if (overrideLang) {
+        // User explicitly chose a language this session → respect it
+        i18n.changeLanguage(overrideLang);
+        localStorage.setItem('i18nextLng', overrideLang);
+      } else if (userData.language) {
+        // No override → apply profile language
         i18n.changeLanguage(userData.language);
         localStorage.setItem('i18nextLng', userData.language);
       }
+
 
       // MERGE LOCAL CART TO SERVER
       const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
@@ -91,6 +106,7 @@ export const AuthProvider = ({ children }) => {
     }
     setUser(null);
     localStorage.removeItem('cart');
+    sessionStorage.removeItem('lang_override');
     window.location.href = '/';
   };
 
