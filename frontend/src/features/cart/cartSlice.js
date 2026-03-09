@@ -247,6 +247,12 @@ const cartSlice = createSlice({
       //saveToLocalStorage(state); // persist after merge
       try { localStorage.removeItem('cart'); } catch { }
     },
+
+    forceRecalc: (state) => {
+      // force a new reference so subscribers re-render
+      state.items = [...state.items];
+      updateTotals(state);
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -277,6 +283,7 @@ export const {
   mergeServerCart,
   setItemStock,
   replaceWithServerCart,
+  forceRecalc,
 } = cartSlice.actions;
 
 export {

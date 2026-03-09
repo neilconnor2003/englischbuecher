@@ -98,8 +98,8 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
     }
   };*/
 
-  
-const handleAddToCart = async (e) => {
+
+  const handleAddToCart = async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -152,6 +152,10 @@ const handleAddToCart = async (e) => {
         quantity: 1,
         book: clientBookPayload,
       }));
+
+      dispatch({
+        type: 'cart/forceRecalc'
+      });
 
       message.success(`${title} ${t('added_to_cart') || 'zum Warenkorb hinzugefügt'}`);
     } catch (err) {
