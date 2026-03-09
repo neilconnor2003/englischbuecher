@@ -3133,7 +3133,9 @@ const computeWorkId = (titleEn, titleDe, author) => {
     b.isbn13
   FROM cart_items ci
   JOIN books b ON ci.book_id = b.id
-  WHERE ci.user_id = ?
+  
+WHERE ci.user_id = ?
+  AND ci.is_active = 1
 `, [req.user.id]);
 
       res.json({ items: rows });
@@ -3168,20 +3170,21 @@ const computeWorkId = (titleEn, titleDe, author) => {
       }
 
       const values = cleaned.map(i => [req.user.id, i.bookId, i.quantity]);
-      const placeholders = values.map(() => '(?, ?, ?)').join(', ');
+      //const placeholders = values.map(() => '(?, ?, ?)').join(', ');
+      const placeholders = values.map(() => '(?, ?, ?, 1, NULL)').join(', ');
       const flatValues = values.flat();
 
       // ✅ Server qty wins:
       // - inserts missing books
       // - ignores existing (user_id, book_id) rows
-      await db.execute(
-        `
-      INSERT IGNORE INTO cart_items (user_id, book_id, quantity)
-      VALUES ${placeholders}
-      `,
-        flatValues
-      );
-
+      await db.execute(`
+  INSERT INTO cart_items (user_id, book_id, quantity, is_active, deleted_at)
+  VALUES ${placeholders}
+  ON DUPLICATE KEY UPDATE
+    quantity = IF(is_active = 0, VALUES(quantity), quantity),
+    is_active = 1,
+    deleted_at = NULL
+`, flatValues);
       res.json({ success: true });
     } catch (err) {
       console.error('POST /api/cart/merge error:', err);
@@ -3196,9 +3199,14 @@ const computeWorkId = (titleEn, titleDe, author) => {
     try {
       //console.log('cart add');
       await db.execute(`
-        INSERT INTO cart_items (user_id, book_id, quantity) VALUES (?, ?, ?)
-        ON DUPLICATE KEY UPDATE quantity = quantity + ?
-      `, [req.user.id, bookId, quantity, quantity]);
+  INSERT INTO cart_items (user_id, book_id, quantity, is_active, deleted_at)
+  VALUES (?, ?, ?, 1, NULL)
+  ON DUPLICATE KEY UPDATE
+    quantity = IF(is_active = 0, VALUES(quantity), quantity + VALUES(quantity)),
+    is_active = 1,
+    deleted_at = NULL
+`, [req.user.id, bookId, quantity]);
+
       res.json({ success: true });
     } catch (err) {
       console.error('POST /api/cart/add error:', err);
@@ -3210,11 +3218,23 @@ const computeWorkId = (titleEn, titleDe, author) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: 'Unauthorized' });
     const { bookId, quantity } = req.body;
     try {
+
       if (quantity <= 0) {
-        await db.execute('DELETE FROM cart_items WHERE user_id = ? AND book_id = ?', [req.user.id, bookId]);
+        await db.execute(`
+    UPDATE cart_items
+    SET is_active = 0,
+        quantity = 0,
+        deleted_at = NOW()
+    WHERE user_id = ? AND book_id = ?
+  `, [req.user.id, bookId]);
       } else {
-        await db.execute('UPDATE cart_items SET quantity = ? WHERE user_id = ? AND book_id = ?', [quantity, req.user.id, bookId]);
+        await db.execute(`
+    UPDATE cart_items
+    SET quantity = ?, is_active = 1, deleted_at = NULL
+    WHERE user_id = ? AND book_id = ?
+  `, [quantity, req.user.id, bookId]);
       }
+
       res.json({ success: true });
     } catch (err) {
       console.error('PUT /api/cart/update error:', err);
@@ -3225,7 +3245,13 @@ const computeWorkId = (titleEn, titleDe, author) => {
   app.delete('/api/cart/remove/:bookId', async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: 'Unauthorized' });
     try {
-      await db.execute('DELETE FROM cart_items WHERE user_id = ? AND book_id = ?', [req.user.id, req.params.bookId]);
+      await db.execute(`
+  UPDATE cart_items
+  SET is_active = 0,
+      quantity = 0,
+      deleted_at = NOW()
+  WHERE user_id = ? AND book_id = ?
+`, [req.user.id, req.params.bookId]);
       res.json({ success: true });
     } catch (err) {
       console.error('DELETE /api/cart/remove error:', err);
@@ -3236,7 +3262,13 @@ const computeWorkId = (titleEn, titleDe, author) => {
   app.post('/api/cart/clear', async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: 'Unauthorized' });
     try {
-      await db.execute('DELETE FROM cart_items WHERE user_id = ?', [req.user.id]);
+      await db.execute(`
+  UPDATE cart_items
+  SET is_active = 0,
+      quantity = 0,
+      deleted_at = NOW()
+  WHERE user_id = ?
+`, [req.user.id]);
       res.json({ success: true });
     } catch (err) {
       console.error('POST /api/cart/clear error:', err);
