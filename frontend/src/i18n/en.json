@@ -147,6 +147,7 @@
   "footer_about": "About Us",
   "header_welcome": "Welcome, {{name}}",
   "header_wishlist": "Wishlist",
+  "in_wishlist": "In wishlist",
   "header_cart": "Cart",
   "header_logout": "Logout",
   "header_admin": "Admin Panel",
