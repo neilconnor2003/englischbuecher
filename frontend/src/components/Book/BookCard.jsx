@@ -12,7 +12,7 @@ import {
   HeartFilled,
   CheckOutlined
 } from '@ant-design/icons';
-import { mergeServerCart, addItem } from '../../features/cart/cartSlice';
+import { mergeServerCart, addItem, replaceWithServerCart } from '../../features/cart/cartSlice';
 import { toggleWishlist, fetchWishlist } from '../../features/wishlist/wishlistSlice';
 import { useTranslation } from 'react-i18next';
 import './BookCard.css';
