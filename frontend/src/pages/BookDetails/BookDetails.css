@@ -1000,3 +1000,27 @@
 .shipping-estimator .ship-dest { font-size: 14px; }
 .shipping-estimator .ant-radio-wrapper { display: block; margin-top: 6px; }
 
+
+/* =========================================================
+   MOBILE — Make recommendation cards identical to Home
+   (prevents text & button truncation)
+   ========================================================= */
+@media (max-width: 768px) {
+
+  /* Let Swiper slides grow vertically */
+  .book-details-page .recommendations-swiper .swiper-slide {
+    height: auto !important;
+    display: flex;
+    align-items: stretch;
+  }
+
+  /* Let the BookCard wrapper grow naturally */
+  .book-details-page .popular-card-wrapper {
+    height: auto !important;
+  }
+
+  /* Ensure the BookCard itself can expand */
+  .book-details-page .book-card {
+    height: auto !important;
+  }
+}

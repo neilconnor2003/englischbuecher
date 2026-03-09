@@ -568,7 +568,7 @@ function BookDetails() {
                 <div className="row"><BookOpen size={18} /> <span>{t('book_details.pages')}</span><span>{book.pages || '—'}</span></div>
                 <div className="row"><Hash size={18} /> <span>ISBN-10</span><span>{book.isbn10 || '—'}</span></div>
                 <div className="row"><Hash size={18} /> <span>ISBN-13</span><span>{book.isbn13 || '—'}</span></div>
-                <div className="row"><Globe size={18} /> <span>{t('book_details.language')}</span><span>{isDE ? 'Deutsch' : 'English'}</span></div>
+                <div className="row"><Globe size={18} /> <span>{t('book_details.language')}</span><span>{'English'}</span></div>
                 <div className="row"><Building size={18} /> <span>{t('book_details.publisher')}</span><span>{book.publisher || '—'}</span></div>
                 <div className="row"><Calendar size={18} /> <span>{t('book_details.published')}</span><span>{formatDate(book.publish_date)}</span></div>
                 <div className="row"><Weight size={18} /> <span>Weight</span><span>{book.weight_grams ? `${book.weight_grams} g` : '—'}</span></div>
