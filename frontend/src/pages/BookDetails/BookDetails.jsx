@@ -105,6 +105,14 @@ function BookDetails() {
     }).format(Number(value) || 0);
   };
 
+  const formatRating = (value, i18n) => {
+    const locale = i18n.resolvedLanguage === 'de' ? 'de-DE' : 'en-US';
+    return new Intl.NumberFormat(locale, {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    }).format(Number(value) || 0);
+  };
+
   const toSlug = (s = '') =>
     String(s)
       .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
@@ -414,7 +422,7 @@ function BookDetails() {
                 <div className="flex items-center gap-3 flex-wrap">
                   <Rate disabled allowHalf value={reviewStats.average || 0} className="text-lg" />
                   <span className="text-lg font-bold text-gray-900">
-                    {(reviewStats.average || 0).toFixed(1)}
+                    {formatRating(reviewStats.average, i18n)}
                   </span>
                   <span className="text-gray-600">
                     {t('review_count', { count: reviewStats.total || 0 })}
@@ -514,8 +522,9 @@ function BookDetails() {
               {/* ===== Formats Tiles + Editions (filtered) ===== */}
               {book.work_id && (
                 <div className="formats-block">
-                  <h3 className="formats-title">Formats & Editions</h3>
-
+                  <h3 className="formats-title">
+                    {t('book_details.formats_and_editions')}
+                  </h3>
                   {/* Format tiles */}
                   <div className="format-tiles">
                     {Object.keys(formatsMap).map(fmt => {
@@ -544,7 +553,7 @@ function BookDetails() {
                         <div className="chip-title">
                           {book.format || 'Format'}{book.edition ? ` · ${book.edition}` : ''}
                         </div>
-                        <div className="chip-price">€{Number(book.price || 0).toFixed(2)}</div>
+                        <div className="chip-price">{formatPrice(book.price, i18n)}</div>
                         <div className="chip-stock">{book.stock > 0 ? 'In Stock' : 'Out of stock'}</div>
                       </div>
                       <div className="chip-action selected">Selected</div>
@@ -554,7 +563,11 @@ function BookDetails() {
                   {/* Sibling editions for selected format */}
                   <div className="edition-list">
                     {editionsForSelected.length === 0 && (
-                      <div className="edition-empty">No other editions in this format.</div>
+
+                      <div className="edition-empty">
+                        {t('book_details.no_other_editions')}
+                      </div>
+
                     )}
 
                     {editionsForSelected.map(ed => (
@@ -658,7 +671,14 @@ function BookDetails() {
                   <InitialsAvatar name={book.author_name || book.author || 'Author'} size={90} className="w-full h-full" />
                   {book.author_photo && (
                     <img
-                      src={book.author_photo}
+                      //src={book.author_photo}
+
+                      src={
+                        book.author_photo.startsWith('http')
+                          ? book.author_photo
+                          : `${config.API_URL}${book.author_photo}`
+                      }
+
                       alt={book.author_name || book.author || 'Author'}
                       className="author-bio-photo-img"
                       onError={(e) => {

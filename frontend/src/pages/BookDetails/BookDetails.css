@@ -1024,3 +1024,17 @@
     height: auto !important;
   }
 }
+
+
+@media (max-width: 640px) {
+  .author-bio-avatar {
+    margin: 0 auto;          /* ✅ center horizontally */
+    display: flex;
+    align-items: center;     /* ✅ center vertically */
+    justify-content: center; /* ✅ center horizontally */
+  }
+
+  .author-bio-content {
+    align-items: center;
+  }
+}

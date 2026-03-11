@@ -317,7 +317,9 @@
     "out_of_5": "von 5",
     "review_singular": "Bewertung",
     "review_plural": "Bewertungen",
-    "no_reviews_yet": "Noch keine Bewertungen"
+    "no_reviews_yet": "Noch keine Bewertungen",
+    "formats_and_editions": "Formate & Ausgabe",
+    "no_other_editions": "Keine weiteren Ausgaben in diesem Format."
   },
   "remove": "Entfernen",
   "only": "Nur",
