@@ -94,6 +94,17 @@ function BookDetails() {
   };
 
 
+  const formatPrice = (value, i18n) => {
+    const locale = i18n.resolvedLanguage === 'de' ? 'de-DE' : 'en-US';
+
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(value) || 0);
+  };
+
   const toSlug = (s = '') =>
     String(s)
       .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
@@ -429,14 +440,21 @@ function BookDetails() {
               {/* BUY BOX */}
               <div className="buy-box">
                 <div className="price-row">
-                  <span className="price">€{(Number(book.price) || 0).toFixed(2)}</span>
+
+                  <span className="price">
+                    {formatPrice(book.price, i18n)}
+                  </span>
+
                   {book.original_price && Number(book.original_price) > Number(book.price) && (
                     <div className="savings-row">
                       <span className="list-price">
-                        {t('book_details.list_price')}: €{(Number(book.original_price)).toFixed(2)}
+                        {t('book_details.list_price')}: {formatPrice(book.original_price, i18n)}
                       </span>
                       <span className="save-badge">
-                        {t('book_details.save')} €{(Number(book.original_price) - Number(book.price)).toFixed(2)}
+                        {t('book_details.save')} {formatPrice(
+                          Number(book.original_price) - Number(book.price),
+                          i18n
+                        )}
                       </span>
                     </div>
                   )}
@@ -552,7 +570,7 @@ function BookDetails() {
                           <div className="chip-title">
                             {ed.format || 'Format'}{ed.edition ? ` · ${ed.edition}` : ''}
                           </div>
-                          <div className="chip-price">€{Number(ed.price || 0).toFixed(2)}</div>
+                          <div className="chip-price">{formatPrice(ed.price, i18n)}</div>
                           <div className="chip-stock">{ed.stock > 0 ? 'In Stock' : 'Out of stock'}</div>
                         </div>
                         <div className="chip-action">View</div>
