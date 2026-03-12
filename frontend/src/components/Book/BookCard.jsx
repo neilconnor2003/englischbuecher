@@ -193,6 +193,16 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
 
   const rootClass = `book-card book-card--${variant} ${className}`.trim();
 
+
+  const formatOneDecimal = (value, i18n) => {
+    const locale = i18n.resolvedLanguage === 'de' ? 'de-DE' : 'en-US';
+    return new Intl.NumberFormat(locale, {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    }).format(Number(value) || 0);
+  };
+
+
   return (
     <article className={rootClass}>
       {/* Wishlist heart (top-right) */}
@@ -223,7 +233,7 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
         <div className="rating-summary">
           <Rate disabled allowHalf value={toNumber(book.rating)} className="rating-stars-inline" />
           <span className="rating-info">
-            {book.rating ? toNumber(book.rating).toFixed(1) : '0.0'}
+            {formatOneDecimal(toNumber(book.rating), i18n)}
             {book.review_count > 0 ? ` (${book.review_count})` : ''}
           </span>
         </div>

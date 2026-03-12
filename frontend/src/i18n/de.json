@@ -384,7 +384,8 @@
     "text_placeholder": "Teile deine ehrliche Meinung zu diesem Buch…",
     "submit": "Bewertung abschicken",
     "submit_error": "Bewertung konnte nicht gesendet werden",
-    "read_all": "Alle Bewertungen ansehen"
+    "read_all": "Alle Bewertungen ansehen",
+    "star_label": "{{count}} Stern"
   },
   "continue_with_google": "Mit Google fortfahren",
   "google_creates_account": "Neu hier? Wir erstellen dein Konto automatisch.",

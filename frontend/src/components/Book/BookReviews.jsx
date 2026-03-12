@@ -17,8 +17,22 @@ const normalizeFromApi = (url) => {
   return url;
 };
 
+const formatOneDecimal = (value) =>
+  new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+    .format(Number(value) || 0);
+
+const formatReviewDate = (iso) => {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' });
+};
+
 function BookReviews({ bookId }) {
-  const { t } = useTranslation();
+  //const { t } = useTranslation();
+  //const locale = (t?.i18n?.resolvedLanguage || 'en') === 'de' ? 'de-DE' : 'en-US';
+
+  const { t, i18n } = useTranslation();
+  const locale = (i18n.resolvedLanguage || 'en') === 'de' ? 'de-DE' : 'en-US';
+
   const { user } = useContext(AuthContext);
   const [reviews, setReviews] = useState([]);
   const [stats, setStats] = useState({
@@ -92,7 +106,7 @@ function BookReviews({ bookId }) {
             <div className="bg-white rounded-3xl shadow-xl p-8 sticky top-24 border border-purple-100">
               <div className="text-center mb-8">
                 <div className="text-7xl font-bold text-purple-600">
-                  {stats.average.toFixed(1)}
+                  {formatOneDecimal(stats.average)}
                 </div>
                 <Rate disabled allowHalf value={stats.average} className="text-4xl mt-3" style={{ color: '#9333ea' }} />
                 <p className="text-gray-600 mt-3 text-lg">
@@ -103,7 +117,11 @@ function BookReviews({ bookId }) {
               {/* Star distribution */}
               {[5, 4, 3, 2, 1].map(star => (
                 <div key={star} className="flex items-center gap-4 mb-4">
-                  <span className="text-sm font-medium w-10">{star} star</span>
+
+                  <span className="text-sm font-medium w-10">
+                    {t('reviews.star_label', { count: star })}
+                  </span>
+
                   <div className="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
@@ -183,7 +201,7 @@ function BookReviews({ bookId }) {
                             {review.reviewer_name || 'Anonymous'}
                           </h4>
                           <p className="text-sm text-gray-500">
-                            {new Date(review.created_at).toLocaleDateString()}
+                            {formatReviewDate(review.created_at)}
                           </p>
                         </div>
                       </div>

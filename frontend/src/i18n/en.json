@@ -431,7 +431,8 @@
     "text_placeholder": "Share your honest thoughts about this book...",
     "submit": "Submit Review",
     "submit_error": "Failed to submit review",
-    "read_all": "See all reviews"
+    "read_all": "See all reviews",
+    "star_label": "{{count}} star"
   },
   "continue_with_google": "Continue with Google",
   "google_creates_account": "New here? We’ll create your account automatically.",
