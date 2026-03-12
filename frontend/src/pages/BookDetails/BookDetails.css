@@ -1038,3 +1038,42 @@
     align-items: center;
   }
 }
+
+
+/* =========================================================
+   BookDetails mobile: force BookCard.css behavior (like Home)
+   ========================================================= */
+@media (max-width: 768px) {
+
+  /* restore title behavior */
+  .book-details-page .recommendations-section .book-card h3 {
+    margin: 12px 12px 6px !important;
+    font-size: 1rem !important;
+    -webkit-line-clamp: 3 !important;
+    line-clamp: 3 !important;
+    min-height: auto !important;
+    max-height: none !important;
+  }
+
+  /* restore image height */
+  .book-details-page .recommendations-section .book-card--default img {
+    height: 220px !important;
+  }
+
+  /* restore actions spacing */
+  .book-details-page .recommendations-section .book-actions {
+    margin: 0 12px 12px !important;
+    padding: 0 !important;
+    gap: 8px !important;
+  }
+
+  /* restore price spacing */
+  .book-details-page .recommendations-section .price-block {
+    margin: 8px 12px 12px !important;
+  }
+
+  /* restore rating spacing */
+  .book-details-page .recommendations-section .rating-summary {
+    margin: 8px 12px 10px !important;
+  }
+}
