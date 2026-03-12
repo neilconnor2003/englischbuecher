@@ -319,7 +319,9 @@
     "review_plural": "Bewertungen",
     "no_reviews_yet": "Noch keine Bewertungen",
     "formats_and_editions": "Formate & Ausgabe",
-    "no_other_editions": "Keine weiteren Ausgaben in diesem Format."
+    "no_other_editions": "Keine weiteren Ausgaben in diesem Format.",
+    "about_author": "Über den Autor",
+    "no_author_bio": "Keine Biografie verfügbar."
   },
   "remove": "Entfernen",
   "only": "Nur",

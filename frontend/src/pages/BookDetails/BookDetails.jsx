@@ -113,6 +113,8 @@ function BookDetails() {
     }).format(Number(value) || 0);
   };
 
+  const [author, setAuthor] = useState(null);
+
   const toSlug = (s = '') =>
     String(s)
       .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
@@ -250,6 +252,25 @@ function BookDetails() {
       setSelectedFormat(first);
     }
   }, [book, editions]);
+
+
+  useEffect(() => {
+    if (!book?.author_id) return;
+
+    axios
+      .get(`${config.API_URL}/api/authors/${book.author_id}`)
+      .then(res => {
+        const data = res.data;
+        setAuthor({
+          ...data,
+          photo: data.photo?.startsWith('http')
+            ? data.photo
+            : `${config.API_URL}${data.photo}`
+        });
+      })
+      .catch(() => setAuthor(null));
+  }, [book?.author_id]);
+
 
   // Filter editions for selected format, exclude current book
   const editionsForSelected = (formatsMap[selectedFormat] || []).filter(b => b.id !== book?.id);
@@ -661,41 +682,39 @@ function BookDetails() {
             )}
           </div>
           {/* === About the Author === */}
-          {(book.author_bio || book.author_photo || book.author_name) && (
+          {author && (
             <div className="author-bio-section">
-              <h3 className="author-bio-title">About the Author</h3>
+              <h3 className="author-bio-title">
+                {t('book_details.about_author')}
+              </h3>
               <div className="author-bio-content">
-
                 {/* Avatar fallback + photo overlay */}
                 <div className="author-bio-avatar">
                   <InitialsAvatar name={book.author_name || book.author || 'Author'} size={90} className="w-full h-full" />
-                  {book.author_photo && (
+
+                  {author.photo && (
                     <img
-                      //src={book.author_photo}
-
-                      src={
-                        book.author_photo.startsWith('http')
-                          ? book.author_photo
-                          : `${config.API_URL}${book.author_photo}`
-                      }
-
-                      alt={book.author_name || book.author || 'Author'}
+                      src={author.photo}
+                      alt={author.name}
                       className="author-bio-photo-img"
+                      loading="lazy"
                       onError={(e) => {
                         e.currentTarget.onerror = null;
-                        e.currentTarget.style.display = 'none'; // reveals avatar below
+                        e.currentTarget.style.display = 'none';
                       }}
-                      loading="lazy"
                     />
                   )}
+
                 </div>
 
                 <div className="author-bio-text">
                   <p><strong>{book.author_name || book.author}</strong></p>
-                  {book.author_bio ? (
-                    <p>{book.author_bio}</p>
+                  {author.bio ? (
+                    <p>{author.bio}</p>
                   ) : (
-                    <p className="text-gray-500">No bio available.</p>
+                    <p className="text-gray-500">
+                      {t('book_details.no_author_bio')}
+                    </p>
                   )}
                 </div>
               </div>
