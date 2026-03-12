@@ -17,21 +17,29 @@ const normalizeFromApi = (url) => {
   return url;
 };
 
-const formatOneDecimal = (value) =>
-  new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
-    .format(Number(value) || 0);
-
-const formatReviewDate = (iso) => {
-  if (!iso) return '';
-  return new Date(iso).toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' });
-};
-
 function BookReviews({ bookId }) {
   //const { t } = useTranslation();
   //const locale = (t?.i18n?.resolvedLanguage || 'en') === 'de' ? 'de-DE' : 'en-US';
 
   const { t, i18n } = useTranslation();
   const locale = (i18n.resolvedLanguage || 'en') === 'de' ? 'de-DE' : 'en-US';
+
+
+  const formatOneDecimal = (value) =>
+    new Intl.NumberFormat(locale, {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    }).format(Number(value) || 0);
+
+  const formatReviewDate = (iso) => {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString(locale, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
 
   const { user } = useContext(AuthContext);
   const [reviews, setReviews] = useState([]);
