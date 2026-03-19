@@ -253,23 +253,34 @@ function BookDetails() {
     }
   }, [book, editions]);
 
+  /*
+    useEffect(() => {
+      if (!book?.author_id) return;
+  
+      axios
+        .get(`${config.API_URL}/api/authors/${book.author_id}`)
+        .then(res => {
+          const data = res.data;
+          setAuthor({
+            ...data,
+            photo: data.photo?.startsWith('http')
+              ? data.photo
+              : `${config.API_URL}${data.photo}`
+          });
+        })
+        .catch(() => setAuthor(null));
+    }, [book?.author_id]);
+  */
 
   useEffect(() => {
-    if (!book?.author_id) return;
+    if (!book?.authors || book.authors.length === 0) {
+      setAuthor(null);
+      return;
+    }
+    // store the full authors array
+    setAuthor(book.authors);
+  }, [book]);
 
-    axios
-      .get(`${config.API_URL}/api/authors/${book.author_id}`)
-      .then(res => {
-        const data = res.data;
-        setAuthor({
-          ...data,
-          photo: data.photo?.startsWith('http')
-            ? data.photo
-            : `${config.API_URL}${data.photo}`
-        });
-      })
-      .catch(() => setAuthor(null));
-  }, [book?.author_id]);
 
 
   // Filter editions for selected format, exclude current book
@@ -682,42 +693,49 @@ function BookDetails() {
             )}
           </div>
           {/* === About the Author === */}
-          {author && (
+
+          {author && Array.isArray(author) && author.length > 0 && (
             <div className="author-bio-section">
               <h3 className="author-bio-title">
                 {t('book_details.about_author')}
               </h3>
-              <div className="author-bio-content">
-                {/* Avatar fallback + photo overlay */}
-                <div className="author-bio-avatar">
-                  <InitialsAvatar name={book.author_name || book.author || 'Author'} size={90} className="w-full h-full" />
 
-                  {author.photo && (
-                    <img
-                      src={author.photo}
-                      alt={author.name}
-                      className="author-bio-photo-img"
-                      loading="lazy"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                  )}
+              {author.map((a) => (
+                <div key={a.id} className="author-bio-content">
+
+                  {/* Avatar + photo */}
+                  <div className="author-bio-avatar">
+                    <InitialsAvatar name={a.name} size={90} className="w-full h-full" />
+
+                    {a.photo && (
+                      <img
+                        src={a.photo}
+                        alt={a.name}
+                        className="author-bio-photo-img"
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    )}
+                  </div>
+
+                  {/* Bio */}
+                  <div className="author-bio-text">
+                    <p><strong>{a.name}</strong></p>
+                    {a.bio ? (
+                      <p>{a.bio}</p>
+                    ) : (
+                      <p className="text-gray-500">
+                        {t('book_details.no_author_bio')}
+                      </p>
+                    )}
+                  </div>
 
                 </div>
+              ))}
 
-                <div className="author-bio-text">
-                  <p><strong>{book.author_name || book.author}</strong></p>
-                  {author.bio ? (
-                    <p>{author.bio}</p>
-                  ) : (
-                    <p className="text-gray-500">
-                      {t('book_details.no_author_bio')}
-                    </p>
-                  )}
-                </div>
-              </div>
             </div>
           )}
         </div>
