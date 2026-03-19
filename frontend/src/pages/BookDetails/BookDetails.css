@@ -1077,3 +1077,30 @@
     margin: 8px 12px 10px !important;
   }
 }
+
+
+/* --- Mobile: Keep author photo + name on the same row --- */
+@media (max-width: 640px) {
+  .author-bio-content {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 14px !important;
+  }
+
+  .author-bio-avatar {
+    width: 60px !important;
+    height: 60px !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+  }
+
+  .author-bio-text {
+    flex: 1 !important;
+  }
+
+  .author-bio-text p {
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+  }
+}
