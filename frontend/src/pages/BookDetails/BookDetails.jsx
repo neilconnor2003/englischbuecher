@@ -732,10 +732,8 @@ function BookDetails() {
                       </p>
                     )}
                   </div>
-
                 </div>
               ))}
-
             </div>
           )}
         </div>

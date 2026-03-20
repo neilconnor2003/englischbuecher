@@ -65,6 +65,7 @@ const Avatar = ({ name, size = 80, className = '' }) => {
 const AuthorModal = ({ isOpen, onClose, onSave, author }) => {
   const [name, setName] = useState(author?.name || '');
   const [bio, setBio] = useState(author?.bio || '');
+  const [bioDe, setBioDe] = useState(author?.bio_de ?? '');
   const [photo, setPhoto] = useState(author?.photo || '');
 
   // Sync fields when the selected author or open state changes
@@ -72,11 +73,13 @@ const AuthorModal = ({ isOpen, onClose, onSave, author }) => {
     if (isOpen) {
       setName(author?.name || '');
       setBio(author?.bio || '');
+      setBioDe(author?.bio_de || '');
       setPhoto(author?.photo || '');
     } else {
       // Clear on close (so "Add Author" starts empty next time)
       setName('');
       setBio('');
+      setBioDe('');
       setPhoto('');
     }
   }, [author, isOpen]);
@@ -167,6 +170,15 @@ const AuthorModal = ({ isOpen, onClose, onSave, author }) => {
               onChange={(e) => setBio(e.target.value)}
               placeholder="Short biography"
             />
+
+            <label className="block text-sm font-medium mb-1">Biography (German)</label>
+            <textarea
+              className="w-full border rounded-lg p-2 min-h-[120px]"
+              value={bioDe}
+              onChange={(e) => setBioDe(e.target.value)}
+              placeholder="German biography"
+            />
+
           </div>
 
           {/* Photo */}
@@ -225,7 +237,7 @@ const AuthorModal = ({ isOpen, onClose, onSave, author }) => {
 
           <button
             className="px-4 py-2 rounded-lg text-white bg-gradient-to-r from-purple-600 to-pink-600 font-bold"
-            onClick={() => onSave({ id: author?.id, name: name.trim(), bio, photo })}
+            onClick={() => onSave({ id: author?.id, name: name.trim(), bio, bio_de: bioDe, photo })}
             disabled={!name.trim()}
           >
             Save

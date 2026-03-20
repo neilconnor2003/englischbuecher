@@ -2021,17 +2021,17 @@ const computeWorkId = (titleEn, titleDe, author) => {
   // Create author
 
   app.post('/api/authors', async (req, res) => {
-    const { name, bio, photo } = req.body || {};
+    const { name, bio, bio_de, photo } = req.body || {};
     if (!name || !name.trim()) return res.status(400).json({ error: 'Name is required' });
 
     try {
       const slug = slugifyStrict(name);
       const [result] = await db.execute(
-        `INSERT INTO authors (name, bio, photo, slug) VALUES (?, ?, ?, ?)`,
-        [name.trim(), bio || null, photo || null, slug]
+        `INSERT INTO authors (name, bio, bio_de, photo, slug) VALUES (?, ?, ?, ?, ?)`,
+        [name.trim(), bio || null, bio_de || null, photo || null, slug]
       );
       const id = result.insertId;
-      const [[author]] = await db.execute('SELECT id, name, bio, photo, slug FROM authors WHERE id = ?', [id]);
+      const [[author]] = await db.execute('SELECT id, name, bio, bio_de, photo, slug FROM authors WHERE id = ?', [id]);
 
       const origin = `${req.protocol}://${req.get('host')}`;
       const norm = (p) => !p ? null : (p.startsWith('http') ? p : `${origin}${p.startsWith('/') ? '' : '/'}${p}`);
@@ -2050,7 +2050,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
   // Update author
 
   app.put('/api/authors/:id', async (req, res) => {
-    const { name, bio, photo } = req.body || {};
+    const { name, bio, bio_de, photo } = req.body || {};
     try {
       const slug = name ? slugifyStrict(name) : null;
 
@@ -2059,10 +2059,11 @@ const computeWorkId = (titleEn, titleDe, author) => {
       SET
         name = COALESCE(?, name),
         bio = COALESCE(?, bio),
+        bio_de = COALESCE(?, bio_de),
         photo = COALESCE(?, photo),
         slug = COALESCE(?, slug)
       WHERE id = ?`,
-        [name ? name.trim() : null, bio ?? null, photo ?? null, slug, req.params.id]
+        [name ? name.trim() : null, bio ?? null, bio_de ?? null, photo ?? null, slug, req.params.id]
       );
 
       if (result.affectedRows === 0) return res.status(404).json({ error: 'Not found' });
