@@ -170,7 +170,9 @@ const AuthorModal = ({ isOpen, onClose, onSave, author }) => {
               onChange={(e) => setBio(e.target.value)}
               placeholder="Short biography"
             />
+          </div>
 
+          <div>
             <label className="block text-sm font-medium mb-1">Biography (German)</label>
             <textarea
               className="w-full border rounded-lg p-2 min-h-[120px]"

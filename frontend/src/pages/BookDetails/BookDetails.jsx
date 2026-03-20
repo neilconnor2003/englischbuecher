@@ -724,13 +724,12 @@ function BookDetails() {
                   {/* Bio */}
                   <div className="author-bio-text">
                     <p><strong>{a.name}</strong></p>
-                    {a.bio ? (
-                      <p>{a.bio}</p>
-                    ) : (
-                      <p className="text-gray-500">
-                        {t('book_details.no_author_bio')}
-                      </p>
-                    )}
+                    <p className="text-gray-500">
+                      {isDE
+                        ? (a.bio_de || a.bio || t('book_details.no_author_bio'))
+                        : (a.bio || a.bio_de || t('book_details.no_author_bio'))
+                      }
+                    </p>
                   </div>
                 </div>
               ))}
