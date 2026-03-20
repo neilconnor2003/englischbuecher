@@ -261,7 +261,7 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
             disabled={book.stock === 0}
           >
             {book.stock === 0
-              ? 'Out of Stock'
+              ? t('out_of_stock')
               : isInCart
                 ? (t('already_in_cart') || 'In Cart')
                 : t('add_to_cart')}

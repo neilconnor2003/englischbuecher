@@ -48,7 +48,9 @@ function Wishlist() {
         <h1>{t('my_wishlist') || 'My Wishlist'}</h1>
         <div className="wishlist-grid">
           {wishlistBooks.map(book => (
-            <BookCard key={book.id} book={book} />
+            <div className="popular-card-wrapper">
+              <BookCard key={book.id} book={book} />
+            </div>
           ))}
         </div>
       </div>

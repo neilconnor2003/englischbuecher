@@ -330,6 +330,7 @@
     "title": "Autor"
   },
   "remove": "Entfernen",
+  "already_in_cart": "Bereits im Warenkorb",
   "only": "Nur",
   "login_to_checkout": "Zum Bezahlen anmelden",
   "cart": {

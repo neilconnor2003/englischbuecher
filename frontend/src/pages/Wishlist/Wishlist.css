@@ -1,28 +1,29 @@
 .wishlist-page {
-    padding: 40px 0;
-    background: #f8f9fa;
-    min-height: 80vh;
+  padding: 40px 0;
+  background: #f8f9fa;
+  min-height: 80vh;
 }
 
 .wishlist-page h1 {
-    font-size: 2rem;
+  font-size: 2rem;
   font-weight: bold;
   text-align: center;
   margin-bottom: 24px;
-  color: #9333ea !important; /* Deep purple for consistency */
+  color: #9333ea !important;
+  /* Deep purple for consistency */
 }
 
 .wishlist-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 24px;
 }
 
 .empty-wishlist {
-    text-align: center;
-    font-size: 1.5rem;
-    color: #666;
-    padding: 100px 20px;
+  text-align: center;
+  font-size: 1.5rem;
+  color: #666;
+  padding: 100px 20px;
 }
 
 
@@ -31,12 +32,15 @@
    ===================================================== */
 @media (max-width: 768px) {
   .wishlist-grid {
-    grid-template-columns: repeat(2, 1fr); /* force 2 columns */
-    gap: 12px;                              /* tighter like Home */
+    grid-template-columns: repeat(2, 1fr);
+    /* force 2 columns */
+    gap: 12px;
+    /* tighter like Home */
   }
 
   .wishlist-page {
-    padding: 20px 0; /* reduce vertical padding */
+    padding: 20px 0;
+    /* reduce vertical padding */
   }
 
   .wishlist-page h1 {
@@ -45,3 +49,53 @@
   }
 }
 
+
+/* ============================
+   MOBILE — make Wishlist cards match BookDetails
+   ============================ */
+@media (max-width: 768px) {
+
+  /* Let each card expand naturally; consistent with BookDetails mobile */
+  .wishlist-page .book-card {
+    height: auto !important;
+  }
+
+  /* Title spacing & readable clamp, just like BookDetails mobile */
+  .wishlist-page .book-card h3 {
+    margin: 12px 12px 6px !important;
+    font-size: 1rem !important;
+    -webkit-line-clamp: 3 !important;
+    line-clamp: 3 !important;
+    min-height: auto !important;
+    max-height: none !important;
+  }
+
+  /* Image height tuned for small screens (same as BookDetails mobile) */
+  .wishlist-page .book-card--default img {
+    height: 220px !important;
+    object-fit: cover;
+  }
+
+  /* Keep rating, price, and actions spacing identical to BookDetails */
+  .wishlist-page .rating-summary {
+    margin: 8px 12px 10px !important;
+  }
+
+  .wishlist-page .price-block {
+    margin: 8px 12px 12px !important;
+  }
+
+  .wishlist-page .book-actions {
+    margin: 0 12px 12px !important;
+    padding: 0 !important;
+    gap: 8px !important;
+  }
+}
+
+/* Optional: tighten the mobile grid a bit so two cards fit comfortably */
+@media (max-width: 768px) {
+  .wishlist-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
