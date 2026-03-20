@@ -132,16 +132,11 @@ const AuthorDetails = () => {
 
             <div className="author-headline">
               <h1 className="author-name-title">{author.name}</h1>
-
-              const currentLang = i18n.language;
               <p className="author-bio">
-
                 {isDE
                   ? (author.bio_de ?? author.bio ?? t('author.no_bio', 'No biography available'))
                   : (author.bio ?? author.bio_de ?? t('author.no_bio', 'No biography available'))}
-
               </p>
-
             </div>
           </header>
 
