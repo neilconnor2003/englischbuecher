@@ -274,8 +274,17 @@ const AuthorsDashboard = () => {
   const [editing, setEditing] = useState(null);
 
   const onSave = async (data) => {
-    if (data.id) await updateAuthor(data).unwrap();
-    else await addAuthor(data).unwrap();
+    try {
+      if (data.id) {
+        await updateAuthor(data).unwrap();
+        message.success("Author updated successfully!");
+      } else {
+        await addAuthor(data).unwrap();
+        message.success("Author created successfully!");
+      }
+    } catch (err) {
+      message.error("Failed to save author.");
+    }
 
     setIsOpen(false);
     setEditing(null);

@@ -121,6 +121,16 @@ const AuthorDetails = () => {
             <div className="author-headline">
               <h1 className="author-name-title">{author.name}</h1>
               <p className="author-bio">{author.bio || 'No biography available.'}</p>
+
+              const currentLang = i18n.language;
+
+              <p className="author-bio">
+                {currentLang === 'de'
+                  ? (author.bio_de || author.bio || t('author.no_bio'))
+                  : (author.bio || author.bio_de || t('author.no_bio'))
+                }
+              </p>
+
             </div>
           </header>
 

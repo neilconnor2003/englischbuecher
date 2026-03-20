@@ -1981,7 +1981,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
   app.get('/api/authors', async (req, res) => {
     try {
       let [rows] = await db.execute(`
-      SELECT id, name, bio, photo, created_at, updated_at
+      SELECT id, name, bio, bio_de, photo, created_at, updated_at
       FROM authors
       ORDER BY name ASC
     `);
@@ -2001,7 +2001,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
   app.get('/api/authors/:id', async (req, res) => {
     try {
       const [[row]] = await db.execute(`
-      SELECT id, name, bio, photo, created_at, updated_at
+      SELECT id, name, bio, bio_de, photo, created_at, updated_at
       FROM authors
       WHERE id = ?
     `, [req.params.id]);
@@ -2086,7 +2086,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
   app.get('/api/authors/slug/:slug', async (req, res) => {
     const [rows] = await db.execute(
-      `SELECT id, name, bio, photo, slug FROM authors WHERE slug = ? LIMIT 1`,
+      `SELECT id, name, bio, bio_de, photo, slug FROM authors WHERE slug = ? LIMIT 1`,
       [String(req.params.slug || '').toLowerCase()]
     );
     if (!rows.length) return res.status(404).json({ error: 'Author not found' });

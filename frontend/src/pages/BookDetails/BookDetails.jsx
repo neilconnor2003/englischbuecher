@@ -434,20 +434,20 @@ function BookDetails() {
                 <p className="original-title">Original title: {book.title_en}</p>
               )}
 
-
               <p className="author">
-                by{' '}
-                <span
-                  className="author-name cursor-pointer"
-                  onClick={() => navigate(`/author/${toSlug(book.author_name || book.author || '')}`)}
-                  role="link"
-                  tabIndex={0}
-                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate(`/author/${toSlug(book.author_name || book.author || '')}`)}
-                >
-                  {book.author_name || book.author}
-                </span>
+                by{" "}
+                {book.authors?.map((a, index) => (
+                  <span key={a.id}>
+                    <span
+                      className="author-name cursor-pointer"
+                      onClick={() => navigate(`/author/${a.slug}`)}
+                    >
+                      {a.name}
+                    </span>
+                    {index < book.authors.length - 1 ? ", " : ""}
+                  </span>
+                ))}
               </p>
-
 
               {/* Ratings summary */}
               <div className="ratings-summary-amazon mb-6">
