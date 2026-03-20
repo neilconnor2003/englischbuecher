@@ -40,7 +40,6 @@
   "out_of_stock": "Out of Stock",
   "publisher": "Publisher",
   "add_to_cart": "Add to Cart",
-  "adding": "Adding...",
   "added": "Added!",
   "please_login": "Please login first!",
   "loading": "Loading book details...",
@@ -368,7 +367,9 @@
     "formats_and_editions": "Formats & Editions",
     "no_other_editions": "No other editions in this format.",
     "about_author": "About the Author",
-    "no_author_bio": "No biography available."
+    "no_author_bio": "No biography available.",
+    "already_in_cart": "Already in cart",
+    "adding": "Adding..."
   },
   "author": {
     "books_by": "Books by {{name}}",

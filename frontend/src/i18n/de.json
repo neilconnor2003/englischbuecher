@@ -58,7 +58,6 @@
   "out_of_stock": "Ausverkauft",
   "publisher": "Verlag",
   "add_to_cart": "In den Warenkorb",
-  "adding": "Wird hinzugefügt...",
   "added": "Hinzugefügt!",
   "please_login": "Bitte zuerst einloggen!",
   "loading": "Lade Buchdetails...",
@@ -321,7 +320,9 @@
     "formats_and_editions": "Formate & Ausgabe",
     "no_other_editions": "Keine weiteren Ausgaben in diesem Format.",
     "about_author": "Über den Autor",
-    "no_author_bio": "Keine Biografie verfügbar."
+    "no_author_bio": "Keine Biografie verfügbar.",
+    "already_in_cart": "Bereits im Warenkorb",
+    "adding": "Wird hinzugefügt..."
   },
   "author": {
     "books_by": "Bücher von {{name}}",
@@ -365,7 +366,6 @@
   "wishlist_error": "Wunschliste konnte nicht aktualisiert werden",
   "my_wishlist": "Meine Wunschliste",
   "wishlist_empty": "Die Wunschliste ist leer",
-  "already_in_cart": "Bereits im Warenkorb",
   "home.new_arrivals": "Neuerscheinungen",
   "home.just_in": "Gerade Eingetroffen",
   "customer_reviews": "Kundenbewertungen",
