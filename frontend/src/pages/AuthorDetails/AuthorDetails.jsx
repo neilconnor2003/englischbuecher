@@ -108,7 +108,7 @@ const AuthorDetails = () => {
 
       <div className="author-details-page">
         <div className="container">
-          <button onClick={() => navigate(-1)} className="back-btn">← Back</button>
+          <button onClick={() => navigate(-1)} className="back-btn">← {t('back')}</button>
 
           {/* Header */}
           <header className="author-header">

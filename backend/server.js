@@ -2752,8 +2752,8 @@ const computeWorkId = (titleEn, titleDe, author) => {
     if (!rating || rating < 1 || rating > 5) {
       return res.status(400).json({ message: 'Rating 1–5 required' });
     }
-    if (!review_text || review_text.trim().length < 20) {
-      return res.status(400).json({ message: 'Review must be at least 20 characters' });
+    if (!review_text || review_text.trim().length < 10) {
+      return res.status(400).json({ message: 'Review must be at least 10 characters' });
     }
 
     try {
