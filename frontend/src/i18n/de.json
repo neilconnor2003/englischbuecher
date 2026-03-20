@@ -323,6 +323,11 @@
     "about_author": "Über den Autor",
     "no_author_bio": "Keine Biografie verfügbar."
   },
+  "author": {
+    "books_by": "Bücher von {{name}}",
+    "no_bio": "Keine Biografie verfügbar",
+    "title": "Autor"
+  },
   "remove": "Entfernen",
   "only": "Nur",
   "login_to_checkout": "Zum Bezahlen anmelden",

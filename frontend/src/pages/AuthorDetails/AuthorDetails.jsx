@@ -143,7 +143,7 @@ const AuthorDetails = () => {
           {/* Books grid using central BookCard */}
           <section aria-labelledby="books-by-author">
             <h2 id="books-by-author" className="books-by-author-title">
-              Books by {author.name}
+              {t('author.books_by', { name: author.name })}
             </h2>
 
             <div className="author-books-grid">

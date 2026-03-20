@@ -369,7 +369,12 @@
     "no_other_editions": "No other editions in this format.",
     "about_author": "About the Author",
     "no_author_bio": "No biography available."
-    },
+  },
+  "author": {
+    "books_by": "Books by {{name}}",
+    "no_bio": "No biography available",
+    "title": "Author"
+  },
   "deliver_to": "Deliver to",
   "remove": "Remove",
   "only": "Only",
