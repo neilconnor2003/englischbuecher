@@ -528,7 +528,7 @@ function BookDetails() {
                         {adding ? t('processing') : t('buy_now')}
                       </button>
                       <button onClick={() => handleCartAction(false)} disabled={adding || book.stock === 0 || isInCart} className={`add-to-cart secondary ${isInCart ? 'already-in-cart' : ''}`}>
-                        {isInCart ? t('book_detaisl.already_in_cart') : adding ? t('book_details.adding') : t('add_to_cart')}
+                        {isInCart ? t('book_details.already_in_cart') : adding ? t('book_details.adding') : t('add_to_cart')}
                       </button>
                     </>
                   ) : (
