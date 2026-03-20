@@ -387,7 +387,7 @@
     "name_required": "Bitte gib deinen Namen ein",
     "name_placeholder": "Dein Name (wird öffentlich angezeigt)",
     "text_required": "Bitte schreibe eine Bewertung",
-    "text_too_short": "Die Bewertung muss mindestens 30 Zeichen lang sein",
+    "text_too_short": "Die Bewertung muss mindestens 10 Zeichen lang sein",
     "text_placeholder": "Teile deine ehrliche Meinung zu diesem Buch…",
     "submit": "Bewertung abschicken",
     "submit_error": "Bewertung konnte nicht gesendet werden",

@@ -368,7 +368,7 @@
     "no_other_editions": "No other editions in this format.",
     "about_author": "About the Author",
     "no_author_bio": "No biography available.",
-    "already_in_cart": "Already in cart",
+    "already_in_cart": "Already in Cart",
     "adding": "Adding..."
   },
   "author": {
@@ -435,7 +435,7 @@
     "name_required": "Please enter your name",
     "name_placeholder": "Your name (will be shown publicly)",
     "text_required": "Please write a review",
-    "text_too_short": "Review must be at least 30 characters",
+    "text_too_short": "Review must be at least 10 characters",
     "text_placeholder": "Share your honest thoughts about this book...",
     "submit": "Submit Review",
     "submit_error": "Failed to submit review",

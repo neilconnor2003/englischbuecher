@@ -258,7 +258,7 @@ function BookReviews({ bookId }) {
             name="review_text"
             rules={[
               { required: true, message: t('reviews.text_required') },
-              { min: 20, message: t('reviews.text_too_short') } // align with server requirement
+              { min: 10, message: t('reviews.text_too_short') } // align with server requirement
             ]}
           >
             <TextArea rows={6} placeholder={t('reviews.text_placeholder')} className="text-lg" />
