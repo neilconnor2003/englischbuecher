@@ -1520,10 +1520,6 @@ const computeWorkId = (titleEn, titleDe, author) => {
   });
 
 
-  // backend/server.js — REPLACE your GET /api/books/:id with this
-
-  // REPLACE your GET /api/books/:id with this:
-
   app.get('/api/books/:id', async (req, res) => {
     try {
       const bookId = Number(req.params.id);
@@ -1555,7 +1551,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
       // 2) Authors via pivot
       const [authorRows] = await db.execute(`
-      SELECT a.id, a.name, a.bio, a.photo
+      SELECT a.id, a.name, a.bio, a.bio_de, a.photo, a.slug
       FROM book_authors ba
       JOIN authors a ON a.id = ba.author_id
       WHERE ba.book_id = ?
@@ -1574,7 +1570,9 @@ const computeWorkId = (titleEn, titleDe, author) => {
       const authors = authorRows.map(a => ({
         id: a.id,
         name: a.name,
+        slug: a.slug,           // ✅ needed by your BookDetails.jsx
         bio: a.bio || '',
+        bio_de: a.bio_de ?? null,
         photo: normalize(a.photo),
       }));
 

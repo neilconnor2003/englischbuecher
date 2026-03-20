@@ -7,6 +7,7 @@ import config from '../../config';
 import './AuthorDetails.css';
 import BookCard from '../../components/Book/BookCard';
 import { Helmet } from 'react-helmet-async';
+import { useTranslation } from 'react-i18next';
 
 /* === Initials Avatar helpers (local-only) === */
 const colorFromString = (s = '') => {
@@ -29,6 +30,10 @@ const AuthorDetails = () => {
   const [author, setAuthor] = useState(null);
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const { t, i18n } = useTranslation();   // ✅ hook up i18n/t
+  const isDE = i18n.resolvedLanguage === 'de';
+
 
   // normalize author.photo to absolute URL
   const toAbsolute = (url) => {
@@ -60,6 +65,10 @@ const AuthorDetails = () => {
         setBooks(normalized);
       } catch (err) {
         console.error('Author page load error:', err);
+
+        // Optional UX: go back or show not-found
+        navigate('/404'); // if you have a 404 route
+
       } finally {
         setLoading(false);
       }
@@ -85,7 +94,10 @@ const AuthorDetails = () => {
   return (
     <>
       <Helmet>
-        <title>{author.name} – Author | Your Bookstore</title>
+        <title>
+          {author.name} – {t('author.title', 'Author')} | Your Bookstore
+        </title>
+
         <meta
           name="description"
           content={`Books and biography of ${author.name}. Browse all books by ${author.name}.`}
@@ -120,15 +132,14 @@ const AuthorDetails = () => {
 
             <div className="author-headline">
               <h1 className="author-name-title">{author.name}</h1>
-              <p className="author-bio">{author.bio || 'No biography available.'}</p>
 
               const currentLang = i18n.language;
-
               <p className="author-bio">
-                {currentLang === 'de'
-                  ? (author.bio_de || author.bio || t('author.no_bio'))
-                  : (author.bio || author.bio_de || t('author.no_bio'))
-                }
+
+                {isDE
+                  ? (author.bio_de ?? author.bio ?? t('author.no_bio', 'No biography available'))
+                  : (author.bio ?? author.bio_de ?? t('author.no_bio', 'No biography available'))}
+
               </p>
 
             </div>
