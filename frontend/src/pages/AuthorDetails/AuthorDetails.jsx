@@ -95,7 +95,7 @@ const AuthorDetails = () => {
     <>
       <Helmet>
         <title>
-          {author.name} – {t('author.title', 'Author')} | Your Bookstore
+          {author.name} – {t('author.title', 'Author')} | EnglischBuecher
         </title>
 
         <meta

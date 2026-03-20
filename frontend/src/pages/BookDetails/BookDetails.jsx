@@ -388,7 +388,7 @@ function BookDetails() {
   return (
     <>
       <Helmet>
-        <title>{isDE ? (book.meta_title_de || title) : (book.meta_title_en || title)} | Your Bookstore</title>
+        <title>{isDE ? (book.meta_title_de || title) : (book.meta_title_en || title)} | EnglischBuecher</title>
         <meta
           name="description"
           content={isDE ? (book.meta_description_de || description.substring(0, 155)) : (book.meta_description_en || description.substring(0, 155))}
