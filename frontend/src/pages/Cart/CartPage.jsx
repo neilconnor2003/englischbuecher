@@ -373,6 +373,7 @@ const CartPage = () => {
             <div className="mobile-qty">
               <Button
                 size="small"
+                className="qty-btn"
                 icon={<MinusOutlined />}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -382,6 +383,7 @@ const CartPage = () => {
               <span>{item.quantity}</span>
               <Button
                 size="small"
+                className="qty-btn"
                 icon={<PlusOutlined />}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -562,6 +564,7 @@ const CartPage = () => {
                         <div className="qty-control">
                           <Button
                             size="small"
+                            className="qty-btn"
                             onClick={() =>
                               handleQuantityChange(r.bookId, -1)
                             }
@@ -571,6 +574,7 @@ const CartPage = () => {
                           <span className="qty">{r.quantity}</span>
                           <Button
                             size="small"
+                            className="qty-btn"
                             onClick={() =>
                               handleQuantityChange(r.bookId, 1)
                             }

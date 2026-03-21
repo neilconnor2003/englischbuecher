@@ -710,3 +710,54 @@
   line-height: 1 !important;
   vertical-align: middle !important;
 }
+
+
+/* =========================================================
+   Perfectly centered quantity buttons (desktop + mobile)
+   ========================================================= */
+
+/* Base square — used on both desktop (.qty-control) and mobile (.mobile-qty) */
+.cart-page .qty-btn {
+  width: 36px !important;
+  /* mobile-friendly square */
+  height: 36px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 8px !important;
+  line-height: 1 !important;
+  /* prevents vertical offset */
+}
+
+/* Desktop table can be slightly smaller if you prefer */
+.cart-page .qty-control .qty-btn {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 6px !important;
+}
+
+/* Ant Design v5 wraps icon in .ant-btn-icon; v4 uses .anticon — cover both */
+.cart-page .qty-btn .ant-btn-icon,
+.cart-page .qty-btn .anticon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  vertical-align: middle !important;
+  font-size: 16px !important;
+  /* ensures a crisp glyph size */
+}
+
+/* If you render raw SVG or text "-" / "+", keep them centered too */
+.cart-page .qty-btn>svg {
+  width: 1em;
+  height: 1em;
+  /* natural icon sizing */
+  display: block;
+}
+
+.cart-page .qty-btn>span {
+  display: inline-block;
+  line-height: 1;
+}
