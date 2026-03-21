@@ -261,6 +261,7 @@ const CartPage = () => {
      RECOMMENDATIONS
      ------------------------------------------------------------ */
   const [recommendations, setRecommendations] = useState({
+    byAuthor: [],
     sameAuthor: [],
     alsoBought: [],
     similar: [],
@@ -306,7 +307,13 @@ const CartPage = () => {
           });
         };
 
+        // Ensure we always have arrays; keep backward-compat for older payloads
+        const byAuthor = Array.isArray(data.byAuthor) ? data.byAuthor : [];
+        const sameAuthor = Array.isArray(data.sameAuthor) ? data.sameAuthor : [];
+
+
         const mergedRecs = {
+          byAuthor,
           sameAuthor: dedupe(data.sameAuthor),
           alsoBought: dedupe(data.alsoBought),
           similar: dedupe(data.similar),
@@ -748,7 +755,20 @@ const CartPage = () => {
                   </div>
                 )}
 
-              {!recLoading && recommendations.sameAuthor.length > 0 && (
+              {!recLoading && recommendations.byAuthor.length > 0 && (
+                <>
+                  {recommendations.byAuthor.map((group) => (
+                    <section className="recommendations-section" key={group.author.id}>
+                      <h3 className="rec-section-title">
+                        {t('more_from_author', { author: group.author.name })}
+                      </h3>
+                      {renderRecSlider(group.books)}
+                    </section>
+                  ))}
+                </>
+              )}
+
+              {!recLoading && recommendations.byAuthor.length === 0 && recommendations.sameAuthor.length > 0 && (
                 <section className="recommendations-section">
                   <h3 className="rec-section-title">
                     {t("more_from_author_plural")}

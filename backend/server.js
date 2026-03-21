@@ -2542,81 +2542,182 @@ const computeWorkId = (titleEn, titleDe, author) => {
   });
 
   // FETCH RECOMMENDATIONS IN THE CART PAGE
+  // === CART RECOMMENDATIONS (multi-author aware; uses book_authors pivot) ===
   app.post('/api/cart/recommendations', async (req, res) => {
-    const bookIds = req.body.bookIds || [];
+    const bookIds = req.body.bookIds ?? [];
     if (!Array.isArray(bookIds) || bookIds.length === 0) {
-      return res.json({ sameAuthor: [], alsoBought: [], similar: [] });
+      return res.json({ byAuthor: [], sameAuthor: [], alsoBought: [], similar: [] });
     }
 
+    // Helpers
+    const origin = `${req.protocol}://${req.get('host')}`;
+    const normalize = (url) => {
+      if (!url) return null;
+      if (url.startsWith('http://') || url.startsWith('https://')) return url;
+      if (url.startsWith('/')) return `${origin}${url}`;
+      return `${origin}/${url}`;
+    };
+
     try {
-      // Fetch authors and categories for all books in the cart
-      const [books] = await db.query(
-        `SELECT id, author, category_id FROM books WHERE id IN (${bookIds.map(() => '?').join(',')})`,
+      const placeholders = bookIds.map(() => '?').join(',');
+
+      // 1) All unique authors for all cart books (via pivot)
+      const [authRows] = await db.query(
+        `
+      SELECT DISTINCT a.id   AS author_id,
+                      a.name AS author_name,
+                      a.slug AS author_slug,
+                      a.photo
+      FROM book_authors ba
+      JOIN authors a ON a.id = ba.author_id
+      WHERE ba.book_id IN (${placeholders})
+      `,
         bookIds
       );
 
-      if (!books.length) {
-        return res.json({ sameAuthor: [], alsoBought: [], similar: [] });
+      const authorIds = authRows.map(r => r.author_id);
+      let byAuthor = [];
+      let sameAuthor = [];
+
+      // 2) Books by these authors (excluding cart items)
+      if (authorIds.length > 0) {
+        const aPlace = authorIds.map(() => '?').join(',');
+        const nPlace = bookIds.map(() => '?').join(',');
+        const params = [...authorIds, ...bookIds];
+
+        const [rows] = await db.query(
+          `
+        SELECT 
+          a.id   AS author_id,
+          a.name AS author_name,
+          a.slug AS author_slug,
+
+          b.id, b.slug, b.title_en, b.title_de, b.author,
+          b.image, b.price, b.original_price, b.rating, b.review_count,
+          b.isbn10, b.isbn13
+        FROM book_authors ba
+        JOIN books b   ON b.id = ba.book_id
+        JOIN authors a ON a.id = ba.author_id
+        WHERE ba.author_id IN (${aPlace})
+          AND b.id NOT IN (${nPlace})
+        ORDER BY a.name ASC,
+                 b.popularity_score DESC,
+                 b.rating DESC,
+                 b.review_count DESC,
+                 b.created_at DESC
+        `,
+          params
+        );
+
+        const metaByAuthor = new Map(
+          authRows.map(r => [
+            r.author_id,
+            {
+              id: r.author_id,
+              name: r.author_name,
+              slug: r.author_slug,
+              photo: normalize(r.photo),
+            }
+          ])
+        );
+
+        // Group by author_id
+        const grouped = new Map();
+        for (const r of rows) {
+          if (!grouped.has(r.author_id)) {
+            grouped.set(r.author_id, {
+              author: metaByAuthor.get(r.author_id) || {
+                id: r.author_id,
+                name: r.author_name,
+                slug: r.author_slug,
+                photo: null
+              },
+              books: []
+            });
+          }
+          grouped.get(r.author_id).books.push({
+            id: r.id,
+            slug: r.slug,
+            title_en: r.title_en,
+            title_de: r.title_de,
+            author: r.author,
+            image: normalize(r.image),
+            price: r.price,
+            original_price: r.original_price,
+            rating: r.rating,
+            review_count: r.review_count,
+            isbn10: r.isbn10,
+            isbn13: r.isbn13
+          });
+        }
+
+        // Limit per author (e.g., 12) and build flattened list
+        byAuthor = Array.from(grouped.values()).map(g => ({
+          ...g,
+          books: g.books.slice(0, 12)
+        }));
+
+        const seen = new Set();
+        for (const g of byAuthor) {
+          for (const b of g.books) {
+            if (!seen.has(b.id)) {
+              seen.add(b.id);
+              sameAuthor.push(b);
+            }
+          }
+        }
       }
 
-      const authors = [...new Set(books.map(b => b.author))];
-      const categories = [...new Set(books.map(b => b.category_id))];
-
-      // Same author recommendations
-      const [sameAuthor] = await db.query(
-        `SELECT id, slug, title_en, title_de, author, image, price, original_price
-       FROM books
-       WHERE author IN (${authors.map(() => '?').join(',')})
-       AND id NOT IN (${bookIds.map(() => '?').join(',')})
-       LIMIT 12`,
-        [...authors, ...bookIds]
-      );
-
-      // Similar category recommendations
-      const [similar] = await db.query(
-        `SELECT id, slug, title_en, title_de, author, image, price, original_price
-       FROM books
-       WHERE category_id IN (${categories.map(() => '?').join(',')})
-       AND id NOT IN (${bookIds.map(() => '?').join(',')})
-       LIMIT 12`,
-        [...categories, ...bookIds]
-      );
-
-      // Also bought recommendations
-      const [alsoBought] = await db.query(
+      // 3) Also bought (JSON_TABLE) — unchanged, normalized images
+      const [alsoBoughtRows] = await db.query(
         `
-      SELECT DISTINCT b.id, b.slug, b.title_en, b.title_de, b.author, b.image, b.price, b.original_price
+      SELECT DISTINCT b.id, b.slug, b.title_en, b.title_de, b.author,
+             b.image, b.price, b.original_price, b.rating, b.review_count,
+             b.isbn10, b.isbn13
       FROM orders o
       JOIN JSON_TABLE(o.order_items, '$[*]'
-        COLUMNS (bookId INT PATH '$.bookId')
-      ) jt1 ON jt1.bookId IN (${bookIds.map(() => '?').join(',')})
+           COLUMNS ( bookId INT PATH '$.bookId' )
+      ) jt1 ON jt1.bookId IN (${placeholders})
       JOIN JSON_TABLE(o.order_items, '$[*]'
-        COLUMNS (otherBookId INT PATH '$.bookId')
-      ) jt2 ON jt2.otherBookId NOT IN (${bookIds.map(() => '?').join(',')})
+           COLUMNS ( otherBookId INT PATH '$.bookId' )
+      ) jt2 ON jt2.otherBookId NOT IN (${placeholders})
       JOIN books b ON b.id = jt2.otherBookId
       LIMIT 12
       `,
         [...bookIds, ...bookIds]
       );
+      const alsoBought = (alsoBoughtRows || []).map(b => ({ ...b, image: normalize(b.image) }));
 
-      // Deduplicate results
-      const dedupe = arr => {
-        const seen = new Set();
-        return arr.filter(b => {
-          if (seen.has(b.id)) return false;
-          seen.add(b.id);
-          return true;
-        });
-      };
+      // 4) Similar category — unchanged, normalized images
+      const [catRows] = await db.query(
+        `SELECT DISTINCT category_id FROM books WHERE id IN (${placeholders})`,
+        bookIds
+      );
+      const cats = (catRows || []).map(r => r.category_id).filter(Boolean);
 
-      res.json({
-        sameAuthor: dedupe(sameAuthor),
-        alsoBought: dedupe(alsoBought),
-        similar: dedupe(similar)
-      });
+      let similar = [];
+      if (cats.length > 0) {
+        const cPlace = cats.map(() => '?').join(',');
+        const nPlace = bookIds.map(() => '?').join(',');
+        const [simRows] = await db.query(
+          `
+        SELECT id, slug, title_en, title_de, author,
+               image, price, original_price, rating, review_count,
+               isbn10, isbn13
+        FROM books
+        WHERE category_id IN (${cPlace})
+          AND id NOT IN (${nPlace})
+        LIMIT 12
+        `,
+          [...cats, ...bookIds]
+        );
+        similar = (simRows || []).map(b => ({ ...b, image: normalize(b.image) }));
+      }
+
+      return res.json({ byAuthor, sameAuthor, alsoBought, similar });
     } catch (err) {
-      console.error('Cart recommendations error:', err);
-      res.status(500).json({ sameAuthor: [], alsoBought: [], similar: [] });
+      console.error('[cart/recommendations] error:', err);
+      return res.status(500).json({ byAuthor: [], sameAuthor: [], alsoBought: [], similar: [] });
     }
   });
 
