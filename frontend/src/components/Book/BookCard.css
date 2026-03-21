@@ -73,7 +73,7 @@
 }
 
 /* RATING SUMMARY (one line, no wrapping) */
-.rating-summary {
+.rating-info .rating-summary {
   margin: 8px 16px 12px;
   display: flex;
   align-items: center;
@@ -206,7 +206,7 @@
     font-size: 0.85rem;
   }
 
-  .rating-summary {
+  .rating-info .rating-summary {
     margin: 8px 12px 10px;
   }
 
@@ -253,7 +253,7 @@
   .discount-badge {
     white-space: nowrap;
   }
-  
+
   .swiper-slide {
     height: auto !important;
     display: flex;
