@@ -525,3 +525,85 @@
     gap: 8px !important;
   }
 }
+
+
+/* ============================
+   MOBILE: center the +/- icon buttons
+   ============================ */
+@media (max-width: 768px) {
+
+  /* Square, centered icon-only buttons in the mobile cart item */
+  .mobile-qty .ant-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    /* keep square with slightly rounded corners */
+  }
+
+  .mobile-qty .ant-btn .anticon {
+    font-size: 16px;
+    line-height: 1;
+  }
+}
+
+/* Optional: make the table (desktop) +/- look balanced as well */
+.qty-control .ant-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+
+/* ============================
+   Headings: unify sizes + decorative bars (all viewports)
+   ============================ */
+.cart-page .section-title,
+.cart-page .rec-section-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #9333ea;
+  text-align: center; /* center so bars look symmetric */
+  margin: 0 0 40px 0;
+}
+
+/* Decorative "bars" on both sides of the title */
+.cart-page .section-title.with-bars,
+.cart-page .rec-section-title.with-bars {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+}
+
+.cart-page .section-title.with-bars::before,
+.cart-page .section-title.with-bars::after,
+.cart-page .rec-section-title.with-bars::before,
+.cart-page .rec-section-title.with-bars::after {
+  content: "";
+  flex: 1 1 24px;   /* stretch lines to edges, minimum length present even on small screens */
+  height: 2px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    #e5e7eb 30%,
+    #e5e7eb 70%,
+    transparent 100%
+  );
+}
+
+/* Mobile: slightly smaller title size, bars still visible */
+@media (max-width: 768px) {
+  .cart-page .section-title,
+  .cart-page .rec-section-title {
+    font-size: 1.8rem;
+    margin-bottom: 28px;
+  }
+}

@@ -2621,10 +2621,18 @@ const computeWorkId = (titleEn, titleDe, author) => {
           ])
         );
 
-        // Group by author_id
+        // Seed groups with every author from the cart (ensures multi-author visibility)
         const grouped = new Map();
+        for (const a of authRows) {
+          grouped.set(a.author_id, {
+            author: metaByAuthor.get(a.author_id),
+            books: []
+          });
+        }
+
+        // Now add the recommended books per author
         for (const r of rows) {
-          if (!grouped.has(r.author_id)) {
+          {/*if (!grouped.has(r.author_id)) {
             grouped.set(r.author_id, {
               author: metaByAuthor.get(r.author_id) || {
                 id: r.author_id,
@@ -2635,7 +2643,11 @@ const computeWorkId = (titleEn, titleDe, author) => {
               books: []
             });
           }
-          grouped.get(r.author_id).books.push({
+          grouped.get(r.author_id).books.push({*/}
+
+          const g = grouped.get(r.author_id);
+          if (!g) continue;
+          g.books.push({
             id: r.id,
             slug: r.slug,
             title_en: r.title_en,
@@ -2652,10 +2664,9 @@ const computeWorkId = (titleEn, titleDe, author) => {
         }
 
         // Limit per author (e.g., 12) and build flattened list
-        byAuthor = Array.from(grouped.values()).map(g => ({
-          ...g,
-          books: g.books.slice(0, 12)
-        }));
+        byAuthor = Array.from(grouped.values())
+          .map(g => ({ ...g, books: g.books.slice(0, 12) }))
+          .filter(g => g.books.length > 0); // hide empty author sections
 
         const seen = new Set();
         for (const g of byAuthor) {

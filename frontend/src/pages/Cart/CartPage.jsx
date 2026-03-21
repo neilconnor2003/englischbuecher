@@ -706,8 +706,8 @@ const CartPage = () => {
           {user && (
             <div className="cart-wishlist full-bleed">
               <div className="inner-limit">
-                <h2 className="section-title">{t("your_wishlist")}</h2>
-
+                {/*h2 className="section-title">{t("your_wishlist")}</h2>*/}
+                <h2 className="section-title with-bars">{t("your_wishlist")}</h2>
                 {wishlistLoading && (
                   <div className="rec-loading">
                     {t("loading_wishlist")}
@@ -720,7 +720,8 @@ const CartPage = () => {
 
                 {!wishlistLoading && wishlistBooks.length > 0 && (
                   <section className="recommendations-section">
-                    <h3 className="rec-section-title">
+                    {/*<h3 className="rec-section-title">*/}
+                    <h3 className="rec-section-title with-bars">
                       {t("saved_for_later")}
                     </h3>
                     {renderRecSlider(
@@ -736,7 +737,8 @@ const CartPage = () => {
           {/* GENERAL RECOMMENDATIONS */}
           <div className="cart-recommendations full-bleed">
             <div className="inner-limit">
-              <h2 className="section-title">
+              {/*<h2 className="section-title">*/}
+              <h2 className="section-title with-bars">
                 {t("you_might_also_like")}
               </h2>
 
@@ -759,7 +761,8 @@ const CartPage = () => {
                 <>
                   {recommendations.byAuthor.map((group) => (
                     <section className="recommendations-section" key={group.author.id}>
-                      <h3 className="rec-section-title">
+                      {/*<h3 className="rec-section-title">*/}
+                      <h3 className="rec-section-title with-bars">
                         {t('more_from_author', { author: group.author.name })}
                       </h3>
                       {renderRecSlider(group.books)}
@@ -767,7 +770,8 @@ const CartPage = () => {
                   ))}
                 </>
               )}
-
+              
+              {/* Flattened fallback, only if per-author is empty */}
               {!recLoading && recommendations.byAuthor.length === 0 && recommendations.sameAuthor.length > 0 && (
                 <section className="recommendations-section">
                   <h3 className="rec-section-title">
@@ -797,8 +801,9 @@ const CartPage = () => {
             </div>
           </div>
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 };
 
