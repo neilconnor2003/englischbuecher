@@ -707,7 +707,7 @@ const CartPage = () => {
             <div className="cart-wishlist full-bleed">
               <div className="inner-limit">
                 {/*h2 className="section-title">{t("your_wishlist")}</h2>*/}
-                <h2 className="section-title with-bars">{t("your_wishlist")}</h2>
+                {/*<h2 className="section-title with-bars">{t("your_wishlist")}</h2>*/}
                 {wishlistLoading && (
                   <div className="rec-loading">
                     {t("loading_wishlist")}
@@ -738,9 +738,9 @@ const CartPage = () => {
           <div className="cart-recommendations full-bleed">
             <div className="inner-limit">
               {/*<h2 className="section-title">*/}
-              <h2 className="section-title with-bars">
+              {/*<h2 className="section-title with-bars">
                 {t("you_might_also_like")}
-              </h2>
+              </h2>*/}
 
               {recLoading && (
                 <div className="rec-loading">
@@ -770,7 +770,7 @@ const CartPage = () => {
                   ))}
                 </>
               )}
-              
+
               {/* Flattened fallback, only if per-author is empty */}
               {!recLoading && recommendations.byAuthor.length === 0 && recommendations.sameAuthor.length > 0 && (
                 <section className="recommendations-section">
