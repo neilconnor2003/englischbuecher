@@ -570,7 +570,8 @@
   font-size: 2.2rem;
   font-weight: 800;
   color: #9333ea;
-  text-align: center; /* center so bars look symmetric */
+  text-align: center;
+  /* center so bars look symmetric */
   margin: 0 0 40px 0;
 }
 
@@ -588,22 +589,124 @@
 .cart-page .rec-section-title.with-bars::before,
 .cart-page .rec-section-title.with-bars::after {
   content: "";
-  flex: 1 1 24px;   /* stretch lines to edges, minimum length present even on small screens */
+  flex: 1 1 24px;
+  /* stretch lines to edges, minimum length present even on small screens */
   height: 2px;
-  background: linear-gradient(
-    to right,
-    transparent 0%,
-    #e5e7eb 30%,
-    #e5e7eb 70%,
-    transparent 100%
-  );
+  background: linear-gradient(to right,
+      transparent 0%,
+      #e5e7eb 30%,
+      #e5e7eb 70%,
+      transparent 100%);
 }
 
 /* Mobile: slightly smaller title size, bars still visible */
 @media (max-width: 768px) {
+
   .cart-page .section-title,
   .cart-page .rec-section-title {
     font-size: 1.8rem;
     margin-bottom: 28px;
   }
+}
+
+
+/* =========================================================
+   A) Headings: same size for h2 and h3 + decorative lines
+   ========================================================= */
+.cart-page .section-title,
+.cart-page .rec-section-title {
+  /* Unify typography across H2/H3 regardless of default UA styles */
+  font-size: 2.2rem !important;
+  line-height: 1.15 !important;
+  font-weight: 800 !important;
+  color: #9333ea !important;
+  margin: 0 0 40px 0 !important;
+  text-align: center !important;
+  letter-spacing: 0 !important;
+  display: block;
+  /* base reset */
+}
+
+/* Keep sizes in sync on mobile too (some mobile UAs downsize h2) */
+@media (max-width: 768px) {
+
+  .cart-page .section-title,
+  .cart-page .rec-section-title {
+    font-size: 1.8rem !important;
+    margin-bottom: 28px !important;
+  }
+}
+
+/* Decorative bars (both sides) — works on desktop & mobile */
+.cart-page .section-title.with-bars,
+.cart-page .rec-section-title.with-bars {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  /* ensure pseudo-lines have room */
+}
+
+.cart-page .section-title.with-bars::before,
+.cart-page .section-title.with-bars::after,
+.cart-page .rec-section-title.with-bars::before,
+.cart-page .rec-section-title.with-bars::after {
+  content: "" !important;
+  flex: 1 1 24px !important;
+  /* still visible even if very narrow */
+  height: 2px !important;
+  background: linear-gradient(to right,
+      transparent 0%,
+      #e5e7eb 30%,
+      #e5e7eb 70%,
+      transparent 100%) !important;
+}
+
+/* If a heading sits inside a constrained container, keep lines visible */
+.cart-page .inner-limit .section-title.with-bars,
+.cart-page .inner-limit .rec-section-title.with-bars {
+  max-width: 100% !important;
+  overflow: visible !important;
+}
+
+/* =========================================================
+   B) Mobile: perfectly centered "- / +" buttons
+   (overrides AntD defaults which use internal line-heights)
+   ========================================================= */
+@media (max-width: 768px) {
+  .mobile-qty .ant-btn {
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 8px !important;
+    line-height: 1 !important;
+    /* avoid vertical mis-centering */
+  }
+
+  .mobile-qty .ant-btn .anticon {
+    font-size: 16px !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
+  }
+}
+
+/* Desktop/table quantity buttons (keeps look cohesive but smaller) */
+.cart-page .qty-control .ant-btn {
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 6px !important;
+  line-height: 1 !important;
+}
+
+.cart-page .qty-control .ant-btn .anticon {
+  line-height: 1 !important;
+  vertical-align: middle !important;
 }
