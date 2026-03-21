@@ -232,10 +232,11 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
         {/* Rating summary (one line; no top ribbon) */}
         <div className="rating-summary">
           <Rate disabled allowHalf value={toNumber(book.rating)} className="rating-stars-inline" />
-          <span className="rating-info">
+        </div>
+
+        <div className="rating-info">
             {formatOneDecimal(toNumber(book.rating), i18n)}
             {book.review_count > 0 ? ` (${book.review_count})` : ''}
-          </span>
         </div>
 
         {/* Price block */}
