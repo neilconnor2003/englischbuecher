@@ -230,14 +230,20 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
         <p className="author">{book.author || 'Unknown Author'}</p>
 
         {/* Rating summary (one line; no top ribbon) */}
-        <div className="rating-summary">
-          <Rate disabled allowHalf value={toNumber(book.rating)} className="rating-stars-inline" />
-        </div>
 
-        <div className="rating-info">
+        <div className="rating-summary">
+          <Rate
+            disabled
+            allowHalf
+            value={toNumber(book.rating)}
+            className="rating-stars-inline"
+          />
+          <span className="rating-info">
             {formatOneDecimal(toNumber(book.rating), i18n)}
             {book.review_count > 0 ? ` (${book.review_count})` : ''}
+          </span>
         </div>
+
 
         {/* Price block */}
         <div className="price-block">

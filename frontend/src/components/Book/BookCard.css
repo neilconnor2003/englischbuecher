@@ -73,7 +73,7 @@
 }
 
 /* RATING SUMMARY (one line, no wrapping) */
-.rating-info .rating-summary {
+.rating-summary {
   margin: 8px 16px 12px;
   display: flex;
   align-items: center;
@@ -206,7 +206,7 @@
     font-size: 0.85rem;
   }
 
-  .rating-info .rating-summary {
+  .rating-summary {
     margin: 8px 12px 10px;
   }
 
@@ -262,5 +262,47 @@
 
   .popular-card-wrapper {
     height: auto !important;
+  }
+}
+
+
+/* Keep the stars + text perfectly aligned on the same baseline */
+.rating-summary {
+  align-items: center;
+  /* already present, but safe to keep */
+}
+
+/* Prevent wrap on the rating label + count (e.g., 4.7 (123)) */
+.rating-summary .rating-info {
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   MOBILE: Align 2-line rating properly (stars + rating text)
+   ========================================================= */
+@media (max-width: 768px) {
+
+  /* Ensure the second line aligns exactly with stars */
+  .rating-info {
+    display: block !important;
+    /* full-width line */
+    margin: 0 12px 10px !important;
+    /* same left/right as rating-summary */
+    font-size: 14px !important;
+    /* match rating-summary */
+    color: #9333ea !important;
+    /* keep your purple tone */
+    font-weight: 600 !important;
+    /* consistent weight */
+    white-space: nowrap !important;
+    /* prevent awkward wrapping */
+  }
+}
+
+
+@media (max-width: 768px) {
+  .rating-summary {
+    margin-bottom: 4px !important;
   }
 }
