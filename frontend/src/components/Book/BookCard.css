@@ -242,6 +242,7 @@
    ========================================================= */
 @media (max-width: 768px) {
   .book-card {
+    overflow: visible !important;
     height: auto !important;
   }
 
@@ -297,6 +298,12 @@
     /* consistent weight */
     white-space: nowrap !important;
     /* prevent awkward wrapping */
+
+    /* Prevent clipping */
+    overflow: visible !important;
+    position: relative !important;
+    z-index: 2 !important;
+
   }
 }
 
