@@ -425,7 +425,7 @@
   /* Let the card shrink instead of forcing 300px */
   .home-page-v2 .popular-card-wrapper {
     width: 100% !important;
-    max-width: 280px !important; /* safe for all mobiles */
+    max-width: 260px !important; /* safe for all mobiles */
   }
 
   /* Reduce slide spacing so content does not overflow */
@@ -433,6 +433,6 @@
   .new-arrivals-swiper .swiper-slide,
   .category-books-swiper .swiper-slide {
     padding: 0 8px !important;
-    margin-right: 12px !important;
+    margin-right: 16px !important;
   }
 }
