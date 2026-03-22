@@ -416,3 +416,21 @@
     margin: 0;
   }
 }
+
+
+/* =========================================================
+   MOBILE FIX — Allow BookCard width to shrink on small screens
+   ========================================================= */
+@media (max-width: 768px) {
+  .home-page-v2 .popular-card-wrapper {
+    width: 100% !important;          /* <-- Fix */
+    max-width: 300px !important;     /* <-- allow but not force */
+  }
+
+  /* Also ensure swiper slides don’t force extra right overflow */
+  .popular-swiper .swiper-slide,
+  .new-arrivals-swiper .swiper-slide,
+  .category-books-swiper .swiper-slide {
+    margin-right: 16px !important;   /* reduce for mobile */
+  }
+}
