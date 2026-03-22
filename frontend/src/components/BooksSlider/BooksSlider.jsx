@@ -2,33 +2,34 @@
 // frontend/src/components/BooksSlider/BooksSlider.jsx
 import React from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination } from 'swiper/modules';
+import { Pagination } from 'swiper/modules';            // 👈 dots only (no arrows)
 import 'swiper/css';
-import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+
 import BookCard from '../Book/BookCard';
 
-export default function BooksSlider({ books, variant = 'default', className = '', onItemClick }) {
+export default function BooksSlider({
+  books = [],
+  variant = 'default',
+  className = 'home-swiper',                            // 👈 default to unified class
+  onItemClick,
+}) {
   return (
     <Swiper
-      modules={[Navigation, Pagination]}
-      spaceBetween={30}
-      slidesPerView={2}
-      navigation
-      pagination={{ clickable: true }}
-      loop={false}
-      watchOverflow
-      breakpoints={{
-        640: { slidesPerView: 3, spaceBetween: 20 },
-        768: { slidesPerView: 4, spaceBetween: 24 },
-        1024: { slidesPerView: 4.1, spaceBetween: 30 },
-        1280: { slidesPerView: 4.1, spaceBetween: 30 },
-      }}
       className={className}
+      slidesPerView="auto"                               // 👈 device‑agnostic: 1 full card + peek
+      spaceBetween={12}                                  // 👈 matches our Home.css spacing
+      pagination={{ clickable: true }}
+      modules={[Pagination]}
     >
-      {books.map(b => (
+      {books.map((b) => (
         <SwiperSlide key={b.id}>
-          <div className="popular-card-wrapper">
-            <BookCard book={b} variant={variant} showActions onClick={() => onItemClick?.(b)} />
+          <div className="popular-card-wrapper">         {/* 👈 enforces the 260px cap cleanly */}
+            <BookCard
+              book={b}
+              variant={variant}
+              onClick={() => onItemClick?.(b)}
+            />
           </div>
         </SwiperSlide>
       ))}

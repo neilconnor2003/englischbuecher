@@ -1,11 +1,8 @@
-/* Clickable area wrapper */
-.book-card-link {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-}
+/* =========================================================
+   UNIVERSAL BOOK CARD — DEVICE AGNOSTIC, SAFE FOR SLIDERS
+   ========================================================= */
 
-/* MAIN CARD */
+/* Core wrapper */
 .book-card {
   background: #fff;
   border-radius: 16px;
@@ -14,93 +11,69 @@
   transition: transform 0.3s ease;
   display: flex;
   flex-direction: column;
-  height: 100%;
   position: relative;
+  width: 100%;
+  max-width: 260px;
+  /* ⭐ UNIVERSAL FIX */
 }
 
 .book-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  transform: translateY(-6px);
 }
 
-/* VARIANTS - image height only */
-.book-card--default img {
-  height: 260px;
-}
-
-.book-card--compact img {
-  height: 220px;
-}
-
-.book-card--large img {
-  height: 320px;
-}
-
-/* IMAGE */
+/* Images */
 .book-card img {
   width: 100%;
   object-fit: cover;
+  height: 260px;
   transition: transform 0.3s ease;
 }
 
-.book-card:hover img {
-  transform: scale(1.05);
-}
-
-/* TITLE */
+/* Title */
 .book-card h3 {
-  margin: 16px 16px 8px;
-  font-size: 1.1rem;
+  margin: 12px 12px 6px;
+  font-size: 1rem;
   font-weight: 600;
-  color: #222;
-  line-height: 1.4;
+  line-height: 1.3;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  /* vendor hint is fine */
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  min-height: 64px;
-  max-height: 64px;
 }
 
-/* AUTHOR */
+/* Author */
 .book-card .author {
-  margin: 0 16px 8px;
-  font-size: 0.9rem;
+  margin: 0 12px 4px;
+  font-size: 0.85rem;
   color: #666;
 }
 
-/* RATING SUMMARY (one line, no wrapping) */
+/* Rating row (two-line mobile-safe layout) */
 .rating-summary {
-  margin: 8px 16px 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: #555;
-  white-space: nowrap;
-  /* force single line */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-height: 22px;
-  /* stable vertical height */
+  margin: 6px 12px 2px;
 }
 
-.rating-stars-inline {
-  font-size: 16px !important;
+.rating-summary .ant-rate {
+  font-size: 16px;
   color: #9333ea !important;
 }
 
+/* Second line: rating number + count */
 .rating-info {
+  margin: 0 12px 10px;
+  font-size: 14px;
   font-weight: 600;
   color: #9333ea;
+  white-space: nowrap;
+  /* ⭐ Prevents wrap of 4.7 (123) */
+  display: block;
+  /* ⭐ Forces second line cleanly */
 }
 
-/* PRICE BLOCK */
+/* Price block */
 .price-block {
-  margin: 8px 16px 16px;
+  margin: 6px 12px 12px;
   display: flex;
   align-items: baseline;
   gap: 10px;
@@ -109,207 +82,73 @@
 .original-price {
   text-decoration: line-through;
   color: #888;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .current-price {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   font-weight: 700;
-  color: #8A2BE2;
+  color: #8a2be2;
 }
 
+/* Discount badge */
 .discount-badge {
-  background: #CC0C39;
+  background: #cc0c39;
   color: #fff;
-  font-size: 0.8rem;
-  font-weight: 700;
   padding: 2px 8px;
+  font-size: 0.75rem;
   border-radius: 8px;
+  white-space: nowrap;
 }
 
-/* ACTIONS ROW */
+/* Wishlist heart */
+.wishlist-heart-btn {
+  position: absolute !important;
+  top: 8px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+/* Actions */
 .book-actions {
-  margin: 0 16px 16px;
+  margin: 0 12px 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: auto;
+  gap: 8px;
 }
 
 .book-actions .ant-btn {
-  border-radius: 10px;
-  font-weight: 600;
-  background: #8A2BE2;
-  border-color: #8A2BE2;
-  color: #fff;
   height: 42px;
+  border-radius: 10px;
   font-size: 15px;
-  padding: 0 16px;
+  font-weight: 600;
 }
 
-.book-actions .ant-btn:hover {
-  background: #6A1B9A;
-  border-color: #6A1B9A;
-}
-
-.book-actions .ant-btn:disabled {
-  background: #9ca3af;
-  border-color: #9ca3af;
-}
-
-/* DETAILS LINK */
+/* Details link */
 .details-link {
   text-align: center;
-  color: #8A2BE2;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  color: #8a2be2;
   text-decoration: none;
-  margin-top: 2px;
-  font-weight: 500;
 }
 
 .details-link:hover {
   text-decoration: underline;
 }
 
-/* WISHLIST HEART (push further to the right) */
-.wishlist-heart-btn {
-  position: absolute !important;
-  top: 8px;
-  right: 12px;
-  z-index: 10;
-  background: rgba(255, 255, 255, 0.95) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s ease;
-}
-
-.wishlist-heart-btn:hover {
-  transform: scale(1.2);
-}
-
-/* MOBILE */
+/* MOBILE TWEAKS */
 @media (max-width: 768px) {
-  .book-card--default img {
+  .book-card img {
     height: 220px;
   }
 
   .book-card h3 {
-    margin: 12px 12px 6px;
-    font-size: 1rem;
-    min-height: auto;
-    max-height: none;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
-  }
-
-  .book-card .author {
-    margin: 0 12px 6px;
-    font-size: 0.85rem;
-  }
-
-  .rating-summary {
-    margin: 8px 12px 10px;
+    font-size: 0.95rem;
   }
 
   .price-block {
-    margin: 8px 12px 12px;
-  }
-
-  .current-price {
-    font-size: 1.15rem;
-  }
-
-  .book-actions {
-    margin: 0 12px 12px;
-    gap: 8px;
-  }
-
-  .book-actions .ant-btn {
-    height: auto !important;
-    min-height: 42px;
-    padding: 8px 14px;
-    line-height: 1.2;
-    white-space: normal;
-    text-align: center;
-  }
-
-  .details-link {
-    font-size: 0.8rem;
-  }
-}
-
-/* =========================================================
-   MOBILE FIX 3A: Allow cards to grow (no clipping)
-   ========================================================= */
-@media (max-width: 768px) {
-  .book-card {
-    overflow: visible !important;
-    height: auto !important;
-  }
-
-  .price-block {
-    flex-wrap: wrap;
-    row-gap: 6px;
-  }
-
-  .discount-badge {
-    white-space: nowrap;
-  }
-
-  .swiper-slide {
-    height: auto !important;
-    display: flex;
-    align-items: stretch;
-  }
-
-  .popular-card-wrapper {
-    height: auto !important;
-  }
-}
-
-
-/* Keep the stars + text perfectly aligned on the same baseline */
-.rating-summary {
-  align-items: center;
-  /* already present, but safe to keep */
-}
-
-/* Prevent wrap on the rating label + count (e.g., 4.7 (123)) */
-.rating-summary .rating-info {
-  white-space: nowrap;
-}
-
-
-/* =========================================================
-   MOBILE: Align 2-line rating properly (stars + rating text)
-   ========================================================= */
-@media (max-width: 768px) {
-
-  /* Ensure the second line aligns exactly with stars */
-  .rating-info {
-    display: block !important;
-    /* full-width line */
-    margin: 0 12px 10px !important;
-    /* same left/right as rating-summary */
-    font-size: 14px !important;
-    /* match rating-summary */
-    color: #9333ea !important;
-    /* keep your purple tone */
-    font-weight: 600 !important;
-    /* consistent weight */
-    white-space: nowrap !important;
-    /* prevent awkward wrapping */
-
-    /* Prevent clipping */
-    overflow: visible !important;
-    position: relative !important;
-    z-index: 2 !important;
-
-  }
-}
-
-
-@media (max-width: 768px) {
-  .rating-summary {
-    margin-bottom: 4px !important;
+    margin: 6px 12px 12px;
   }
 }

@@ -113,7 +113,7 @@ function Home() {
             <BooksSlider
               books={popularBooks}
               variant="default"
-              className="popular-swiper"
+              className="home-swiper"
             />
           </div>
         </section>
@@ -136,7 +136,7 @@ function Home() {
             <BooksSlider
               books={newArrivals}
               variant="default"
-              className="new-arrivals-swiper"
+              className="home-swiper"
             />
           </div>
         </section>
@@ -160,7 +160,7 @@ function Home() {
             <BooksSlider
               books={section.books}
               variant="default"
-              className="category-books-swiper"
+              className="home-swiper"
             />
           </div>
         </section>
