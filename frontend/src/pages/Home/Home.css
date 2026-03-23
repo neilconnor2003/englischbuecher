@@ -1,114 +1,265 @@
 
 /* =========================================================
-   CLEAN, UNIVERSAL HOME PAGE STYLES
+   Home — Clean, unified, device‑agnostic stylesheet
+   Preserves original design + fixes slider conflicts
    ========================================================= */
 
+/* PAGE + CONTAINER */
 .home-page-v2 {
-  background: linear-gradient(to bottom, #faf8ff, #ffffff);
+  background: linear-gradient(to bottom, #faf8ff 0%, #ffffff 100%);
   min-height: 100vh;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, sans-serif;
 }
-
 .home-page-v2 .container {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 20px;
 }
 
-/* ---------- SECTION TITLES ---------- */
+/* SECTION TITLES (preserved from original) */
 .section-title {
-  font-size: 2.4rem;
+  font-size: 2.5rem;
   font-weight: 800;
-  color: #9333ea;
   text-align: center;
-  margin: 70px 0 40px;
+  margin: 80px 0 50px;
+  color: #9333ea;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 16px;
   position: relative;
 }
-
 .section-title::before,
 .section-title::after {
-  content: "";
+  content: '';
   flex: 1;
-  max-width: 200px;
   height: 2px;
   background: linear-gradient(to right, transparent, #c4b5fd, transparent);
+  max-width: 200px;
 }
 
-/* ---------- CATEGORY STRIP ---------- */
+.title-icon {
+  color: #9333ea;
+  animation: pulse 2s infinite;
+}
+.fire {
+  background: linear-gradient(135deg, #9333ea, #c4b5fd);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 1.2em;
+}
+
+/* CATEGORIES SECTION (unchanged design) */
+.categories-section {
+  padding: 20px 0 0px;
+  background: linear-gradient(to bottom, #f8f5ff 0%, #ffffff 100%);
+  position: relative;
+}
+.categories-section::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 100px;
+  background: linear-gradient(to top, transparent 0%, #9333ea08 100%);
+  border-radius: 80px 80px 0 0;
+  pointer-events: none;
+}
+.categories-section .section-title {
+  color: #9333ea !important;
+  font-weight: 900;
+}
+.categories-section .category-name {
+  color: #9333ea;
+  font-weight: 700;
+}
+
+/* CATEGORY SCROLLER (from your original version) */
 .categories-grid {
   display: flex;
   gap: 24px;
   overflow-x: auto;
-  padding: 12px 16px 20px;
+  padding: 10px 16px 20px;
   scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  justify-content: flex-start;
+  scroll-padding-left: 16px;
 }
 .categories-grid::-webkit-scrollbar { display: none; }
+.categories-grid { scrollbar-width: none; }
 
 .category-card {
   min-width: 160px;
   max-width: 160px;
   flex: 0 0 auto;
   scroll-snap-align: center;
-  background: #fff;
+
+  background: white;
   border-radius: 28px;
   padding: 28px 20px;
   text-align: center;
-  box-shadow: 0 10px 30px rgba(147,51,234,0.1);
+  box-shadow: 0 10px 30px rgba(147, 51, 234, 0.1);
   border: 1px solid #e4d9ff;
-  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.4s ease;
 }
 .category-card:hover {
-  transform: translateY(-10px);
+  transform: translateY(-12px) scale(1.05);
+  box-shadow: 0 20px 50px rgba(147, 51, 234, 0.25);
+  border-color: #9333ea;
+}
+.category-icon,
+.category-icon-placeholder {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #9333ea, #c4b5fd);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 8px 25px rgba(147, 51, 234, 0.3);
 }
 
-/* ---------- UNIFIED SWIPER ---------- */
+/* BOOK SECTIONS (unchanged) */
+.popular-section { padding: 20px 0; background: white; }
+
+.category-books-section {
+  padding: 20px 0;
+  background: #faf8ff;
+}
+.category-books-section:nth-child(even) { background: white; }
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 50px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.section-header .section-title {
+  margin: 0;
+  font-size: 2.2rem;
+  text-align: left;
+}
+.view-all-btn {
+  background: #9333ea;
+  color: white;
+  padding: 12px 32px;
+  border-radius: 50px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s;
+  box-shadow: 0 8px 25px rgba(147, 51, 234, 0.3);
+}
+.view-all-btn:hover {
+  background: #7c2ae8;
+  transform: translateY(-3px);
+}
+
+/* =========================================================
+   UNIFIED SWIPER (replaces all old swiper classes)
+   Thalia-style 1 full card + peek next card
+   ========================================================= */
+
 .home-swiper .swiper-slide {
   width: auto !important;
   flex-shrink: 0 !important;
-  padding: 0 8px;
-  margin-right: 12px;
+  padding: 0 12px;
+  margin-right: 30px !important;
   box-sizing: border-box;
 }
 
-/* Remove arrows (touch-swipe only) */
-.home-swiper .swiper-button-next,
-.home-swiper .swiper-button-prev {
+/* Remove arrows globally */
+.home-swiper .swiper-button-prev,
+.home-swiper .swiper-button-next {
   display: none !important;
 }
 
 /* Keep dots */
 .home-swiper .swiper-pagination {
   position: relative !important;
-  margin-top: 20px;
+  margin-top: 30px !important;
 }
 .home-swiper .swiper-pagination-bullet-active {
   background: #9333ea !important;
 }
 
-/* ---------- CARD WRAPPER ---------- */
+/* BookCard wrapper (enforces universal 260px max-width) */
 .popular-card-wrapper {
   width: 100%;
-  max-width: 260px !important;     /* ⭐ MATCHES BOOKCARD */
+  max-width: 260px !important;
   height: 100%;
   display: flex;
 }
 
-/* ---------- RESPONSIVE ---------- */
+/* NEW ARRIVALS (your original design preserved) */
+.new-arrivals-section {
+  padding: 80px 0;
+  background: linear-gradient(to bottom, #fff0fb 0%, #f8f5ff 100%);
+  position: relative;
+}
+.new-arrivals-section::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="20" cy="20" r="8" fill="%23c4b5fd33"/><circle cx="80" cy="40" r="6" fill="%23e879f933"/><circle cx="50" cy="80" r="10" fill="%239333ea22"/></svg>');
+  opacity: 0.3;
+  pointer-events: none;
+}
+.new-release-glow {
+  background: linear-gradient(135deg, #ec4899, #a855f7, #8b5cf6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 1.4em;
+  font-weight: 900;
+}
+.new-arrivals-section .book-item { transition: transform 0.3s ease; }
+.new-arrivals-section .book-item:hover { transform: translateY(-8px); }
+
+/* ANIMATION */
+@keyframes pulse {
+  0%,100% { transform: scale(1); }
+  50%     { transform: scale(1.1); }
+}
+
+/* =========================================================
+   RESPONSIVE (≤768px) — preserves your original mobile layout
+   ========================================================= */
 @media (max-width: 768px) {
   .section-title {
     font-size: 2rem;
-    margin: 50px 0 30px;
+    margin: 60px 0 40px;
     flex-wrap: wrap;
+    text-align: center;
+    white-space: normal;
   }
   .section-title::before,
   .section-title::after {
     display: none;
   }
-  .category-card {
-    padding: 20px;
+
+  .category-card { padding: 20px; }
+  .category-icon, .category-icon-placeholder {
+    width: 70px; height: 70px;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .view-all-btn {
+    align-self: flex-end;
+  }
+
+  /* SAFE spacing: card + margins never overflow iPhone 11 */
+  .home-swiper .swiper-slide {
+    padding: 0 8px !important;
+    margin-right: 12px !important;
   }
 }
