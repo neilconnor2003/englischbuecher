@@ -263,3 +263,24 @@
     margin-right: 12px !important;
   }
 }
+
+
+/* Pixel 7 / German overflow fix */
+.section-title,
+.section-header .section-title {
+  white-space: normal !important;
+  flex-wrap: wrap !important;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.view-all-btn {
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .view-all-btn {
+    white-space: normal !important;
+    padding: 10px 20px;
+  }
+}

@@ -261,22 +261,34 @@
   }
 
   /* Row 1 stays compact */
-  .auth-links {
+  /*}.auth-links {
     flex-wrap: nowrap !important;
     /*gap: 10px;*/
-    gap: 6px !important;   /*   MOBILE COMPACTION FIX — FORCE 2 ROWS */
+  */
+  /*gap: 6px !important;
+    /*   MOBILE COMPACTION FIX — FORCE 2 ROWS */
+  */
+  /*} */
+
+
+  /* Mobile — safer spacing (Pixel 7 fix) */
+  .auth-links {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    justify-content: flex-end;
   }
+
 
   /* Make logo more compact on mobile */
   .logo {
     max-width: 140px;
     flex-shrink: 1;
   }
-  
+
   .logo-img {
     height: 36px;
   }
-  
+
   /* Slightly smaller mobile icon buttons */
   .header-icon-btn {
     width: 36px;
@@ -287,8 +299,12 @@
   /* Language switcher should not grow */
   .language-switcher,
   .language-switcher * {
-    max-width: 48px;
-    flex-shrink: 0;
+    /*max-width: 48px;
+    flex-shrink: 0;*/
+
+    max-width: unset !important;
+    flex-shrink: 1 !important;
+
   }
 
   /* Hide desktop-only items */
@@ -327,4 +343,16 @@
   .desktop-only {
     display: none !important;
   }
+}
+
+
+/* Keep icons spaced consistently across Android + iOS */
+.header-container,
+.auth-links {
+  column-gap: 12px;
+}
+
+/* Avoid icon collisions on Android Chrome */
+.header-icon-btn {
+  flex-shrink: 0 !important;
 }
