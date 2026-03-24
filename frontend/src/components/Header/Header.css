@@ -508,3 +508,55 @@
 .header-container {
   overflow-x: hidden;
 }
+
+
+/* =========================================================
+   UNIVERSAL TABLET/PHONE LANDSCAPE FIX (Pixel 7, iPad Mini, etc.)
+   ========================================================= */
+@media (orientation: landscape) and (max-height: 700px) {
+
+  /* Allow header to split into two rows */
+  .header-container {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    padding: 8px 12px !important;
+    row-gap: 10px !important;
+    overflow: hidden !important;
+  }
+
+  /* Move search bar to second row, full width */
+  .search-bar {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    margin-top: 8px !important;
+    order: 99;
+  }
+
+  /* Right-side icons: allow wrapping + shrinking */
+  .auth-links {
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    justify-content: flex-end !important;
+    min-width: 0 !important;
+  }
+
+  /* Language selector can shrink safely */
+  .language-switcher,
+  .language-switcher * {
+    max-width: none !important;
+    flex-shrink: 1 !important;
+  }
+
+  /* Prevent icons from pushing layout outward */
+  .header-icon-btn,
+  .cart-link,
+  .profile-avatar {
+    flex-shrink: 1 !important;
+  }
+
+  /* Keep logo visible and comfortably sized */
+  .logo-img {
+    height: 42px !important;
+    flex-shrink: 1 !important;
+  }
+}
