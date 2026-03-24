@@ -22,6 +22,7 @@ import { HeartFilled, HeartOutlined } from '@ant-design/icons';
 import { message, Button, Rate } from 'antd';
 import { generateBookUrl } from '../../utils/seoUrl';
 import BookReviews from '../../components/Book/BookReviews';
+import BooksSlider from '../../components/BooksSlider/BooksSlider';
 
 // Swiper imports (same as Home.jsx)
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -663,7 +664,7 @@ function BookDetails() {
                   <section className="recommendations-section">
                     <div className="container">
                       <h2>{t('more_from_author', { author: book.author })}</h2>
-                      {renderBooksSlider(recommendations.sameAuthor, 'recommendations-swiper')}
+                      <BooksSlider books={recommendations.sameAuthor} variant="default" className="home-swiper" />
                     </div>
                   </section>
                 )}
@@ -671,7 +672,7 @@ function BookDetails() {
                   <section className="recommendations-section">
                     <div className="container">
                       <h2>{t('customers_also_bought')}</h2>
-                      {renderBooksSlider(recommendations.alsoBought, 'recommendations-swiper')}
+                      <BooksSlider books={recommendations.alsoBought} variant="default" className="home-swiper" />
                     </div>
                   </section>
                 )}
@@ -679,7 +680,7 @@ function BookDetails() {
                   <section className="recommendations-section">
                     <div className="container">
                       <h2>{t('similar_books')}</h2>
-                      {renderBooksSlider(recommendations.similar, 'recommendations-swiper')}
+                      <BooksSlider books={recommendations.similar} variant="default" className="home-swiper" />
                     </div>
                   </section>
                 )}

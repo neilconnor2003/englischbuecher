@@ -1104,3 +1104,46 @@
     line-height: 1.4 !important;
   }
 }
+
+/* Use the same slide sizing as Home */
+.home-swiper .swiper-slide {
+  width: auto !important;
+  flex-shrink: 0 !important;
+  padding: 0 8px;
+  margin-right: 12px !important;
+  box-sizing: border-box;
+}
+
+/* The same wrapper width the Home page uses around BookCard */
+.popular-card-wrapper {
+  width: 100%;
+  max-width: 260px !important;
+  height: 100%;
+  display: flex;
+}
+
+
+/* Optional: match Home section title look in BookDetails */
+.recommendations-section > .container > h2 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #9333ea;
+  text-align: center;
+  margin: 50px 0 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.recommendations-section > .container > h2::before,
+.recommendations-section > .container > h2::after {
+  content: "";
+  flex: 1;
+  height: 2px;
+  max-width: 200px;
+  background: linear-gradient(to right, transparent, #c4b5fd, transparent);
+}
+@media (max-width: 768px) {
+  .recommendations-section > .container > h2::before,
+  .recommendations-section > .container > h2::after { display: none; }
+}
