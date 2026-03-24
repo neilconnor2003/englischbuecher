@@ -603,7 +603,7 @@
 }
 
 /* 2) Additional orientation safety for ALL landscape cases */
-@media (orientation: landscape) {
+/*@media (orientation: landscape) {
   .header-container {
     flex-wrap: wrap !important;
   }
@@ -612,4 +612,12 @@
     height: 46px !important;
     flex-shrink: 1 !important;
   }
-}
+}*/
+
+
+/* --- PC horizontal scroll safety (non‑visual) --- */
+.header { overflow-x: clip; }         /* contain any 1‑px flex overflow */
+.header-container { min-width: 0; }   /* allow the row to shrink */
+.logo, .search-bar, .auth-links { min-width: 0; }   /* let children shrink */
+.search-bar input,
+.search-bar .ant-select-selector { max-width: 100%; box-sizing: border-box; }

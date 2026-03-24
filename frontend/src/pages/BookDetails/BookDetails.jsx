@@ -48,6 +48,7 @@ function BookDetails() {
   const [adding, setAdding] = useState(false);
   const [mainImage, setMainImage] = useState('');
   const [recommendations, setRecommendations] = useState({ sameAuthor: [], alsoBought: [], similar: [] });
+  const [authorRecs, setAuthorRecs] = useState([]); // { author, books }[]
   const [recLoading, setRecLoading] = useState(true);
   const [reviewStats, setReviewStats] = useState({ total: 0, average: 0 });
 
@@ -273,15 +274,38 @@ function BookDetails() {
     }, [book?.author_id]);
   */
 
-  useEffect(() => {
+  /*useEffect(() => {
     if (!book?.authors || book.authors.length === 0) {
       setAuthor(null);
       return;
     }
     // store the full authors array
     setAuthor(book.authors);
-  }, [book]);
+  }, [book]);*/
 
+
+  useEffect(() => {
+    if (!book?.authors?.length) { setAuthorRecs([]); return; }
+    let cancelled = false;
+
+    (async () => {
+      const results = await Promise.all(
+        book.authors.map(async (a) => {
+          try {
+            const { data } = await axios.get(
+              `${config.API_URL}/api/authors/${a.id}/books?limit=12&exclude=${book.id}`
+            );
+            return { author: a, books: Array.isArray(data) ? data : [] };
+          } catch {
+            return { author: a, books: [] };
+          }
+        })
+      );
+      if (!cancelled) setAuthorRecs(results);
+    })();
+
+    return () => { cancelled = true; };
+  }, [book]);
 
 
   // Filter editions for selected format, exclude current book
@@ -660,20 +684,29 @@ function BookDetails() {
               <div className="rec-loading">{t('loading_recommendations') || 'Loading...'}</div>
             ) : (
               <>
-                {recommendations.sameAuthor.length > 0 && (
+
+                {authorRecs.map(({ author: a, books }) =>
+                  books.length > 0 && (
+                    <section className="recommendations-section" key={a.id}>
+                      <div className="container">
+                        <h2>{t('more_from_author', { author: a.name })}</h2>
+                        <BooksSlider title="" books={books} className="home-swiper" />
+                      </div>
+                    </section>
+                  )
+                )}
+                {/*{recommendations.sameAuthor.length > 0 && (
                   <section className="recommendations-section">
                     <div className="container">
                       <h2>{t('more_from_author', { author: book.author })}</h2>
-
                       <BooksSlider
                         title=""
                         books={recommendations.sameAuthor}
                         className="home-swiper"
                       />
-
                     </div>
                   </section>
-                )}
+                )}*/}
                 {recommendations.alsoBought.length > 0 && (
                   <section className="recommendations-section">
                     <div className="container">
