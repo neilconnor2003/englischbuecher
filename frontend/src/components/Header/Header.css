@@ -461,3 +461,45 @@
   }
 }
 
+
+/* =========================================================
+   UNIVERSAL FIX — Prevent header overflow on tablets + phones
+   ========================================================= */
+@media (max-height: 700px) and (orientation: landscape) {
+  .header-container {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    padding: 8px 12px !important;
+    row-gap: 8px !important;
+  }
+
+  .search-bar {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    order: 99;
+    margin-top: 6px !important;
+  }
+
+  .auth-links {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+  }
+
+  .language-switcher,
+  .language-switcher * {
+    max-width: none !important;
+    flex-shrink: 1 !important;
+  }
+
+  .logo-img {
+    height: 42px !important; /* slightly bigger on tablets */
+  }
+
+  .header-icon-btn,
+  .profile-avatar,
+  .cart-link {
+    flex-shrink: 1 !important;
+  }
+}
+
