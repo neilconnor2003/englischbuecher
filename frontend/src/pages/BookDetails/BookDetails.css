@@ -1147,3 +1147,24 @@
   .recommendations-section > .container > h2::before,
   .recommendations-section > .container > h2::after { display: none; }
 }
+
+
+/* --- BookDetails-only tightening for stacked author sliders --- */
+.book-details-page .home-swiper .swiper-pagination {
+  margin-top: 12px !important;   /* override Home.css 30px */
+}
+
+/* Reduce heading bottom space just a touch for stacked sections */
+.book-details-page .recommendations-section > .container > h2 {
+  margin: 0 0 16px !important;   /* was 24–50px in various places */
+}
+
+/* Keep section padding modest; prevents compounded white space */
+.book-details-page .recommendations-section {
+  padding: 8px 0 12px !important;   /* slight increase from 5px for breathing */
+}
+
+/* Optional: add a tiny separator between author sections only */
+.book-details-page .recommendations-section + .recommendations-section {
+  margin-top: 8px;                  /* replaces big visual gaps with a gentle step */
+}

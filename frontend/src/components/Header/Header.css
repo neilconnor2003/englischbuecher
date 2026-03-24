@@ -67,18 +67,11 @@
   cursor: pointer;
 }
 
-/* AutoComplete dropdown */
-/*.search-bar .ant-select-dropdown {
-  min-width: 420px !important;
-}*/
-
-
 /* AntD dropdown: never cause layout overflow; cap width sensibly */
 .ant-select-dropdown {
   max-width: min(90vw, 600px);
   overflow: hidden;
 }
-
 
 /* =========================================================
    AUTOCOMPLETE ITEMS
