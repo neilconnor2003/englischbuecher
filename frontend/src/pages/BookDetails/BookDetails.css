@@ -367,11 +367,11 @@
 
 /* MAKE RECOMMENDATION CARDS EXACTLY SAME AS HOME PAGE — FINAL FIX */
 .recommendations-container {
-  margin-top: 80px;
+  margin-top: 32px;
 }
 
 .recommendations-section {
-  padding: 40px 0;
+  padding: 24px 0;
   background: #faf8ff;
 }
 
@@ -1129,7 +1129,7 @@
   font-weight: 800;
   color: #9333ea;
   text-align: center;
-  margin: 50px 0 30px;
+  margin: 0px 0 24px;  /* was 50px 0 30px */
   display: flex;
   align-items: center;
   justify-content: center;

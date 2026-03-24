@@ -68,9 +68,17 @@
 }
 
 /* AutoComplete dropdown */
-.search-bar .ant-select-dropdown {
+/*.search-bar .ant-select-dropdown {
   min-width: 420px !important;
+}*/
+
+
+/* AntD dropdown: never cause layout overflow; cap width sensibly */
+.ant-select-dropdown {
+  max-width: min(90vw, 600px);
+  overflow: hidden;
 }
+
 
 /* =========================================================
    AUTOCOMPLETE ITEMS
@@ -363,7 +371,7 @@
    PIXEL 7 LANDSCAPE FIX — prevent header overflow
    ========================================================= */
 @media (max-height: 500px) and (orientation: landscape) {
-  
+
   /* Allow wrapping to a second line (prevents horizontal overflow) */
   .header-container {
     flex-wrap: wrap !important;
@@ -377,7 +385,8 @@
     flex: 1 1 100% !important;
     max-width: 100% !important;
     margin: 6px 0 0 !important;
-    order: 99; /* moves search bar to next line cleanly */
+    order: 99;
+    /* moves search bar to next line cleanly */
   }
 
   /* Auth links & icons — allow shrinking */
@@ -417,7 +426,7 @@
    Handles Pixel 7, iPad Mini, Fold devices, etc.
    ========================================================= */
 @media (orientation: landscape) and (max-height: 600px) {
-  
+
   /* Allow header to break into two rows instead of overflowing */
   .header-container {
     flex-wrap: wrap !important;
@@ -494,7 +503,8 @@
   }
 
   .logo-img {
-    height: 42px !important; /* slightly bigger on tablets */
+    height: 42px !important;
+    /* slightly bigger on tablets */
   }
 
   .header-icon-btn,
@@ -616,8 +626,25 @@
 
 
 /* --- PC horizontal scroll safety (non‑visual) --- */
-.header { overflow-x: clip; }         /* contain any 1‑px flex overflow */
-.header-container { min-width: 0; }   /* allow the row to shrink */
-.logo, .search-bar, .auth-links { min-width: 0; }   /* let children shrink */
+.header {
+  overflow-x: clip;
+}
+
+/* contain any 1‑px flex overflow */
+.header-container {
+  min-width: 0;
+}
+
+/* allow the row to shrink */
+.logo,
+.search-bar,
+.auth-links {
+  min-width: 0;
+}
+
+/* let children shrink */
 .search-bar input,
-.search-bar .ant-select-selector { max-width: 100%; box-sizing: border-box; }
+.search-bar .ant-select-selector {
+  max-width: 100%;
+  box-sizing: border-box;
+}

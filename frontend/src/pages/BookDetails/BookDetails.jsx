@@ -739,7 +739,7 @@ function BookDetails() {
             )}
 
             {book && (
-              <div id="reviews-section" className="book-reviews mt-24 bg-gradient-to-b from-purple-50/50 to-transparent">
+              <div id="reviews-section" className="book-reviews mt-8 bg-gradient-to-b from-purple-50/50 to-transparent">
                 <BookReviews bookId={book.id} />
               </div>
             )}
