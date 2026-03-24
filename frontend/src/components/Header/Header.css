@@ -560,3 +560,56 @@
     flex-shrink: 1 !important;
   }
 }
+
+
+/* =========================================================
+   UNIVERSAL RESPONSIVE HEADER — ANY DEVICE, ANY ORIENTATION
+   ========================================================= */
+
+/* 1) If screen width is below 1100px → allow wrap */
+@media (max-width: 1100px) {
+  .header-container {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    padding: 8px 12px !important;
+    row-gap: 8px !important;
+  }
+
+  .search-bar {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    order: 99;
+    margin-top: 8px !important;
+  }
+
+  .auth-links {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+    justify-content: flex-end !important;
+  }
+
+  .header-icon-btn,
+  .cart-link,
+  .profile-avatar {
+    flex-shrink: 1 !important;
+  }
+
+  .language-switcher,
+  .language-switcher * {
+    max-width: none !important;
+    flex-shrink: 1 !important;
+  }
+}
+
+/* 2) Additional orientation safety for ALL landscape cases */
+@media (orientation: landscape) {
+  .header-container {
+    flex-wrap: wrap !important;
+  }
+
+  .logo-img {
+    height: 46px !important;
+    flex-shrink: 1 !important;
+  }
+}
