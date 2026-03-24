@@ -356,3 +356,57 @@
 .header-icon-btn {
   flex-shrink: 0 !important;
 }
+
+
+/* =========================================================
+   PIXEL 7 LANDSCAPE FIX — prevent header overflow
+   ========================================================= */
+@media (max-height: 500px) and (orientation: landscape) {
+  
+  /* Allow wrapping to a second line (prevents horizontal overflow) */
+  .header-container {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    padding: 6px 10px !important;
+    row-gap: 6px !important;
+  }
+
+  /* Prevent large items from forcing overflow */
+  .search-bar {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    margin: 6px 0 0 !important;
+    order: 99; /* moves search bar to next line cleanly */
+  }
+
+  /* Auth links & icons — allow shrinking */
+  .auth-links {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+  }
+
+  /* Language switcher can shrink (important for DE locale) */
+  .language-switcher,
+  .language-switcher * {
+    max-width: none !important;
+    flex-shrink: 1 !important;
+  }
+
+  /* Logo shrinks slightly in landscape */
+  .logo-img {
+    height: 32px !important;
+  }
+
+  /* Icon buttons — ensure safe spacing */
+  .header-icon-btn {
+    flex-shrink: 1 !important;
+    margin: 0 4px;
+  }
+
+  /* Ensure nothing forces overflow */
+  .profile-avatar {
+    flex-shrink: 1 !important;
+  }
+}
+
