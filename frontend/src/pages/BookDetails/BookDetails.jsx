@@ -664,7 +664,13 @@ function BookDetails() {
                   <section className="recommendations-section">
                     <div className="container">
                       <h2>{t('more_from_author', { author: book.author })}</h2>
-                      <BooksSlider books={recommendations.sameAuthor} variant="default" className="home-swiper" />
+
+                      <BooksSlider
+                        title=""
+                        books={recommendations.sameAuthor}
+                        className="home-swiper"
+                      />
+
                     </div>
                   </section>
                 )}
@@ -672,7 +678,13 @@ function BookDetails() {
                   <section className="recommendations-section">
                     <div className="container">
                       <h2>{t('customers_also_bought')}</h2>
-                      <BooksSlider books={recommendations.alsoBought} variant="default" className="home-swiper" />
+
+                      <BooksSlider
+                        title=""
+                        books={recommendations.alsoBought}
+                        className="home-swiper"
+                      />
+
                     </div>
                   </section>
                 )}
@@ -680,7 +692,13 @@ function BookDetails() {
                   <section className="recommendations-section">
                     <div className="container">
                       <h2>{t('similar_books')}</h2>
-                      <BooksSlider books={recommendations.similar} variant="default" className="home-swiper" />
+
+                      <BooksSlider
+                        title=""
+                        books={recommendations.similar}
+                        className="home-swiper"
+                      />
+
                     </div>
                   </section>
                 )}

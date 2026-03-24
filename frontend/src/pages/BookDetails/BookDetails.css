@@ -38,7 +38,7 @@
 
 /* Images */
 .image-section {
-  position: sticky;
+  position: static !important;
   top: 20px;
 }
 
@@ -319,7 +319,7 @@
   border: 1px solid #ddd;
   border-radius: 12px;
   padding: 28px;
-  position: sticky;
+  position: static !important;
   top: 20px;
 }
 

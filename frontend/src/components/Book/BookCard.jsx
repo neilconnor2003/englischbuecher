@@ -202,6 +202,15 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
     }).format(Number(value) || 0);
   };
 
+  const formatCurrency = (value, i18n) => {
+    const locale = i18n.resolvedLanguage === 'de' ? 'de-DE' : 'en-US';
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(value) || 0);
+  };
 
   return (
     <article className={rootClass}>
@@ -247,10 +256,9 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
 
         {/* Price block */}
         <div className="price-block">
-          {originalPrice > price && (
-            <span className="original-price">€{originalPrice.toFixed(2)}</span>
-          )}
-          <span className="current-price">€{price.toFixed(2)}</span>
+          {originalPrice > price && (<span className="original-price">{formatCurrency(originalPrice, i18n)}</span>)}
+          <span className="current-price">{formatCurrency(price, i18n)}</span>
+
           {discountPercent > 0 && (
             <span className="discount-badge">-{discountPercent}%</span>
           )}
