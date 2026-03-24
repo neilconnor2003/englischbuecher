@@ -410,3 +410,54 @@
   }
 }
 
+
+/* =========================================================
+   UNIVERSAL LANDSCAPE FIX (all tablets + phones)
+   Handles Pixel 7, iPad Mini, Fold devices, etc.
+   ========================================================= */
+@media (orientation: landscape) and (max-height: 600px) {
+  
+  /* Allow header to break into two rows instead of overflowing */
+  .header-container {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    padding: 6px 12px !important;
+    row-gap: 8px !important;
+  }
+
+  /* Search bar always moves to next row and becomes full width */
+  .search-bar {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    margin-top: 6px !important;
+    order: 99;
+  }
+
+  /* Icon row */
+  .auth-links {
+    flex-wrap: wrap !important;
+    min-width: 0 !important;
+    gap: 10px !important;
+    justify-content: flex-end !important;
+  }
+
+  /* Language selector can shrink naturally */
+  .language-switcher,
+  .language-switcher * {
+    max-width: none !important;
+    flex-shrink: 1 !important;
+  }
+
+  /* Prevent avatar / icons from forcing overflow */
+  .profile-avatar,
+  .header-icon-btn,
+  .cart-link {
+    flex-shrink: 1 !important;
+  }
+
+  /* Logo becomes slightly smaller in landscape */
+  .logo-img {
+    height: 34px !important;
+  }
+}
+
