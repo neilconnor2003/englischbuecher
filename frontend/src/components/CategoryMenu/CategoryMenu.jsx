@@ -161,20 +161,26 @@ function CategoryMenu() {
               {/* Mobile: accordion submenu */}
               {!canHover && expandedId === cat.id && hasChildren && (
                 <div className="submenu submenu--mobile">
-                  <button type="button" className="submenu-item" onClick={() => goToCategory(cat.id)}>
-                    <span className="cat-label">{t('view_all') || 'View all'}</span>
-                  </button>
                   <button
                     type="button"
-                    key={child.id}
                     className="submenu-item"
-                    onClick={() => goToCategory(child.id)}
+                    onClick={() => goToCategory(cat.id)}
                   >
-                    <span className="cat-label">
-                      {i18n.language === 'de' ? (child.name_de || child.name_en) : child.name_en}
-                    </span>
+                    <span className="cat-label">{t('view_all') || 'View all'}</span>
                   </button>
-                  ))
+
+                  {Array.isArray(cat.children) && cat.children.map((child) => (
+                    <button
+                      type="button"
+                      key={child.id}
+                      className="submenu-item"
+                      onClick={() => goToCategory(child.id)}
+                    >
+                      <span className="cat-label">
+                        {i18n.language === 'de' ? (child.name_de || child.name_en) : child.name_en}
+                      </span>
+                    </button>
+                  ))}
                 </div>
               )}
             </div>

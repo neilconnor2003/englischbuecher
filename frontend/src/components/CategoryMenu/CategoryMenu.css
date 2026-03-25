@@ -203,3 +203,12 @@
     overflow: auto;
   }
 }
+
+/* When a submenu is opened by click/expand, stack it under the parent item */
+.submenu--mobile {
+  position: relative;
+  top: 0;
+  left: 0;
+  margin-left: 0;
+  box-shadow: none; /* optional: flatter look when stacked */
+}
