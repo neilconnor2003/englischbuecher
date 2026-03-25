@@ -153,9 +153,11 @@ function CategoryMenu() {
 
               {/* Desktop: hover submenu */}
               {canHover && hoveredId === cat.id && hasChildren && (
-                <div className="submenu">
+                <div
+                  className="submenu"
                   onMouseEnter={cancelHoverClose}
-                  onMouseLeave={() => { startHoverClose(140); }}
+                  onMouseLeave={() => startHoverClose(140)}
+                >
                   <button type="button" className="submenu-item" onClick={() => goToCategory(cat.id)}>
                     <span className="cat-label">{t('view_all') || 'View all'}</span>
                   </button>
@@ -173,7 +175,6 @@ function CategoryMenu() {
                   ))}
                 </div>
               )}
-
               {/* Mobile: accordion submenu */}
               {!canHover && expandedId === cat.id && hasChildren && (
                 <div className="submenu submenu--mobile">
