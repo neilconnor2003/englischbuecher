@@ -163,3 +163,19 @@
 .submenu-item:hover {
   background: rgba(0, 0, 0, 0.05);
 }
+
+
+/* existing .dropdown-menu remains for general styling */
+
+/* Only when we render via portal */
+.dropdown-menu--portal {
+  z-index: 2000;
+  /* above the header */
+  max-width: min(95vw, 420px);
+  /* clamp width to viewport */
+  max-height: min(70vh, 560px);
+  /* scroll inside the menu, not page */
+  overflow: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+}

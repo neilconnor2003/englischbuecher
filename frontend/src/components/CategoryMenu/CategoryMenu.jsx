@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useGetCategoriesQuery } from '../../admin/features/book/bookApiSlice';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import './CategoryMenu.css';
+import { createPortal } from 'react-dom';
 
 function CategoryMenu() {
   const { t, i18n } = useTranslation();
@@ -21,6 +22,9 @@ function CategoryMenu() {
   }, []);
 
   const rootRef = useRef(null);
+
+  const btnRef = useRef(null);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -123,6 +127,17 @@ function CategoryMenu() {
     setExpandedId(prev => (prev === id ? null : id));
   };
 
+
+  // When menu opens, measure the toggle button and place the popup under it
+  useEffect(() => {
+    if (!isOpen || !btnRef.current) return;
+    const rect = btnRef.current.getBoundingClientRect();
+    const top = rect.bottom + 12; // 12px gap
+    const left = rect.left + rect.width / 2; // center align
+    setMenuPos({ top, left });
+  }, [isOpen]);
+
+
   return (
     <div
       className="category-dropdown"
@@ -136,6 +151,7 @@ function CategoryMenu() {
         onClick={toggleMenu}
         aria-expanded={isOpen}
         aria-haspopup="menu"
+        ref={btnRef}
       >
         {t('categories')}{' '}
         <ChevronDown className={`chevron ${isOpen ? 'open' : ''}`} />

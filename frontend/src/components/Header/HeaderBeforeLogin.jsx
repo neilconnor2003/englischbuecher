@@ -144,9 +144,16 @@ function HeaderBeforeLogin() {
         <nav className="auth-links">
 
           {/* Desktop Categories (hidden on mobile by CSS via wrapper class) */}
-          <div className="category-menu">
+          {/*<div className="category-menu">
+            <CategoryMenu />
+          </div>*/}
+
+
+          {/* DESKTOP: Categories (overlay anchor) */}
+          <div className="category-anchor desktop-only" data-overlay-root>
             <CategoryMenu />
           </div>
+
 
           {/* Desktop Request Book button (hidden on mobile by CSS) */}
           <Link to="/request-book" className="request-book-btn">{t('request.button')}</Link>

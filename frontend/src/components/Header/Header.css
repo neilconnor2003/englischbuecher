@@ -38,12 +38,26 @@
    SEARCH BAR (DESKTOP)
    ========================================================= */
 
-.search-bar {
+/*}.search-bar {
   flex: 1;
   max-width: 500px;
   margin: 0 20px;
   position: relative;
+}*/
+
+
+/* SEARCH BAR — resilient sizing */
+.search-bar {
+  flex: 1 1 480px;
+  /* grows, can shrink, prefers ~480px */
+  min-width: 260px;
+  /* hard guard: never smaller */
+  max-width: 600px;
+  /* a bit wider on desktop if space allows */
+  margin: 0 16px;
+  position: relative;
 }
+
 
 .search-bar input,
 .search-bar .ant-select-selector {
@@ -70,6 +84,7 @@
 /* AntD dropdown: never cause layout overflow; cap width sensibly */
 .ant-select-dropdown {
   max-width: min(90vw, 600px);
+  max-height: 70vh;
   overflow: hidden;
 }
 
@@ -579,11 +594,18 @@
   }
 
   .search-bar {
+    flex: 1 1 100%;
+    max-width: 100%;
+    order: 99;        /* pushes search to row 2 when wrapping */
+    margin: 8px 0 0;
+  }
+
+  /*.search-bar {
     flex: 1 1 100% !important;
     max-width: 100% !important;
     order: 99;
     margin-top: 8px !important;
-  }
+  }*/
 
   .auth-links {
     flex-wrap: wrap !important;
@@ -640,4 +662,43 @@
 .search-bar .ant-select-selector {
   max-width: 100%;
   box-sizing: border-box;
+}
+
+
+/* === Category overlay: never affect header width === */
+.category-anchor {
+  position: relative;
+  /* anchor for absolute children */
+  flex: 0 0 auto;
+  /* do not grow, do not shrink */
+  contain: layout paint;
+  /* isolate layout/paint to prevent overflow side-effects */
+}
+
+/* If your CategoryMenu renders a container for the expanded panel,
+   give that container the class .category-panel so it overlays. */
+.category-anchor .category-panel {
+  position: absolute;
+  /* out of normal flow => won't widen header */
+  top: 100%;
+  left: 0;
+  width: max(320px, 40vw);
+  max-width: min(100vw, 1100px);
+  max-height: min(70vh, 540px);
+  overflow: auto;
+  margin-top: 8px;
+  z-index: 1200;
+  /* header is z-index: 1000 */
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .18);
+  border-radius: 10px;
+}
+
+/* Defensive cap for AntD overlays (dropdown/menu/select) */
+.ant-dropdown,
+.ant-dropdown-menu,
+.ant-menu-submenu-popup,
+.ant-select-dropdown {
+  max-width: min(100vw, 1100px);
+  overflow: hidden;
 }

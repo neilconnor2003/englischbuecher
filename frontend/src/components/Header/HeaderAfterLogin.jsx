@@ -209,9 +209,16 @@ function HeaderAfterLogin() {
         <nav className="auth-links">
 
           {/* ✅ Desktop ONLY categories (your CSS hides .category-menu on mobile) */}
-          <div className="category-menu">
+          {/*<div className="category-menu">
+            <CategoryMenu />
+          </div>*/}
+
+
+          {/* DESKTOP: Categories (overlay anchor) */}
+          <div className="category-anchor desktop-only" data-overlay-root>
             <CategoryMenu />
           </div>
+
 
           {/* Desktop welcome text (hidden on mobile in your CSS) */}
           <span className="welcome-text">
