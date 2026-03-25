@@ -28,6 +28,8 @@ function CategoryMenu() {
   const [expandedId, setExpandedId] = useState(null);  // mobile: which parent is expanded
   const [pos, setPos] = useState({ top: 0, left: 0 }); // panel position in viewport coords
 
+  const hoverCloseTimer = useRef(null);
+
   // Visible, sorted categories
   const roots = useMemo(() => {
     const all = Array.isArray(data.hierarchy) ? data.hierarchy : [];
@@ -65,6 +67,18 @@ function CategoryMenu() {
     const rect = triggerRef.current.getBoundingClientRect();
     setPos({ top: rect.bottom + 12, left: rect.left + rect.width / 2 });
   };
+
+
+  const startHoverClose = (delay = 140) => {
+    if (hoverCloseTimer.current) clearTimeout(hoverCloseTimer.current);
+    hoverCloseTimer.current = setTimeout(() => {
+      setHoveredId(null);
+    }, delay);
+  };
+  const cancelHoverClose = () => {
+    if (hoverCloseTimer.current) clearTimeout(hoverCloseTimer.current);
+  };
+
 
   useEffect(() => {
     if (!isOpen) return;
@@ -117,8 +131,8 @@ function CategoryMenu() {
             <div
               key={cat.id}
               className="dropdown-item-parent"
-              onMouseEnter={() => onHoverParent(cat.id)}
-              onMouseLeave={clearHover}
+              onMouseEnter={() => { cancelHoverClose(); onHoverParent(cat.id); }}
+              onMouseLeave={() => { startHoverClose(140); }}
             >
               <button
                 type="button"
@@ -140,6 +154,8 @@ function CategoryMenu() {
               {/* Desktop: hover submenu */}
               {canHover && hoveredId === cat.id && hasChildren && (
                 <div className="submenu">
+                  onMouseEnter={cancelHoverClose}
+                  onMouseLeave={() => { startHoverClose(140); }}
                   <button type="button" className="submenu-item" onClick={() => goToCategory(cat.id)}>
                     <span className="cat-label">{t('view_all') || 'View all'}</span>
                   </button>

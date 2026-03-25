@@ -51,20 +51,20 @@
   position: relative;
 }
 
-/* CategoryMenu.css – Add this rule */
+
+/* Hover corridor so mouse can travel into the submenu without closing */
 .dropdown-item-parent::after {
   content: '';
   position: absolute;
   top: -12px;
   left: 100%;
-  width: 30px;
-  /* WIDER SAFE ZONE */
+  width: 48px;                 /* wider corridor */
   height: calc(100% + 24px);
   z-index: 1;
-  /* background: rgba(255,0,0,0.1); */
-  /* DEBUG: REMOVE LATER */
-  pointer-events: none;
+  pointer-events: auto;        /* <-- critical: treat as part of the parent */
+  background: transparent;     /* invisible, but keeps hover alive */
 }
+
 
 .dropdown-item-link {
   display: flex;
@@ -205,10 +205,20 @@
 }
 
 /* When a submenu is opened by click/expand, stack it under the parent item */
+/* Click-expanded second level: in-flow, indented block */
 .submenu--mobile {
-  position: relative;
+  position: relative;       /* in-flow, pushes next items down */
   top: 0;
   left: 0;
-  margin-left: 0;
-  box-shadow: none; /* optional: flatter look when stacked */
+  margin: 6px 0 10px 0;
+  padding: 8px 0 6px 0;
+  border-left: 3px solid #e9d5ff;
+  background: #faf5ff;      /* subtle contrast; optional */
+  border-radius: 8px;
 }
+
+/* Indent child items a touch */
+.submenu--mobile .submenu-item {
+  padding-left: 20px;       /* visually indented */
+}
+
