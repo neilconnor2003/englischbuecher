@@ -1,5 +1,5 @@
 
-// src/components/CategoryMenu/CategoryMenu.jsx
+// src/components/CategoryMenu/CategoryMenu.jsx hasChildren;
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -20,17 +20,18 @@ function CategoryMenu() {
     return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   }, []);
 
-  const rootRef = useRef(null); // wraps the trigger button
-  const btnRef = useRef(null);  // the "Categories" button
-  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+  // Refs and state
+  const triggerRef = useRef(null);   // the "Categories" button wrapper
+  const panelRef = useRef(null);     // the floating panel
   const [isOpen, setIsOpen] = useState(false);
-  const [hoveredId, setHoveredId] = useState(null);   // desktop hover parent id
-  const [expandedId, setExpandedId] = useState(null);  // mobile accordion parent id
+  const [hoveredId, setHoveredId] = useState(null);   // desktop hover: which parent is hovered
+  const [expandedId, setExpandedId] = useState(null); // mobile: which parent is expanded
+  const [pos, setPos] = useState({ top: 0, left: 0 }); // panel position (viewport coords)
 
-  // Prepare visible categories in a stable order
-  const rootCategories = useMemo(() => {
+  // Visible, sorted categories
+  const roots = useMemo(() => {
     const all = Array.isArray(data.hierarchy) ? data.hierarchy : [];
-    const visible = all.filter(cat => Number(cat.is_visible) === 1);
+    const visible = all.filter(c => Number(c.is_visible) === 1);
     return [...visible]
       .sort((a, b) => a.id - b.id)
       .map(root => ({
@@ -39,7 +40,7 @@ function CategoryMenu() {
       }));
   }, [data.hierarchy]);
 
-  // Navigate and close menu
+  // Navigate to category and close
   const goToCategory = (id) => {
     const params = new URLSearchParams(location.search);
     params.set('category', String(id));
@@ -52,15 +53,37 @@ function CategoryMenu() {
     setIsOpen(false); setHoveredId(null); setExpandedId(null);
   }, [location.pathname, location.search]);
 
-  // Close on outside click / ESC — works with portal
+  // Toggle
+  const toggleOpen = () => {
+    setIsOpen(v => !v);
+    if (isOpen) { setHoveredId(null); setExpandedId(null); }
+  };
+
+  // Position panel just under the trigger button
+  const placePanel = () => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    setPos({ top: rect.bottom + 12, left: rect.left + rect.width / 2 });
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    placePanel();
+    window.addEventListener('resize', placePanel);
+    window.addEventListener('scroll', placePanel, true);
+    return () => {
+      window.removeEventListener('resize', placePanel);
+      window.removeEventListener('scroll', placePanel, true);
+    };
+  }, [isOpen]);
+
+  // Close on outside click / ESC (works with body-portal)
   useEffect(() => {
     const onDocClick = (e) => {
       if (!isOpen) return;
-      const overlayRoot = document.querySelector('[data-overlay-root]');
-      const panel = overlayRoot?.querySelector('.category-panel');
-      const clickedInsideTrigger = rootRef.current?.contains(e.target);
-      const clickedInsidePanel = panel?.contains(e.target);
-      if (!clickedInsideTrigger && !clickedInsidePanel) {
+      const inTrigger = triggerRef.current?.contains(e.target);
+      const inPanel = panelRef.current?.contains(e.target);
+      if (!inTrigger && !inPanel) {
         setIsOpen(false); setHoveredId(null); setExpandedId(null);
       }
     };
@@ -77,67 +100,36 @@ function CategoryMenu() {
     };
   }, [isOpen]);
 
-  // Desktop hover open/close
-  const onMouseEnterMenu = () => { if (!canHover) return; setIsOpen(true); };
-  const onMouseLeaveMenu = (e) => {
-    if (!canHover) return;
-    const next = e.relatedTarget;
-    const overlayRoot = document.querySelector('[data-overlay-root]');
-    const panel = overlayRoot?.querySelector('.category-panel');
-    const leftEverything =
-      (!rootRef.current || (next && !rootRef.current.contains(next))) &&
-      (!panel || (next && !panel.contains(next)));
-    if (leftEverything) {
-      setIsOpen(false); setHoveredId(null);
-    }
-  };
-  const onHoverParent = (id) => { if (!canHover) return; setHoveredId(id); setIsOpen(true); };
+  // Hover helpers (desktop)
+  const onHoverParent = (id) => { if (canHover) { setHoveredId(id); if (!isOpen) setIsOpen(true); } };
+  const clearHover = () => { if (canHover) setHoveredId(null); };
 
-  // Mobile toggle
-  const toggleMenu = () => {
-    setIsOpen(v => !v);
-    if (isOpen) { setHoveredId(null); setExpandedId(null); }
-  };
-  const toggleExpand = (id) => setExpandedId(prev => (prev === id ? null : id));
-
-  // Position the panel directly under the button
-  useEffect(() => {
-    if (!isOpen || !btnRef.current) return;
-    const place = () => {
-      const rect = btnRef.current.getBoundingClientRect();
-      setMenuPos({ top: rect.bottom + 12, left: rect.left + rect.width / 2 });
-    };
-    place();
-    window.addEventListener('resize', place);
-    window.addEventListener('scroll', place, true);
-    return () => {
-      window.removeEventListener('resize', place);
-      window.removeEventListener('scroll', place, true);
-    };
-  }, [isOpen]);
-
-  // Menu content (re-used inside portal)
+  // Menu content
   const MenuContent = () => (
     <>
       {isLoading ? (
         <div className="dropdown-item">Loading...</div>
-      ) : rootCategories.length > 0 ? (
-        rootCategories.map(cat => {
+      ) : roots.length > 0 ? (
+        roots.map(cat => {
           const hasChildren = Array.isArray(cat.children) && cat.children.length > 0;
           const showSubmenuDesktop = canHover && hoveredId === cat.id && hasChildren;
-          const showSubmenuMobile = !canHover && expandedId === cat.id && hasChildren;
+
           return (
             <div
               key={cat.id}
               className="dropdown-item-parent"
               onMouseEnter={() => onHoverParent(cat.id)}
+              onMouseLeave={clearHover}
             >
               <button
                 type="button"
                 className="dropdown-item-link"
                 onClick={() => {
-                  if (!canHover && hasChildren) { toggleExpand(cat.id); }
-                  else { goToCategory(cat.id); }
+                  if (!canHover && hasChildren) { // mobile: expand/collapse
+                    setExpandedId(prev => (prev === cat.id ? null : cat.id));
+                  } else {
+                    goToCategory(cat.id);
+                  }
                 }}
               >
                 <span className="cat-label">
@@ -194,41 +186,31 @@ function CategoryMenu() {
     </>
   );
 
-  // Find the header overlay root (your wrapper on the header)
-  const overlayRoot = typeof document !== 'undefined'
-    ? (rootRef.current?.closest('[data-overlay-root]') ||
-      document.querySelector('[data-overlay-root]') ||
-      document.body)
-    : null;
+  // Always portal to <body> (robust, independent of header)
+  const overlayRoot = typeof document !== 'undefined' ? document.body : null;
 
   return (
-    <div
-      className="category-dropdown"
-      ref={rootRef}
-      onMouseEnter={onMouseEnterMenu}
-      onMouseLeave={onMouseLeaveMenu}
-    >
+    <div className="category-dropdown" ref={triggerRef}>
       <button
         type="button"
         className="category-toggle"
-        onClick={toggleMenu}
+        onClick={toggleOpen}
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        ref={btnRef}
       >
         {t('categories')}{' '}
         <ChevronDown className={`chevron ${isOpen ? 'open' : ''}`} />
       </button>
 
-      {/* PORTAL: render the open menu under the header's overlay root */}
       {isOpen && overlayRoot && createPortal(
         <div
+          ref={panelRef}
           className="category-panel dropdown-menu dropdown-menu--portal"
           role="menu"
           style={{
             position: 'fixed',
-            top: menuPos.top,
-            left: menuPos.left,
+            top: pos.top,
+            left: pos.left,
             transform: 'translateX(-50%)'
           }}
         >
