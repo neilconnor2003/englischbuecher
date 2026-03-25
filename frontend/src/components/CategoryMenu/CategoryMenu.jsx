@@ -1,5 +1,5 @@
 
-// src/components/CategoryMenu/CategoryMenu.jsx hasChildren;
+// src/components/CategoryMenu/CategoryMenu.jsx                  {cat.children.map(child => (
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -14,19 +14,19 @@ function CategoryMenu() {
   const navigate = useNavigate();
   const { data = { hierarchy: [] }, isLoading } = useGetCategoriesQuery();
 
-  // Detect desktop hover vs touch
+  // Detect desktop (mouse/hover) vs touch
   const canHover = useMemo(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return true;
     return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   }, []);
 
-  // Refs and state
-  const triggerRef = useRef(null);   // the "Categories" button wrapper
-  const panelRef = useRef(null);     // the floating panel
+  // Refs & state
+  const triggerRef = useRef(null);     // wraps the "Categories" button
+  const panelRef = useRef(null);       // floating panel element
   const [isOpen, setIsOpen] = useState(false);
-  const [hoveredId, setHoveredId] = useState(null);   // desktop hover: which parent is hovered
-  const [expandedId, setExpandedId] = useState(null); // mobile: which parent is expanded
-  const [pos, setPos] = useState({ top: 0, left: 0 }); // panel position (viewport coords)
+  const [hoveredId, setHoveredId] = useState(null);    // desktop: which parent is hovered
+  const [expandedId, setExpandedId] = useState(null);  // mobile: which parent is expanded
+  const [pos, setPos] = useState({ top: 0, left: 0 }); // panel position in viewport coords
 
   // Visible, sorted categories
   const roots = useMemo(() => {
@@ -40,7 +40,7 @@ function CategoryMenu() {
       }));
   }, [data.hierarchy]);
 
-  // Navigate to category and close
+  // Navigate and close
   const goToCategory = (id) => {
     const params = new URLSearchParams(location.search);
     params.set('category', String(id));
@@ -53,7 +53,7 @@ function CategoryMenu() {
     setIsOpen(false); setHoveredId(null); setExpandedId(null);
   }, [location.pathname, location.search]);
 
-  // Toggle
+  // Toggle menu
   const toggleOpen = () => {
     setIsOpen(v => !v);
     if (isOpen) { setHoveredId(null); setExpandedId(null); }
@@ -100,11 +100,11 @@ function CategoryMenu() {
     };
   }, [isOpen]);
 
-  // Hover helpers (desktop)
+  // Hover helpers (desktop only)
   const onHoverParent = (id) => { if (canHover) { setHoveredId(id); if (!isOpen) setIsOpen(true); } };
   const clearHover = () => { if (canHover) setHoveredId(null); };
 
-  // Menu content
+  // Menu content (conditions are inlined to prevent "undefined" refs)
   const MenuContent = () => (
     <>
       {isLoading ? (
@@ -112,7 +112,6 @@ function CategoryMenu() {
       ) : roots.length > 0 ? (
         roots.map(cat => {
           const hasChildren = Array.isArray(cat.children) && cat.children.length > 0;
-          const showSubmenuDesktop = canHover && hoveredId === cat.id && hasChildren;
 
           return (
             <div
@@ -125,10 +124,10 @@ function CategoryMenu() {
                 type="button"
                 className="dropdown-item-link"
                 onClick={() => {
-                  if (!canHover && hasChildren) { // mobile: expand/collapse
-                    setExpandedId(prev => (prev === cat.id ? null : cat.id));
+                  if (!canHover && hasChildren) {
+                    setExpandedId(prev => (prev === cat.id ? null : cat.id)); // mobile expand/collapse
                   } else {
-                    goToCategory(cat.id);
+                    goToCategory(cat.id); // desktop click goes straight to category
                   }
                 }}
               >
@@ -138,7 +137,8 @@ function CategoryMenu() {
                 {hasChildren && <ChevronRight className="arrow-right" aria-hidden />}
               </button>
 
-              {showSubmenuDesktop && (
+              {/* Desktop: hover submenu */}
+              {canHover && hoveredId === cat.id && hasChildren && (
                 <div className="submenu">
                   <button type="button" className="submenu-item" onClick={() => goToCategory(cat.id)}>
                     <span className="cat-label">{t('view_all') || 'View all'}</span>
@@ -158,23 +158,23 @@ function CategoryMenu() {
                 </div>
               )}
 
-              {showSubmenuMobile && (
+              {/* Mobile: accordion submenu */}
+              {!canHover && expandedId === cat.id && hasChildren && (
                 <div className="submenu submenu--mobile">
                   <button type="button" className="submenu-item" onClick={() => goToCategory(cat.id)}>
                     <span className="cat-label">{t('view_all') || 'View all'}</span>
                   </button>
-                  {cat.children.map(child => (
-                    <button
-                      type="button"
-                      key={child.id}
-                      className="submenu-item"
-                      onClick={() => goToCategory(child.id)}
-                    >
-                      <span className="cat-label">
-                        {i18n.language === 'de' ? (child.name_de || child.name_en) : child.name_en}
-                      </span>
-                    </button>
-                  ))}
+                  <button
+                    type="button"
+                    key={child.id}
+                    className="submenu-item"
+                    onClick={() => goToCategory(child.id)}
+                  >
+                    <span className="cat-label">
+                      {i18n.language === 'de' ? (child.name_de || child.name_en) : child.name_en}
+                    </span>
+                  </button>
+                  ))
                 </div>
               )}
             </div>
@@ -186,7 +186,7 @@ function CategoryMenu() {
     </>
   );
 
-  // Always portal to <body> (robust, independent of header)
+  // Always mount overlay to <body> (robust against header overflow/clip)
   const overlayRoot = typeof document !== 'undefined' ? document.body : null;
 
   return (
