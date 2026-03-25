@@ -778,3 +778,63 @@
     max-width: 560px;         /* was 600px */
   }
 }
+
+
+/* Make wishlist & cart icons larger */
+.header .anticon {
+  font-size: 22px;          /* increase icon size */
+  min-width: 22px;
+  height: 22px;
+}
+
+/* Align icons vertically better */
+.auth-links .anticon,
+.cart-link .anticon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header .anticon {
+  font-size: 24px !important;
+}
+
+
+/* Uniform alignment & spacing on large screens */
+@media (min-width: 1400px) {
+  .header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px; /* consistent spacing */
+    height: 80px;  /* taller header helps icon alignment */
+  }
+
+  .search-bar {
+    flex: 1 1 700px;     /* larger search bar */
+    max-width: 700px;    /* allow it to grow slightly */
+    margin: 0 24px;      /* balanced spacing */
+  }
+
+  .auth-links {
+    gap: 20px;           /* slightly wider spacing */
+    align-items: center; /* consistent vertical alignment */
+  }
+
+  .profile-avatar {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+.header-container > * {
+  display: flex;
+  align-items: center;
+}
+
+.wishlist-link,
+.cart-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px; /* space between icon and number */
+}
