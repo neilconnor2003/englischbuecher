@@ -838,3 +838,19 @@
   align-items: center;
   gap: 6px; /* space between icon and number */
 }
+/* Reduce the size of the dropdown arrow in the language selector */
+.language-switcher .ant-select-arrow {
+  font-size: 12px !important;   /* Default ~14–16px → now smaller */
+  width: 12px !important;
+  height: 12px !important;
+}
+
+/* Optional: tighten its spacing */
+.language-switcher .ant-select-selector {
+  padding-right: 20px !important; /* prevents arrow overlap */
+}
+
+.language-switcher .ant-select-selection-item {
+  display: flex;
+  align-items: center;
+}
