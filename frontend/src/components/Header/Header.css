@@ -48,12 +48,9 @@
 
 /* SEARCH BAR — resilient sizing */
 .search-bar {
-  flex: 1 1 480px;
-  /* grows, can shrink, prefers ~480px */
-  min-width: 260px;
-  /* hard guard: never smaller */
-  max-width: 600px;
-  /* a bit wider on desktop if space allows */
+  flex: 1 1 480px;    /* grows, can shrink, prefers ~480px */
+  min-width: 260px;   /* hard guard: never smaller */
+  max-width: 600px;   /* a bit wider on desktop if space allows */
   margin: 0 16px;
   position: relative;
 }
@@ -701,4 +698,39 @@
 .ant-select-dropdown {
   max-width: min(100vw, 1100px);
   overflow: hidden;
+}
+
+
+/* === MEDIUM VIEWPORT (≤1280px) — keep everything visible on iPad Air landscape === */
+@media (max-width: 1280px) {
+  .header-container {
+    flex-wrap: wrap !important;         /* permit 2 rows */
+    height: auto !important;
+    padding: 8px 12px !important;
+    row-gap: 8px !important;
+    overflow: visible !important;        /* prevent clipping of right-side items */
+  }
+
+  /* Put search on row 2 and make it full width */
+  .search-bar {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    order: 99;                           /* moves search to next line */
+    margin-top: 8px !important;
+  }
+
+  /* Allow right-side icons/links to wrap if needed (Wishlist, Cart, Avatar, Lang) */
+  .auth-links {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    justify-content: flex-end !important;
+    min-width: 0 !important;
+  }
+
+  /* Ensure Cart + Avatar don't shrink out of view */
+  .cart-link,
+  .profile-avatar,
+  .header-icon-btn {
+    flex: 0 0 auto !important;           /* do not shrink to zero */
+  }
 }
