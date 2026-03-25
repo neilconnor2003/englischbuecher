@@ -182,3 +182,24 @@
 
 /* Ensure the portaled menu sits above the header */
 .dropdown-menu--portal { z-index: 1400; }
+
+
+/* Show the entire category list (no internal scrollbars) */
+.dropdown-menu--portal.category-panel {
+  max-height: none !important;   /* cancel the 70vh cap */
+  overflow: visible !important;   /* no scrollbars inside the panel */
+}
+
+/* Optional: keep submenus unconstrained too */
+.dropdown-menu--portal.category-panel .submenu {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* No cap on large screens, but keep a safety cap on short viewports */
+@media (max-height: 700px) {
+  .dropdown-menu--portal.category-panel {
+    max-height: min(90vh, 720px);
+    overflow: auto;
+  }
+}
