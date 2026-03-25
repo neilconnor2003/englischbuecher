@@ -233,16 +233,13 @@ function HeaderAfterLogin() {
 
           {/* Desktop wishlist/cart + avatar (hide on mobile using desktop-only) */}
           <Link to="/wishlist" className="desktop-only cart-link" style={{ marginRight: 16 }}>
-            <HeartOutlined style={{ color: '#e91e63' }} />
             <div className="wishlist-link">
-              <HeartOutlined />
+              <HeartOutlined style={{ color: '#e91e63' }} />
               <span>{t('header_wishlist')} ({wishlistCount})</span>
             </div>
-            ({wishlistCount})
           </Link>
 
           <Link to="/cart" className="desktop-only cart-link">
-            <ShoppingCartOutlined />
             <div className="cart-link">
               <ShoppingCartOutlined />
               <span>{t('header_cart')} ({cartCount})</span>
