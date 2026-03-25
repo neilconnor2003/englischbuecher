@@ -734,3 +734,47 @@
     flex: 0 0 auto !important;           /* do not shrink to zero */
   }
 }
+
+
+/* === DESKTOP SAFETY (≤1400px) — ensure Cart + Avatar stay visible === */
+@media (max-width: 1400px) {
+  .header-container {
+    flex-wrap: wrap !important;         /* allow 2 rows instead of clipping */
+    height: auto !important;
+    padding: 8px 12px !important;
+    row-gap: 8px !important;
+    overflow: visible !important;       /* don't clip right-edge icons */
+  }
+
+  /* Search moves to row 2 to free space for Wishlist/Cart/Avatar */
+  .search-bar {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    order: 99;
+    margin-top: 8px !important;
+  }
+
+  /* Right-side can wrap if needed and won't be forced off-screen */
+  .auth-links {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+    justify-content: flex-end !important;
+  }
+
+  /* Keep key icons visible — do not let them shrink to zero */
+  .cart-link,
+  .profile-avatar,
+  .header-icon-btn {
+    flex: 0 0 auto !important;
+  }
+}
+
+
+/* Narrow the preferred search width slightly on huge screens to reserve space for right icons */
+@media (min-width: 1401px) {
+  .search-bar {
+    flex-basis: 440px;        /* was ~480px preferred; slightly tighter */
+    max-width: 560px;         /* was 600px */
+  }
+}
