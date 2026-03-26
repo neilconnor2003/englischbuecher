@@ -88,6 +88,7 @@ function Books() {
 
   // Slider value (derived from URL)
   const priceRange = useMemo(() => [minPrice, maxPrice], [minPrice, maxPrice]);
+  const [tempPrice, setTempPrice] = useState([minPrice, maxPrice]);
 
   // Debounce typing in the "search within results" input so each keystroke doesn't fetch immediately
   const debounceRef = useRef(null);
@@ -103,6 +104,12 @@ function Books() {
   const clearFilters = () => {
     setSearchParams(new URLSearchParams()); // wipe all params
   };
+
+
+  useEffect(() => {
+    setTempPrice([minPrice, maxPrice]);
+  }, [minPrice, maxPrice]);
+
 
   // ===== Load filter options once =====
   useEffect(() => {
@@ -359,16 +366,22 @@ function Books() {
                 onChange={(val) => {
                   // live preview without writing URL (to keep fetch debounce calm)
                   // reflect immediately by updating URL onAfterChange:
+                  setTempPrice(val);
                 }}
                 onAfterChange={(val) => {
                   const [min, max] = val;
-                  const updates = {};
-                  updates.min_price = min > 0 ? String(min) : null;
-                  updates.max_price = max < 200 ? String(max) : null;
-                  updateParams(updates);
+                  //const updates = {};
+                  //updates.min_price = min > 0 ? String(min) : null;
+                  //updates.max_price = max < 200 ? String(max) : null;
+                  //updateParams(updates);
+                  updateParams({
+                    min_price: min > 0 ? String(min) : null,
+                    max_price: max < 200 ? String(max) : null,
+                  });
                 }}
               />
-              <div className="price-values">€{priceRange[0]} – €{priceRange[1]}</div>
+              {/*<div className="price-values">€{priceRange[0]} – €{priceRange[1]}</div>*/}
+              <div className="price-values">€{tempPrice[0]} – €{tempPrice[1]}</div>
             </div>
 
             {/* In Stock */}
