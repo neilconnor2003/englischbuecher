@@ -538,3 +538,44 @@
   padding: 0 !important;
   margin: 0 !important;
 }
+
+/* === AntD Slider tooltip: keep bubble, hide ▲/▼ steppers, adjust number size === */
+
+/* Hide the stepper handlers (▲ / ▼) AntD adds to the InputNumber inside tooltip */
+.ant-tooltip .ant-input-number-handler-wrap,
+.ant-slider-tooltip .ant-input-number-handler-wrap {
+  display: none !important;
+}
+
+/* Neutralize the InputNumber chrome inside the tooltip (keep bubble size unchanged) */
+.ant-tooltip .ant-input-number,
+.ant-slider-tooltip .ant-input-number {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  width: auto !important;
+  min-width: 22px !important;        /* room for values like 0–200 */
+  height: auto !important;
+  padding: 0 !important;
+}
+
+/* Make the digits inside the bubble smaller (bubble shape stays the same) */
+.ant-tooltip .ant-input-number-input,
+.ant-slider-tooltip .ant-input-number-input {
+  font-size: 11px !important;        /* tweak: 10px / 12px if you prefer */
+  line-height: 1.2 !important;
+  text-align: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Extra safety: remove native number spinners from any fallback <input type="number"> */
+.ant-tooltip input[type="number"]::-webkit-inner-spin-button,
+.ant-tooltip input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+.ant-tooltip input[type="number"] {
+  appearance: textfield !important;       /* standard */
+  -moz-appearance: textfield !important;  /* Firefox */
+}
