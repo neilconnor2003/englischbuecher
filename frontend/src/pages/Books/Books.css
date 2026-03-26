@@ -31,7 +31,6 @@
 }
 
 /* Filters card aligned a bit higher to the title */
-
 .filters-sidebar {
     background: #ffffff;
     border-radius: 16px;
@@ -127,28 +126,10 @@
   justify-content: start; /* or center, or space-between */
 }
 
-
-
-/*.popular-card-wrapper {
-    width: 100% !important;
-    height: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-
-.popular-card-wrapper {
-    /*max-width: 260px !important;*/
-   /* width: 100% !important;
-    height: 100% !important;
-    display: flex;
-}*/
-
 .popular-card-wrapper {
   width: auto;       /* <-- critical */
   display: flex;
 }
-
-
 
 .book-card {
     height: 100%;
@@ -167,7 +148,6 @@
 }
 
 /* ---- AntD control sizing inside the sidebar ---- */
-
 /* Make AntD controls take the sidebar width */
 .filters-sidebar .ant-select,
 .filters-sidebar .ant-input,
@@ -192,7 +172,6 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-
 }
 
 /* Taller select trigger & padding for readability */
@@ -202,16 +181,6 @@
     border-radius: 8px;
 }
 
-/* Wider dropdown panel (used with dropdownMatchSelectWidth=false in JSX) */
-/*.filters-sidebar .ant-select-dropdown {
-    min-width: 380px !important;
-    max-height: 320px !important;
-    /* let the popup own the scroll */
-    /*overflow-y: auto !important;
-    overflow-x: hidden !important;
-
-}*/
-
 /* Make dropdowns fit within the sidebar on all screens */
 .filters-sidebar .ant-select-dropdown {
   min-width: 0 !important;
@@ -219,8 +188,6 @@
   max-width: calc(100vw - 40px) !important; /* prevent overflow on mobile */
   left: 0 !important;
 }
-
-
 
 .filters-sidebar .ant-checkbox-wrapper {
     font-size: 0.95rem;
@@ -238,7 +205,6 @@
     font-weight: 600;
     color: #ef4444;
 }
-
 
 /* Option text: wrap & left-align (no tail-only clipping) */
 .filters-sidebar .ant-select-item-option-content {
@@ -335,3 +301,11 @@
     max-height: 2000px;  /* large enough for content; animates open */
   }
 }
+
+.books-listing-page .container {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding-left: 40px;
+    padding-right: 40px;
+}
+
