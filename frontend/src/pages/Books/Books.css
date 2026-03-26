@@ -428,3 +428,55 @@
   margin: 0;
 }
 
+/* Make slider bubble numbers smaller WITHOUT shrinking the bubble */
+.ant-slider-tooltip .ant-tooltip-inner input[type="number"] {
+  font-size: 12px !important;   /* smaller number text */
+  line-height: 1.2 !important;
+  padding: 0 !important;
+  height: auto !important;
+  width: auto !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  text-align: center !important;
+  outline: none !important;
+}
+
+/* Remove the up/down arrows inside the slider bubble */
+.ant-slider-tooltip .ant-tooltip-inner input[type="number"]::-webkit-inner-spin-button,
+.ant-slider-tooltip .ant-tooltip-inner input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0;
+}
+
+.ant-slider-tooltip .ant-tooltip-inner input[type="number"] {
+  appearance: textfield !important;
+}
+
+/* Slider tooltip input styling — smaller text, no arrows, no warnings */
+.ant-slider-tooltip .ant-tooltip-inner input[type="number"] {
+  appearance: textfield !important;      /* standard */
+  -webkit-appearance: none !important;   /* Safari/Chrome */
+  -moz-appearance: textfield !important; /* Firefox */
+
+  font-size: 12px !important;            /* <-- smaller text */
+  line-height: 1.2 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+
+  width: auto !important;
+  height: auto !important;
+  text-align: center !important;
+  outline: none !important;
+}
+
+/* Remove spinner arrows in WebKit browsers */
+.ant-slider-tooltip .ant-tooltip-inner input[type="number"]::-webkit-inner-spin-button,
+.ant-slider-tooltip .ant-tooltip-inner input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none !important;
+}
+
