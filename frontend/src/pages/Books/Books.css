@@ -413,3 +413,18 @@
   overflow-x: hidden;
 }
 
+/* Remove number input arrows inside AntD Slider tooltip */
+.ant-slider-tooltip input[type="number"],
+.ant-tooltip input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.ant-slider-tooltip input[type="number"]::-webkit-inner-spin-button,
+.ant-slider-tooltip input[type="number"]::-webkit-outer-spin-button,
+.ant-tooltip input[type="number"]::-webkit-inner-spin-button,
+.ant-tooltip input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
