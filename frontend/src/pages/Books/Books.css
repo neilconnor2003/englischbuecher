@@ -332,3 +332,41 @@
   margin: 0 !important;
 }
 
+/* FILTER PANEL BEHAVIOR FIX */
+
+/* 1 — Filter panel collapsed: hide ALL internal overflow */
+.filters-sidebar.collapsed {
+  max-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;     /* hide slider contents */
+  position: relative !important;   /* required for clipping */
+  z-index: 1;
+}
+
+/* 2 — Filter panel open: allow slider bubble but not spill into book grid */
+.filters-sidebar.open {
+  overflow: visible !important;    /* let slider tooltip appear above it */
+  position: relative !important;
+  z-index: 20;                     /* ensure tooltip goes over panel, not under books */
+}
+
+/* 3 — Prevent book cards from drawing over the filter panel */
+.listing-main {
+  position: relative;
+  z-index: 1;
+}
+
+.books-grid {
+  position: relative;
+  z-index: 1;
+}
+
+/* 4 — Ensure the slider tooltip bubble is ABOVE everything */
+.ant-slider-tooltip,
+.ant-slider-handle::after,
+.ant-tooltip,
+.ant-tooltip-content {
+  z-index: 9999 !important;
+}
+
