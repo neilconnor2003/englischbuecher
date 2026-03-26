@@ -37,7 +37,7 @@ function Books() {
       .map(s => s.trim())
       .filter(Boolean);
 
-  const updateParams = (updates) => {
+  /*const updateParams = (updates) => {
     setSearchParams(prev => {
       const params = new URLSearchParams(prev);
       Object.entries(updates).forEach(([key, value]) => {
@@ -49,7 +49,20 @@ function Books() {
       });
       return params;
     });
+  };*/
+
+  const updateParams = (updates) => {
+    setSearchParams(prev => {
+      const params = new URLSearchParams(prev);
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === null || value === undefined || value === '') params.delete(key);
+        else params.set(key, value);
+      });
+      return params;
+    });
+    if (isMobile) setShowFilters(false); // <-- auto-shrink after a change on small screens
   };
+
 
   // ===== Derived values from URL (single source of truth) =====
   const q = getParam('q', '').trim();
@@ -188,6 +201,39 @@ function Books() {
     { value: 'popularity_score_desc', label: t('most_popular') },
   ];
 
+
+  // -- Filters collapse on small screens --
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 1024px)').matches);
+  const [showFilters, setShowFilters] = useState(() => !window.matchMedia('(max-width: 1024px)').matches);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 1024px)');
+    const onChange = (e) => {
+      setIsMobile(e.matches);
+      setShowFilters(!e.matches); // open on desktop, collapse on mobile
+    };
+    mq.addEventListener?.('change', onChange);
+    return () => mq.removeEventListener?.('change', onChange);
+  }, []);
+
+
+  const activeFilterCount = useMemo(() => {
+    let c = 0;
+    if (q) c++;
+    if (author) c++;
+    if (category) c++;
+    if (publisher) c++;
+    if (edition) c++;
+    if (formatList.length) c++;
+    if (stock) c++;
+    if (rating) c++;
+    if (minPriceStr) c++;
+    if (maxPriceStr) c++;
+    return c;
+  }, [q, author, category, publisher, edition, formatList, stock, rating, minPriceStr, maxPriceStr]);
+
+
+
   return (
     <div className="books-listing-page">
       <div className="container">
@@ -197,10 +243,28 @@ function Books() {
         </h1>
 
         <div className="listing-grid">
-          {/* FILTERS SIDEBAR */}
-          <aside className="filters-sidebar">
-            <h3>{t('filters')}</h3>
 
+          {/* MOBILE FILTER TOGGLE */}
+          {isMobile && (
+            <button
+              type="button"
+              className="filters-toggle"
+              onClick={() => setShowFilters(v => !v)}
+              aria-expanded={showFilters}
+              aria-controls="filters-panel"
+            >
+              {t('filters')} {activeFilterCount ? `(${activeFilterCount})` : ''}
+              <span className={`chevron ${showFilters ? 'open' : ''}`} aria-hidden />
+            </button>
+          )}
+
+          {/* FILTERS SIDEBAR */}
+          {/*<aside className="filters-sidebar">*/}
+          <aside
+            id="filters-panel"
+            className={`filters-sidebar ${isMobile ? (showFilters ? 'open' : 'collapsed') : ''}`}
+          >
+            <h3>{t('filters')}</h3>
             {/* Author */}
             <div className="filter-group">
               <h4>{t('filter_author')}</h4>

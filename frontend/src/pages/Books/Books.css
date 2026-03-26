@@ -121,9 +121,14 @@
 /* Books grid */
 .books-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 32px;
+    grid-template-columns: repeat(auto-fill, 260px);
+    /* <- each column is 260px */
+    gap: 24px;
+    /* gap is accounted for automatically */
+    justify-content: space-between;
+    /* spread nicely across the row */
 }
+
 
 /*.popular-card-wrapper {
     width: 100% !important;
@@ -133,10 +138,10 @@
 }*/
 
 .popular-card-wrapper {
-  max-width: 260px !important;
-  width: 100% !important;
-  height: 100% !important;
-  display: flex;
+    max-width: 260px !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex;
 }
 
 
@@ -148,6 +153,12 @@
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+    width: 100%;
+    /* the card fills the track */
+    max-width: none;
+    /* override any global max-width caps */
+
 }
 
 /* ---- AntD control sizing inside the sidebar ---- */
@@ -217,18 +228,18 @@
 
 /* Option text: wrap & left-align (no tail-only clipping) */
 .filters-sidebar .ant-select-item-option-content {
-  white-space: normal !important;
-  word-break: break-word;
-  text-overflow: clip !important;
-  overflow: visible !important;
-  direction: ltr !important;
-  text-align: left !important;
+    white-space: normal !important;
+    word-break: break-word;
+    text-overflow: clip !important;
+    overflow: visible !important;
+    direction: ltr !important;
+    text-align: left !important;
 }
 
 /* Selected value in the trigger: allow wrapping for long labels */
 .ant-select-selection-item {
-  white-space: normal !important;
-  word-break: break-word;
+    white-space: normal !important;
+    word-break: break-word;
 }
 
 /* Responsive */
@@ -248,14 +259,65 @@
 
 /* Match Home page spacing */
 .books-listing-page .books-grid {
-  padding-top: 20px;
-  padding-bottom: 40px;
+    padding-top: 20px;
+    padding-bottom: 40px;
 }
 
 .books-listing-page .popular-card-wrapper {
-  justify-content: flex-start;
+    justify-content: flex-start;
 }
 
 .listing-main {
-  align-items: flex-start;
+    align-items: flex-start;
+}
+
+.books-section {
+    background: #faf8ff;
+    padding: 20px 0;
+}
+
+/* --- Mobile-only filter toggle button --- */
+.filters-toggle {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .filters-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    color: #4f46e5;
+    background: #eef2ff;
+    border: 1px solid #e5e7eb;
+  }
+  .filters-toggle .chevron {
+    width: 10px;
+    height: 10px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+    transition: transform .2s ease;
+    margin-left: auto;
+  }
+  .filters-toggle .chevron.open { transform: rotate(-135deg); }
+
+  /* Collapsible filters panel */
+  .filters-sidebar {
+    transition: max-height .25s ease, padding .2s ease, margin .2s ease, box-shadow .2s ease;
+    overflow: hidden;
+  }
+  .filters-sidebar.collapsed {
+    max-height: 0;
+    padding: 0 12px;     /* keep some side padding so it doesn't jump */
+    margin: 0;
+    box-shadow: none;
+    border: 0;
+  }
+  .filters-sidebar.open {
+    max-height: 2000px;  /* large enough for content; animates open */
+  }
 }
