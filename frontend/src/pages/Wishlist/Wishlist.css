@@ -40,10 +40,13 @@
    ===================================================== */
 @media (max-width: 768px) {
   .wishlist-grid {
-    grid-template-columns: repeat(2, 1fr);
+    /*grid-template-columns: repeat(2, 1fr);*/
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
     /* force 2 columns */
-    gap: 12px;
+    gap: 32px;
     /* tighter like Home */
+    justify-content: start;
   }
 
   .wishlist-page {
@@ -100,10 +103,3 @@
   }
 }
 
-/* Optional: tighten the mobile grid a bit so two cards fit comfortably */
-@media (max-width: 768px) {
-  .wishlist-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-}
