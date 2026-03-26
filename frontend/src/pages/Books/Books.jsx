@@ -363,12 +363,14 @@ function Books() {
             ) : books.length === 0 ? (
               <div className="no-results">{t('no_books_found')}</div>
             ) : (
-              <div className="books-grid">
-                {books.map(book => (
-                  <div key={book.id} className="popular-card-wrapper">
-                    <BookCard book={book} />
-                  </div>
-                ))}
+              <div className="books-section">
+                <div className="books-grid">
+                  {books.map(book => (
+                    <div key={book.id} className="popular-card-wrapper">
+                      <BookCard book={book} />
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

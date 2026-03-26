@@ -125,12 +125,20 @@
     gap: 32px;
 }
 
-.popular-card-wrapper {
+/*.popular-card-wrapper {
     width: 100% !important;
     height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
+}*/
+
+.popular-card-wrapper {
+  max-width: 260px !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex;
 }
+
 
 .book-card {
     height: 100%;
@@ -236,4 +244,18 @@
         /* no negative offset on mobile */
         top: unset;
     }
+}
+
+/* Match Home page spacing */
+.books-listing-page .books-grid {
+  padding-top: 20px;
+  padding-bottom: 40px;
+}
+
+.books-listing-page .popular-card-wrapper {
+  justify-content: flex-start;
+}
+
+.listing-main {
+  align-items: flex-start;
 }
