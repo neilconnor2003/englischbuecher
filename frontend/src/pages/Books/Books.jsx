@@ -379,7 +379,9 @@ function Books() {
                 value={tempPrice}
                 max={200}
                 //tooltip={{ open: true }}
-                tooltip={{ open: !isMobile || showFilters }}
+                tooltip={{ open: !isMobile || showFilters,
+                  formatter: (val) => <span className="slider-tip">{val}</span>,   // <— add this
+                 }}
                 onChange={(val) => {
                   // live preview without writing URL (to keep fetch debounce calm)
                   // reflect immediately by updating URL onAfterChange:
