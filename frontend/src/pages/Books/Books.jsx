@@ -154,8 +154,22 @@ function Books() {
           signal: controller.signal
         });
         const data = Array.isArray(res.data) ? res.data : [];
-        setBooks(data);
-        setTotal(data.length);
+        //setBooks(data);
+        //setTotal(data.length);
+
+        // FRONTEND price filtering fallback
+        let filtered = data;
+
+        if (minPrice > 0 || maxPrice < 200) {
+          filtered = data.filter(b => {
+            const p = Number(b.price);
+            return p >= minPrice && p <= maxPrice;
+          });
+        }
+
+        setBooks(filtered);
+        setTotal(filtered.length);
+
       } catch (err) {
         if (err.name !== 'CanceledError' && err.code !== 'ERR_CANCELED') {
           console.error('books load failed:', err?.message);
@@ -361,8 +375,10 @@ function Books() {
               <h4>{t('filter_price')}</h4>
               <Slider
                 range
-                value={priceRange}
+                //value={priceRange}
+                value={tempPrice}
                 max={200}
+                tooltip={{ open: true }}
                 onChange={(val) => {
                   // live preview without writing URL (to keep fetch debounce calm)
                   // reflect immediately by updating URL onAfterChange:
