@@ -403,3 +403,13 @@
   }
 }
 
+@media (max-width: 1024px) {
+  .filters-sidebar {
+    margin-top: 0 !important;   /* remove the negative margin on mobile */
+  }
+}
+
+.books-listing-page {
+  overflow-x: hidden;
+}
+
