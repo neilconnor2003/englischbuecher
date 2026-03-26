@@ -13,11 +13,19 @@
   /* Deep purple for consistency */
 }
 
-.wishlist-grid {
+/*.wishlist-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 24px;
+}*/
+
+.wishlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 260px); /* match Books page */
+  gap: 32px; /* same gap as Books */
+  justify-content: start; /* aligns left like Books page */
 }
+
 
 .empty-wishlist {
   text-align: center;
