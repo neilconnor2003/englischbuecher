@@ -480,3 +480,32 @@
   -webkit-appearance: none !important;
 }
 
+
+/* Add space between heading and slider */
+.filter-group h4 {
+  margin-bottom: 18px !important; /* default is 12px, increase by +6 */
+}
+
+/* Make slider bubble text smaller (bubble size stays same) */
+.ant-slider .ant-slider-handle::after {
+  transform: scale(0.9); /* optional, reduces only the text container */
+}
+
+.ant-tooltip-inner {
+  font-size: 11px !important;
+  padding: 4px 6px !important; /* keeps bubble size consistent */
+  line-height: 1.1 !important;
+}
+
+/* Remove number-input arrows inside tooltip */
+.ant-tooltip-inner input[type="number"] {
+  appearance: textfield !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: textfield !important;
+}
+
+.ant-tooltip-inner input[type="number"]::-webkit-inner-spin-button,
+.ant-tooltip-inner input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0;
+}
