@@ -389,4 +389,17 @@
   white-space: nowrap !important;
 }
 
+@media (max-width: 480px) {
+  .books-listing-page > .container {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .listing-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+}
 
