@@ -43,7 +43,7 @@
     display: flex;
     flex-direction: column;
     gap: 24px;
-    overflow: visible !important;
+    /*overflow: visible !important;*/
 }
 
 .filters-sidebar h3 {
@@ -318,4 +318,17 @@
     padding-right: 40px !important;
 }
 
+
+/* Fix: Sidebar should only allow slider bubble when OPEN */
+.filters-sidebar.open {
+  overflow: visible !important;
+}
+
+/* When collapsed, hide everything properly */
+.filters-sidebar.collapsed {
+  overflow: hidden !important;
+  max-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
 
