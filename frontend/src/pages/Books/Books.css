@@ -413,8 +413,9 @@
   overflow-x: hidden;
 }
 
+/********* commented from here ********/
 /* Remove number input arrows inside AntD Slider tooltip */
-.ant-slider-tooltip input[type="number"],
+/*.ant-slider-tooltip input[type="number"],
 .ant-tooltip input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
@@ -429,9 +430,9 @@
 }
 
 /* Make slider bubble numbers smaller WITHOUT shrinking the bubble */
-.ant-slider-tooltip .ant-tooltip-inner input[type="number"] {
+/*.ant-slider-tooltip .ant-tooltip-inner input[type="number"] {
   font-size: 12px !important;   /* smaller number text */
-  line-height: 1.2 !important;
+  /*line-height: 1.2 !important;
   padding: 0 !important;
   height: auto !important;
   width: auto !important;
@@ -443,7 +444,7 @@
 }
 
 /* Remove the up/down arrows inside the slider bubble */
-.ant-slider-tooltip .ant-tooltip-inner input[type="number"]::-webkit-inner-spin-button,
+/*.ant-slider-tooltip .ant-tooltip-inner input[type="number"]::-webkit-inner-spin-button,
 .ant-slider-tooltip .ant-tooltip-inner input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none !important;
   margin: 0;
@@ -454,12 +455,12 @@
 }
 
 /* Slider tooltip input styling — smaller text, no arrows, no warnings */
-.ant-slider-tooltip .ant-tooltip-inner input[type="number"] {
-  appearance: textfield !important;      /* standard */
-  -webkit-appearance: none !important;   /* Safari/Chrome */
+/*.ant-slider-tooltip .ant-tooltip-inner input[type="number"] {
+  appearance: textfield !important;      
+  -webkit-appearance: none !important;   
   -moz-appearance: textfield !important; /* Firefox */
 
-  font-size: 12px !important;            /* <-- smaller text */
+  /*font-size: 12px !important;          
   line-height: 1.2 !important;
   padding: 0 !important;
   margin: 0 !important;
@@ -474,30 +475,30 @@
   outline: none !important;
 }
 
-/* Remove spinner arrows in WebKit browsers */
+
 .ant-slider-tooltip .ant-tooltip-inner input[type="number"]::-webkit-inner-spin-button,
 .ant-slider-tooltip .ant-tooltip-inner input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none !important;
 }
 
 
-/* Add space between heading and slider */
+
 .filter-group h4 {
-  margin-bottom: 18px !important; /* default is 12px, increase by +6 */
+  margin-bottom: 18px !important; 
 }
 
-/* Make slider bubble text smaller (bubble size stays same) */
+
 .ant-slider .ant-slider-handle::after {
-  transform: scale(0.9); /* optional, reduces only the text container */
+  transform: scale(0.9); 
 }
 
 .ant-tooltip-inner {
   font-size: 11px !important;
-  padding: 4px 6px !important; /* keeps bubble size consistent */
+  padding: 4px 6px !important; 
   line-height: 1.1 !important;
 }
 
-/* Remove number-input arrows inside tooltip */
+
 .ant-tooltip-inner input[type="number"] {
   appearance: textfield !important;
   -webkit-appearance: none !important;
@@ -510,22 +511,20 @@
   margin: 0;
 }
 
-/* --- FIX ANTD v5 SLIDER TOOLTIP NUMBER INPUT --- */
 
-/* 1) Remove arrows (Chrome, Edge, Safari) */
 .ant-tooltip-inner input.ant-slider-handle-input::-webkit-inner-spin-button,
 .ant-tooltip-inner input.ant-slider-handle-input::-webkit-outer-spin-button {
   -webkit-appearance: none !important;
   margin: 0 !important;
 }
 
-/* 2) Remove arrows (Firefox) */
+
 .ant-tooltip-inner input.ant-slider-handle-input {
   -moz-appearance: textfield !important;
   appearance: textfield !important;
 }
 
-/* 3) Reduce ONLY the text size inside the bubble (bubble stays same) */
+
 .ant-tooltip-inner input.ant-slider-handle-input {
   font-size: 11px !important;
   font-weight: 600;
@@ -533,49 +532,43 @@
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  width: 26px !important;   /* perfect width for 1–3 digit numbers */
+  width: 26px !important;   
   height: 20px !important;
   padding: 0 !important;
   margin: 0 !important;
 }
 
-/* === AntD Slider tooltip: keep bubble, hide ▲/▼ steppers, adjust number size === */
-
-/* Hide the stepper handlers (▲ / ▼) AntD adds to the InputNumber inside tooltip */
 .ant-tooltip .ant-input-number-handler-wrap,
 .ant-slider-tooltip .ant-input-number-handler-wrap {
   display: none !important;
 }
 
-/* Neutralize the InputNumber chrome inside the tooltip (keep bubble size unchanged) */
 .ant-tooltip .ant-input-number,
 .ant-slider-tooltip .ant-input-number {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
   width: auto !important;
-  min-width: 22px !important;        /* room for values like 0–200 */
+  min-width: 22px !important;       
   height: auto !important;
   padding: 0 !important;
 }
 
-/* Make the digits inside the bubble smaller (bubble shape stays the same) */
 .ant-tooltip .ant-input-number-input,
 .ant-slider-tooltip .ant-input-number-input {
-  font-size: 11px !important;        /* tweak: 10px / 12px if you prefer */
+  font-size: 11px !important;        
   line-height: 1.2 !important;
   text-align: center !important;
   padding: 0 !important;
   margin: 0 !important;
 }
 
-/* Extra safety: remove native number spinners from any fallback <input type="number"> */
 .ant-tooltip input[type="number"]::-webkit-inner-spin-button,
 .ant-tooltip input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none !important;
   margin: 0 !important;
 }
 .ant-tooltip input[type="number"] {
-  appearance: textfield !important;       /* standard */
-  -moz-appearance: textfield !important;  /* Firefox */
+  appearance: textfield !important;       
+  -moz-appearance: textfield !important;  
 }
