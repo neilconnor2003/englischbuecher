@@ -362,11 +362,17 @@
   z-index: 1;
 }
 
-/* 4 — Ensure the slider tooltip bubble is ABOVE everything */
-.ant-slider-tooltip,
-.ant-slider-handle::after,
-.ant-tooltip,
-.ant-tooltip-content {
+
+/* Elevate slider tooltip only when the filter panel is OPEN */
+.filters-sidebar.open .ant-slider-tooltip,
+.filters-sidebar.open .ant-tooltip,
+.filters-sidebar.open .ant-tooltip-content {
   z-index: 9999 !important;
 }
+
+/* When collapsed, swallow interactions */
+.filters-sidebar.collapsed {
+  pointer-events: none !important;
+}
+
 

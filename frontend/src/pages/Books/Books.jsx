@@ -378,7 +378,8 @@ function Books() {
                 //value={priceRange}
                 value={tempPrice}
                 max={200}
-                tooltip={{ open: true }}
+                //tooltip={{ open: true }}
+                tooltip={{ open: !isMobile || showFilters }}
                 onChange={(val) => {
                   // live preview without writing URL (to keep fetch debounce calm)
                   // reflect immediately by updating URL onAfterChange:
