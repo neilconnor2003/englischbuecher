@@ -122,6 +122,7 @@
 .books-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, 260px); /* FIXED TILE WIDTH */
+  grid-auto-columns: max-content;   /* <-- prevents column stretching */
   gap: 32px;
   justify-content: start; /* or center, or space-between */
 }
@@ -133,14 +134,20 @@
     height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
-}*/
+}
 
 .popular-card-wrapper {
     /*max-width: 260px !important;*/
-    width: 100% !important;
+   /* width: 100% !important;
     height: 100% !important;
     display: flex;
+}*/
+
+.popular-card-wrapper {
+  width: auto;       /* <-- critical */
+  display: flex;
 }
+
 
 
 .book-card {
