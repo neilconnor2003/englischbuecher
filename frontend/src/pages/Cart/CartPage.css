@@ -761,3 +761,26 @@
   display: inline-block;
   line-height: 1;
 }
+
+/* === Responsive grid for Wishlist/Recommendations inside Cart === */
+.cart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 32px;
+  justify-content: start;
+  padding: 20px 0 40px;
+}
+
+/* Ensure cards behave like Books page */
+.cart-grid .popular-card-wrapper {
+  width: auto;
+  display: flex;
+}
+
+.cart-grid .book-card {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+}

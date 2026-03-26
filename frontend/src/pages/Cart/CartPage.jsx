@@ -728,10 +728,20 @@ const CartPage = () => {
                     <h3 className="rec-section-title with-bars">
                       {t("saved_for_later")}
                     </h3>
-                    {renderRecSlider(
+                    {/*{renderRecSlider(
                       wishlistBooks,
                       "cart-recommendations-swiper"
-                    )}
+                    )}*/}
+                    <div className="cart-grid">
+                      {wishlistBooks.map((b) => {
+                        const nb = normalizeBook(b);
+                        return (
+                          <div key={b.id} className="popular-card-wrapper">
+                            <BookCard book={nb} showActions variant="default" />
+                          </div>
+                        );
+                      })}
+                    </div>
                   </section>
                 )}
               </div>
@@ -769,7 +779,18 @@ const CartPage = () => {
                       <h3 className="rec-section-title with-bars">
                         {t('more_from_author', { author: group.author.name })}
                       </h3>
-                      {renderRecSlider(group.books)}
+                      {/*{renderRecSlider(group.books)}*/}
+                      <div className="cart-grid">
+                        {group.books.map((b) => {
+                          const nb = normalizeBook(b);
+                          return (
+                            <div key={b.id} className="popular-card-wrapper">
+                              <BookCard book={nb} showActions variant="default" />
+                            </div>
+                          );
+                        })}
+                      </div>
+
                     </section>
                   ))}
                 </>
@@ -781,7 +802,17 @@ const CartPage = () => {
                   <h3 className="rec-section-title">
                     {t("more_from_author_plural")}
                   </h3>
-                  {renderRecSlider(recommendations.sameAuthor)}
+                  {/*{renderRecSlider(recommendations.sameAuthor)}*/}
+                  <div className="cart-grid">
+                    {recommendations.sameAuthor.map((b) => {
+                      const nb = normalizeBook(b);
+                      return (
+                        <div key={b.id} className="popular-card-wrapper">
+                          <BookCard book={nb} showActions variant="default" />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </section>
               )}
 
@@ -790,7 +821,17 @@ const CartPage = () => {
                   <h3 className="rec-section-title">
                     {t("customers_also_bought")}
                   </h3>
-                  {renderRecSlider(recommendations.alsoBought)}
+                  {/*{renderRecSlider(recommendations.alsoBought)}*/}
+                  <div className="cart-grid">
+                    {recommendations.alsoBought.map((b) => {
+                      const nb = normalizeBook(b);
+                      return (
+                        <div key={b.id} className="popular-card-wrapper">
+                          <BookCard book={nb} showActions variant="default" />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </section>
               )}
 
@@ -799,7 +840,18 @@ const CartPage = () => {
                   <h3 className="rec-section-title">
                     {t("similar_books")}
                   </h3>
-                  {renderRecSlider(recommendations.similar)}
+                  {/*{renderRecSlider(recommendations.similar)}*/}
+                  <div className="cart-grid">
+                    {recommendations.similar.map((b) => {
+                      const nb = normalizeBook(b);
+                      return (
+                        <div key={b.id} className="popular-card-wrapper">
+                          <BookCard book={nb} showActions variant="default" />
+                        </div>
+                      );
+                    })}
+                  </div>
+
                 </section>
               )}
             </div>
