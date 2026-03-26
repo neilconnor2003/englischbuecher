@@ -790,3 +790,9 @@
 
 /* NOTE: DO NOT force flex-wrap here */
 /* Wrapping should only occur in your existing media queries */
+
+/* Allow Browse Categories to shrink at 90% zoom */
+.category-anchor {
+  flex-shrink: 1 !important;
+  min-width: 0 !important;
+}
