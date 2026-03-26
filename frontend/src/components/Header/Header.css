@@ -1,55 +1,36 @@
-
-/* ====== HEADER: BASE ====== */
 .header {
   background: #E6D9FF;
   box-shadow: 0 2px 8px rgba(138, 43, 226, 0.2);
   position: sticky;
   top: 0;
   z-index: 1000;
-  width: 100%;
-}
-
-/* Full‑width container that can wrap and never truncate */
-.header > .container,
-.header-container {
-  max-width: 100% !important;
-  width: 100% !important;
 }
 
 .header-container {
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;            /* allow a second row if space gets tight */
-  gap: 12px;
-  min-height: 70px;
-  overflow: visible;
-  min-width: 0;               /* allow inner flex items to shrink */
+  flex-wrap: nowrap;
+  /* desktop: single row */
+  height: 70px;
+  /* desktop height */
 }
 
-/* Let every direct child be shrink‑safe */
-.header-container > * {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  flex-shrink: 1;
-}
-
-/* ====== LOGO ====== */
 .logo-img {
+  /*height: clamp(40px, 6vw, 50px);*/
   height: clamp(40px, 4.5vw, 60px);
   object-fit: contain;
   background: transparent;
-  flex: 0 0 auto;
 }
 
-/* ====== SEARCH BAR (fluid) ====== */
+/* SEARCH BAR — resilient sizing */
 .search-bar {
-  flex: 1 1 480px;       /* grow and shrink; prefers ~480px */
-  min-width: 240px;      /* hard floor */
-  max-width: none !important;  /* no upper cap → prevents truncation */
+  flex: 1 1 480px;    /* grows, can shrink, prefers ~480px */
+  min-width: 260px;   /* hard guard: never smaller */
+  max-width: 600px;   /* a bit wider on desktop if space allows */
   margin: 0 16px;
   position: relative;
 }
@@ -76,28 +57,38 @@
   cursor: pointer;
 }
 
-/* AntD dropdown: cap width sensibly */
+/* AntD dropdown: never cause layout overflow; cap width sensibly */
 .ant-select-dropdown {
   max-width: min(90vw, 600px);
   max-height: 70vh;
   overflow: hidden;
 }
 
-/* Suggest items */
-.suggest-item { display: inline-flex; align-items: baseline; gap: 6px; font-size: 14px; }
-.suggest-title { font-weight: 600; color: #1f2937; }
-.suggest-author { color: #4b5563; }
-.suggest-isbn   { color: #6b7280; }
+.suggest-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 14px;
+}
 
-/* ====== RIGHT NAV / ACTIONS ====== */
+.suggest-title {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.suggest-author {
+  color: #4b5563;
+}
+
+.suggest-isbn {
+  color: #6b7280;
+}
+
 .auth-links {
   display: flex;
   align-items: center;
   gap: 16px;
   font-size: clamp(12px, 2vw, 14px);
-  flex: 0 1 auto;              /* allow shrinking instead of overflow */
-  min-width: 0;
-  flex-wrap: wrap;             /* wrap on pressure (DE labels, zoom) */
 }
 
 .auth-button,
@@ -119,18 +110,37 @@
   transform: translateY(-1px);
 }
 
-.welcome-text { font-weight: 600; color: #6a1b9a; }
-
-/* Cart / Wishlist */
-.cart-link { position: relative; color: #8A2BE2; font-weight: 600; transition: transform .3s; }
-.cart-link:hover { transform: scale(1.1); }
-.cart-count {
-  position: absolute; top: -8px; right: -8px; background: #ff4081; color: #fff;
-  font-size: 10px; width: 18px; height: 18px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
+.welcome-text {
+  font-weight: 600;
+  color: #6a1b9a;
 }
 
-/* Avatar */
+.cart-link {
+  position: relative;
+  color: #8A2BE2;
+  font-weight: 600;
+  transition: transform 0.3s ease;
+}
+
+.cart-link:hover {
+  transform: scale(1.1);
+}
+
+.cart-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ff4081;
+  color: #fff;
+  font-size: 10px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .profile-avatar {
   width: clamp(32px, 6vw, 40px);
   height: clamp(32px, 6vw, 40px);
@@ -140,99 +150,643 @@
   color: #8A2BE2;
   font-weight: 700;
   object-fit: cover;
-  flex-shrink: 1;
 }
-.profile-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-.profile-dropdown .ant-dropdown-menu { min-width: 200px; }
 
-/* Icon button */
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-dropdown .ant-dropdown-menu {
+  min-width: 200px;
+}
+
+.request-book-fab {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #8A2BE2;
+  color: #fff;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  z-index: 999;
+  text-decoration: none;
+}
+
 .header-icon-btn {
-  width: 40px; height: 40px; border-radius: 10px; border: 2px solid #8A2BE2;
-  background: #fff; color: #8A2BE2; display: inline-flex; align-items: center; justify-content: center;
-  cursor: pointer; flex-shrink: 1 !important;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 2px solid #8A2BE2;
+  background: #fff;
+  color: #8A2BE2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
-/* Global icon size (wishlist/cart, etc.) */
-.header .anticon { font-size: 22px; min-width: 22px; height: 22px; }
-.auth-links .anticon, .cart-link .anticon { display: inline-flex; align-items: center; justify-content: center; }
-.header .anticon { font-size: 24px !important; }
 
-/* Wishlist/Cart inline layout */
-.wishlist-link, .cart-link { display: inline-flex; align-items: center; gap: 6px; }
+.desktop-only {
+  display: inline-flex;
+}
 
-/* Language selector adjustments */
-.language-switcher { flex: 0 1 auto !important; min-width: 0 !important; }
-.language-switcher .ant-select-arrow { font-size: 12px !important; width: 12px !important; height: 12px !important; }
-.language-switcher .ant-select-selector { padding-right: 20px !important; }
-.language-switcher .ant-select-selection-item { display: flex; align-items: center; }
-
-/* ====== MOBILE VISIBILITY HELPERS ====== */
-.desktop-only { display: inline-flex; }
-.mobile-only  { display: none !important; }
+/* HARD GUARANTEE: mobile-only never appears on desktop */
+.mobile-only {
+  display: none !important;
+}
 
 @media (max-width: 768px) {
-  .mobile-only { display: inline-flex !important; }
-  .desktop-only { display: none !important; }
-
-  .header-container { padding: 8px 12px; row-gap: 8px; }
-
-  /* Make logo smaller */
-  .logo { max-width: 140px; flex-shrink: 1; }
-  .logo-img { height: 36px; }
-
-  /* Compact icons */
-  .header-icon-btn { width: 36px; height: 36px; padding: 0; }
-
-  /* Row 2: search full width */
-  .search-bar { width: 100%; max-width: 100%; margin: 8px 0 0; order: 99; }
-
-  /* Hide secondary desktop items */
-  .auth-button, .request-book-btn, .welcome-text, .category-menu { display: none !important; }
-
-  /* FAB on mobile (if used) */
-  .request-book-fab { position: fixed; right: 16px; bottom: 16px; width: 56px; height: 56px;
-    border-radius: 50%; background: #8A2BE2; color: #fff; display: inline-flex; align-items: center;
-    justify-content: center; font-size: 28px; z-index: 999; text-decoration: none; }
+  .mobile-only {
+    display: inline-flex !important;
+  }
 }
 
-/* ====== LANDSCAPE SHORT-HEIGHT GUARDS (tablets/phones) ====== */
+@media (min-width: 769px) {
+  .mobile-only {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .header-container {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 8px 12px;
+    row-gap: 8px;
+  }
+
+  /* Mobile — safer spacing (Pixel 7 fix) */
+  .auth-links {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    justify-content: flex-end;
+  }
+
+  /* Make logo more compact on mobile */
+  .logo {
+    max-width: 140px;
+    flex-shrink: 1;
+  }
+
+  .logo-img {
+    height: 36px;
+  }
+
+  /* Slightly smaller mobile icon buttons */
+  .header-icon-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+  }
+
+  /* Language switcher should not grow */
+  .language-switcher,
+  .language-switcher * {
+    /*max-width: 48px;
+    flex-shrink: 0;*/
+
+    max-width: unset !important;
+    flex-shrink: 1 !important;
+
+  }
+
+  /* Hide desktop-only items */
+  .auth-button,
+  .request-book-btn,
+  .welcome-text,
+  .category-menu {
+    display: none !important;
+  }
+
+  /* Show mobile icons */
+  .mobile-only {
+    display: inline-flex;
+  }
+
+  /* Row 2: search always full width */
+  .search-bar {
+    width: 100%;
+    max-width: 100%;
+    margin: 8px 0 0;
+    order: 99;
+  }
+
+  /* Disable hover transform on touch */
+  .cart-link {
+    transform: none;
+  }
+
+  /* FAB visible */
+  .request-book-fab {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+/* Keep icons spaced consistently across Android + iOS */
+.header-container,
+.auth-links {
+  column-gap: 12px;
+}
+
+/* Avoid icon collisions on Android Chrome */
+.header-icon-btn {
+  flex-shrink: 0 !important;
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+
+  /* Allow wrapping to a second line (prevents horizontal overflow) */
+  .header-container {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    padding: 6px 10px !important;
+    row-gap: 6px !important;
+  }
+
+  /* Prevent large items from forcing overflow */
+  .search-bar {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    margin: 6px 0 0 !important;
+    order: 99;
+    /* moves search bar to next line cleanly */
+  }
+
+  /* Auth links & icons — allow shrinking */
+  .auth-links {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+  }
+
+  /* Language switcher can shrink (important for DE locale) */
+  .language-switcher,
+  .language-switcher * {
+    max-width: none !important;
+    flex-shrink: 1 !important;
+  }
+
+  /* Logo shrinks slightly in landscape */
+  .logo-img {
+    height: 32px !important;
+  }
+
+  /* Icon buttons — ensure safe spacing */
+  .header-icon-btn {
+    flex-shrink: 1 !important;
+    margin: 0 4px;
+  }
+
+  /* Ensure nothing forces overflow */
+  .profile-avatar {
+    flex-shrink: 1 !important;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+
+  /* Allow header to break into two rows instead of overflowing */
+  .header-container {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    padding: 6px 12px !important;
+    row-gap: 8px !important;
+  }
+
+  /* Search bar always moves to next row and becomes full width */
+  .search-bar {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    margin-top: 6px !important;
+    order: 99;
+  }
+
+  /* Icon row */
+  .auth-links {
+    flex-wrap: wrap !important;
+    min-width: 0 !important;
+    gap: 10px !important;
+    justify-content: flex-end !important;
+  }
+
+  /* Language selector can shrink naturally */
+  .language-switcher,
+  .language-switcher * {
+    max-width: none !important;
+    flex-shrink: 1 !important;
+  }
+
+  /* Prevent avatar / icons from forcing overflow */
+  .profile-avatar,
+  .header-icon-btn,
+  .cart-link {
+    flex-shrink: 1 !important;
+  }
+
+  /* Logo becomes slightly smaller in landscape */
+  .logo-img {
+    height: 34px !important;
+  }
+}
+
 @media (max-height: 700px) and (orientation: landscape) {
-  .header-container { padding: 8px 12px !important; row-gap: 8px !important; }
-  .search-bar { flex: 1 1 100% !important; max-width: 100% !important; order: 99; margin-top: 6px !important; }
-  .auth-links { flex-wrap: wrap !important; gap: 10px !important; min-width: 0 !important; }
-  .language-switcher, .language-switcher * { max-width: none !important; flex-shrink: 1 !important; }
-  .logo-img { height: 34px !important; }
+  .header-container {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    padding: 8px 12px !important;
+    row-gap: 8px !important;
+  }
+
+  .search-bar {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    order: 99;
+    margin-top: 6px !important;
+  }
+
+  .auth-links {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+  }
+
+  .language-switcher,
+  .language-switcher * {
+    max-width: none !important;
+    flex-shrink: 1 !important;
+  }
+
+  .logo-img {
+    height: 42px !important;
+    /* slightly bigger on tablets */
+  }
+
+  .header-icon-btn,
+  .profile-avatar,
+  .cart-link {
+    flex-shrink: 1 !important;
+  }
 }
 
-/* ====== MEDIUM/LARGE VIEWPORT TUNING ====== */
-@media (max-width: 1400px) {
-  .header-container { row-gap: 8px !important; }
-  .search-bar { order: initial; }
+
+.header-container {
+  overflow-x: hidden;
 }
 
-@media (min-width: 1401px) {
-  .header-container { gap: 24px; min-height: 80px; }
-  .search-bar { flex-basis: 520px; }
+@media (orientation: landscape) and (max-height: 700px) {
+
+  /* Allow header to split into two rows */
+  .header-container {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    padding: 8px 12px !important;
+    row-gap: 10px !important;
+    overflow: hidden !important;
+  }
+
+  /* Move search bar to second row, full width */
+  .search-bar {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    margin-top: 8px !important;
+    order: 99;
+  }
+
+  /* Right-side icons: allow wrapping + shrinking */
+  .auth-links {
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    justify-content: flex-end !important;
+    min-width: 0 !important;
+  }
+
+  /* Language selector can shrink safely */
+  .language-switcher,
+  .language-switcher * {
+    max-width: none !important;
+    flex-shrink: 1 !important;
+  }
+
+  /* Prevent icons from pushing layout outward */
+  .header-icon-btn,
+  .cart-link,
+  .profile-avatar {
+    flex-shrink: 1 !important;
+  }
+
+  /* Keep logo visible and comfortably sized */
+  .logo-img {
+    height: 42px !important;
+    flex-shrink: 1 !important;
+  }
 }
 
-/* ====== CATEGORY OVERLAY (does not affect header width) ====== */
-.category-anchor { position: relative; flex: 0 0 auto; contain: layout paint; }
+/* 1) If screen width is below 1100px → allow wrap */
+@media (max-width: 1100px) {
+  .header-container {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    padding: 8px 12px !important;
+    row-gap: 8px !important;
+  }
+
+  .search-bar {
+    flex: 1 1 100%;
+    max-width: 100%;
+    order: 99;        /* pushes search to row 2 when wrapping */
+    margin: 8px 0 0;
+  }
+
+  .auth-links {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+    justify-content: flex-end !important;
+  }
+
+  .header-icon-btn,
+  .cart-link,
+  .profile-avatar {
+    flex-shrink: 1 !important;
+  }
+
+  .language-switcher,
+  .language-switcher * {
+    max-width: none !important;
+    flex-shrink: 1 !important;
+  }
+}
+
+/* --- PC horizontal scroll safety (non‑visual) --- */
+.header {
+  overflow-x: clip;
+}
+
+/* contain any 1‑px flex overflow */
+.header-container {
+  min-width: 0;
+}
+
+/* allow the row to shrink */
+.logo,
+.search-bar,
+.auth-links {
+  min-width: 0;
+}
+
+/* let children shrink */
+.search-bar input,
+.search-bar .ant-select-selector {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* === Category overlay: never affect header width === */
+.category-anchor {
+  position: relative;
+  /* anchor for absolute children */
+  flex: 0 0 auto;
+  /* do not grow, do not shrink */
+  contain: layout paint;
+  /* isolate layout/paint to prevent overflow side-effects */
+}
+
+/* If your CategoryMenu renders a container for the expanded panel,
+   give that container the class .category-panel so it overlays. */
 .category-anchor .category-panel {
-  position: absolute; top: 100%; left: 0;
-  width: max(320px, 40vw); max-width: min(100vw, 1100px);
-  max-height: min(70vh, 540px); overflow: auto; margin-top: 8px; z-index: 1200;
-  background: #fff; box-shadow: 0 12px 32px rgba(0,0,0,.18); border-radius: 10px;
-}
-.ant-dropdown, .ant-dropdown-menu, .ant-menu-submenu-popup, .ant-select-dropdown {
-  max-width: min(100vw, 1100px); overflow: hidden;
+  position: absolute;
+  /* out of normal flow => won't widen header */
+  top: 100%;
+  left: 0;
+  width: max(320px, 40vw);
+  max-width: min(100vw, 1100px);
+  max-height: min(70vh, 540px);
+  overflow: auto;
+  margin-top: 8px;
+  z-index: 1200;
+  /* header is z-index: 1000 */
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .18);
+  border-radius: 10px;
 }
 
-/* ====== ZOOM/TRUNCATION SAFETY OVERRIDE (must be last) ====== */
+/* Defensive cap for AntD overlays (dropdown/menu/select) */
+.ant-dropdown,
+.ant-dropdown-menu,
+.ant-menu-submenu-popup,
+.ant-select-dropdown {
+  max-width: min(100vw, 1100px);
+  overflow: hidden;
+}
+
+/* === MEDIUM VIEWPORT (≤1280px) — keep everything visible on iPad Air landscape === */
+@media (max-width: 1280px) {
+  .header-container {
+    flex-wrap: wrap !important;         /* permit 2 rows */
+    height: auto !important;
+    padding: 8px 12px !important;
+    row-gap: 8px !important;
+    overflow: visible !important;        /* prevent clipping of right-side items */
+  }
+
+  /* Put search on row 2 and make it full width */
+  .search-bar {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    order: 99;                           /* moves search to next line */
+    margin-top: 8px !important;
+  }
+
+  /* Allow right-side icons/links to wrap if needed (Wishlist, Cart, Avatar, Lang) */
+  .auth-links {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    justify-content: flex-end !important;
+    min-width: 0 !important;
+  }
+
+  /* Ensure Cart + Avatar don't shrink out of view */
+  .cart-link,
+  .profile-avatar,
+  .header-icon-btn {
+    flex: 0 0 auto !important;           /* do not shrink to zero */
+  }
+}
+
+/* === DESKTOP SAFETY (≤1400px) — ensure Cart + Avatar stay visible === */
+@media (max-width: 1400px) {
+  .header-container {
+    flex-wrap: wrap !important;         /* allow 2 rows instead of clipping */
+    height: auto !important;
+    padding: 8px 12px !important;
+    row-gap: 8px !important;
+    overflow: visible !important;       /* don't clip right-edge icons */
+  }
+
+  /* Search moves to row 2 to free space for Wishlist/Cart/Avatar */
+  .search-bar {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    order: 99;
+    margin-top: 8px !important;
+  }
+
+  /* Right-side can wrap if needed and won't be forced off-screen */
+  .auth-links {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+    justify-content: flex-end !important;
+  }
+
+  /* Keep key icons visible — do not let them shrink to zero */
+  .cart-link,
+  .profile-avatar,
+  .header-icon-btn {
+    flex: 0 0 auto !important;
+  }
+}
+
+
+/* Narrow the preferred search width slightly on huge screens to reserve space for right icons */
+@media (min-width: 1401px) {
+  .search-bar {
+    flex-basis: 440px;        /* was ~480px preferred; slightly tighter */
+    max-width: 560px;         /* was 600px */
+  }
+}
+
+
+/* Make wishlist & cart icons larger */
+.header .anticon {
+  font-size: 22px;          /* increase icon size */
+  min-width: 22px;
+  height: 22px;
+}
+
+/* Align icons vertically better */
+.auth-links .anticon,
+.cart-link .anticon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header .anticon {
+  font-size: 24px !important;
+}
+
+
+/* Uniform alignment & spacing on large screens */
+@media (min-width: 1400px) {
+  .header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px; /* consistent spacing */
+    height: 80px;  /* taller header helps icon alignment */
+  }
+
+  .search-bar {
+    flex: 1 1 700px;     /* larger search bar */
+    max-width: 700px;    /* allow it to grow slightly */
+    margin: 0 24px;      /* balanced spacing */
+  }
+
+  .auth-links {
+    gap: 20px;           /* slightly wider spacing */
+    align-items: center; /* consistent vertical alignment */
+  }
+
+  .profile-avatar {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+.header-container > * {
+  display: flex;
+  align-items: center;
+}
+
+.wishlist-link,
+.cart-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px; /* space between icon and number */
+}
+/* Reduce the size of the dropdown arrow in the language selector */
+.language-switcher .ant-select-arrow {
+  font-size: 12px !important;   /* Default ~14–16px → now smaller */
+  width: 12px !important;
+  height: 12px !important;
+}
+
+/* Optional: tighten its spacing */
+.language-switcher .ant-select-selector {
+  padding-right: 20px !important; /* prevents arrow overlap */
+}
+
+.language-switcher .ant-select-selection-item {
+  display: flex;
+  align-items: center;
+}
+
+/* Make the header container always full width */
+.header > .container,
+.header-container {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+.header {
+    width: 100%;
+}
+
+/* === FINAL OVERRIDE: Prevent header truncation at all zoom levels === */
+
+/* Make header container fluid and allow wrapping instead of clipping */
 .header-container {
   max-width: 100% !important;
   width: 100% !important;
-  flex-wrap: wrap !important;      /* wrap instead of clip at 80%/67% zoom */
+  flex-wrap: wrap !important;
+  justify-content: space-between !important;
   overflow: visible !important;
+  min-width: 0 !important;    /* prevents flex overflow */
 }
-.search-bar { flex: 1 1 auto !important; max-width: none !important; }
-.auth-links { flex: 0 1 auto !important; min-width: 0 !important; flex-wrap: wrap !important; }
+
+/* Make the search bar truly flexible */
+.search-bar {
+  flex: 1 1 auto !important;
+  max-width: none !important;
+  min-width: 200px !important;
+}
+
+/* Allow right‑side items to shrink and wrap instead of pushing content off-screen */
+.auth-links {
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  flex-wrap: wrap !important;
+}
+
+/* Ensure EVERY item inside header-container can shrink */
+.header-container > * {
+  flex-shrink: 1 !important;
+  min-width: 0 !important;
+}
