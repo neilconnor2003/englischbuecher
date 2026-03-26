@@ -78,11 +78,20 @@
     font-weight: 600;
 }
 
+/*.listing-main {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}*/
+
 .listing-main {
     display: flex;
     flex-direction: column;
     gap: 24px;
+    align-items: stretch !important;   /* <-- critical */
+    width: 100%;
 }
+
 
 .sort-bar {
     display: flex;
