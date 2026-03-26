@@ -854,3 +854,14 @@
   display: flex;
   align-items: center;
 }
+
+/* Make the header container always full width */
+.header > .container,
+.header-container {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+.header {
+    width: 100%;
+}
