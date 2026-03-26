@@ -120,14 +120,12 @@
 
 /* Books grid */
 .books-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, 260px);
-    /* <- each column is 260px */
-    gap: 24px;
-    /* gap is accounted for automatically */
-    justify-content: space-between;
-    /* spread nicely across the row */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 260px); /* FIXED TILE WIDTH */
+  gap: 32px;
+  justify-content: start; /* or center, or space-between */
 }
+
 
 
 /*.popular-card-wrapper {
@@ -138,7 +136,7 @@
 }*/
 
 .popular-card-wrapper {
-    max-width: 260px !important;
+    /*max-width: 260px !important;*/
     width: 100% !important;
     height: 100% !important;
     display: flex;
@@ -198,14 +196,23 @@
 }
 
 /* Wider dropdown panel (used with dropdownMatchSelectWidth=false in JSX) */
-.filters-sidebar .ant-select-dropdown {
+/*.filters-sidebar .ant-select-dropdown {
     min-width: 380px !important;
     max-height: 320px !important;
     /* let the popup own the scroll */
-    overflow-y: auto !important;
+    /*overflow-y: auto !important;
     overflow-x: hidden !important;
 
+}*/
+
+/* Make dropdowns fit within the sidebar on all screens */
+.filters-sidebar .ant-select-dropdown {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: calc(100vw - 40px) !important; /* prevent overflow on mobile */
+  left: 0 !important;
 }
+
 
 
 .filters-sidebar .ant-checkbox-wrapper {

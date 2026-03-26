@@ -276,7 +276,8 @@ function Books() {
                 placeholder={t('all_authors')}
                 style={{ width: '100%' }}
                 popupMatchSelectWidth={false}
-                getPopupContainer={(trigger) => trigger.parentNode}
+                //getPopupContainer={(trigger) => trigger.parentNode}
+                getPopupContainer={() => document.body}
                 optionFilterProp="label"
                 onChange={(val) => updateParams({ author: val || null })}
               />
@@ -292,7 +293,8 @@ function Books() {
                 placeholder={t('all_categories')}
                 style={{ width: '100%' }}
                 popupMatchSelectWidth={false}
-                getPopupContainer={(trigger) => trigger.parentNode}
+                //getPopupContainer={(trigger) => trigger.parentNode}
+                getPopupContainer={() => document.body}
                 optionFilterProp="label"
                 onChange={(val) => updateParams({ category: val || null })}
               />
@@ -309,7 +311,8 @@ function Books() {
                 placeholder={t('all_publishers')}
                 style={{ width: '100%' }}
                 popupMatchSelectWidth={false}
-                getPopupContainer={(trigger) => trigger.parentNode}
+                //getPopupContainer={(trigger) => trigger.parentNode}
+                getPopupContainer={() => document.body}
                 optionFilterProp="label"
                 onChange={(val) => updateParams({ publisher: val || null })}
               />
@@ -339,7 +342,8 @@ function Books() {
                 placeholder={t('all_editions')}
                 style={{ width: '100%' }}
                 popupMatchSelectWidth={false}
-                getPopupContainer={(trigger) => trigger.parentNode}
+                //getPopupContainer={(trigger) => trigger.parentNode}
+                getPopupContainer={() => document.body}
                 optionFilterProp="label"
                 onChange={(val) => updateParams({ edition: val || null })}
               />
