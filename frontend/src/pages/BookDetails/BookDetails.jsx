@@ -46,7 +46,7 @@ function BookDetails() {
   const [loading, setLoading] = useState(true);
   const [bookId, setBookId] = useState(null);
   const [adding, setAdding] = useState(false);
-  const [shippingMode, setShippingMode] = useState < 'delivery' | 'pickup' > ('delivery');
+  const [shippingMode, setShippingMode] = useState('delivery');
   const [mainImage, setMainImage] = useState('');
   const [recommendations, setRecommendations] = useState({ sameAuthor: [], alsoBought: [], similar: [] });
   const [authorRecs, setAuthorRecs] = useState([]); // { author, books }[]
