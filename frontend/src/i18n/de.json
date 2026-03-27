@@ -337,7 +337,8 @@
     "subtotal": "Zwischensumme",
     "shipping_label": "Versand",
     "pickup_label": "Versand",
-    "total": "Gesamtsumme"
+    "total": "Gesamtsumme",
+    "pickup_note": "Keine Versandkosten. Sie können das Buch jederzeit selbst abholen."
   },
   "shipping_note": "Die Versandkosten werden an der Kasse berechnet",
   "shipping_rate_limited": "Zu viele Versandabfragen. Bitte kurz warten und erneut versuchen.",

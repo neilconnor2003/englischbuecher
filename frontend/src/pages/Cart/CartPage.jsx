@@ -704,7 +704,7 @@ const CartPage = () => {
 
                 <div className="shipping-note">
                   {shippingMode === 'pickup'
-                    ? (t('pickup_note') || 'No shipping fees. You will collect the book yourself.')
+                    ? (t('cart.pickup_note') || 'No shipping fees. You will collect the book yourself.')
                     : (t("shipping_calculated_at_checkout") || "Shipping label is purchased at checkout")}
                 </div>
               </div>

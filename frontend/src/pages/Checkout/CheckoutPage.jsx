@@ -40,6 +40,23 @@ const CheckoutPage = ({ clientSecret }) => {
 
   const COUNTRY = "DE";
 
+
+  // Delivery vs Pickup (default from Cart/BookDetails preference)
+  const [shippingMode, setShippingMode] = useState(() => {
+    try {
+      const v = localStorage.getItem('engb_shipping_pref');
+      return v === 'pickup' ? 'pickup' : 'delivery';
+    } catch {
+      return 'delivery';
+    }
+  });
+
+  // persist choice so Cart/BookDetails stay in sync
+  useEffect(() => {
+    try { localStorage.setItem('engb_shipping_pref', shippingMode); } catch { }
+  }, [shippingMode]);
+
+
   useEffect(() => {
     if (!user) navigate("/login?redirect=checkout");
     else if (cartItems.length === 0 && !window.location.pathname.includes('/order-success')) {
@@ -53,11 +70,30 @@ const CheckoutPage = ({ clientSecret }) => {
 
     async function quote() {
       //if (!postalCode || cartItems.length === 0) {
+      /*if (!postalCode || cartItems.length === 0 || !email || !email.includes('@')) {
+        setShippingQuote(null);
+        setPiUpdated(false);
+        return;
+      }*/
+
+      // If pickup: no quote needed, shipping is €0
+      if (shippingMode === 'pickup') {
+        setShippingQuote({
+          amount_eur: 0,
+          provider: 'PICKUP',
+          service: 'CLICK_COLLECT',
+          rate_object_id: 'PICKUP', // placeholder so UI/validation works
+        });
+        setPiUpdated(false);
+        return;
+      }
+
       if (!postalCode || cartItems.length === 0 || !email || !email.includes('@')) {
         setShippingQuote(null);
         setPiUpdated(false);
         return;
       }
+
       setQuoting(true);
       try {
         /*const { data } = await axios.post('/api/checkout/quote', {
@@ -105,7 +141,7 @@ const CheckoutPage = ({ clientSecret }) => {
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     //}, [postalCode, city, cartItems.length]);
-  }, [postalCode, city, address, email, itemsSignature]);
+  }, [postalCode, city, address, email, itemsSignature, shippingMode]);
 
   // Update PaymentIntent amount (subtotal + shipping)
   useEffect(() => {
@@ -186,10 +222,25 @@ const CheckoutPage = ({ clientSecret }) => {
         totalPrice: Number(totalPrice || 0) + Number(shippingQuote.amount_eur || 0),
 
         // Tell backend which rate to buy + how much shipping was
-        shipping_selected_rate_id: shippingQuote.rate_object_id,
+        /*shipping_selected_rate_id: shippingQuote.rate_object_id,
         shipping_amount_eur: shippingQuote.amount_eur,
         shipping_provider: shippingQuote.provider || null,
-        shipping_service: shippingQuote.service || null
+        shipping_service: shippingQuote.service || null*/
+
+        shipping_mode: shippingMode,
+
+        shipping_selected_rate_id:
+          shippingMode === 'pickup' ? null : shippingQuote.rate_object_id,
+
+        shipping_amount_eur:
+          shippingMode === 'pickup' ? 0 : shippingQuote.amount_eur,
+
+        shipping_provider:
+          shippingMode === 'pickup' ? 'PICKUP' : (shippingQuote.provider ?? null),
+
+        shipping_service:
+          shippingMode === 'pickup' ? 'CLICK_COLLECT' : (shippingQuote.service ?? null),
+
       };
 
       const result = await dispatch(createOrder(orderData)).unwrap();
@@ -240,7 +291,14 @@ const CheckoutPage = ({ clientSecret }) => {
                   <span className="total-price">€{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="total-row">
-                  <span>{t('cart.shipping_label') || 'Shipping'}</span>
+                  {/*<span>{t('cart.shipping_label') || 'Shipping'}</span>*/}
+
+                  <span>
+                    {shippingMode === 'pickup'
+                      ? (t('cart.pickup_label') || 'Pickup')
+                      : (t('cart.shipping_label') || 'Shipping')}
+                  </span>
+
                   <span className="total-price">{quoting ? '…' : `€${shipping.toFixed(2)}`}</span>
                 </div>
                 <div className="total-row total-strong">
@@ -253,6 +311,40 @@ const CheckoutPage = ({ clientSecret }) => {
             {/* RIGHT: SHIPPING ADDRESS */}
             <div className="address-card">
               <div className="form-header">{t('shipping_address')}</div>
+
+              <div className="form-group">
+                <label>{t('delivery_method') || 'Delivery method'}</label>
+                <div className="shipping-choice">
+                  <label className="ship-radio">
+                    <input
+                      type="radio"
+                      name="shippingMode"
+                      value="delivery"
+                      checked={shippingMode === 'delivery'}
+                      onChange={() => setShippingMode('delivery')}
+                    />
+                    <span>{t('delivery_ship_to_postcode') || 'Deliver to postcode'}</span>
+                  </label>
+
+                  <label className="ship-radio">
+                    <input
+                      type="radio"
+                      name="shippingMode"
+                      value="pickup"
+                      checked={shippingMode === 'pickup'}
+                      onChange={() => setShippingMode('pickup')}
+                    />
+                    <span>{t('click_collect') || 'Click & Collect (pickup)'}</span>
+                  </label>
+                </div>
+
+                {shippingMode === 'pickup' && (
+                  <div className="pickup-hint">
+                    {t('pickup_hint') || 'No shipping fees. You will collect the book yourself.'}
+                  </div>
+                )}
+              </div>
+
               <div className="form-group">
                 <label>{t('email')}</label>
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />

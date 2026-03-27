@@ -384,7 +384,8 @@
     "subtotal": "Subtotal",
     "shipping_label": "Shipping",
     "pickup_label": "Shipping",
-    "total": "Total"
+    "total": "Total",
+    "pickup_note": "No shipping fees. You can collect the book yourself at any time."
   },
   "shipping_note": "Shipping is calculated at checkout",
   "change": "Change",
