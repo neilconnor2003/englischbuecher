@@ -426,7 +426,7 @@ const CartPage = () => {
   });
 
   const renderRecSlider = (books, className = "cart-recommendations-swiper") => (
-    <Swiper
+    /*<Swiper
       modules={[Navigation, Pagination]}
       spaceBetween={30}
       slidesPerView={2}
@@ -441,7 +441,20 @@ const CartPage = () => {
         1280: { slidesPerView: 4.1, spaceBetween: 30 },
       }}
       className={className}
+    >*/
+
+    <Swiper
+      modules={[Navigation, Pagination]}
+      slidesPerView="auto"               // ← like Home: size comes from CSS, not breakpoints
+      spaceBetween={0}                   // ← spacing handled via slide padding / margin-right in CSS
+      allowTouchMove={true}
+      loop={false}
+      watchOverflow={false}              // ← never disable swipe when items ≤ visible width
+      navigation={false}                 // ← Home hides arrows; set true if you want arrows
+      pagination={{ clickable: true }}   // ← dots like Home
+      className={className}
     >
+
       {books.map((b) => {
         const nb = normalizeBook(b);
         return (

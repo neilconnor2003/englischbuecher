@@ -825,3 +825,42 @@
 .recommendations-section {
   padding: 20px 0;       /* already present in your file */
 }
+
+/* Make the Swiper container show the peeking next card, like Home */
+.cart-recommendations-swiper .swiper {
+  overflow: visible !important;
+}
+
+/* Slides size by content (BookCard) with side padding + “peek” spacing */
+.cart-recommendations-swiper .swiper-slide {
+  width: auto !important;         /* critical for slidesPerView="auto" */
+  flex-shrink: 0 !important;
+  padding: 0 12px;                /* same as Home */
+  margin-right: 30px !important;  /* “peek next card” feel like Home */
+  box-sizing: border-box;
+}
+
+/* BookCard wrapper width identical to Home */
+.cart-recommendations-swiper .popular-card-wrapper {
+  max-width: 260px !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Dots like Home; keep visible under the row */
+.cart-recommendations-swiper .swiper-pagination {
+  position: relative !important;
+  margin-top: 30px !important;
+}
+
+.cart-recommendations-swiper .swiper-pagination-bullet-active {
+  background: #9333ea !important; /* brand purple */
+}
+
+/* (Optional) hide arrows like Home; delete this block if you want arrows on desktop */
+.cart-recommendations-swiper .swiper-button-prev,
+.cart-recommendations-swiper .swiper-button-next {
+  display: none !important;
+}
