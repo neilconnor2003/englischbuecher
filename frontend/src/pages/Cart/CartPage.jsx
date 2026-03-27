@@ -27,6 +27,7 @@ import 'swiper/css/pagination';
 
 import BookCard from '../../components/Book/BookCard';
 import CartShippingSummary from '../../components/Cart/CartShippingSummary';
+import { getDeliveryContext, setDeliveryContext } from '../../utils/deliveryContext';
 
 const CartPage = () => {
   const { t, i18n } = useTranslation();
@@ -53,6 +54,11 @@ const CartPage = () => {
      - Reload server cart and REPLACE Redux cart
      ------------------------------------------------------------ */
   const didMergeRef = useRef(false);
+
+
+  const ctx = getDeliveryContext() || {};
+  const [shippingMode, setShippingMode] = useState(ctx.shippingMode || 'delivery');
+
 
   useEffect(() => {
     if (!user) return;                 // Only after user logs in
@@ -192,14 +198,14 @@ const CartPage = () => {
   }, [dispatch, items]);
 
   // Delivery vs Click & Collect (persisted)
-  const [shippingMode, setShippingMode] = useState(() => {
+  /*const [shippingMode, setShippingMode] = useState(() => {
     try {
       const v = localStorage.getItem('engb_shipping_pref');
       return v === 'pickup' ? 'pickup' : 'delivery';
     } catch {
       return 'delivery';
     }
-  });
+  });*/
 
   // Shipping cost set by CartShippingSummary (in EUR)
   const [shippingCost, setShippingCost] = useState(0);
@@ -684,11 +690,26 @@ const CartPage = () => {
 
                 {/* Delivery mode: existing component */}
                 {shippingMode === 'delivery' ? (
-                  <CartShippingSummary
+                  /*<CartShippingSummary
                     t={t}
                     i18n={i18n}
                     onShippingChange={setShippingCost}
+                  />*/
+
+                  <CartShippingSummary
+                    t={t}
+                    i18n={i18n}
+                    onShippingChange={(cost, meta) => {
+                      setShippingCost(cost);
+
+                      setDeliveryContext({
+                        shippingMode,
+                        postalCode: meta?.postalCode || '',
+                        city: meta?.city || '',
+                      });
+                    }}
                   />
+
                 ) : (
                   /* Pickup mode: free */
                   <div className="pickup-card">

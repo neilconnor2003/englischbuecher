@@ -23,6 +23,7 @@ import { message, Button, Rate, Radio } from 'antd';
 import { generateBookUrl } from '../../utils/seoUrl';
 import BookReviews from '../../components/Book/BookReviews';
 import BooksSlider from '../../components/BooksSlider/BooksSlider';
+import { setDeliveryContext, getDeliveryContext } from '../../utils/deliveryContext';
 
 // Swiper imports (same as Home.jsx)
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -46,7 +47,12 @@ function BookDetails() {
   const [loading, setLoading] = useState(true);
   const [bookId, setBookId] = useState(null);
   const [adding, setAdding] = useState(false);
-  const [shippingMode, setShippingMode] = useState('delivery');
+  //const [shippingMode, setShippingMode] = useState('delivery');
+  const initialCtx = getDeliveryContext() || {};
+
+  const [shippingMode, setShippingMode] = useState(initialCtx.shippingMode || 'delivery');
+  const [postalCode, setPostalCode] = useState(initialCtx.postalCode || '');
+  const [city, setCity] = useState(initialCtx.city || '');
   const [mainImage, setMainImage] = useState('');
   const [recommendations, setRecommendations] = useState({ sameAuthor: [], alsoBought: [], similar: [] });
   const [authorRecs, setAuthorRecs] = useState([]); // { author, books }[]
@@ -57,7 +63,6 @@ function BookDetails() {
   const [editions, setEditions] = useState([]);
   const [formatsMap, setFormatsMap] = useState({});
   const [selectedFormat, setSelectedFormat] = useState('');
-
 
   // --- Initials Avatar helpers (BookDetails only) ---
   const colorFromString = (s = '') => {
@@ -125,6 +130,14 @@ function BookDetails() {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
 
+  useEffect(() => {
+    setDeliveryContext({
+      shippingMode,
+      postalCode,
+      city,
+    });
+  }, [shippingMode, postalCode, city]);
+
   // --- Resolve the canonical book ID from id/isbn/slug ---
   useEffect(() => {
     const controller = new AbortController();
@@ -174,9 +187,9 @@ function BookDetails() {
   }, [bookId]);
 
   // Persist the user's last choice (delivery vs pickup)
-  useEffect(() => {
+  /*useEffect(() => {
     try { localStorage.setItem('engb_shipping_pref', shippingMode); } catch { }
-  }, [shippingMode]);
+  }, [shippingMode]);*/
 
   // --- Load book + recommendations for the resolved bookId ---
   useEffect(() => {

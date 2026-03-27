@@ -10,6 +10,7 @@ import { AuthContext } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import './CheckoutPage.css';
+import { getDeliveryContext, setDeliveryContext } from '../../utils/deliveryContext';
 
 const CheckoutPage = ({ clientSecret }) => {
   const { t } = useTranslation();
@@ -23,8 +24,12 @@ const CheckoutPage = ({ clientSecret }) => {
 
   const [email, setEmail] = useState(user?.email || "");
   const [address, setAddress] = useState(shippingAddress?.address || "");
-  const [city, setCity] = useState(shippingAddress?.city || "");
-  const [postalCode, setPostalCode] = useState(shippingAddress?.postalCode || "");
+  //const [city, setCity] = useState(shippingAddress?.city || "");
+  //const [postalCode, setPostalCode] = useState(shippingAddress?.postalCode || "");
+  const ctx = getDeliveryContext() || {};
+  const [shippingMode, setShippingMode] = useState(ctx.shippingMode || 'delivery');
+  const [postalCode, setPostalCode] = useState(ctx.postalCode || shippingAddress?.postalCode || "");
+  const [city, setCity] = useState(ctx.city || shippingAddress?.city || "");
   const [loading, setLoading] = useState(false);
   const [paymentReady, setPaymentReady] = useState(false);
 
@@ -42,19 +47,19 @@ const CheckoutPage = ({ clientSecret }) => {
 
 
   // Delivery vs Pickup (default from Cart/BookDetails preference)
-  const [shippingMode, setShippingMode] = useState(() => {
+  /*const [shippingMode, setShippingMode] = useState(() => {
     try {
       const v = localStorage.getItem('engb_shipping_pref');
       return v === 'pickup' ? 'pickup' : 'delivery';
     } catch {
       return 'delivery';
     }
-  });
+  });*/
 
   // persist choice so Cart/BookDetails stay in sync
-  useEffect(() => {
+  /*useEffect(() => {
     try { localStorage.setItem('engb_shipping_pref', shippingMode); } catch { }
-  }, [shippingMode]);
+  }, [shippingMode]);*/
 
 
   useEffect(() => {
@@ -63,6 +68,14 @@ const CheckoutPage = ({ clientSecret }) => {
       navigate("/cart");
     }
   }, [user, cartItems, navigate]);
+
+  useEffect(() => {
+    setDeliveryContext({
+      shippingMode,
+      postalCode,
+      city,
+    });
+  }, [shippingMode, postalCode, city]);
 
   // Quote shipping when postal/city/items change
   useEffect(() => {
