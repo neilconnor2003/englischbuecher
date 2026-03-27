@@ -567,13 +567,46 @@ function BookDetails() {
 
                 {/* Shipping choice: Delivery vs. Click & Collect */}
                 <div className="shipping-choice">
-                  <Radio.Group
+
+                  {shippingMode === 'delivery' && (
+                    <div className="delivery-fields">
+                      <div className="delivery-grid">
+                        <div className="delivery-field">
+                          <label className="delivery-label">{t('postal_code') || 'Postal code'}</label>
+                          <input
+                            className="delivery-input"
+                            value={postalCode}
+                            onChange={(e) => setPostalCode(e.target.value)}
+                            placeholder="55411"
+                          />
+                        </div>
+
+                        <div className="delivery-field">
+                          <label className="delivery-label">{t('city') || 'City'}</label>
+                          <input
+                            className="delivery-input"
+                            value={city}
+                            onChange={(e) => setCity(e.target.value)}
+                            placeholder="Bingen"
+                          />
+                        </div>
+                      </div>
+
+                      {!postalCode?.trim() && (
+                        <div className="delivery-hint">
+                          {t('enter_postcode_for_shipping') || 'Enter postal code to see delivery cost.'}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/*<Radio.Group
                     value={shippingMode}
                     onChange={(e) => setShippingMode(e.target.value)}
                   >
                     <Radio value="delivery">{t('delivery_ship_to_postcode') || 'Deliver to postcode'}</Radio>
                     <Radio value="pickup">{t('click_collect') || 'Click & Collect (pickup in Ingelheim)'}</Radio>
-                  </Radio.Group>
+                  </Radio.Group>*/}
                 </div>
 
                 {shippingMode === 'delivery' ? (
