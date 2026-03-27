@@ -459,5 +459,10 @@
   "request.email": "Ihre E-Mail",
   "request.name_required": "Bitte geben Sie Ihren Namen ein",
   "request.email_required": "Bitte geben Sie Ihre E-Mail ein",
-  "request.email_invalid": "Bitte geben Sie eine gültige E-Mail ein"
+  "request.email_invalid": "Bitte geben Sie eine gültige E-Mail ein",
+  "delivery_ship_to_postcode": "Lieferung an Postleitzahl",
+  "click_collect": "Click & Collect (Abholung in Bingen 55411)",
+  "pickup_title": "Click & Collect — Gratis",
+  "pickup_hint": "Abholung in Bingen 55411. Genaue Adresse und Zeitfenster nach dem Kauf.",
+  "free": "Kostenlos"
 }

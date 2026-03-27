@@ -1168,3 +1168,48 @@
 .book-details-page .recommendations-section + .recommendations-section {
   margin-top: 8px;                  /* replaces big visual gaps with a gentle step */
 }
+
+/* --- Delivery vs. Click & Collect toggle --- */
+.shipping-choice {
+  margin-top: 12px;
+}
+
+/* --- Click & Collect info card --- */
+.pickup-card {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #e9d5ff;         /* light purple */
+  background: #fdf4ff;                /* soft purple */
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.pickup-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.pickup-meta {
+  display: grid;
+  gap: 2px;
+}
+
+.pickup-title {
+  font-weight: 700;
+  color: #6b21a8;                     /* purple heading */
+}
+
+.pickup-addr {
+  color: #4b5563;
+  font-size: 13px;
+}
+
+.pickup-free {
+  color: #16a34a;                     /* green "free" */
+  font-weight: 800;
+  white-space: nowrap;
+}

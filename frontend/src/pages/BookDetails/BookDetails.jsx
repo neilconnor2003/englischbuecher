@@ -6,7 +6,7 @@ import axios from 'axios';
 import {
   ShoppingCart, ArrowLeft, Check, Share2,
   Calendar, BookOpen, Hash, Globe, Building,
-  Weight, Ruler, Award, Layers, Book
+  Weight, Ruler, Award, Layers, Book, MapPin
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
@@ -19,7 +19,7 @@ import { toggleWishlist, fetchWishlist } from '../../features/wishlist/wishlistS
 import { AuthContext } from '../../context/AuthContext';
 import BookCard from '../../components/Book/BookCard';
 import { HeartFilled, HeartOutlined } from '@ant-design/icons';
-import { message, Button, Rate } from 'antd';
+import { message, Button, Rate, Radio } from 'antd';
 import { generateBookUrl } from '../../utils/seoUrl';
 import BookReviews from '../../components/Book/BookReviews';
 import BooksSlider from '../../components/BooksSlider/BooksSlider';
@@ -46,6 +46,7 @@ function BookDetails() {
   const [loading, setLoading] = useState(true);
   const [bookId, setBookId] = useState(null);
   const [adding, setAdding] = useState(false);
+  const [shippingMode, setShippingMode] = useState < 'delivery' | 'pickup' > ('delivery');
   const [mainImage, setMainImage] = useState('');
   const [recommendations, setRecommendations] = useState({ sameAuthor: [], alsoBought: [], similar: [] });
   const [authorRecs, setAuthorRecs] = useState([]); // { author, books }[]
@@ -171,6 +172,11 @@ function BookDetails() {
   useEffect(() => {
     setMainImage('');
   }, [bookId]);
+
+  // Persist the user's last choice (delivery vs pickup)
+  useEffect(() => {
+    try { localStorage.setItem('engb_shipping_pref', shippingMode); } catch { }
+  }, [shippingMode]);
 
   // --- Load book + recommendations for the resolved bookId ---
   useEffect(() => {
@@ -538,13 +544,47 @@ function BookDetails() {
 
 
                 {/* Live shipping estimate (Germany-only, Shippo: DPD/Deutsche Post) */}
-                <div style={{ marginTop: 12 }}>
+                {/*<div style={{ marginTop: 12 }}>
                   <ShippoEstimator
                     items={[{ weight_grams: book.weight_grams || 500, quantity: 1 }]}
                     t={t}
                     i18n={i18n}
                   />
+                </div>*/}
+
+                {/* Shipping choice: Delivery vs. Click & Collect */}
+                <div className="shipping-choice">
+                  <Radio.Group
+                    value={shippingMode}
+                    onChange={(e) => setShippingMode(e.target.value)}
+                  >
+                    <Radio value="delivery">{t('delivery_ship_to_postcode') || 'Deliver to postcode'}</Radio>
+                    <Radio value="pickup">{t('click_collect') || 'Click & Collect (pickup in Ingelheim)'}</Radio>
+                  </Radio.Group>
                 </div>
+
+                {shippingMode === 'delivery' ? (
+                  <div style={{ marginTop: 12 }}>
+                    <ShippoEstimator
+                      items={[{ weight_grams: book.weight_grams ?? 500, quantity: 1 }]}
+                      t={t}
+                      i18n={i18n}
+                    />
+                  </div>
+                ) : (
+                  <div className="pickup-card" role="region" aria-label="Click & Collect">
+                    <div className="pickup-row">
+                      <MapPin size={18} />
+                      <div className="pickup-meta">
+                        <div className="pickup-title">{t('pickup_title') || 'Click & Collect — Free'}</div>
+                        <div className="pickup-addr">
+                          {t('pickup_hint') || 'Pickup in Ingelheim. Exact address and time window will be shared after purchase.'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="pickup-free">{t('free') || '0,00 €'}</div>
+                  </div>
+                )}
 
                 <div className="buy-buttons">
                   {user ? (
