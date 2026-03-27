@@ -452,12 +452,22 @@
 }
 
 /* Wrapper width identical to Home/BookDetails so BookCard renders the same */
-.popular-card-wrapper {
+/*.popular-card-wrapper {
   width: 300px;
   height: 100% !important;
   display: flex !important;
   flex-direction: column !important;
+}*/
+
+/* Match Home’s BookCard width inside sliders */
+.popular-card-wrapper {
+  max-width: 260px !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
+
 
 /* RESPONSIVE */
 @media (max-width: 1024px) {
@@ -783,4 +793,35 @@
   max-width: none;
   display: flex;
   flex-direction: column;
+}
+
+/* === Make Cart sliders match Home’s look-and-feel === */
+
+/* Each slide holds a card with some side padding; prevents cards from “sticking” */
+.cart-recommendations-swiper .swiper-slide {
+  width: auto !important;
+  flex-shrink: 0 !important;
+  padding: 0 12px;
+  margin-right: 30px !important; /* “peek next card” feel */
+  box-sizing: border-box;
+}
+
+/* Hide arrows if you want Home’s “no arrow, dots only” behavior */
+.cart-recommendations-swiper .swiper-button-prev,
+.cart-recommendations-swiper .swiper-button-next {
+  display: none !important;   /* set to block if you prefer arrows visible */
+}
+
+/* Keep dots visible underneath, like Home */
+.cart-recommendations-swiper .swiper-pagination {
+  position: relative !important;
+  margin-top: 30px !important;
+}
+
+.cart-recommendations-swiper .swiper-pagination-bullet-active {
+  background: #9333ea !important; /* brand purple, same as Home */
+}
+
+.recommendations-section {
+  padding: 20px 0;       /* already present in your file */
 }
