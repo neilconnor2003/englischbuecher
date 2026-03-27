@@ -864,3 +864,33 @@
 .cart-recommendations-swiper .swiper-button-next {
   display: none !important;
 }
+
+/* --- Delivery vs Click & Collect toggle in Cart --- */
+.shipping-choice {
+  margin-bottom: 12px;
+}
+
+.pickup-card {
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid #e9d5ff;
+  background: #fdf4ff;
+  border-radius: 10px;
+}
+
+.pickup-title {
+  font-weight: 800;
+  color: #6b21a8;
+  margin-bottom: 4px;
+}
+
+.pickup-addr {
+  font-size: 13px;
+  color: #4b5563;
+  margin-bottom: 8px;
+}
+
+.pickup-free {
+  font-weight: 900;
+  color: #16a34a;
+}

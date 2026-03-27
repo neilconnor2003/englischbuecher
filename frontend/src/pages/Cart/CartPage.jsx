@@ -3,7 +3,7 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Table, Button, Empty, message, Card, Row, Col, Tag, Divider } from 'antd';
+import { Table, Button, Empty, message, Card, Row, Col, Tag, Divider, Radio } from 'antd';
 import { DeleteOutlined, PlusOutlined, MinusOutlined } from '@ant-design/icons';
 import {
   updateQuantity,
@@ -191,8 +191,29 @@ const CartPage = () => {
     })();
   }, [dispatch, items]);
 
+  // Delivery vs Click & Collect (persisted)
+  const [shippingMode, setShippingMode] = useState(() => {
+    try {
+      const v = localStorage.getItem('engb_shipping_pref');
+      return v === 'pickup' ? 'pickup' : 'delivery';
+    } catch {
+      return 'delivery';
+    }
+  });
+
   // Shipping cost set by CartShippingSummary (in EUR)
   const [shippingCost, setShippingCost] = useState(0);
+
+  // Persist preference and enforce shipping=0 for pickup
+  useEffect(() => {
+    try { localStorage.setItem('engb_shipping_pref', shippingMode); } catch { }
+    if (shippingMode === 'pickup') {
+      setShippingCost(0);
+    } else {
+      // trigger a recalculation if user returns to delivery
+      window.dispatchEvent(new Event("cart-updated"));
+    }
+  }, [shippingMode]);
 
   // Subtotal (items only)
   const subtotal = useMemo(() => Number(totalPrice || 0), [totalPrice]);
@@ -637,7 +658,7 @@ const CartPage = () => {
             {/* SHIPPING + ORDER SUMMARY */}
             <div className="cart-summary-grid">
               {/* Left: Shipping selector/details */}
-              <div className="cart-shipping-panel">
+              {/*<div className="cart-shipping-panel">
                 <CartShippingSummary
                   t={t}
                   i18n={i18n}
@@ -646,6 +667,45 @@ const CartPage = () => {
                 <div className="shipping-note">
                   {t("shipping_calculated_at_checkout") ||
                     "Shipping label is purchased at checkout"}
+                </div>
+              </div>*/}
+
+              <div className="cart-shipping-panel">
+                {/* Shipping choice */}
+                <div className="shipping-choice">
+                  <Radio.Group
+                    value={shippingMode}
+                    onChange={(e) => setShippingMode(e.target.value)}
+                  >
+                    <Radio value="delivery">{t('delivery_ship_to_postcode') || 'Deliver to postcode'}</Radio>
+                    <Radio value="pickup">{t('click_collect') || 'Click & Collect (pickup)'}</Radio>
+                  </Radio.Group>
+                </div>
+
+                {/* Delivery mode: existing component */}
+                {shippingMode === 'delivery' ? (
+                  <CartShippingSummary
+                    t={t}
+                    i18n={i18n}
+                    onShippingChange={setShippingCost}
+                  />
+                ) : (
+                  /* Pickup mode: free */
+                  <div className="pickup-card">
+                    <div className="pickup-title">
+                      {t('pickup_title') || 'Click & Collect — Free'}
+                    </div>
+                    <div className="pickup-addr">
+                      {t('pickup_hint') || 'Pickup at our location. Address & time window shared after purchase.'}
+                    </div>
+                    <div className="pickup-free">{t('free') || '0,00 €'}</div>
+                  </div>
+                )}
+
+                <div className="shipping-note">
+                  {shippingMode === 'pickup'
+                    ? (t('pickup_note') || 'No shipping fees. You will collect the book yourself.')
+                    : (t("shipping_calculated_at_checkout") || "Shipping label is purchased at checkout")}
                 </div>
               </div>
 
@@ -661,7 +721,13 @@ const CartPage = () => {
                 </div>
 
                 <div className="summary-row">
-                  <span className="summary-label">{t("cart.shipping_label") || "Shipping"}</span>
+                  {/*<span className="summary-label">{t("cart.shipping_label") || "Shipping"}</span>*/}
+                  <span className="summary-label">
+                    {shippingMode === 'pickup'
+                      ? (t('pickup_label') || 'Pickup')
+                      : (t("cart.shipping_label") || "Shipping")}
+                  </span>
+
                   <span className="summary-value">
                     {currency.format(Number(shippingCost || 0))}
                   </span>
