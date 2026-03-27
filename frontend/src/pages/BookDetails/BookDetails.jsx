@@ -566,7 +566,7 @@ function BookDetails() {
                 {shippingMode === 'delivery' ? (
                   <div style={{ marginTop: 12 }}>
                     <ShippoEstimator
-                      items={[{ weight_grams: book.weight_grams ?? 500, quantity: 1 }]}
+                      items={[{ weight_grams: book.weight_grams || 500, quantity: 1 }]}
                       t={t}
                       i18n={i18n}
                     />
