@@ -336,6 +336,7 @@
   "cart": {
     "subtotal": "Zwischensumme",
     "shipping_label": "Versand",
+    "pickup_label": "Versand",
     "total": "Gesamtsumme"
   },
   "shipping_note": "Die Versandkosten werden an der Kasse berechnet",

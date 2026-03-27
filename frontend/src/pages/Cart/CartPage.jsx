@@ -724,7 +724,7 @@ const CartPage = () => {
                   {/*<span className="summary-label">{t("cart.shipping_label") || "Shipping"}</span>*/}
                   <span className="summary-label">
                     {shippingMode === 'pickup'
-                      ? (t('pickup_label') || 'Pickup')
+                      ? (t('cart.pickup_label') || 'Pickup')
                       : (t("cart.shipping_label") || "Shipping")}
                   </span>
 
