@@ -609,7 +609,7 @@ function BookDetails() {
                   </Radio.Group>*/}
                 </div>
 
-                {shippingMode === 'delivery' ? (
+                {/*{shippingMode === 'delivery' ? (
                   <div style={{ marginTop: 12 }}>
                     <ShippoEstimator
                       items={[{ weight_grams: Number(book.weight_grams) || 500, quantity: 1 }]}
@@ -630,7 +630,40 @@ function BookDetails() {
                     </div>
                     <div className="pickup-free">{t('free') || '0,00 €'}</div>
                   </div>
+                )}*/}
+
+                {shippingMode === 'delivery' ? (
+                  postalCode?.trim() ? (
+                    <div style={{ marginTop: 12 }}>
+                      <ShippoEstimator
+                        items={[{ weight_grams: Number(book.weight_grams) || 500, quantity: 1 }]}
+                        t={t}
+                        i18n={i18n}
+                      />
+                    </div>
+                  ) : (
+                    <div className="delivery-hint">
+                      {t('enter_postcode_for_shipping') || 'Enter postal code to see delivery cost'}
+                    </div>
+                  )
+                ) : (
+                  <div className="pickup-card" role="region" aria-label="Click & Collect">
+                    <div className="pickup-row">
+                      <MapPin size={18} />
+                      <div className="pickup-meta">
+                        <div className="pickup-title">
+                          {t('pickup_title') || 'Click & Collect — Free'}
+                        </div>
+                        <div className="pickup-addr">
+                          {t('pickup_hint') ||
+                            'Pickup in Ingelheim. Exact address and time window will be shared after purchase.'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="pickup-free">{t('free') || '0,00 €'}</div>
+                  </div>
                 )}
+
 
                 <div className="buy-buttons">
                   {user ? (
