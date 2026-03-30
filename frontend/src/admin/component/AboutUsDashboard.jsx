@@ -1,5 +1,5 @@
 // frontend/src/admin/components/AboutUsDashboard.jsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   useGetAboutQuery,
@@ -16,6 +16,27 @@ const AboutUsDashboard = () => {
 
   const heroImage = watch('hero_image');
   const storyImage = watch('story_image');
+
+
+  const [heroPreview, setHeroPreview] = useState('');
+  const [storyPreview, setStoryPreview] = useState('');
+
+
+  const API_ORIGIN = import.meta.env.VITE_API_URL;
+
+  const absolute = (p) => {
+    if (!p) return '';
+    if (p.startsWith('http://') || p.startsWith('https://')) return p;
+    if (p.startsWith('/uploads') && API_ORIGIN) return `${API_ORIGIN}${p}`;
+    return p;
+  };
+
+  useEffect(() => {
+    return () => {
+      if (heroPreview) URL.revokeObjectURL(heroPreview);
+      if (storyPreview) URL.revokeObjectURL(storyPreview);
+    };
+  }, [heroPreview, storyPreview]);
 
   useEffect(() => {
     if (about) {
@@ -95,18 +116,43 @@ const AboutUsDashboard = () => {
           <div>
             <label className="block font-medium text-gray-700 mb-3">Hero Background Image</label>
             {about?.hero_image_url && (
-              <img src={about.hero_image_url} alt="Hero" className="w-full h-64 object-cover rounded-lg mb-4 shadow" />
+              <img src={absolute(about.hero_image_url)} alt="Hero" className="w-full h-64 object-cover rounded-lg mb-4 shadow" />
             )}
             <Upload
               accept="image/*"
               maxCount={1}
               beforeUpload={() => false}
-              onChange={(info) => setValue('hero_image', info.fileList.map(f => f.originFileObj))}
+              //onChange={(info) => setValue('hero_image', info.fileList.map(f => f.originFileObj))}
+              onChange={(info) => {
+                const file = info.fileList?.[0]?.originFileObj;
+                if (file) {
+                  setValue('hero_image', [file]);
+                  setHeroPreview(URL.createObjectURL(file));
+                } else {
+                  setValue('hero_image', []);
+                  setHeroPreview('');
+                }
+              }}
+
             >
               <button type="button" className="px-5 py-3 border border-purple-600 text-purple-600 rounded-lg flex items-center gap-2 hover:bg-purple-50">
                 <UploadOutlined /> Upload New Hero Image
               </button>
             </Upload>
+            {(heroPreview || about?.hero_image_url) && (
+              <div style={{ marginTop: 12 }}>
+                <img
+                  src={heroPreview || absolute(about.hero_image_url)}
+                  alt="Hero preview"
+                  style={{
+                    width: '100%',
+                    maxWidth: 420,
+                    borderRadius: 12,
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
+                  }}
+                />
+              </div>
+            )}
           </div>
         </section>
 
@@ -142,18 +188,42 @@ const AboutUsDashboard = () => {
           <div>
             <label className="block font-medium text-gray-700 mb-3">Story Image (right side)</label>
             {about?.story_image_url && (
-              <img src={about.story_image_url} alt="Story" className="w-full max-w-md h-64 object-cover rounded-lg mb-4 shadow" />
+              <img src={absolute(about.story_image_url)} alt="Story" className="w-full max-w-md h-64 object-cover rounded-lg mb-4 shadow" />
             )}
             <Upload
               accept="image/*"
               maxCount={1}
               beforeUpload={() => false}
-              onChange={(info) => setValue('story_image', info.fileList.map(f => f.originFileObj))}
+              //onChange={(info) => setValue('story_image', info.fileList.map(f => f.originFileObj))}
+              onChange={(info) => {
+                const file = info.fileList?.[0]?.originFileObj;
+                if (file) {
+                  setValue('story_image', [file]);
+                  setStoryPreview(URL.createObjectURL(file));
+                } else {
+                  setValue('story_image', []);
+                  setStoryPreview('');
+                }
+              }}
             >
               <button type="button" className="px-5 py-3 border border-purple-600 text-purple-600 rounded-lg flex items-center gap-2 hover:bg-purple-50">
                 <UploadOutlined /> Upload Story Image
               </button>
             </Upload>
+            {(storyPreview || about?.story_image_url) && (
+              <div style={{ marginTop: 12 }}>
+                <img
+                  src={storyPreview || absolute(about.story_image_url)}
+                  alt="Story preview"
+                  style={{
+                    width: '100%',
+                    maxWidth: 420,
+                    borderRadius: 12,
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
+                  }}
+                />
+              </div>
+            )}
           </div>
         </section>
 
