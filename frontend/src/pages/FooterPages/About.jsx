@@ -43,7 +43,9 @@ const About = () => {
             {t('about.mission.title')}
           </h2>
           <p className="about-text">
-            {t('lang') === 'de' ? about.mission_de : about.mission_en}
+            {
+              lang === 'de'
+                ? about.mission_de : about.mission_en}
           </p>
         </section>
         <section className="story">
@@ -52,7 +54,9 @@ const About = () => {
               {t('about.story.title')}
             </h2>
             <p className="about-text">
-              {t('lang') === 'de' ? about.story_de : about.story_en}
+              {
+                lang === 'de'
+                  ? about.story_de : about.story_en}
             </p>
           </div>
           <div className="story-image">
@@ -61,7 +65,9 @@ const About = () => {
         </section>
 
         <section className="values">
-          <h2>{t('about.values.title')}</h2>
+          <h2 className="about-section-title">
+            {t('about.values.title')}
+          </h2>
           <div className="values-grid">
             {['quality', 'service', 'speed'].map(key => (
               <div className="value-card" key={key}>
@@ -77,7 +83,9 @@ const About = () => {
             {t('about.team.title')}
           </h2>
           <p className="about-text">
-            {t('lang') === 'de' ? about.team_de : about.team_en}
+            {
+              lang === 'de'
+                ? about.team_de : about.team_en}
           </p>
         </section>
       </div>

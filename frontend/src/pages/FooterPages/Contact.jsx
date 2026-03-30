@@ -5,7 +5,10 @@ import { useGetContactQuery } from '../../admin/features/contact/contactApiSlice
 import './Contact.css';
 
 const Contact = () => {
-  const { t } = useTranslation();
+  //const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i
+
   const { data: contact = {}, isLoading: loadingContact } = useGetContactQuery();
   const [status, setStatus] = useState('');
 
@@ -45,8 +48,8 @@ const Contact = () => {
   return (
     <div className="contact-page">
       <div className="contact-hero" style={{ backgroundImage: `linear-gradient(rgba(0,0,0,.5), rgba(0,0,0,.7)), url(${heroImage})` }}>
-        <h1>{t('lang') === 'de' ? contact.title_de : contact.title_en || t('contact.title')}</h1>
-        <p>{t('lang') === 'de' ? contact.subtitle_de : contact.subtitle_en || t('contact.subtitle')}</p>
+        <h1>{lang === 'de' ? contact.title_de : contact.title_en || t('contact.title')}</h1>
+        <p>{lang === 'de' ? contact.subtitle_de : contact.subtitle_en || t('contact.subtitle')}</p>
       </div>
 
       <div className="contact-container">
@@ -66,13 +69,13 @@ const Contact = () => {
                 {contact.phone || '+49 89 12345678'}
               </a><br />
               <small>
-                {t('lang') === 'de' ? contact.phone_hours_de : contact.phone_hours_en || 'Mo–Fr 9–17 Uhr'}
+                {lang === 'de' ? contact.phone_hours_de : contact.phone_hours_en || 'Mo–Fr 9–17 Uhr'}
               </small>
             </div>
             <div className="info-item">
               <strong>{t('contact.info.response')}</strong>
               <p>
-                {t('lang') === 'de' ? contact.response_time_de : contact.response_time_en || t('contact.info.response_text')}
+                {lang === 'de' ? contact.response_time_de : contact.response_time_en || t('contact.info.response_text')}
               </p>
             </div>
           </div>
@@ -90,8 +93,8 @@ const Contact = () => {
                 {status === 'sending' ? 'Sending…' : t('contact.form.submit')}
               </button>
 
-              {status === 'success' && <p style={{color:'green',marginTop:'1rem'}}>Message sent successfully!</p>}
-              {status === 'error' && <p style={{color:'red',marginTop:'1rem'}}>Failed. Please try again.</p>}
+              {status === 'success' && <p style={{ color: 'green', marginTop: '1rem' }}>Message sent successfully!</p>}
+              {status === 'error' && <p style={{ color: 'red', marginTop: '1rem' }}>Failed. Please try again.</p>}
             </form>
           </div>
         </div>
