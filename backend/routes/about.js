@@ -48,6 +48,19 @@ module.exports = (db) => {
       const data = req.body;
       const files = req.files || {};
 
+      // Get the latest existing row
+      const [prevRows] = await db.execute(
+        'SELECT hero_image_url, story_image_url FROM about_content ORDER BY id DESC LIMIT 1'
+      );
+      const prev = prevRows[0] || {};
+
+
+      // Preserve previous images by default
+      data.hero_image_url = prev.hero_image_url || null;
+      data.story_image_url = prev.story_image_url || null;
+
+
+      // Override only if new files uploaded
       // Build image URLs
       if (files.hero_image?.[0]) {
         data.hero_image_url = `/uploads/about/${files.hero_image[0].filename}`;
