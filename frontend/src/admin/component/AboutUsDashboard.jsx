@@ -15,6 +15,13 @@ const AboutUsDashboard = () => {
   const { register, handleSubmit, setValue, watch } = useForm();
 
   const heroImage = watch('hero_image');
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
+  const rawHero = about.hero_image_url || '';
+  const heroImage1 = rawHero
+    ? (rawHero.startsWith('http') ? rawHero : `${API_BASE_URL}${rawHero}`)
+    : '';
+
+
   const storyImage = watch('story_image');
 
   useEffect(() => {
@@ -95,7 +102,7 @@ const AboutUsDashboard = () => {
           <div>
             <label className="block font-medium text-gray-700 mb-3">Hero Background Image</label>
             {about?.hero_image_url && (
-              <img src={about.hero_image_url} alt="Hero" className="w-full h-64 object-cover rounded-lg mb-4 shadow" />
+              <img src={heroImage1} alt="Hero" className="w-full h-64 object-cover rounded-lg mb-4 shadow" />
             )}
             <Upload
               accept="image/*"
