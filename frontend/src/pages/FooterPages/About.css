@@ -113,3 +113,36 @@ section h2 {
   .story-image img { order: -1; }
   section h2 { font-size: 30px; }
 }
+
+.hero-content {
+  padding: 0 18px;
+}
+
+.about-content p {
+  letter-spacing: 0.2px;
+}
+
+.value-card p {
+  margin: 0;
+}
+
+.value-card {
+  border: 1px solid rgba(124, 58, 237, 0.08);
+}
+
+.about-hero {
+  position: relative;
+}
+
+.about-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(124,58,237,0.25), transparent 55%);
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+}
