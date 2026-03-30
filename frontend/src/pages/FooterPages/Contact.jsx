@@ -7,7 +7,7 @@ import './Contact.css';
 const Contact = () => {
   //const { t } = useTranslation();
   const { t, i18n } = useTranslation();
-  const lang = i
+  const lang = i18n.language;
 
   const { data: contact = {}, isLoading: loadingContact } = useGetContactQuery();
   const [status, setStatus] = useState('');
