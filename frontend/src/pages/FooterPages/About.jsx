@@ -8,7 +8,10 @@ import './About.css';
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const About = () => {
-  const { t } = useTranslation();
+  //const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
+
   const { data: about = {}, isLoading } = useGetAboutQuery();
 
 
@@ -29,21 +32,21 @@ const About = () => {
     <div className="about-page">
       <div className="about-hero" style={{ backgroundImage: `linear-gradient(rgba(0,0,0,.4), rgba(0,0,0,.6)), url(${heroImage || '/assets/about-hero.jpg'})` }}>
         <div className="hero-content">
-          <h1>{t('lang') === 'de' ? about.title_de : about.title_en || t('about.title')}</h1>
-          <p className="subtitle">{t('lang') === 'de' ? about.subtitle_de : about.subtitle_en || t('about.subtitle')}</p>
+          <h1>{lang === 'de' ? about.title_de : about.title_en || t('about.title')}</h1>
+          <p className="subtitle">{lang === 'de' ? about.subtitle_de : about.subtitle_en || t('about.subtitle')}</p>
         </div>
       </div>
 
       <div className="about-content">
         <section className="mission">
           <h2>{t('about.mission.title')}</h2>
-          <p>{t('lang') === 'de' ? about.mission_de : about.mission_en}</p>
+          <p>{lang === 'de' ? about.mission_de : about.mission_en}</p>
         </section>
 
         <section className="story">
           <div className="story-text">
             <h2>{t('about.story.title')}</h2>
-            <p>{t('lang') === 'de' ? about.story_de : about.story_en}</p>
+            <p>{lang === 'de' ? about.story_de : about.story_en}</p>
           </div>
           <div className="story-image">
             <img src={storyImage || '/assets/about-bookstack.jpg'} alt="Our story" />
@@ -55,8 +58,8 @@ const About = () => {
           <div className="values-grid">
             {['quality', 'service', 'speed'].map(key => (
               <div className="value-card" key={key}>
-                <h3>{t('lang') === 'de' ? about[`values_${key}_de`] : about[`values_${key}_en`]}</h3>
-                <p>{t('lang') === 'de' ? about[`values_${key}_text_de`] : about[`values_${key}_text_en`]}</p>
+                <h3>{lang === 'de' ? about[`values_${key}_de`] : about[`values_${key}_en`]}</h3>
+                <p>{lang === 'de' ? about[`values_${key}_text_de`] : about[`values_${key}_text_en`]}</p>
               </div>
             ))}
           </div>
@@ -64,7 +67,7 @@ const About = () => {
 
         <section className="team">
           <h2>{t('about.team.title')}</h2>
-          <p>{t('lang') === 'de' ? about.team_de : about.team_en}</p>
+          <p>{lang === 'de' ? about.team_de : about.team_en}</p>
         </section>
       </div>
     </div>
