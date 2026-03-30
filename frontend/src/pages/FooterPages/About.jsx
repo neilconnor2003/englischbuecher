@@ -37,16 +37,23 @@ const About = () => {
         </div>
       </div>
 
-      <div className="about-content">
+      <div className="about-content about-container">
         <section className="mission">
-          <h2>{t('about.mission.title')}</h2>
-          <p>{lang === 'de' ? about.mission_de : about.mission_en}</p>
+          <h2 className="about-section-title">
+            {t('about.mission.title')}
+          </h2>
+          <p className="about-text">
+            {t('lang') === 'de' ? about.mission_de : about.mission_en}
+          </p>
         </section>
-
         <section className="story">
           <div className="story-text">
-            <h2>{t('about.story.title')}</h2>
-            <p>{lang === 'de' ? about.story_de : about.story_en}</p>
+            <h2 className="about-section-title">
+              {t('about.story.title')}
+            </h2>
+            <p className="about-text">
+              {t('lang') === 'de' ? about.story_de : about.story_en}
+            </p>
           </div>
           <div className="story-image">
             <img src={storyImage || '/assets/about-bookstack.jpg'} alt="Our story" />
@@ -66,8 +73,12 @@ const About = () => {
         </section>
 
         <section className="team">
-          <h2>{t('about.team.title')}</h2>
-          <p>{lang === 'de' ? about.team_de : about.team_en}</p>
+          <h2 className="about-section-title">
+            {t('about.team.title')}
+          </h2>
+          <p className="about-text">
+            {t('lang') === 'de' ? about.team_de : about.team_en}
+          </p>
         </section>
       </div>
     </div>
