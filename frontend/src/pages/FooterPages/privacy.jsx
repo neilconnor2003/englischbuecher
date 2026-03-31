@@ -16,7 +16,7 @@ const Privacy = () => {
 
   return (
     <div className="legal-page">
-      <div className="legal-content">
+      <div className="legal-container">
         <p><em>Stand: {p.last_updated || 'November 2025'}</em></p>
         <h1>{t('privacy.title')}</h1>
         {[
