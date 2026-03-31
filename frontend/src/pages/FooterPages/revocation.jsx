@@ -8,7 +8,7 @@ const Revocation = () => {
 
   return (
     <div className="legal-page">
-      <div className="legal-content">
+      <div className="legal-container">
         <h1>{t('revocation.title')}</h1>
         <h2>{t('revocation.right')}</h2>
         <p>{t('revocation.right_text')}</p>
