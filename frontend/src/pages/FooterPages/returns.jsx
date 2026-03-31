@@ -39,10 +39,9 @@ const Returns = () => {
           <h2>{t('returns.info.title')}</h2>
           <p><strong>{t('returns.info.address')}</strong></p>
           <p>
-            Dein Englisch Bücher<br />
-            Retourenabteilung<br />
-            Musterstraße 123<br />
-            80331 München
+            Englisch Bücher<br />
+            Im Schwalg 60<br />
+            55411 Bingen
           </p>
           <p className="highlight">{t('returns.info.free')}</p>
         </section>
