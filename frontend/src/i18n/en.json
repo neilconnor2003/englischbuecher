@@ -203,7 +203,7 @@
     "shipping": "Shipping Costs",
     "shipping_text": "Shipping costs are shown separately in the shopping cart and order overview.",
     "payment": "Payment Methods",
-    "payment_text": "We accept PayPal, credit card, Apple Pay, Klarna and bank transfer.",
+    "payment_text": "We accept PayPal and credit card.",
     "revocation": "Right of Withdrawal",
     "revocation_text": "Consumers are entitled to a 7-day right of withdrawal. Details can be found in our withdrawal policy."
   },

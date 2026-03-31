@@ -199,7 +199,7 @@
     "contract_text": "Die Darstellung von Waren in unserem Online-Shop stellt kein rechtlich bindendes Angebot, sondern lediglich eine unverbindliche Aufforderung zur Abgabe einer Bestellung dar.",
     "prices_text": "Alle Preise verstehen sich inklusive der gesetzlichen Mehrwertsteuer. Die Zahlung kann mit den im Bestellprozess angebotenen Zahlungsmethoden erfolgen.",
     "shipping_text": "Die Versandkosten werden im Warenkorb und in der Bestellübersicht separat ausgewiesen.",
-    "payment_text": "Wir akzeptieren PayPal, Kreditkarte, Apple Pay, Klarna und Banküberweisung.",
+    "payment_text": "Wir akzeptieren PayPal und Kreditkarte.",
     "revocation_text": "Verbraucher haben ein 7-tägiges Widerrufsrecht. Einzelheiten finden Sie in unserer Widerrufsbelehrung."
   },
   "revocation": {

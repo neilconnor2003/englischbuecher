@@ -41,19 +41,17 @@ function Footer() {
           <ul>
             <li><Link to="/faq">FAQ</Link></li>
             <li><Link to="/returns">{t('footer.returns')}</Link></li>
-            <li><a href="mailto:support@dein-englisch-buecher.de">support@dein-englisch-buecher.de</a></li>
+            <li><a href="mailto:admin@englischbuecher.de">admin@englischbuecher.de</a></li>
           </ul>
         </div>
       </div>
 
       <div className="footer-bottom">
-        <p>© {currentYear} Dein Englisch Bücher • All rights reserved.</p>
+        <p>© {currentYear} EnglischBücher • All rights reserved.</p>
         <div className="footer-payment">
           <img src="/assets/payments/paypal.svg" alt="PayPal" />
           <img src="/assets/payments/visa.svg" alt="Visa" />
           <img src="/assets/payments/mastercard.svg" alt="Mastercard" />
-          <img src="/assets/payments/apple-pay.svg" alt="Apple Pay" />
-          <img src="/assets/payments/klarna.svg" alt="Klarna" />
         </div>
       </div>
     </footer>

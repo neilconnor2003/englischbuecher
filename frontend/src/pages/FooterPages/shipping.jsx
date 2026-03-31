@@ -25,9 +25,6 @@ const Shipping = () => {
         <ul>
           <li>PayPal</li>
           <li>Kreditkarte (Visa, Mastercard)</li>
-          <li>Apple Pay / Google Pay</li>
-          <li>Klarna Rechnung & Raten</li>
-          <li>Vorkasse</li>
         </ul>
       </div>
     </div>
