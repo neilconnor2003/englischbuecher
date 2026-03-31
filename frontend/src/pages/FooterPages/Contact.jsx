@@ -12,6 +12,17 @@ const Contact = () => {
   const { data: contact = {}, isLoading: loadingContact } = useGetContactQuery();
   const [status, setStatus] = useState('');
 
+
+  const API_ORIGIN = import.meta.env.VITE_API_URL;
+
+  const absolute = (p) => {
+    if (!p) return '';
+    if (p.startsWith('http')) return p;
+    if (p.startsWith('/uploads') && API_ORIGIN) return `${API_ORIGIN}${p}`;
+    return p;
+  };
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus('sending');
@@ -33,7 +44,8 @@ const Contact = () => {
         e.target.reset();
       } else {
         setStatus('error');
-        alert(json.error(json.error || 'Something went wrong'));
+        //alert(json.error(json.error || 'Something went wrong'));
+        alert(json.error || 'Something went wrong');
       }
     } catch (err) {
       setStatus('error');
@@ -43,13 +55,18 @@ const Contact = () => {
 
   if (loadingContact) return <div className="p-20 text-center">Loading...</div>;
 
-  const heroImage = contact.hero_image_url || '/assets/contact-hero.jpg';
+  //const heroImage = contact.hero_image_url || '/assets/contact-hero.jpg';
+  const heroImage =
+    absolute(contact.hero_image_url) || '/assets/contact-hero.jpg';
+
 
   return (
     <div className="contact-page">
       <div className="contact-hero" style={{ backgroundImage: `linear-gradient(rgba(0,0,0,.5), rgba(0,0,0,.7)), url(${heroImage})` }}>
-        <h1>{lang === 'de' ? contact.title_de : contact.title_en || t('contact.title')}</h1>
-        <p>{lang === 'de' ? contact.subtitle_de : contact.subtitle_en || t('contact.subtitle')}</p>
+        <div className="hero-content">
+          <h1>{lang === 'de' ? contact.title_de : contact.title_en || t('contact.title')}</h1>
+          <p className="subtitle"> {lang === 'de' ? contact.subtitle_de : contact.subtitle_en || t('contact.subtitle')}</p>
+        </div>
       </div>
 
       <div className="contact-container">
