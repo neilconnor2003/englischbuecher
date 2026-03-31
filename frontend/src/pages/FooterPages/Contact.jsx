@@ -1,5 +1,5 @@
 // frontend/src/pages/Contact.jsx
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGetContactQuery } from '../../admin/features/contact/contactApiSlice';
 import './Contact.css';
