@@ -16,9 +16,16 @@
 }
 
 .legal-container h1 {
-  font-size: 32px;
-  margin-bottom: 30px;
-  color: #5b21b6;
+  margin-bottom: 40px;
+  font-size: 2.5rem;
+  font-weight: 800;
+  text-align: center;
+  margin: 30px 0 30px;
+  color: #9333ea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
 }
 
 .legal-container h2 {
