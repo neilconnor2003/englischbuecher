@@ -14,7 +14,7 @@ const Imprint = () => {
 
   return (
     <div className="legal-page">
-      <div className="legal-container">
+      <div className="legal-content">
         <h1>{t('imprint.title')}</h1>
         
         <p><strong>{lang === 'de' ? imp.company_name_de : imp.company_name_en || 'Dein Englisch Bücher'}</strong></p>

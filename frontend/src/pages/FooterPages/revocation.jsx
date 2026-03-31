@@ -20,11 +20,11 @@ const Revocation = () => {
         <p>{t('revocation.form_text')}</p>
         <p>
           <strong>{t('revocation.to')}</strong><br />
-          Dein Englisch Bücher<br />
-          Max Mustermann<br />
-          Musterstraße 123<br />
-          80331 München<br />
-          E-Mail: widerruf@dein-englisch-buecher.de
+          EnglischBücher<br />
+          Shelly Biswal<br />
+          Im Schwalg 60<br />
+          55411 Bingen<br />
+          E-Mail: admin@englischbuecher.de
         </p>
 
         <p><em>{t('revocation.end')}</em></p>
