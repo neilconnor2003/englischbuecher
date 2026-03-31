@@ -181,12 +181,7 @@
     "title": "Datenschutzerklärung",
     "intro": "Der Schutz Ihrer Daten ist uns wichtig...",
     "controller": "Verantwortlicher",
-    "data_collection": "Erhebung personenbezogener Daten",
-    "collection": {
-      "1": "Beim Besuch der Website",
-      "2": "Bei Bestellung",
-      "3": "Bei Newsletter-Anmeldung"
-    },
+    "collection": "Erhebung personenbezogener Daten",
     "cookies": "Cookies & Tracking",
     "tools": "Eingesetzte Dienste",
     "rights": "Ihre Rechte",
@@ -199,13 +194,22 @@
     "prices": "Preise und Zahlungsbedingungen",
     "shipping": "Versandkosten",
     "payment": "Zahlungsarten",
-    "revocation": "Widerrufsrecht"
+    "revocation": "Widerrufsrecht",
+    "scope_text": "Diese Allgemeinen Geschäftsbedingungen gelten für alle Verträge, die zwischen uns und unseren Kunden über den Online-Shop geschlossen werden.",
+    "contract_text": "Die Darstellung von Waren in unserem Online-Shop stellt kein rechtlich bindendes Angebot, sondern lediglich eine unverbindliche Aufforderung zur Abgabe einer Bestellung dar.",
+    "prices_text": "Alle Preise verstehen sich inklusive der gesetzlichen Mehrwertsteuer. Die Zahlung kann mit den im Bestellprozess angebotenen Zahlungsmethoden erfolgen.",
+    "shipping_text": "Die Versandkosten werden im Warenkorb und in der Bestellübersicht separat ausgewiesen.",
+    "payment_text": "Wir akzeptieren PayPal, Kreditkarte, Apple Pay, Klarna und Banküberweisung.",
+    "revocation_text": "Verbraucher haben ein 7-tägiges Widerrufsrecht. Einzelheiten finden Sie in unserer Widerrufsbelehrung."
   },
   "revocation": {
     "title": "Widerrufsbelehrung",
     "right": "Widerrufsrecht",
+    "right_text": "Sie haben das Recht, binnen 7 Tagen ohne Angabe von Gründen diesen Vertrag zu widerrufen. Die Widerrufsfrist beträgt 7 Tage ab dem Tag, an dem Sie oder ein von Ihnen benannter Dritter, der nicht der Beförderer ist, die Ware in Besitz genommen haben.",
     "consequences": "Folgen des Widerrufs",
+    "consequences_text": "Wenn Sie diesen Vertrag widerrufen, erstatten wir Ihnen alle von Ihnen erhaltenen Zahlungen, mit Ausnahme der Lieferkosten, unverzüglich und in jedem Fall binnen 14 Tagen ab dem Tag, an dem wir über Ihren Widerruf dieses Vertrags informiert wurden.",
     "form": "Widerrufsformular",
+    "form_text": "Um Ihr Widerrufsrecht auszuüben, teilen Sie uns dies bitte mittels einer eindeutigen Erklärung (z. B. ein mit der Post versandter Brief oder eine E-Mail) mit.",
     "to": "An",
     "end": "– Ende der Widerrufsbelehrung –"
   },

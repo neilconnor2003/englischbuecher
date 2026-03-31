@@ -181,12 +181,7 @@
     "title": "Privacy Policy",
     "intro": "The protection of your personal data is of particular concern to us.",
     "controller": "Data Controller",
-    "data_collection": "Collection of Personal Data",
-    "collection": {
-      "1": "When visiting the website",
-      "2": "When placing an order",
-      "3": "When subscribing to the newsletter"
-    },
+    "collection": "Collection of Personal Data",
     "cookies": "Cookies & Tracking",
     "cookies_text": "We use cookies and similar technologies to improve your browsing experience and to analyse the use of our website.",
     "tools": "Third-Party Services",
@@ -210,14 +205,14 @@
     "payment": "Payment Methods",
     "payment_text": "We accept PayPal, credit card, Apple Pay, Klarna and bank transfer.",
     "revocation": "Right of Withdrawal",
-    "revocation_text": "Consumers are entitled to a 14-day right of withdrawal. Details can be found in our withdrawal policy."
+    "revocation_text": "Consumers are entitled to a 7-day right of withdrawal. Details can be found in our withdrawal policy."
   },
   "revocation": {
     "title": "Cancellation Policy",
     "right": "Right of Withdrawal",
-    "right_text": "You have the right to withdraw from this contract within 14 days without giving any reason. The withdrawal period is 14 days from the day on which you or a third party named by you, who is not the carrier, took possession of the goods.",
+    "right_text": "You have the right to withdraw from this contract within 7 days without giving any reason. The withdrawal period is 7 days from the day on which you or a third party named by you, who is not the carrier, took possession of the goods.",
     "consequences": "Consequences of Withdrawal",
-    "consequences_text": "If you withdraw from this contract, we shall reimburse you all payments received from you, including delivery costs (except for additional costs resulting from your choice of a different delivery method than the cheapest standard delivery offered by us), without undue delay and in any event not later than 14 days from the day on which we are informed about your decision to withdraw from this contract.",
+    "consequences_text": "If you withdraw from this contract, we shall reimburse you all payments received from you, excluding delivery costs, without undue delay and in any event not later than 14 days from the day on which we are informed about your decision to withdraw from this contract.",
     "form": "Withdrawal Form",
     "form_text": "To exercise your right of withdrawal, please inform us by means of a clear statement (e.g. a letter sent by post or email).",
     "to": "To",
