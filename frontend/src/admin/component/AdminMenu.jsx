@@ -36,7 +36,7 @@ const AdminMenu = () => {
     { name: 'Contact', path: 'footer/contact' },
     { name: 'FAQ', path: 'footer/faq' },
     { name: 'Returns', path: 'footer/returns' },
-    { name: 'Imprint', path: 'footer/imprint' },
+    { name: 'Impressum', path: 'footer/imprint' },
     { name: 'Privacy', path: 'footer/privacy' },
     { name: 'Terms (AGB)', path: 'footer/terms' },
     { name: 'Revocation', path: 'footer/revocation' },

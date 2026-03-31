@@ -14,11 +14,13 @@ const Imprint = () => {
 
   return (
     <div className="legal-page">
-      <div className="legal-container">
+      <div className="legal-hero">
         <h1>{t('imprint.title')}</h1>
-        
+      </div>
+      
+      <div className="legal-container legal-content">
         <p><strong>{lang === 'de' ? imp.company_name_de : imp.company_name_en || 'Dein Englisch Bücher'}</strong></p>
-        
+
         <p>
           {lang === 'de' ? imp.owner_name_de : imp.owner_name_en || 'Max Mustermann'}<br />
           {lang === 'de' ? imp.address_street_de : imp.address_street_en || 'Musterstraße 123'}<br />
