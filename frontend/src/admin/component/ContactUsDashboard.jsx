@@ -1,5 +1,6 @@
 // frontend/src/admin/components/ContactUsDashboard.jsx
-import React from 'react';
+//import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGetContactQuery, useUpdateContactMutation } from '../features/contact/contactApiSlice';
 import { useTranslation } from 'react-i18next';
 
@@ -7,6 +8,18 @@ const ContactUsDashboard = () => {
   const { t } = useTranslation();
   const { data: contact = {}, isLoading } = useGetContactQuery();
   const [updateContact, { isLoading: isUpdating }] = useUpdateContactMutation();
+
+  const [heroPreview, setHeroPreview] = useState('');
+
+  const API_ORIGIN = import.meta.env.VITE_API_URL;
+
+  const absolute = (p) => {
+    if (!p) return '';
+    if (p.startsWith('http')) return p;
+    if (p.startsWith('/uploads') && API_ORIGIN) return `${API_ORIGIN}${p}`;
+    return p;
+  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,11 +37,11 @@ const ContactUsDashboard = () => {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <h1 className="text-3xl font-bold mb-8 text-purple-700">Contact Us Page Editor</h1>
-      
+
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-2xl font-semibold mb-6 text-purple-600">Hero Section</h2>
-          
+
           <div className="grid grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium mb-2">Title (EN)</label>
@@ -50,16 +63,45 @@ const ContactUsDashboard = () => {
 
           <div className="mt-6">
             <label className="block text-sm font-medium mb-2">Hero Background Image</label>
-            {contact.hero_image_url && (
+            {/*{contact.hero_image_url && (
               <img src={contact.hero_image_url} alt="Current hero" className="w-full h-64 object-cover rounded-lg mb-4" />
             )}
-            <input type="file" name="hero_image" accept="image/*" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-purple-600 file:text-white hover:file:bg-purple-700" />
+            <input type="file" name="hero_image" accept="image/*" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-purple-600 file:text-white hover:file:bg-purple-700" />*/}
+
+            {/* Preview: new upload OR existing DB image */}
+            {(heroPreview || contact.hero_image_url) && (
+              <img
+                src={heroPreview || absolute(contact.hero_image_url)}
+                alt="Hero preview"
+                className="w-full h-64 object-cover rounded-lg mb-4"
+              />
+            )}
+
+            <input
+              type="file"
+              name="hero_image"
+              accept="image/*"
+              className="block w-full text-sm text-gray-500
+              file:mr-4 file:py-2 file:px-4
+              file:rounded file:border-0
+              file:bg-purple-600 file:text-white
+              hover:file:bg-purple-700"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setHeroPreview(URL.createObjectURL(file));
+                } else {
+                  setHeroPreview('');
+                }
+              }}
+            />
+
           </div>
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-2xl font-semibold mb-6 text-purple-600">Contact Info</h2>
-          
+
           <div className="grid grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium mb-2">Email</label>

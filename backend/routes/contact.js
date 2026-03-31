@@ -59,7 +59,7 @@ module.exports = (db) => {
           email = VALUES(email), phone = VALUES(phone),
           phone_hours_en = VALUES(phone_hours_en), phone_hours_de = VALUES(phone_hours_de),
           response_time_en = VALUES(response_time_en), response_time_de = VALUES(response_time_de),
-          hero_image_url = VALUES(hero_image_url)
+          hero_image_url = COALESCE(VALUES(hero_image_url), hero_image_url)
       `, [
         data.title_en, data.title_de,
         data.subtitle_en, data.subtitle_de,
