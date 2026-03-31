@@ -42,7 +42,7 @@ module.exports = (transporter) => {
         subject: `Kontakt: ${subject}`,
         text: `Name: ${name}\nEmail: ${email}\n\n${message}`,
         html: `
-          <h3>Neue Nachricht vom Kontaktformular</h3>
+          <h3>New Message from EnglischBuecher</h3>
           <p><strong>Name:</strong> ${name}</p>
           <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
           <p><strong>Betreff:</strong> ${subject}</p>

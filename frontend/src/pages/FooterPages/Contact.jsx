@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGetContactQuery } from '../../admin/features/contact/contactApiSlice';
 import './Contact.css';
+import { AuthContext } from '../../context/AuthContext';
 
 const Contact = () => {
   //const { t } = useTranslation();
@@ -12,6 +13,8 @@ const Contact = () => {
   const { data: contact = {}, isLoading: loadingContact } = useGetContactQuery();
   const [status, setStatus] = useState('');
 
+  const { user } = useContext(AuthContext);
+  const loggedInEmail = user?.email || '';
 
   const API_ORIGIN = import.meta.env.VITE_API_URL;
 
@@ -102,7 +105,17 @@ const Contact = () => {
             <h2>{t('contact.form.title')}</h2>
             <form onSubmit={handleSubmit}>
               <input type="text" name="name" placeholder={t('contact.form.name')} required />
-              <input type="email" name="email" placeholder={t('contact.form.email')} required />
+              {/*<input type="email" name="email" placeholder={t('contact.form.email')} required />*/}
+              <input
+                type="email"
+                name="email"
+                value={loggedInEmail || undefined}
+                defaultValue={!loggedInEmail ? '' : undefined}
+                placeholder={t('contact.form.email')}
+                required
+                readOnly={!!loggedInEmail}
+                className={loggedInEmail ? 'email-readonly' : ''}
+              />
               <input type="text" name="subject" placeholder={t('contact.form.subject')} required />
               <textarea name="message" rows="6" placeholder={t('contact.form.message')} required></textarea>
 

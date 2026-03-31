@@ -201,3 +201,8 @@
     font-size: 18px;
   }
 }
+
+.email-readonly {
+  background-color: #f1f5f9;
+  cursor: not-allowed;
+}

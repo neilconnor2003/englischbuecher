@@ -39,6 +39,24 @@ module.exports = (db) => {
   router.patch('/', upload.single('hero_image'), async (req, res) => {
     try {
       const data = req.body;
+      //const files = req.files || {};
+
+      // Get the latest existing row
+      const [prevRows] = await db.execute(
+        'SELECT hero_image_url FROM contact_content ORDER BY id DESC LIMIT 1'
+      );
+      const prev = prevRows[0] || {};
+
+      // Preserve previous images by default
+      data.hero_image_url = prev.hero_image_url || null;
+
+      // Override only if new files uploaded
+      // Build image URLs
+      /*if (files.hero_image?.[0]) {
+        data.hero_image_url = `/uploads/contact/${files.hero_image[0].filename}`;
+      }*/
+      
+      //const data = req.body;
       if (req.file) {
         data.hero_image_url = `/uploads/contact/${req.file.filename}`;
       }
