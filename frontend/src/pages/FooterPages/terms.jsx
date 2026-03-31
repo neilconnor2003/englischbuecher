@@ -8,7 +8,8 @@ const Terms = () => {
 
   return (
     <div className="legal-page">
-      <div className="legal-container">
+      <div className="legal-content">
+        <p className="legal-updated"><em>Stand: November 2025</em></p>
         <h1>{t('terms.title')}</h1>
         <ol className="terms-list">
           <li><strong>{t('terms.scope')}</strong><br />{t('terms.scope_text')}</li>
@@ -18,7 +19,6 @@ const Terms = () => {
           <li><strong>{t('terms.payment')}</strong><br />{t('terms.payment_text')}</li>
           <li><strong>{t('terms.revocation')}</strong><br />{t('terms.revocation_text')}</li>
         </ol>
-        <p className="legal-updated"><em>Stand: November 2025</em></p>
       </div>
     </div>
   );
