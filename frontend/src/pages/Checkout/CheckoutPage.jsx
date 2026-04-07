@@ -46,6 +46,9 @@ const CheckoutPage = ({ clientSecret }) => {
   const COUNTRY = "DE";
 
 
+  const [hydrated, setHydrated] = useState(false);
+
+
   // Delivery vs Pickup (default from Cart/BookDetails preference)
   /*const [shippingMode, setShippingMode] = useState(() => {
     try {
@@ -69,13 +72,38 @@ const CheckoutPage = ({ clientSecret }) => {
     }
   }, [user, cartItems, navigate]);
 
-  useEffect(() => {
+  {/*useEffect(() => {
     setDeliveryContext({
       shippingMode,
       postalCode,
       city,
     });
-  }, [shippingMode, postalCode, city]);
+  }, [shippingMode, postalCode, city]);*/}
+
+  useEffect(() => {
+    const ctx = getDeliveryContext();
+    if (!ctx) {
+      setHydrated(true);
+      return;
+    }
+
+    if (ctx.shippingMode) setShippingMode(ctx.shippingMode);
+    if (ctx.postalCode) setPostalCode(ctx.postalCode);
+    if (ctx.city) setCity(ctx.city);
+
+    setHydrated(true);
+  }, []);
+
+
+  useEffect(() => {
+    if (!hydrated) return;
+
+    setDeliveryContext({
+      shippingMode,
+      postalCode,
+      city,
+    });
+  }, [hydrated, shippingMode, postalCode, city]);
 
   // Quote shipping when postal/city/items change
   useEffect(() => {
