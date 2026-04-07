@@ -285,12 +285,26 @@
     "steps": {
       "title": "So einfach geht’s",
       "1": {
-        "title": "E-Mail schreiben",
-        "text": "An widerruf@..."
+        "title": "Senden Sie uns eine E-Mail",
+        "text": "Schreiben Sie an admin@englischbuecher.de mit Ihrer Bestellnummer."
+      },
+      "2": {
+        "title": "Rücksendeetikett erhalten",
+        "text": "Wir senden Ihnen umgehend ein Rücksendeetikett per E-Mail zu."
+      },
+      "3": {
+        "title": "Abgeben & Rückerstattung erhalten",
+        "text": "Geben Sie das Paket ab – das Geld ist innerhalb von 14 Tagen auf Ihrem Konto."
       }
     },
     "info": {
       "title": "Retourenadresse",
+      "address": {
+        "line1": "EnglischBücher",
+        "line2": "Shelly Biswal",
+        "line3": "Im Schwalg 60",
+        "line4": "55411 Bingen"
+      },
       "free": "Rückversand ist für dich kostenlos!"
     }
   },

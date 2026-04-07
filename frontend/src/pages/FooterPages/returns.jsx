@@ -37,7 +37,12 @@ const Returns = () => {
 
         <section className="returns-info">
           <h2>{t('returns.info.title')}</h2>
-          <p><strong>{t('returns.info.address')}</strong></p>
+          <p>
+            <strong>{t('returns.info.address.line1')}</strong><br />
+            {t('returns.info.address.line2')}<br />
+            {t('returns.info.address.line3')}<br />
+            {t('returns.info.address.line4')}
+          </p>
           <p>
             Englisch Bücher<br />
             Im Schwalg 60<br />

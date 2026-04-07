@@ -315,20 +315,25 @@
       "title": "It’s that simple",
       "1": {
         "title": "Send us an email",
-        "text": "Write to support@dein-englisch-buecher.de with your order number."
+        "text": "Write to admin@englischbuecher.de with your order number."
       },
       "2": {
         "title": "Receive return label",
-        "text": "We’ll immediately send you a free DHL return label by email."
+        "text": "We’ll immediately send you a return label by email."
       },
       "3": {
         "title": "Drop off & get refunded",
-        "text": "Drop off the package at any DHL point — money is back in your account within 3 days."
+        "text": "Drop off the package — money is back in your account within 14 days."
       }
     },
     "info": {
       "title": "Return Address",
-      "address": "Dein Englisch Bücher<br />Returns Department<br />Musterstraße 123<br />80331 München",
+      "address": {
+        "line1": "EnglischBücher",
+        "line2": "Shelly Biswal",
+        "line3": "Im Schwalg 60",
+        "line4": "55411 Bingen"
+      },
       "free": "Return shipping is completely free for you within Germany!"
     }
   },
