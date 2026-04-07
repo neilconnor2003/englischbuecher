@@ -86,7 +86,7 @@ const CheckoutPage = ({ clientSecret }) => {
     });
   }, [shippingMode, postalCode, city]);*/}
 
-  useEffect(() => {
+  {/*useEffect(() => {
     const ctx = getDeliveryContext();
     if (!ctx) {
       setHydrated(true);
@@ -98,8 +98,34 @@ const CheckoutPage = ({ clientSecret }) => {
     if (ctx.city) setCity(ctx.city);
 
     setHydrated(true);
-  }, []);
+  }, []);*/}
 
+
+  useEffect(() => {
+    // 1️⃣ Try shared delivery context
+    const ctx = getDeliveryContext();
+
+    // 2️⃣ Fallback: ShippoEstimator storage
+    let shippo = null;
+    try {
+      const raw =
+        localStorage.getItem('ship_dest') || localStorage.getItem('shippo_dest');
+      shippo = raw ? JSON.parse(raw) : null;
+    } catch { }
+
+    const resolvedPostal =
+      ctx?.postalCode || shippo?.postal || '';
+    const resolvedCity =
+      ctx?.city || shippo?.city || '';
+    const resolvedMode =
+      ctx?.shippingMode || 'delivery';
+
+    setShippingMode(resolvedMode);
+    setPostalCode(resolvedPostal);
+    setCity(resolvedCity);
+
+    setHydrated(true);
+  }, []);
 
 
   useEffect(() => {
