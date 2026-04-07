@@ -24,12 +24,16 @@ const CheckoutPage = ({ clientSecret }) => {
 
   const [email, setEmail] = useState(user?.email || "");
   const [address, setAddress] = useState(shippingAddress?.address || "");
+
   //const [city, setCity] = useState(shippingAddress?.city || "");
   //const [postalCode, setPostalCode] = useState(shippingAddress?.postalCode || "");
+  const [postalCode, setPostalCode] = useState("");
+  const [city, setCity] = useState("");
+
   const ctx = getDeliveryContext() || {};
   const [shippingMode, setShippingMode] = useState(ctx.shippingMode || 'delivery');
-  const [postalCode, setPostalCode] = useState(ctx.postalCode || shippingAddress?.postalCode || "");
-  const [city, setCity] = useState(ctx.city || shippingAddress?.city || "");
+  //const [postalCode, setPostalCode] = useState(ctx.postalCode || shippingAddress?.postalCode || "");
+  //const [city, setCity] = useState(ctx.city || shippingAddress?.city || "");
   const [loading, setLoading] = useState(false);
   const [paymentReady, setPaymentReady] = useState(false);
 
@@ -95,8 +99,12 @@ const CheckoutPage = ({ clientSecret }) => {
   }, []);
 
 
+
   useEffect(() => {
     if (!hydrated) return;
+
+    // Do not overwrite valid saved values with empty strings
+    if (!postalCode || !city) return;
 
     setDeliveryContext({
       shippingMode,
@@ -104,6 +112,8 @@ const CheckoutPage = ({ clientSecret }) => {
       city,
     });
   }, [hydrated, shippingMode, postalCode, city]);
+
+
 
   // Quote shipping when postal/city/items change
   useEffect(() => {
