@@ -130,13 +130,13 @@ function BookDetails() {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
 
-  /*useEffect(() => {
+  {/*useEffect(() => {
     setDeliveryContext({
       shippingMode,
       postalCode,
       city,
     });
-  }, [shippingMode, postalCode, city]);*/
+  }, [shippingMode, postalCode, city]);*/}
 
   useEffect(() => {
     // BookDetails only controls delivery vs pickup.
@@ -574,7 +574,7 @@ function BookDetails() {
                 {/* Shipping choice: Delivery vs. Click & Collect */}
                 <div className="shipping-choice">
 
-                  {shippingMode === 'delivery' && (
+                  {/*{shippingMode === 'delivery' && (
                     <div className="delivery-fields">
                       <div className="delivery-grid">
                         <div className="delivery-field">
@@ -604,7 +604,7 @@ function BookDetails() {
                         </div>
                       )}
                     </div>
-                  )}
+                  )}*/}
 
                   {/*<Radio.Group
                     value={shippingMode}
