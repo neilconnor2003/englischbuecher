@@ -30,8 +30,10 @@ const CheckoutPage = ({ clientSecret }) => {
   const [postalCode, setPostalCode] = useState("");
   const [city, setCity] = useState("");
 
-  const ctx = getDeliveryContext() || {};
-  const [shippingMode, setShippingMode] = useState(ctx.shippingMode || 'delivery');
+  //const ctx = getDeliveryContext() || {};
+  //const [shippingMode, setShippingMode] = useState(ctx.shippingMode || 'delivery');
+  const [shippingMode, setShippingMode] = useState('delivery');
+
   //const [postalCode, setPostalCode] = useState(ctx.postalCode || shippingAddress?.postalCode || "");
   //const [city, setCity] = useState(ctx.city || shippingAddress?.city || "");
   const [loading, setLoading] = useState(false);
