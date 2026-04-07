@@ -43,11 +43,6 @@ const Returns = () => {
             {t('returns.info.address.line3')}<br />
             {t('returns.info.address.line4')}
           </p>
-          <p>
-            Englisch Bücher<br />
-            Im Schwalg 60<br />
-            55411 Bingen
-          </p>
           <p className="highlight">{t('returns.info.free')}</p>
         </section>
       </div>

@@ -4,6 +4,7 @@ import { Button, Form, Input, Modal, Spin, Tooltip, message } from 'antd';
 import { EnvironmentOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import config from '../../config';
+import { setDeliveryContext } from '../../utils/deliveryContext';
 
 /**
  * Props:
@@ -21,7 +22,7 @@ export default function ShippoEstimator({ items = [], t, i18n }) {
     try {
       const raw = localStorage.getItem('ship_dest') || localStorage.getItem('shippo_dest');
       if (raw) setDest(JSON.parse(raw));
-    } catch {}
+    } catch { }
   }, []);
 
   const fmtKg = (g) => (Number(g || 0) / 1000).toFixed(2);
@@ -75,7 +76,7 @@ export default function ShippoEstimator({ items = [], t, i18n }) {
   };
 
   const info = quote?.cheapest;
-  const wb   = quote?.weight_breakdown;
+  const wb = quote?.weight_breakdown;
 
   return (
     <div style={{ width: '100%' }}>
@@ -146,16 +147,39 @@ export default function ShippoEstimator({ items = [], t, i18n }) {
         <Form
           layout="vertical"
           initialValues={{ postal: dest.postal || '', city: dest.city || '' }}
-          onFinish={(vals) => {
+          /*onFinish={(vals) => {
             const next = {
               country: 'DE',
               postal: (vals.postal || '').trim(),
               city: (vals.city || '').trim()
             };
             setDest(next);
-            try { localStorage.setItem('ship_dest', JSON.stringify(next)); } catch {}
+            try { localStorage.setItem('ship_dest', JSON.stringify(next)); } catch { }
+            setOpen(false);
+          }}*/
+
+          onFinish={(vals) => {
+            const next = {
+              country: 'DE',
+              postal: (vals.postal || '').trim(),
+              city: (vals.city || '').trim()
+            };
+
+            setDest(next);
+
+            // keep old behavior
+            try { localStorage.setItem('ship_dest', JSON.stringify(next)); } catch { }
+
+            // NEW: also sync the shared context used by Cart/Checkout
+            setDeliveryContext({
+              shippingMode: 'delivery',
+              postalCode: next.postal,
+              city: next.city
+            });
+
             setOpen(false);
           }}
+
         >
           <Form.Item
             label={t?.('postal_code') || 'Postal code'}

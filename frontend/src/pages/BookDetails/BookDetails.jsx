@@ -130,13 +130,19 @@ function BookDetails() {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
 
-  useEffect(() => {
+  /*useEffect(() => {
     setDeliveryContext({
       shippingMode,
       postalCode,
       city,
     });
-  }, [shippingMode, postalCode, city]);
+  }, [shippingMode, postalCode, city]);*/
+
+  useEffect(() => {
+    // BookDetails only controls delivery vs pickup.
+    // Postal code/city are controlled by Cart/Checkout/Shippo modal.
+    setDeliveryContext({ shippingMode });
+  }, [shippingMode]);
 
   // --- Resolve the canonical book ID from id/isbn/slug ---
   useEffect(() => {
