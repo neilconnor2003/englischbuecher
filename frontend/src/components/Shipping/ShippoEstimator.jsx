@@ -37,7 +37,8 @@ export default function ShippoEstimator({ items = [], t, i18n }) {
         {
           to_zip: dest.postal,
           to_city: dest.city || 'Berlin',
-          items
+          items,
+          estimate_only: true   // ✅ THIS IS THE KEY
         },
         { withCredentials: true }
       );
