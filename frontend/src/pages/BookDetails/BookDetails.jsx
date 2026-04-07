@@ -51,8 +51,8 @@ function BookDetails() {
   const initialCtx = getDeliveryContext() || {};
 
   const [shippingMode, setShippingMode] = useState(initialCtx.shippingMode || 'delivery');
-  const [postalCode, setPostalCode] = useState(initialCtx.postalCode || '');
-  const [city, setCity] = useState(initialCtx.city || '');
+  //const [postalCode, setPostalCode] = useState(initialCtx.postalCode || '');
+  //const [city, setCity] = useState(initialCtx.city || '');
   const [mainImage, setMainImage] = useState('');
   const [recommendations, setRecommendations] = useState({ sameAuthor: [], alsoBought: [], similar: [] });
   const [authorRecs, setAuthorRecs] = useState([]); // { author, books }[]
@@ -637,21 +637,14 @@ function BookDetails() {
                     <div className="pickup-free">{t('free') || '0,00 €'}</div>
                   </div>
                 )}*/}
-
                 {shippingMode === 'delivery' ? (
-                  postalCode?.trim() ? (
-                    <div style={{ marginTop: 12 }}>
-                      <ShippoEstimator
-                        items={[{ weight_grams: Number(book.weight_grams) || 500, quantity: 1 }]}
-                        t={t}
-                        i18n={i18n}
-                      />
-                    </div>
-                  ) : (
-                    <div className="delivery-hint">
-                      {t('enter_postcode_for_shipping') || 'Enter postal code to see delivery cost'}
-                    </div>
-                  )
+                  <div style={{ marginTop: 12 }}>
+                    <ShippoEstimator
+                      items={[{ weight_grams: Number(book.weight_grams) || 500, quantity: 1 }]}
+                      t={t}
+                      i18n={i18n}
+                    />
+                  </div>
                 ) : (
                   <div className="pickup-card" role="region" aria-label="Click & Collect">
                     <div className="pickup-row">
@@ -662,14 +655,13 @@ function BookDetails() {
                         </div>
                         <div className="pickup-addr">
                           {t('pickup_hint') ||
-                            'Pickup in Ingelheim. Exact address and time window will be shared after purchase.'}
+                            'Pickup in Bingen. Exact address and time window will be shared after purchase.'}
                         </div>
                       </div>
                     </div>
                     <div className="pickup-free">{t('free') || '0,00 €'}</div>
                   </div>
                 )}
-
 
                 <div className="buy-buttons">
                   {user ? (
