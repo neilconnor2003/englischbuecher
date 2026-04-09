@@ -638,6 +638,7 @@ function BookDetails() {
                     <div className="pickup-free">{t('free') || '0,00 €'}</div>
                   </div>
                 )}*/}
+                
                 {shippingMode === 'delivery' ? (
                   <div style={{ marginTop: 12 }}>
                     <DPDEstimator
