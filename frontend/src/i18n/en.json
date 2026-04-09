@@ -387,7 +387,8 @@
     "shipping_label": "Shipping",
     "pickup_label": "Shipping",
     "total": "Total",
-    "pickup_note": "No shipping fees. You can collect the book yourself at any time."
+    "pickup_note": "No shipping fees. You can collect the book yourself at any time.",
+    "shipping_note": "Exact shipping confirmed at checkout"
   },
   "shipping_note": "Shipping is calculated at checkout",
   "change": "Change",

@@ -28,6 +28,8 @@ import 'swiper/css/pagination';
 import BookCard from '../../components/Book/BookCard';
 import CartShippingSummary from '../../components/Cart/CartShippingSummary';
 import { getDeliveryContext, setDeliveryContext } from '../../utils/deliveryContext';
+import { getDPDShippingPrice } from '../../utils/dpdShipping';
+
 
 const CartPage = () => {
   const { t, i18n } = useTranslation();
@@ -59,6 +61,20 @@ const CartPage = () => {
   const ctx = getDeliveryContext() || {};
   const [shippingMode, setShippingMode] = useState(ctx.shippingMode || 'delivery');
 
+  const totalWeightGrams = useMemo(() => {
+    return items.reduce((sum, item) => {
+      const w = Number(item.weight_grams || 0);
+      const q = Number(item.quantity || 1);
+      return sum + w * q;
+    }, 0);
+  }, [items]);
+
+  const calculatedShippingCost = useMemo(() => {
+    if (shippingMode !== 'delivery') return 0;
+    if (!totalWeightGrams) return 0;
+
+    return getDPDShippingPrice(totalWeightGrams);
+  }, [shippingMode, totalWeightGrams]);
 
   useEffect(() => {
     if (!user) return;                 // Only after user logs in
@@ -211,7 +227,7 @@ const CartPage = () => {
   const [shippingCost, setShippingCost] = useState(0);
 
   // Persist preference and enforce shipping=0 for pickup
-  useEffect(() => {
+  {/*useEffect(() => {
     try { localStorage.setItem('engb_shipping_pref', shippingMode); } catch { }
     if (shippingMode === 'pickup') {
       setShippingCost(0);
@@ -219,7 +235,15 @@ const CartPage = () => {
       // trigger a recalculation if user returns to delivery
       window.dispatchEvent(new Event("cart-updated"));
     }
-  }, [shippingMode]);
+  }, [shippingMode]);*/}
+
+  useEffect(() => {
+    if (shippingMode === 'pickup') {
+      setShippingCost(0);
+    } else {
+      setShippingCost(calculatedShippingCost);
+    }
+  }, [shippingMode, calculatedShippingCost]);
 
   // Subtotal (items only)
   const subtotal = useMemo(() => Number(totalPrice || 0), [totalPrice]);
@@ -236,9 +260,9 @@ const CartPage = () => {
   /* ------------------------------------------------------------
      🔥 Recalculate shipping on quantity changes
      ------------------------------------------------------------ */
-  const triggerShippingUpdate = () => {
+  {/*const triggerShippingUpdate = () => {
     window.dispatchEvent(new Event("cart-updated"));
-  };
+  };*/}
 
   const handleQuantityChange = (bookId, delta) => {
     const item = items.find((i) => i.bookId === bookId);
@@ -251,7 +275,7 @@ const CartPage = () => {
       if (user) dispatch(syncRemove(bookId));
 
       message.info(t("item_removed"));
-      triggerShippingUpdate();
+      //triggerShippingUpdate();
       return;
     }
 
@@ -265,7 +289,7 @@ const CartPage = () => {
     dispatch(updateQuantity({ bookId, quantity: newQty }));
     if (user) dispatch(syncUpdate({ bookId, quantity: newQty }));
 
-    triggerShippingUpdate();
+    //triggerShippingUpdate();
   };
 
   const handleRemove = (bookId) => {
@@ -273,7 +297,7 @@ const CartPage = () => {
     if (user) dispatch(syncRemove(bookId));
 
     message.success(t("removed_from_cart"));
-    triggerShippingUpdate();
+    //triggerShippingUpdate();
   };
 
   const handleClearCart = () => {
@@ -281,7 +305,7 @@ const CartPage = () => {
     if (user) dispatch(syncClear());
 
     message.success(t("cart_cleared"));
-    triggerShippingUpdate();
+    //triggerShippingUpdate();
   };
 
   /* ------------------------------------------------------------
@@ -689,12 +713,12 @@ const CartPage = () => {
                 </div>
 
                 {/* Delivery mode: existing component */}
-                {shippingMode === 'delivery' ? (
-                  /*<CartShippingSummary
+                {/*{shippingMode === 'delivery' ? (
+                  <CartShippingSummary
                     t={t}
                     i18n={i18n}
                     onShippingChange={setShippingCost}
-                  />*/
+                  />
 
                   <CartShippingSummary
                     t={t}
@@ -711,7 +735,31 @@ const CartPage = () => {
                   />
 
                 ) : (
-                  /* Pickup mode: free */
+                  // Pickup mode: free
+                  <div className="pickup-card">
+                    <div className="pickup-title">
+                      {t('pickup_title') || 'Click & Collect — Free'}
+                    </div>
+                    <div className="pickup-addr">
+                      {t('pickup_hint') || 'Pickup at our location. Address & time window shared after purchase.'}
+                    </div>
+                    <div className="pickup-free">{t('free') || '0,00 €'}</div>
+                  </div>
+                )}*/}
+
+                {shippingMode === 'delivery' ? (
+                  <div className="dpd-static-card">
+                    <div className="dpd-price">
+                      {currency.format(calculatedShippingCost)}
+                    </div>
+                    <div className="dpd-label">
+                      {isDE
+                        ? 'DPD · Deutschlandweit (inkl. MwSt.)'
+                        : 'DPD · Germany-wide (incl. VAT)'}
+                    </div>
+                  </div>
+                ) : (
+                  // Pickup mode: free
                   <div className="pickup-card">
                     <div className="pickup-title">
                       {t('pickup_title') || 'Click & Collect — Free'}
@@ -722,6 +770,7 @@ const CartPage = () => {
                     <div className="pickup-free">{t('free') || '0,00 €'}</div>
                   </div>
                 )}
+
 
                 <div className="shipping-note">
                   {shippingMode === 'pickup'
