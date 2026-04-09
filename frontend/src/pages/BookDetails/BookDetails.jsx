@@ -24,6 +24,7 @@ import { generateBookUrl } from '../../utils/seoUrl';
 import BookReviews from '../../components/Book/BookReviews';
 import BooksSlider from '../../components/BooksSlider/BooksSlider';
 import { setDeliveryContext, getDeliveryContext } from '../../utils/deliveryContext';
+import DPDEstimator from '../../components/Shipping/DPDEstimator';
 
 // Swiper imports (same as Home.jsx)
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -639,10 +640,8 @@ function BookDetails() {
                 )}*/}
                 {shippingMode === 'delivery' ? (
                   <div style={{ marginTop: 12 }}>
-                    <ShippoEstimator
-                      items={[{ weight_grams: Number(book.weight_grams) || 500, quantity: 1 }]}
-                      t={t}
-                      i18n={i18n}
+                    <DPDEstimator
+                      weightGrams={Number(book.weight_grams) || 500}
                     />
                   </div>
                 ) : (

@@ -3436,6 +3436,8 @@ WHERE ci.user_id = ?
     }
   });
 
+  app.use('/api/dpd', dpdRoutes);
+
   // === CHECKOUT (NO EMAIL) ===
   app.post('/api/checkout', async (req, res) => {
     const { email, items, total } = req.body;
