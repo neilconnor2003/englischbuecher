@@ -39,6 +39,8 @@ const CartPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  const [weightedItems, setWeightedItems] = useState([]);
+
   const { items, totalItems, totalPrice, merged } = useSelector((state) => state.cart);
 
 
@@ -62,12 +64,11 @@ const CartPage = () => {
   const [shippingMode, setShippingMode] = useState(ctx.shippingMode || 'delivery');
 
   const totalWeightGrams = useMemo(() => {
-    return items.reduce((sum, item) => {
-      const w = Number(item.weight_grams || 0);
-      const q = Number(item.quantity || 1);
-      return sum + w * q;
-    }, 0);
-  }, [items]);
+    return weightedItems.reduce(
+      (sum, it) => sum + it.weight_grams * it.quantity,
+      0
+    );
+  }, [weightedItems]);
 
   const calculatedShippingCost = useMemo(() => {
     if (shippingMode !== 'delivery') return 0;
@@ -213,29 +214,65 @@ const CartPage = () => {
     })();
   }, [dispatch, items]);
 
-  // Delivery vs Click & Collect (persisted)
-  /*const [shippingMode, setShippingMode] = useState(() => {
-    try {
-      const v = localStorage.getItem('engb_shipping_pref');
-      return v === 'pickup' ? 'pickup' : 'delivery';
-    } catch {
-      return 'delivery';
+  useEffect(() => {
+    let cancelled = false;
+
+    const requestItems = items
+      .map(it => ({
+        bookId: Number(it.bookId),
+        quantity: Math.max(1, Number(it.quantity || 1)),
+      }))
+      .filter(it => it.bookId > 0);
+
+    if (!requestItems.length) {
+      setWeightedItems([]);
+      return;
     }
-  });*/
+
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/cart/weights`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ items: requestItems }),
+        });
+
+        const data = await res.json();
+        const rows = Array.isArray(data?.items) ? data.items : [];
+
+        const map = new Map(rows.map(r => [Number(r.book_id), r]));
+
+        const resolved = requestItems.map(it => {
+          const row = map.get(it.bookId) || {};
+          const w = Number(row?.weight_grams);
+
+          return {
+            quantity: it.quantity,
+            weight_grams: Number.isFinite(w) && w > 0 ? w : 500, // ✅ fallback
+          };
+        });
+
+        if (!cancelled) setWeightedItems(resolved);
+      } catch (err) {
+        console.warn('[Cart] Failed to fetch weights, falling back', err);
+        if (!cancelled) {
+          setWeightedItems(
+            requestItems.map(it => ({
+              quantity: it.quantity,
+              weight_grams: 500,
+            }))
+          );
+        }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [items, API_BASE]);
+
 
   // Shipping cost set by CartShippingSummary (in EUR)
   const [shippingCost, setShippingCost] = useState(0);
-
-  // Persist preference and enforce shipping=0 for pickup
-  {/*useEffect(() => {
-    try { localStorage.setItem('engb_shipping_pref', shippingMode); } catch { }
-    if (shippingMode === 'pickup') {
-      setShippingCost(0);
-    } else {
-      // trigger a recalculation if user returns to delivery
-      window.dispatchEvent(new Event("cart-updated"));
-    }
-  }, [shippingMode]);*/}
 
   useEffect(() => {
     if (shippingMode === 'pickup') {
@@ -256,13 +293,6 @@ const CartPage = () => {
     const locale = (i18n?.resolvedLanguage || 'en') === 'de' ? 'de-DE' : 'en-US';
     return new Intl.NumberFormat(locale, { style: 'currency', currency: 'EUR' });
   }, [i18n?.resolvedLanguage]);
-
-  /* ------------------------------------------------------------
-     🔥 Recalculate shipping on quantity changes
-     ------------------------------------------------------------ */
-  {/*const triggerShippingUpdate = () => {
-    window.dispatchEvent(new Event("cart-updated"));
-  };*/}
 
   const handleQuantityChange = (bookId, delta) => {
     const item = items.find((i) => i.bookId === bookId);
@@ -289,7 +319,6 @@ const CartPage = () => {
     dispatch(updateQuantity({ bookId, quantity: newQty }));
     if (user) dispatch(syncUpdate({ bookId, quantity: newQty }));
 
-    //triggerShippingUpdate();
   };
 
   const handleRemove = (bookId) => {
@@ -297,7 +326,6 @@ const CartPage = () => {
     if (user) dispatch(syncRemove(bookId));
 
     message.success(t("removed_from_cart"));
-    //triggerShippingUpdate();
   };
 
   const handleClearCart = () => {
@@ -305,7 +333,6 @@ const CartPage = () => {
     if (user) dispatch(syncClear());
 
     message.success(t("cart_cleared"));
-    //triggerShippingUpdate();
   };
 
   /* ------------------------------------------------------------
@@ -477,22 +504,6 @@ const CartPage = () => {
   });
 
   const renderRecSlider = (books, className = "cart-recommendations-swiper") => (
-    /*<Swiper
-      modules={[Navigation, Pagination]}
-      spaceBetween={30}
-      slidesPerView={2}
-      navigation
-      pagination={{ clickable: true }}
-      loop={false}
-      watchOverflow
-      breakpoints={{
-        640: { slidesPerView: 3, spaceBetween: 20 },
-        768: { slidesPerView: 4, spaceBetween: 24 },
-        1024: { slidesPerView: 4.1, spaceBetween: 30 },
-        1280: { slidesPerView: 4.1, spaceBetween: 30 },
-      }}
-      className={className}
-    >*/
 
     <Swiper
       modules={[Navigation, Pagination]}
@@ -687,19 +698,6 @@ const CartPage = () => {
 
             {/* SHIPPING + ORDER SUMMARY */}
             <div className="cart-summary-grid">
-              {/* Left: Shipping selector/details */}
-              {/*<div className="cart-shipping-panel">
-                <CartShippingSummary
-                  t={t}
-                  i18n={i18n}
-                  onShippingChange={setShippingCost}
-                />
-                <div className="shipping-note">
-                  {t("shipping_calculated_at_checkout") ||
-                    "Shipping label is purchased at checkout"}
-                </div>
-              </div>*/}
-
               <div className="cart-shipping-panel">
                 {/* Shipping choice */}
                 <div className="shipping-choice">
@@ -713,40 +711,6 @@ const CartPage = () => {
                 </div>
 
                 {/* Delivery mode: existing component */}
-                {/*{shippingMode === 'delivery' ? (
-                  <CartShippingSummary
-                    t={t}
-                    i18n={i18n}
-                    onShippingChange={setShippingCost}
-                  />
-
-                  <CartShippingSummary
-                    t={t}
-                    i18n={i18n}
-                    onShippingChange={(cost, meta) => {
-                      setShippingCost(cost);
-
-                      setDeliveryContext({
-                        shippingMode,
-                        postalCode: meta?.postalCode || '',
-                        city: meta?.city || '',
-                      });
-                    }}
-                  />
-
-                ) : (
-                  // Pickup mode: free
-                  <div className="pickup-card">
-                    <div className="pickup-title">
-                      {t('pickup_title') || 'Click & Collect — Free'}
-                    </div>
-                    <div className="pickup-addr">
-                      {t('pickup_hint') || 'Pickup at our location. Address & time window shared after purchase.'}
-                    </div>
-                    <div className="pickup-free">{t('free') || '0,00 €'}</div>
-                  </div>
-                )}*/}
-
                 {shippingMode === 'delivery' ? (
                   <div className="dpd-static-card">
                     <div className="dpd-price">
@@ -770,8 +734,6 @@ const CartPage = () => {
                     <div className="pickup-free">{t('free') || '0,00 €'}</div>
                   </div>
                 )}
-
-
                 <div className="shipping-note">
                   {shippingMode === 'pickup'
                     ? (t('cart.pickup_note') || 'No shipping fees. You will collect the book yourself.')
@@ -859,8 +821,6 @@ const CartPage = () => {
           {user && (
             <div className="cart-wishlist full-bleed">
               <div className="inner-limit">
-                {/*h2 className="section-title">{t("your_wishlist")}</h2>*/}
-                {/*<h2 className="section-title with-bars">{t("your_wishlist")}</h2>*/}
                 {wishlistLoading && (
                   <div className="rec-loading">
                     {t("loading_wishlist")}
@@ -873,7 +833,6 @@ const CartPage = () => {
 
                 {!wishlistLoading && wishlistBooks.length > 0 && (
                   <section className="recommendations-section">
-                    {/*<h3 className="rec-section-title">*/}
                     <h3 className="rec-section-title with-bars">
                       {t("saved_for_later")}
                     </h3>
@@ -890,11 +849,6 @@ const CartPage = () => {
           {/* GENERAL RECOMMENDATIONS */}
           <div className="cart-recommendations full-bleed">
             <div className="inner-limit">
-              {/*<h2 className="section-title">*/}
-              {/*<h2 className="section-title with-bars">
-                {t("you_might_also_like")}
-              </h2>*/}
-
               {recLoading && (
                 <div className="rec-loading">
                   {t("loading_recommendations")}
