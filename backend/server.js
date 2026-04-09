@@ -2,6 +2,11 @@
 require('dotenv').config();
 
 
+console.log('DB_USER:', process.env.DB_USER);
+console.log('DB_HOST:', process.env.DB_HOST);
+
+
+
 const express = require('express');
 const mysql = require('mysql2/promise'); // ← /promise
 const cors = require('cors');
@@ -15,6 +20,8 @@ const multer = require('multer'); // ← ADD MULTER
 const fs = require('fs');
 const axios = require('axios');   // ← ADD THIS LINE
 const cookieParser = require('cookie-parser');
+
+const dpdRoutes = require('./routes/dpd');
 
 const FRONTEND_URL = process.env.FRONTEND_URL;
 
