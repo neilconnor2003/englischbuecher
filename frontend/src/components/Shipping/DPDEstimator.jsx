@@ -1,11 +1,22 @@
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { getDPDShippingPrice } from '../../utils/dpdShipping';
 
 export default function DPDEstimator({ weightGrams }) {
+  const { t, i18n } = useTranslation();
+
   if (!weightGrams) return null;
 
   const price = getDPDShippingPrice(weightGrams);
+
+  const formattedPrice = new Intl.NumberFormat(
+    i18n.resolvedLanguage === 'de' ? 'de-DE' : 'en-US',
+    {
+      style: 'currency',
+      currency: 'EUR',
+    }
+  ).format(price);
 
   return (
     <div
@@ -18,13 +29,13 @@ export default function DPDEstimator({ weightGrams }) {
       }}
     >
       <div style={{ fontWeight: 700 }}>
-        €{price.toFixed(2)}
+        {formattedPrice}
       </div>
       <div style={{ fontSize: 13 }}>
-        DPD · Germany‑wide (incl. VAT)
+        {t('shipping.provider_label')}
       </div>
       <div style={{ fontSize: 12, color: '#555' }}>
-        Exact shipping confirmed at checkout
+        {t('shipping.checkout_note')}
       </div>
     </div>
   );

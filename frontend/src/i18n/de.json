@@ -217,7 +217,9 @@
     "title": "Versand & Zahlung",
     "costs": "Versandkosten",
     "methods": "Versandarten",
-    "payment": "Zahlungsmethoden"
+    "payment": "Zahlungsmethoden",
+    "provider_label": "DPD · Deutschlandweit (inkl. MwSt.)",
+    "checkout_note": "Exakte Versandkosten werden im Checkout bestätigt"
   },
   "about": {
     "title": "Über uns",

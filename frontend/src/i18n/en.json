@@ -222,7 +222,9 @@
     "title": "Shipping & Payment",
     "costs": "Shipping Costs",
     "methods": "Shipping Methods",
-    "payment": "Payment Methods"
+    "payment": "Payment Methods",
+    "provider_label": "DPD · Germany-wide (incl. VAT)",
+    "checkout_note": "Exact shipping confirmed at checkout"
   },
   "about": {
     "title": "About Us",
