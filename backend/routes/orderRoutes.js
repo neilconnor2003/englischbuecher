@@ -25,11 +25,23 @@ module.exports = (db) => {
     }
 
     try {
-      const paymentIntent = await stripe.paymentIntents.create({
+      /*const paymentIntent = await stripe.paymentIntents.create({
         amount,
         currency,
         // keep your explicitly allowed methods
         payment_method_types: ['card', 'paypal', 'sofort'],
+        metadata: {
+          userId: req.user?.id || 'guest',
+          cart: JSON.stringify(items.map(i => ({ id: i.bookId, qty: i.quantity }))),
+        },
+      });*/
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount,
+        currency: 'eur',
+        automatic_payment_methods: {
+          enabled: true,
+        },
         metadata: {
           userId: req.user?.id || 'guest',
           cart: JSON.stringify(items.map(i => ({ id: i.bookId, qty: i.quantity }))),

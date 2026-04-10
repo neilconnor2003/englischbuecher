@@ -54,8 +54,8 @@ const CheckoutWrapper = () => {
           },
           { withCredentials: true }
         );
-
         if (!cancelled) {
+          setClientSecret('');              // 🚨 force new Elements session
           setClientSecret(data.clientSecret);
         }
       } catch (err) {
