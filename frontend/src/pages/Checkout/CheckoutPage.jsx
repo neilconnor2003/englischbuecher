@@ -25,24 +25,13 @@ const CheckoutPage = ({ clientSecret }) => {
   const [email, setEmail] = useState(user?.email || "");
   const [address, setAddress] = useState(shippingAddress?.address || "");
 
-  //const [city, setCity] = useState(shippingAddress?.city || "");
-  //const [postalCode, setPostalCode] = useState(shippingAddress?.postalCode || "");
   const [postalCode, setPostalCode] = useState("");
   const [city, setCity] = useState("");
 
-  //const ctx = getDeliveryContext() || {};
-  //const [shippingMode, setShippingMode] = useState(ctx.shippingMode || 'delivery');
   const [shippingMode, setShippingMode] = useState('delivery');
 
-  //const [postalCode, setPostalCode] = useState(ctx.postalCode || shippingAddress?.postalCode || "");
-  //const [city, setCity] = useState(ctx.city || shippingAddress?.city || "");
   const [loading, setLoading] = useState(false);
   const [paymentReady, setPaymentReady] = useState(false);
-
-  // Shipping quote state
-  const [shippingQuote, setShippingQuote] = useState(null); // { amount_eur, provider, service, rate_object_id }
-  const [quoting, setQuoting] = useState(false);
-  //const [piUpdated, setPiUpdated] = useState(false);
 
   const [shippingAmount, setShippingAmount] = useState(0);
 
@@ -53,24 +42,7 @@ const CheckoutPage = ({ clientSecret }) => {
 
   const COUNTRY = "DE";
 
-
   const [hydrated, setHydrated] = useState(false);
-
-
-  // Delivery vs Pickup (default from Cart/BookDetails preference)
-  /*const [shippingMode, setShippingMode] = useState(() => {
-    try {
-      const v = localStorage.getItem('engb_shipping_pref');
-      return v === 'pickup' ? 'pickup' : 'delivery';
-    } catch {
-      return 'delivery';
-    }
-  });*/
-
-  // persist choice so Cart/BookDetails stay in sync
-  /*useEffect(() => {
-    try { localStorage.setItem('engb_shipping_pref', shippingMode); } catch { }
-  }, [shippingMode]);*/
 
   useEffect(() => {
     try {
@@ -89,29 +61,6 @@ const CheckoutPage = ({ clientSecret }) => {
       navigate("/cart");
     }
   }, [user, cartItems, navigate]);
-
-  {/*useEffect(() => {
-    setDeliveryContext({
-      shippingMode,
-      postalCode,
-      city,
-    });
-  }, [shippingMode, postalCode, city]);*/}
-
-  {/*useEffect(() => {
-    const ctx = getDeliveryContext();
-    if (!ctx) {
-      setHydrated(true);
-      return;
-    }
-
-    if (ctx.shippingMode) setShippingMode(ctx.shippingMode);
-    if (ctx.postalCode) setPostalCode(ctx.postalCode);
-    if (ctx.city) setCity(ctx.city);
-
-    setHydrated(true);
-  }, []);*/}
-
 
   useEffect(() => {
     // 1️⃣ Try shared delivery context
@@ -153,108 +102,6 @@ const CheckoutPage = ({ clientSecret }) => {
     });
   }, [hydrated, shippingMode, postalCode, city]);
 
-
-
-  // Quote shipping when postal/city/items change
-  useEffect(() => {
-    let cancelled = false;
-
-    async function quote() {
-      //if (!postalCode || cartItems.length === 0) {
-      /*if (!postalCode || cartItems.length === 0 || !email || !email.includes('@')) {
-        setShippingQuote(null);
-        setPiUpdated(false);
-        return;
-      }*/
-
-      // If pickup: no quote needed, shipping is €0
-      if (shippingMode === 'pickup') {
-        setShippingQuote({
-          amount_eur: 0,
-          provider: 'PICKUP',
-          service: 'CLICK_COLLECT',
-          rate_object_id: 'PICKUP', // placeholder so UI/validation works
-        });
-        setPiUpdated(false);
-        return;
-      }
-
-      if (!postalCode || cartItems.length === 0 || !email || !email.includes('@')) {
-        setShippingQuote(null);
-        setPiUpdated(false);
-        return;
-      }
-
-      setQuoting(true);
-      try {
-        /*const { data } = await axios.post('/api/checkout/quote', {
-          to_zip: postalCode,
-          to_city: city || 'Berlin',
-          email,
-          items: cartItems.map(i => ({ bookId: i.bookId, quantity: i.quantity }))
-        }, { withCredentials: true });*/
-
-
-        const { data } = await axios.post('/api/checkout/quote', {
-          to_zip: postalCode,
-          to_city: city,
-          to_street: address,
-          to_name: user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : 'Customer',
-          email,
-          //phone: shippingPhone || '',
-          items: cartItems.map(i => ({ bookId: i.bookId, quantity: i.quantity }))
-        }, { withCredentials: true });
-
-
-        const ch = data?.cheapest;
-        if (!cancelled && ch) {
-          setShippingQuote({
-            amount_eur: Number(ch.amount) || 0,
-            provider: ch.provider || null,
-            service: ch.service || null,
-            rate_object_id: ch.rate_object_id || ch.object_id || null
-          });
-          setPiUpdated(false);
-        }
-      } catch (e) {
-        console.error('[Checkout] quote failed:', e?.response?.data || e?.message);
-        if (!cancelled) {
-          setShippingQuote(null);
-          setPiUpdated(false);
-          toast.error(t('shipping_error') || 'Could not fetch shipping rates');
-        }
-      } finally {
-        if (!cancelled) setQuoting(false);
-      }
-    }
-
-    quote();
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    //}, [postalCode, city, cartItems.length]);
-  }, [postalCode, city, address, email, itemsSignature, shippingMode]);
-
-  // Update PaymentIntent amount (subtotal + shipping)
-  {/*useEffect(() => {
-    async function updatePI() {
-      if (!shippingQuote || !clientSecret) return;
-      try {
-        const grand = Number(totalPrice || 0) + Number(shippingQuote.amount_eur || 0);
-        const amount_cents = Math.round(grand * 100);
-        await axios.post('/api/orders/update-payment-intent-amount', {
-          clientSecret,
-          amount_cents
-        }, { withCredentials: true });
-        setPiUpdated(true);
-      } catch (e) {
-        console.error('[Checkout] PI update failed:', e?.response?.data || e?.message);
-        setPiUpdated(false);
-        toast.error(t('payment_failed_try_again'));
-      }
-    }
-    updatePI();
-  }, [shippingQuote, clientSecret, totalPrice, t]);*/}
-
   useEffect(() => {
     async function updatePI() {
       if (!clientSecret) return;
@@ -284,12 +131,9 @@ const CheckoutPage = ({ clientSecret }) => {
     if (!city.trim()) return toast.error(t('city_required'));
     if (!postalCode.trim()) return toast.error(t('postal_code_required'));
     if (!stripe || !elements || !paymentReady) return toast.error(t('payment_not_ready'));
-    //if (!shippingQuote?.rate_object_id) return toast.error(t('shipping_error') || 'Shipping not ready');
 
     if (shippingMode === 'delivery' && shippingAmount <= 0)
       return toast.error(t('shipping_error'));
-
-    //if (!piUpdated) return toast.error(t('payment_failed_try_again'));
 
     setLoading(true);
 
@@ -335,29 +179,11 @@ const CheckoutPage = ({ clientSecret }) => {
           status: paymentIntent.status,
           email_address: email,
         },
-        //totalPrice: Number(totalPrice || 0) + Number(shippingQuote.amount_eur || 0),
         totalPrice: Number(totalPrice || 0) + Number(shippingAmount || 0),
-
-        // Tell backend which rate to buy + how much shipping was
-        /*shipping_selected_rate_id: shippingQuote.rate_object_id,
-        shipping_amount_eur: shippingQuote.amount_eur,
-        shipping_provider: shippingQuote.provider || null,
-        shipping_service: shippingQuote.service || null*/
 
         shipping_mode: shippingMode,
 
-        /*shipping_selected_rate_id:
-          shippingMode === 'pickup' ? null : shippingQuote.rate_object_id,*/
         shipping_selected_rate_id: null, // static pricing, no carrier rate
-
-        /*shipping_amount_eur:
-          shippingMode === 'pickup' ? 0 : shippingQuote.amount_eur,
-
-        shipping_provider:
-          shippingMode === 'pickup' ? 'PICKUP' : (shippingQuote.provider ?? null),
-
-        shipping_service:
-          shippingMode === 'pickup' ? 'CLICK_COLLECT' : (shippingQuote.service ?? null),*/
 
       };
 
@@ -514,11 +340,6 @@ const CheckoutPage = ({ clientSecret }) => {
               />
             </div>
 
-            {/*<button
-              type="submit"
-              disabled={!stripe || loading || !paymentReady || !shippingQuote?.rate_object_id || !piUpdated}
-              className="pay-button full-width"
-            >*/}
             <button
               type="submit"
               disabled={
@@ -529,7 +350,6 @@ const CheckoutPage = ({ clientSecret }) => {
               }
               className="pay-button full-width"
             >
-
               {loading ? (
                 <span className="spinner">{t('processing')}...</span>
               ) : (
