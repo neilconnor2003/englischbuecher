@@ -202,7 +202,6 @@ const CheckoutPage = ({ clientSecret }) => {
   };
 
   const subtotal = Number(totalPrice || 0);
-  //const shipping = Number(shippingQuote?.amount_eur || 0);
   const shipping = Number(shippingAmount || 0);
   const grandTotal = subtotal + shipping;
 
@@ -244,7 +243,7 @@ const CheckoutPage = ({ clientSecret }) => {
                       : (t('cart.shipping_label') || 'Shipping')}
                   </span>
 
-                  <span className="total-price">{quoting ? '…' : `€${shipping.toFixed(2)}`}</span>
+                  <span className="total-price">€{shipping.toFixed(2)}</span>
                 </div>
                 <div className="total-row total-strong">
                   <span>{t('total')}</span>
