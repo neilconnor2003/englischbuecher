@@ -282,6 +282,19 @@ const CartPage = () => {
     }
   }, [shippingMode, calculatedShippingCost]);
 
+
+  // Persist shipping amount when navigating to checkout //
+  useEffect(() => {
+    localStorage.setItem(
+      'checkout_shipping_amount',
+      JSON.stringify({
+        amount_eur: shippingCost,
+        mode: shippingMode,
+      })
+    );
+  }, [shippingCost, shippingMode]);
+
+
   // Subtotal (items only)
   const subtotal = useMemo(() => Number(totalPrice || 0), [totalPrice]);
 

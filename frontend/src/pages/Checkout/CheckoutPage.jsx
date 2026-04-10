@@ -44,6 +44,8 @@ const CheckoutPage = ({ clientSecret }) => {
   const [quoting, setQuoting] = useState(false);
   const [piUpdated, setPiUpdated] = useState(false);
 
+  const [shippingAmount, setShippingAmount] = useState(0);
+
 
   const itemsSignature = cartItems
     .map(i => `${i.bookId}:${i.quantity}`)
@@ -70,6 +72,16 @@ const CheckoutPage = ({ clientSecret }) => {
     try { localStorage.setItem('engb_shipping_pref', shippingMode); } catch { }
   }, [shippingMode]);*/
 
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('checkout_shipping_amount');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setShippingAmount(Number(parsed.amount_eur || 0));
+        setShippingMode(parsed.mode || 'delivery');
+      }
+    } catch { }
+  }, []);
 
   useEffect(() => {
     if (!user) navigate("/login?redirect=checkout");
@@ -223,7 +235,7 @@ const CheckoutPage = ({ clientSecret }) => {
   }, [postalCode, city, address, email, itemsSignature, shippingMode]);
 
   // Update PaymentIntent amount (subtotal + shipping)
-  useEffect(() => {
+  {/*useEffect(() => {
     async function updatePI() {
       if (!shippingQuote || !clientSecret) return;
       try {
@@ -241,7 +253,28 @@ const CheckoutPage = ({ clientSecret }) => {
       }
     }
     updatePI();
-  }, [shippingQuote, clientSecret, totalPrice, t]);
+  }, [shippingQuote, clientSecret, totalPrice, t]);*/}
+
+  useEffect(() => {
+    async function updatePI() {
+      if (!clientSecret) return;
+
+      const total = Number(totalPrice || 0) + Number(shippingAmount || 0);
+      const amount_cents = Math.round(total * 100);
+
+      try {
+        await axios.post(
+          '/api/orders/update-payment-intent-amount',
+          { clientSecret, amount_cents },
+          { withCredentials: true }
+        );
+      } catch (e) {
+        toast.error(t('payment_failed_try_again'));
+      }
+    }
+
+    updatePI();
+  }, [clientSecret, totalPrice, shippingAmount, t]);
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -251,7 +284,11 @@ const CheckoutPage = ({ clientSecret }) => {
     if (!city.trim()) return toast.error(t('city_required'));
     if (!postalCode.trim()) return toast.error(t('postal_code_required'));
     if (!stripe || !elements || !paymentReady) return toast.error(t('payment_not_ready'));
-    if (!shippingQuote?.rate_object_id) return toast.error(t('shipping_error') || 'Shipping not ready');
+    //if (!shippingQuote?.rate_object_id) return toast.error(t('shipping_error') || 'Shipping not ready');
+
+    if (shippingMode === 'delivery' && shippingAmount <= 0)
+      return toast.error(t('shipping_error'));
+
     if (!piUpdated) return toast.error(t('payment_failed_try_again'));
 
     setLoading(true);
@@ -308,17 +345,18 @@ const CheckoutPage = ({ clientSecret }) => {
 
         shipping_mode: shippingMode,
 
-        shipping_selected_rate_id:
-          shippingMode === 'pickup' ? null : shippingQuote.rate_object_id,
+        /*shipping_selected_rate_id:
+          shippingMode === 'pickup' ? null : shippingQuote.rate_object_id,*/
+        shipping_selected_rate_id: null, // static pricing, no carrier rate
 
-        shipping_amount_eur:
+        /*shipping_amount_eur:
           shippingMode === 'pickup' ? 0 : shippingQuote.amount_eur,
 
         shipping_provider:
           shippingMode === 'pickup' ? 'PICKUP' : (shippingQuote.provider ?? null),
 
         shipping_service:
-          shippingMode === 'pickup' ? 'CLICK_COLLECT' : (shippingQuote.service ?? null),
+          shippingMode === 'pickup' ? 'CLICK_COLLECT' : (shippingQuote.service ?? null),*/
 
       };
 
@@ -337,7 +375,8 @@ const CheckoutPage = ({ clientSecret }) => {
   };
 
   const subtotal = Number(totalPrice || 0);
-  const shipping = Number(shippingQuote?.amount_eur || 0);
+  //const shipping = Number(shippingQuote?.amount_eur || 0);
+  const shipping = Number(shippingAmount || 0);
   const grandTotal = subtotal + shipping;
 
   return (
