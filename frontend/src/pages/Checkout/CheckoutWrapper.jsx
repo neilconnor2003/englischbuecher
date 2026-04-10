@@ -15,7 +15,68 @@ const CheckoutWrapper = () => {
   const [clientSecret, setClientSecret] = useState('');
   const [loading, setLoading] = useState(true);
 
+
   useEffect(() => {
+    let cancelled = false;
+
+    const getShippingAmount = () => {
+      try {
+        const raw = localStorage.getItem('checkout_shipping_amount');
+        if (!raw) return 0;
+        const parsed = JSON.parse(raw);
+        return Number(parsed.amount_eur || 0);
+      } catch {
+        return 0;
+      }
+    };
+
+    const createIntent = async () => {
+      if (items.length === 0) {
+        toast.error('Cart is empty');
+        if (!cancelled) setLoading(false);
+        return;
+      }
+
+      const shippingAmount = getShippingAmount();
+      const finalTotal =
+        Number(totalPrice || 0) + Number(shippingAmount || 0);
+
+      try {
+        const { data } = await axios.post(
+          '/api/orders/create-payment-intent',
+          {
+            items: items.map(i => ({
+              bookId: i.bookId,
+              quantity: i.quantity,
+            })),
+            totalPrice: finalTotal, // ✅ FINAL amount incl. shipping
+            currency: 'eur',
+          },
+          { withCredentials: true }
+        );
+
+        if (!cancelled) {
+          setClientSecret(data.clientSecret);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          toast.error('Failed to initialize payment');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    createIntent();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [items, totalPrice]);
+
+  /*useEffect(() => {
     let cancelled = false;
 
     const createIntent = async () => {
@@ -55,7 +116,7 @@ const CheckoutWrapper = () => {
 
     createIntent();
     return () => { cancelled = true; };
-  }, [items, totalPrice]);
+  }, [items, totalPrice]);*/
 
   const options = useMemo(
     () => (clientSecret ? { clientSecret } : undefined),

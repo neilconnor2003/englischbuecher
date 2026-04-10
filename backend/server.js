@@ -3480,7 +3480,7 @@ WHERE ci.user_id = ?
   // Update the amount of the existing PaymentIntent (subtotal + shipping)
   // POST /api/orders/update-payment-intent-amount
   // Body: { clientSecret, amount_cents }
-  app.post('/api/orders/update-payment-intent-amount', async (req, res) => {
+  /*app.post('/api/orders/update-payment-intent-amount', async (req, res) => {
     try {
       const { clientSecret, amount_cents } = req.body || {};
       if (!clientSecret || !Number.isFinite(Number(amount_cents)) || amount_cents <= 0) {
@@ -3494,7 +3494,12 @@ WHERE ci.user_id = ?
       console.error('[orders/update-payment-intent-amount] error:', err?.message || err);
       return res.status(500).json({ error: 'pi_update_failed' });
     }
+  });*/
+
+  app.post('/api/orders/update-payment-intent-amount', (req, res) => {
+    res.status(410).json({ error: 'deprecated' });
   });
+
 
 
   // === ORDER ROUTES ===

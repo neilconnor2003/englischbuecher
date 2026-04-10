@@ -102,7 +102,7 @@ const CheckoutPage = ({ clientSecret }) => {
     });
   }, [hydrated, shippingMode, postalCode, city]);
 
-  useEffect(() => {
+  {/*useEffect(() => {
     async function updatePI() {
       if (!clientSecret) return;
 
@@ -121,7 +121,7 @@ const CheckoutPage = ({ clientSecret }) => {
     }
 
     updatePI();
-  }, [clientSecret, totalPrice, shippingAmount, t]);
+  }, [clientSecret, totalPrice, shippingAmount, t]);*/}
 
   const submitHandler = async (e) => {
     e.preventDefault();
