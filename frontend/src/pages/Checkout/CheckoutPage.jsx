@@ -42,7 +42,7 @@ const CheckoutPage = ({ clientSecret }) => {
   // Shipping quote state
   const [shippingQuote, setShippingQuote] = useState(null); // { amount_eur, provider, service, rate_object_id }
   const [quoting, setQuoting] = useState(false);
-  const [piUpdated, setPiUpdated] = useState(false);
+  //const [piUpdated, setPiUpdated] = useState(false);
 
   const [shippingAmount, setShippingAmount] = useState(0);
 
@@ -289,7 +289,7 @@ const CheckoutPage = ({ clientSecret }) => {
     if (shippingMode === 'delivery' && shippingAmount <= 0)
       return toast.error(t('shipping_error'));
 
-    if (!piUpdated) return toast.error(t('payment_failed_try_again'));
+    //if (!piUpdated) return toast.error(t('payment_failed_try_again'));
 
     setLoading(true);
 
@@ -335,7 +335,8 @@ const CheckoutPage = ({ clientSecret }) => {
           status: paymentIntent.status,
           email_address: email,
         },
-        totalPrice: Number(totalPrice || 0) + Number(shippingQuote.amount_eur || 0),
+        //totalPrice: Number(totalPrice || 0) + Number(shippingQuote.amount_eur || 0),
+        totalPrice: Number(totalPrice || 0) + Number(shippingAmount || 0),
 
         // Tell backend which rate to buy + how much shipping was
         /*shipping_selected_rate_id: shippingQuote.rate_object_id,
@@ -513,11 +514,22 @@ const CheckoutPage = ({ clientSecret }) => {
               />
             </div>
 
-            <button
+            {/*<button
               type="submit"
               disabled={!stripe || loading || !paymentReady || !shippingQuote?.rate_object_id || !piUpdated}
               className="pay-button full-width"
+            >*/}
+            <button
+              type="submit"
+              disabled={
+                !stripe ||
+                loading ||
+                !paymentReady ||
+                (shippingMode === 'delivery' && shippingAmount <= 0)
+              }
+              className="pay-button full-width"
             >
+
               {loading ? (
                 <span className="spinner">{t('processing')}...</span>
               ) : (
