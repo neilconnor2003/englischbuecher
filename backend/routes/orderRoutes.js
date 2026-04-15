@@ -9,49 +9,64 @@ module.exports = (db) => {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
   // === CREATE PAYMENT INTENT — GERMANY ONLY ===
+
   router.post('/create-payment-intent', async (req, res) => {
-    const { items, totalPrice, currency = 'eur' } = req.body;
 
-    if (!items?.length) return res.status(400).json({ error: 'Cart is empty' });
-    const amount = Math.round(totalPrice * 100);
-    if (amount < 50) return res.status(400).json({ error: 'Minimum €0.50' });
+    console.log(
+      '[HIT create-payment-intent]',
+      'port=',
+      process.env.PORT,
+      'pid=',
+      process.pid,
+      'hasDebugHeader=',
+      req.headers['x-debug-from']
+    );
 
-    // Before creating paymentIntent in /create-payment-intent:
-    for (const i of items) {
-      const [[row]] = await db.execute('SELECT stock FROM books WHERE id = ?', [i.bookId]);
-      if (!row || row.stock < i.quantity) {
-        return res.status(409).json({ error: `Only ${row?.stock ?? 0} left for book ${i.bookId}` });
-      }
-    }
+    const sk = process.env.STRIPE_SECRET_KEY || '';
+    const skPrefix = sk ? sk.slice(0, 12) : 'MISSING';
 
     try {
-      /*const paymentIntent = await stripe.paymentIntents.create({
-        amount,
-        currency,
-        // keep your explicitly allowed methods
-        payment_method_types: ['card', 'paypal', 'sofort'],
-        metadata: {
-          userId: req.user?.id || 'guest',
-          cart: JSON.stringify(items.map(i => ({ id: i.bookId, qty: i.quantity }))),
-        },
-      });*/
+      // Identify which Stripe account THIS server key belongs to
+      const acct = await stripe.accounts.retrieve();
+
+      console.log('[Stripe DEBUG] acct:', acct.id, 'skPrefix:', skPrefix);
+
+      const { items, totalPrice, currency = 'eur' } = req.body;
+
+      if (!items?.length) return res.status(400).json({ error: 'Cart is empty' });
+      const amount = Math.round(totalPrice * 100);
+      if (amount < 50) return res.status(400).json({ error: 'Minimum €0.50' });
+
+      for (const i of items) {
+        const [[row]] = await db.execute('SELECT stock FROM books WHERE id = ?', [i.bookId]);
+        if (!row || row.stock < i.quantity) {
+          return res.status(409).json({ error: `Only ${row?.stock ?? 0} left for book ${i.bookId}` });
+        }
+      }
 
       const paymentIntent = await stripe.paymentIntents.create({
         amount,
         currency: 'eur',
-        automatic_payment_methods: {
-          enabled: true,
-        },
+        automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
         metadata: {
           userId: req.user?.id || 'guest',
           cart: JSON.stringify(items.map(i => ({ id: i.bookId, qty: i.quantity }))),
         },
       });
 
-      res.json({ clientSecret: paymentIntent.client_secret });
+      return res.json({
+        clientSecret: paymentIntent.client_secret,
+        // TEMP DEBUG — remove after fix
+        debug: {
+          stripeAccount: acct.id,
+          skPrefix,
+          nodeEnv: process.env.NODE_ENV || null,
+          port: process.env.PORT || null,
+        },
+      });
     } catch (err) {
       console.error('Stripe error:', err);
-      res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: err.message });
     }
   });
 

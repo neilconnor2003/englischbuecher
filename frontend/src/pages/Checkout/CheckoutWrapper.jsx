@@ -52,7 +52,15 @@ const CheckoutWrapper = () => {
             totalPrice: finalTotal, // ✅ FINAL amount incl. shipping
             currency: 'eur',
           },
-          { withCredentials: true }
+          //{ withCredentials: true }
+
+          {
+            withCredentials: true,
+            headers: {
+              'X-Debug-From': 'checkout-wrapper',
+            }
+          }
+
         );
         if (!cancelled) {
           setClientSecret('');              // 🚨 force new Elements session
