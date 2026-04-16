@@ -181,7 +181,8 @@ const OrderSuccessPage = () => {
                     {order.shipping_service ? <> · {order.shipping_service}</> : null}
                   </div>
                 ) : (
-                  <div>{t('shipping') || 'Shipping'}: —</div>
+                  //<div>{t('shipping') || 'Shipping'}: —</div>
+                  <div>{t('cart.shipping_label')}: —</div>
                 )}
 
                 {/* Shipping cost */}

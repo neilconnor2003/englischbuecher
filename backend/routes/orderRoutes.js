@@ -11,6 +11,7 @@ module.exports = (db) => {
   // === CREATE PAYMENT INTENT — GERMANY ONLY ===
 
   router.post('/create-payment-intent', async (req, res) => {
+    console.log('Stripe secret key prefix:', process.env.STRIPE_SECRET_KEY.slice(0, 12));
 
     console.log(
       '[HIT create-payment-intent]',
