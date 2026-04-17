@@ -167,6 +167,7 @@ const OrdersDashboard = () => {
 
 
   const handleCreateDpdLabel = async (order) => {
+    console.log('[ADMIN] Create DPD label clicked for order', order.id, order.shipping_provider);
     try {
       // Guard: only DPD + paid + not already labeled
       if ((order.shipping_provider || '').toUpperCase() !== 'DPD') {
@@ -362,7 +363,7 @@ const OrdersDashboard = () => {
                       <button
                         onClick={() => handleCreateDpdLabel(order)}
                         disabled={
-                          (order.shipping_provider || '').toUpperCase() !== 'DPD' ||
+                          !(order.shipping_provider || '').toUpperCase() !== 'DPD' ||
                           !order.is_paid ||
                           !!order.tracking_number ||
                           !!order.label_url ||
@@ -449,7 +450,7 @@ const OrdersDashboard = () => {
                         <button
                           onClick={() => handleCreateDpdLabel(order)}
                           disabled={
-                            (order.shipping_provider || '').toUpperCase() !== 'DPD' ||
+                            !(order.shipping_provider || '').toUpperCase() !== 'DPD' ||
                             !order.is_paid ||
                             !!order.tracking_number ||
                             !!order.label_url ||

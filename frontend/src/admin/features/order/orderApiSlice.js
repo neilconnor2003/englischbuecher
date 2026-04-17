@@ -32,11 +32,11 @@ export const orderApiSlice = apiSlice.injectEndpoints({
     }),
     createDpdLabel: builder.mutation({
       query: (orderId) => ({
-        url: `/orders/${orderId}/create-dpd-label`,
+        url: `/api/orders/${orderId}/create-dpd-label`,
         method: 'POST',
         credentials: 'include',
       }),
-      invalidatesTags: ['Orders'],
+      invalidatesTags: ['Order'],
     }),
 
   }),
