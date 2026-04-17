@@ -558,5 +558,146 @@ module.exports = (db) => {
     }
   });
 
+
+  // === ADMIN: CREATE DPD LABEL FOR AN ORDER (manual packing workflow) ===
+  router.post('/:id/create-dpd-label', async (req, res) => {
+    try {
+      // Admin guard (adjust if your auth middleware uses different fields)
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      const orderId = Number(req.params.id);
+      if (!orderId) return res.status(400).json({ error: 'Invalid order id' });
+
+      // 1) Load order
+      const [[order]] = await db.execute('SELECT * FROM orders WHERE id = ?', [orderId]);
+      if (!order) return res.status(404).json({ error: 'Order not found' });
+
+      // 2) Safety guards
+      if (order.tracking_number || order.label_url) {
+        return res.status(409).json({ error: 'Label already created for this order' });
+      }
+
+      if ((order.shipping_provider || '').toUpperCase() !== 'DPD') {
+        return res.status(400).json({ error: 'Order is not a DPD shipment' });
+      }
+
+      // Parse needed fields
+      const shippingAddress = typeof order.shipping_address === 'string'
+        ? JSON.parse(order.shipping_address)
+        : (order.shipping_address || {});
+
+      const orderItems = typeof order.order_items === 'string'
+        ? JSON.parse(order.order_items)
+        : (order.order_items || []);
+
+      // 3) Compute total weight (grams) - fallback 500g each
+      const itemIds = orderItems.map(i => Number(i.bookId)).filter(Boolean);
+      const weights = new Map();
+      if (itemIds.length) {
+        const placeholders = itemIds.map(() => '?').join(',');
+        const [rows] = await db.execute(
+          `SELECT id, weight_grams FROM books WHERE id IN (${placeholders})`,
+          itemIds
+        );
+        rows.forEach(r => weights.set(Number(r.id), Number(r.weight_grams || 0)));
+      }
+
+      const totalWeightGrams = orderItems.reduce((sum, it) => {
+        const w = weights.get(Number(it.bookId)) || 0;
+        const qty = Number(it.quantity || 1);
+        return sum + (w > 0 ? w : 500) * qty;
+      }, 0);
+
+      // 4) Call DPD Cloud (setOrder) — create real shipment + label
+      // NOTE: payload schema may differ slightly depending on your DPD Cloud doc,
+      // so keep this structure consistent with what DPD expects in your integration.
+      const axios = require('axios');
+
+      const dpdPayload = {
+        partnerCredentials: {
+          name: 'DPD Cloud Service Alpha2',
+          token: process.env.DPD_PARTNER_TOKEN,
+        },
+        userCredentials: {
+          cloudUserID: process.env.DPD_CLOUD_USER_ID,
+          token: process.env.DPD_USER_TOKEN,
+        },
+        order: {
+          orderGeneralData: { orderType: 'shipment' },
+          sender: {
+            country: 'DE',
+            zipCode: '55411',
+            city: 'Bingen',
+            street: 'Im Schwalg 60',
+            name: 'EnglischBuecher',
+          },
+          receiver: {
+            country: shippingAddress.country || 'DE',
+            zipCode: shippingAddress.postalCode,
+            city: shippingAddress.city,
+            street: shippingAddress.address,
+            name: `${req.user?.first_name || ''} ${req.user?.last_name || ''}`.trim() || 'Customer',
+          },
+          parcels: [
+            { weight: Math.max(1, totalWeightGrams / 1000) } // DPD expects kg
+          ],
+          productAndServiceData: {
+            product: 'CL',
+            orderType: 'CL',
+            b2c: true
+          }
+        }
+      };
+
+      const { data } = await axios.post(
+        'https://cloud.dpd.com/api/v1/setOrder',
+        dpdPayload,
+        { headers: { 'Content-Type': 'application/json' }, timeout: 20000 }
+      );
+
+      // 5) Extract label + tracking from response
+      // Your DPD response fields may differ. Adjust keys after first real response.
+      const trackingNumber =
+        data?.orderResult?.parcels?.[0]?.parcelNumber ||
+        data?.orderResult?.trackingNumber ||
+        null;
+
+      const labelUrl =
+        data?.orderResult?.labelUrl ||
+        data?.orderResult?.labelPdfUrl ||
+        null;
+
+      const trackingUrl =
+        trackingNumber ? `https://tracking.dpd.de/status/en_US/parcel/${trackingNumber}` : null;
+
+      if (!trackingNumber) {
+        return res.status(502).json({ error: 'DPD did not return tracking number', dpd: data });
+      }
+
+      // 6) Persist on order
+      await db.execute(
+        `UPDATE orders
+       SET tracking_number = ?,
+           tracking_url = ?,
+           label_url = ?,
+           status = 'shipped'
+       WHERE id = ?`,
+        [trackingNumber, trackingUrl, labelUrl, orderId]
+      );
+
+      return res.json({
+        success: true,
+        tracking_number: trackingNumber,
+        tracking_url: trackingUrl,
+        label_url: labelUrl,
+      });
+    } catch (err) {
+      console.error('[create-dpd-label] error:', err?.response?.data || err?.message || err);
+      return res.status(500).json({ error: 'dpd_label_failed' });
+    }
+  });
+
   return router;
 };

@@ -30,6 +30,15 @@ export const orderApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Order'],
     }),
+    createDpdLabel: builder.mutation({
+      query: (orderId) => ({
+        url: `/orders/${orderId}/create-dpd-label`,
+        method: 'POST',
+        credentials: 'include',
+      }),
+      invalidatesTags: ['Orders'],
+    }),
+
   }),
 });
 
@@ -38,4 +47,5 @@ export const {
   useAddOrderMutation,
   useUpdateOrderMutation,
   useDeleteOrderMutation,
+  useCreateDpdLabelMutation
 } = orderApiSlice;

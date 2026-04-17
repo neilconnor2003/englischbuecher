@@ -27,6 +27,7 @@ import {
   useAddOrderMutation,
   useUpdateOrderMutation,
   useDeleteOrderMutation,
+  useCreateDpdLabelMutation
 } from "../features/order/orderApiSlice";
 import { useGetUsersQuery } from "../features/users/usersApiSlice";
 import { format } from "date-fns";
@@ -51,6 +52,7 @@ const OrdersDashboard = () => {
   const [addOrder] = useAddOrderMutation();
   const [updateOrder] = useUpdateOrderMutation();
   const [deleteOrder] = useDeleteOrderMutation();
+  const [createDpdLabel] = useCreateDpdLabelMutation();
 
   const [viewMode, setViewMode] = useState('card');
   const [searchTerm, setSearchTerm] = useState("");
@@ -161,6 +163,33 @@ const OrdersDashboard = () => {
     setSelectedOrders(prev =>
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     );
+  };
+
+
+  const handleCreateDpdLabel = async (order) => {
+    try {
+      // Guard: only DPD + paid + not already labeled
+      if ((order.shipping_provider || '').toUpperCase() !== 'DPD') {
+        showToast("Not a DPD order", "error");
+        return;
+      }
+      if (!order.is_paid) {
+        showToast("Order not paid yet", "error");
+        return;
+      }
+      if (order.tracking_number || order.label_url) {
+        showToast("Label already created", "error");
+        return;
+      }
+
+      await createDpdLabel(order.id).unwrap();
+      showToast("DPD label created!", "success");
+    } catch (err) {
+      showToast(
+        "DPD label failed: " + (err?.data?.error || err?.error || err?.message || "unknown"),
+        "error"
+      );
+    }
   };
 
   const selectAll = () => {
@@ -331,6 +360,20 @@ const OrdersDashboard = () => {
                         <Edit className="w-4 h-4 text-blue-600" />
                       </button>
                       <button
+                        onClick={() => handleCreateDpdLabel(order)}
+                        disabled={
+                          (order.shipping_provider || '').toUpperCase() !== 'DPD' ||
+                          !order.is_paid ||
+                          !!order.tracking_number ||
+                          !!order.label_url ||
+                          order.status === 'cancelled'
+                        }
+                        className="p-1.5 hover:bg-gray-100 rounded disabled:opacity-50"
+                        title="Create DPD label"
+                      >
+                        <Package className="w-4 h-4 text-purple-600" />
+                      </button>
+                      <button
                         onClick={() => {
                           setOrderToDelete(order);
                           setIsDeleteModalOpen(true);
@@ -402,6 +445,20 @@ const OrdersDashboard = () => {
                           className="text-blue-600 hover:bg-blue-100 p-2 rounded"
                         >
                           <Edit className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleCreateDpdLabel(order)}
+                          disabled={
+                            (order.shipping_provider || '').toUpperCase() !== 'DPD' ||
+                            !order.is_paid ||
+                            !!order.tracking_number ||
+                            !!order.label_url ||
+                            order.status === 'cancelled'
+                          }
+                          className="text-purple-600 hover:bg-purple-100 p-2 rounded ml-1 disabled:opacity-50"
+                          title="Create DPD label"
+                        >
+                          <Package className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => {
