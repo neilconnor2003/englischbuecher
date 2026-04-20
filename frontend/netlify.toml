@@ -1,7 +1,23 @@
 
-# Proxy ORDER APIs to backend
+# =========================
+# API PROXY (MUST BE FIRST)
+# =========================
 [[redirects]]
-  from = "/api/orders/*"
-  to = "https://api-dev.englischbuecher.de/api/orders/:splat"
+  from = "/api/*"
+  to = "https://api-dev.englischbuecher.de/api/:splat"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/auth/*"
+  to = "https://api-dev.englischbuecher.de/auth/:splat"
+  status = 200
+  force = true
+
+# =========================
+# SPA FALLBACK (LAST)
+# =========================
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

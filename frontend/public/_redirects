@@ -1,4 +1,1 @@
-/auth/*  https://api-dev.englischbuecher.de/auth/:splat  200
-/api/*   https://api-dev.englischbuecher.de/api/:splat   200
-
 /*    /index.html   200
