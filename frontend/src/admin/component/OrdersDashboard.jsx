@@ -170,10 +170,12 @@ const OrdersDashboard = () => {
     console.log('[ADMIN] Create DPD label clicked for order', order.id, order.shipping_provider);
     try {
       // Guard: only DPD + paid + not already labeled
-      if (!(order.shipping_provider || '').toUpperCase().includes('DPD')) {
-        showToast("Not a DPD order", "error");
+
+      if (!order.is_paid || order.status !== 'processing') {
+        showToast("Order not ready for shipping", "error");
         return;
       }
+
       if (!order.is_paid) {
         showToast("Order not paid yet", "error");
         return;
@@ -196,6 +198,14 @@ const OrdersDashboard = () => {
   const selectAll = () => {
     setSelectedOrders(displayedOrders.map(o => o.id));
   };
+
+
+  const canCreateDpdLabel =
+    order.is_paid &&
+    order.status === 'processing' &&
+    !order.tracking_number &&
+    !order.label_url;
+
 
   const exportCSV = () => {
     const headers = ["ID", "User", "Email", "Total", "Status", "Paid", "Date", "Items", "Address"];
@@ -362,13 +372,7 @@ const OrdersDashboard = () => {
                       </button>
                       <button
                         onClick={() => handleCreateDpdLabel(order)}
-                        disabled={
-                          !(order.shipping_provider || '').toUpperCase().includes('DPD') ||
-                          !order.is_paid ||
-                          !!order.tracking_number ||
-                          !!order.label_url ||
-                          order.status === 'cancelled'
-                        }
+                        disabled={!canCreateDpdLabel}
                         className="p-1.5 hover:bg-gray-100 rounded disabled:opacity-50"
                         title="Create DPD label"
                       >
@@ -449,13 +453,7 @@ const OrdersDashboard = () => {
                         </button>
                         <button
                           onClick={() => handleCreateDpdLabel(order)}
-                          disabled={
-                            !(order.shipping_provider || '').toUpperCase().includes('DPD') ||
-                            !order.is_paid ||
-                            !!order.tracking_number ||
-                            !!order.label_url ||
-                            order.status === 'cancelled'
-                          }
+                          disabled={!canCreateDpdLabel}
                           className="text-purple-600 hover:bg-purple-100 p-2 rounded ml-1 disabled:opacity-50"
                           title="Create DPD label"
                         >
