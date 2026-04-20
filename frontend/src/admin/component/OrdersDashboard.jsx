@@ -199,14 +199,6 @@ const OrdersDashboard = () => {
     setSelectedOrders(displayedOrders.map(o => o.id));
   };
 
-
-  const canCreateDpdLabel =
-    order.is_paid &&
-    order.status === 'processing' &&
-    !order.tracking_number &&
-    !order.label_url;
-
-
   const exportCSV = () => {
     const headers = ["ID", "User", "Email", "Total", "Status", "Paid", "Date", "Items", "Address"];
     const rows = filteredOrders.map(o => [
@@ -324,6 +316,13 @@ const OrdersDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {displayedOrders.map(order => {
             const StatusIcon = statusConfig[order.status]?.icon || Clock;
+
+            const canCreateDpdLabel =
+              order.is_paid &&
+              order.status === 'processing' &&
+              !order.tracking_number &&
+              !order.label_url;
+
             return (
               <div
                 key={order.id}
@@ -415,6 +414,13 @@ const OrdersDashboard = () => {
               <tbody className="divide-y divide-gray-200">
                 {displayedOrders.map(order => {
                   const StatusIcon = statusConfig[order.status]?.icon || Clock;
+
+                  const canCreateDpdLabel =
+                    order.is_paid &&
+                    order.status === 'processing' &&
+                    !order.tracking_number &&
+                    !order.label_url;
+
                   return (
                     <tr key={order.id} className="hover:bg-purple-50 transition">
                       <td className="p-4"><input type="checkbox" checked={selectedOrders.includes(order.id)} onChange={() => toggleSelect(order.id)} /></td>
