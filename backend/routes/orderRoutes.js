@@ -518,49 +518,9 @@ module.exports = (db) => {
     }
   });
 
-  // === GET ORDER BY ID ===
-  router.get('/:id', async (req, res) => {
-    const { id } = req.params;
-
-    try {
-      const [rows] = await db.execute(`
-        SELECT
-          o.*,
-          u.first_name,
-                   u.last_name,
-          u.email
-        FROM orders o
-        LEFT JOIN users u ON o.user_id = u.id
-        WHERE o.id = ?
-      `, [id]);
-
-      if (rows.length === 0) {
-        return res.status(404).json({ error: 'Order not found' });
-      }
-
-      const order = rows[0];
-      const parseIfString = (field) => {
-        if (typeof field === 'string') {
-          try { return JSON.parse(field); } catch (e) { return []; }
-        }
-        return field || [];
-      };
-
-      order.total = Number(order.total) || 0;
-      order.order_items = parseIfString(order.order_items);
-      order.shipping_address = parseIfString(order.shipping_address);
-      order.payment_result = parseIfString(order.payment_result);
-
-      res.json(order);
-    } catch (err) {
-      console.error('Fetch order error:', err);
-      res.status(500).json({ error: 'Server error' });
-    }
-  });
-
-
   // === ADMIN: CREATE DPD LABEL FOR AN ORDER (manual packing workflow) ===
   router.post('/:id/create-dpd-label', async (req, res) => {
+    console.log('[ROUTE REGISTERED]', req.originalUrl);
     try {
       // Admin guard (adjust if your auth middleware uses different fields)
       if (!req.user || req.user.role !== 'admin') {
@@ -700,6 +660,46 @@ module.exports = (db) => {
     } catch (err) {
       console.error('[create-dpd-label] error:', err?.response?.data || err?.message || err);
       return res.status(500).json({ error: 'dpd_label_failed' });
+    }
+  });
+
+  // === GET ORDER BY ID ===
+  router.get('/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+      const [rows] = await db.execute(`
+        SELECT
+          o.*,
+          u.first_name,
+                   u.last_name,
+          u.email
+        FROM orders o
+        LEFT JOIN users u ON o.user_id = u.id
+        WHERE o.id = ?
+      `, [id]);
+
+      if (rows.length === 0) {
+        return res.status(404).json({ error: 'Order not found' });
+      }
+
+      const order = rows[0];
+      const parseIfString = (field) => {
+        if (typeof field === 'string') {
+          try { return JSON.parse(field); } catch (e) { return []; }
+        }
+        return field || [];
+      };
+
+      order.total = Number(order.total) || 0;
+      order.order_items = parseIfString(order.order_items);
+      order.shipping_address = parseIfString(order.shipping_address);
+      order.payment_result = parseIfString(order.payment_result);
+
+      res.json(order);
+    } catch (err) {
+      console.error('Fetch order error:', err);
+      res.status(500).json({ error: 'Server error' });
     }
   });
 
