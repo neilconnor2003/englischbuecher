@@ -579,7 +579,11 @@ module.exports = (db) => {
         return res.status(409).json({ error: 'Label already created for this order' });
       }
 
-      if ((order.shipping_provider || '').toUpperCase() !== 'DPD') {
+
+      // Allow NULL (legacy orders), block only explicit non‑DPD providers
+      const provider = (order.shipping_provider || '').toUpperCase();
+
+      if (provider && !provider.includes('DPD')) {
         return res.status(400).json({ error: 'Order is not a DPD shipment' });
       }
 

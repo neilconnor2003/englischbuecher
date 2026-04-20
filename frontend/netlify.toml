@@ -1,0 +1,7 @@
+
+# Proxy ORDER APIs to backend
+[[redirects]]
+  from = "/api/orders/*"
+  to = "https://api-dev.englischbuecher.de/api/orders/:splat"
+  status = 200
+  force = true
