@@ -22,6 +22,7 @@ const axios = require('axios');   // ← ADD THIS LINE
 const cookieParser = require('cookie-parser');
 
 const dpdRoutes = require('./routes/dpd');
+console.log('✅ LOADING dpd routes from:', require.resolve('./routes/dpd'));
 
 const FRONTEND_URL = process.env.FRONTEND_URL;
 
@@ -3500,11 +3501,22 @@ WHERE ci.user_id = ?
     res.status(410).json({ error: 'deprecated' });
   });
 
-
-
   // === ORDER ROUTES ===
   console.log('✅ Mounting orders routes from:', require.resolve('./routes/orderRoutes'));
-  app.use('/api/orders', require('./routes/orderRoutes')(db));
+
+  const ordersRouter = require('./routes/orderRoutes')(db);
+  app.use('/api/orders', ordersRouter);
+
+  // ✅ DEBUG: list actual registered routes under /api/orders
+  app.get('/api/_debug/orders-routes', (req, res) => {
+    const list = (ordersRouter.stack || [])
+      .filter(l => l.route)
+      .map(l => ({
+        methods: Object.keys(l.route.methods).join(',').toUpperCase(),
+        path: l.route.path
+      }));
+    res.json(list);
+  });
 
   app.use('/admin/wishlist', require('./routes/admin/wishlist')(db));
   app.use('/api/admin/cart', require('./routes/admin/cart')(db));

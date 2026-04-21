@@ -34,7 +34,6 @@ export const orderApiSlice = apiSlice.injectEndpoints({
       query: (orderId) => ({
         url: `${import.meta.env.VITE_API_URL}/api/orders/${orderId}/create-dpd-label`,
         method: 'POST',
-        credentials: 'include',
       }),
       invalidatesTags: ['Order'],
     }),
