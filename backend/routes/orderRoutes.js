@@ -8,6 +8,8 @@ const axios = require('axios');
 module.exports = (db) => {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+  console.log('✅ LOADING orderRoutes from:', __filename);
+
   // === CREATE PAYMENT INTENT — GERMANY ONLY ===
 
   router.post('/create-payment-intent', async (req, res) => {

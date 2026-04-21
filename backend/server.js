@@ -3503,6 +3503,7 @@ WHERE ci.user_id = ?
 
 
   // === ORDER ROUTES ===
+  console.log('✅ Mounting orders routes from:', require.resolve('./routes/orderRoutes'));
   app.use('/api/orders', require('./routes/orderRoutes')(db));
 
   app.use('/admin/wishlist', require('./routes/admin/wishlist')(db));
