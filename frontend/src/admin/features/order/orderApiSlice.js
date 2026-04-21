@@ -32,7 +32,7 @@ export const orderApiSlice = apiSlice.injectEndpoints({
     }),
     createDpdLabel: builder.mutation({
       query: (orderId) => ({
-        url: `${import.meta.env.VITE_API_URL}/api/orders/${orderId}/create-dpd-label`,
+        url: `/api/orders/${orderId}/create-dpd-label`,
         method: 'POST',
       }),
       invalidatesTags: ['Order'],
