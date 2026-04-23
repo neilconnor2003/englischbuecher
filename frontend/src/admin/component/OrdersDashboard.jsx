@@ -238,7 +238,7 @@ const OrdersDashboard = () => {
     return <Icon className="w-4 h-4" />;
   };
 
-  const handleSaveOrderEdit = async (payload) => {
+  /*const handleSaveOrderEdit = async (payload) => {
     try {
       const url = `${config.DIRECT_API_URL}/api/orders/${payload.id}`;
 
@@ -256,7 +256,18 @@ const OrdersDashboard = () => {
         "error"
       );
     }
+  };*/
+
+
+  const handleSaveOrderEdit = async (payload) => {
+    try {
+      await updateOrder(payload).unwrap();
+      showToast("Order updated", "success");
+    } catch (e) {
+      showToast("Update failed", "error");
+    }
   };
+
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
