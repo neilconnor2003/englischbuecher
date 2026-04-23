@@ -240,7 +240,7 @@ const OrdersDashboard = () => {
 
   const handleSaveOrderEdit = async (payload) => {
     try {
-      const url = `${config.DIRECT_API_URL}/api/orders/${payload.id}`;
+      const url = `${config.DIRECT_API_URL}/orders/${payload.id}`;
 
       await axios.put(
         url,
