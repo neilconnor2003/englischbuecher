@@ -181,6 +181,13 @@ const CheckoutPage = ({ clientSecret }) => {
         },
         totalPrice: Number(totalPrice || 0) + Number(shippingAmount || 0),
 
+
+        // ✅ NEW: shipping metadata (backend already supports this)
+        shipping_amount_eur: Number(shippingAmount || 0),
+        shipping_provider: shippingMode === 'pickup' ? 'PICKUP' : 'DPD',
+        shipping_service: shippingMode === 'pickup' ? 'Click & Collect' : 'Standard',
+
+
         shipping_mode: shippingMode,
 
         shipping_selected_rate_id: null, // static pricing, no carrier rate
