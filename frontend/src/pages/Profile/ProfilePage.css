@@ -30,6 +30,11 @@
   position: relative;
 }
 
+.profile-tabs {
+  margin-top: 16px;
+}
+
+
 .avatar-wrapper {
   position: relative;
   margin-right: 32px;
@@ -345,5 +350,52 @@
   .profile-tabs .ant-tabs-tab {
     padding: 10px 12px !important;
     font-size: 0.9rem !important;
+  }
+}
+
+/* ========================================
+   MOBILE TABS – SEGMENTED STYLE
+   ======================================== */
+
+@media (max-width: 768px) {
+  .profile-tabs .ant-tabs-nav {
+    padding: 12px;
+    background: transparent;
+  }
+
+  .profile-tabs .ant-tabs-nav-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .profile-tabs .ant-tabs-tab {
+    margin: 0 !important;
+    padding: 10px 8px !important;
+    border-radius: 12px;
+    background: #f1f2ff;
+    justify-content: center;
+    font-size: 0.9rem !important;
+    white-space: nowrap;
+  }
+
+  .profile-tabs .ant-tabs-tab-active {
+    background: #722ed1 !important;
+  }
+
+  .profile-tabs .ant-tabs-tab-active span {
+    color: #ffffff !important;
+    font-weight: 600;
+  }
+
+  /* Remove default ink bar (underline) */
+  .profile-tabs .ant-tabs-ink-bar {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-tabs .ant-tabs-tab span {
+    font-size: 0.85rem;
   }
 }
