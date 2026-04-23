@@ -1,6 +1,7 @@
 // frontend/src/admin/pages/OrdersDashboard.jsx
 import React, { useState, useMemo } from "react";
-import BookModal from "../component/BookModal";
+//import BookModal from "../component/BookModal";
+import OrderEditModal from "../component/OrderEditModal";
 import DeleteModal from "../component/DeleteModal";
 import Toast from "../component/Toast";
 import {
@@ -54,13 +55,18 @@ const OrdersDashboard = () => {
   const [deleteOrder] = useDeleteOrderMutation();
   const [createDpdLabel] = useCreateDpdLabelMutation();
 
+
+  const [editOrder, setEditOrder] = useState(null);
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+
+
   const [viewMode, setViewMode] = useState('card');
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [modalOrder, setModalOrder] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  //const [modalOrder, setModalOrder] = useState(null);
+  //const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState(null);
   const [toast, setToast] = useState(null);
@@ -132,7 +138,7 @@ const OrdersDashboard = () => {
   const showToast = (msg, type) => setToast({ message: msg, type });
   const closeToast = () => setToast(null);
 
-  const handleSaveOrder = async (orderData) => {
+  /*const handleSaveOrder = async (orderData) => {
     try {
       if (orderData.id) {
         await updateOrder({ id: orderData.id, ...orderData }).unwrap();
@@ -146,7 +152,7 @@ const OrdersDashboard = () => {
     }
     setIsModalOpen(false);
     setModalOrder(null);
-  };
+  };*/
 
   const handleDelete = async () => {
     try {
@@ -227,6 +233,17 @@ const OrdersDashboard = () => {
     const Icon = config.icon;
     return <Icon className="w-4 h-4" />;
   };
+
+
+  const handleSaveOrderEdit = async (payload) => {
+    try {
+      await updateOrder(payload).unwrap();
+      showToast("Order updated", "success");
+    } catch (e) {
+      showToast("Update failed", "error");
+    }
+  };
+
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -362,8 +379,8 @@ const OrdersDashboard = () => {
                     <div className="flex gap-1 mt-3">
                       <button
                         onClick={() => {
-                          setModalOrder(order);
-                          setIsModalOpen(true);
+                          setEditOrder(order);
+                          setIsOrderModalOpen(true);
                         }}
                         className="p-1.5 hover:bg-gray-100 rounded"
                       >
@@ -448,15 +465,17 @@ const OrdersDashboard = () => {
                       <td className="p-4 text-sm">{format(new Date(order.created_at), 'MMM d, yyyy HH:mm')}</td>
                       <td className="p-4 text-center">{order.order_items_parsed.length}</td>
                       <td className="p-4">
+
                         <button
                           onClick={() => {
-                            setModalOrder(order);
-                            setIsModalOpen(true);
+                            setEditOrder(order);
+                            setIsOrderModalOpen(true);
                           }}
                           className="text-blue-600 hover:bg-blue-100 p-2 rounded"
                         >
                           <Edit className="w-5 h-5" />
                         </button>
+
                         <button
                           onClick={() => handleCreateDpdLabel(order)}
                           disabled={!canCreateDpdLabel}
@@ -506,23 +525,17 @@ const OrdersDashboard = () => {
       )}
 
       {/* MODAL */}
-      <BookModal
-        isOpen={isModalOpen}
+
+      <OrderEditModal
+        isOpen={isOrderModalOpen}
         onClose={() => {
-          setIsModalOpen(false);
-          setModalOrder(null);
+          setIsOrderModalOpen(false);
+          setEditOrder(null);
         }}
-        book={modalOrder}
-        onSave={handleSaveOrder}
-        fields={[
-          { name: 'user_id', label: 'User ID', type: 'number', required: true },
-          { name: 'total', label: 'Total', type: 'number', required: true },
-          { name: 'status', label: 'Status', type: 'select', required: true, options: Object.keys(statusConfig).map(s => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) })) },
-          { name: 'tracking_number', label: 'Tracking Number', type: 'text' },
-          { name: 'payment_method', label: 'Payment Method', type: 'text' },
-          { name: 'is_paid', label: 'Paid', type: 'select', options: [{ value: '1', label: 'Yes' }, { value: '0', label: 'No' }] },
-        ]}
+        order={editOrder}
+        onSave={handleSaveOrderEdit}
       />
+
 
       <DeleteModal
         isOpen={isDeleteModalOpen}

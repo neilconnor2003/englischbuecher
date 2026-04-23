@@ -582,45 +582,80 @@ module.exports = (db) => {
       const axios = require('axios');
 
       const dpdPayload = {
-        partnerCredentials: {
-          name: 'DPD Cloud Service Alpha2',
-          token: process.env.DPD_PARTNER_TOKEN,
-        },
-        userCredentials: {
-          cloudUserID: process.env.DPD_CLOUD_USER_ID,
-          token: process.env.DPD_USER_TOKEN,
-        },
-        order: {
-          orderGeneralData: { orderType: 'shipment' },
-          sender: {
-            country: 'DE',
-            zipCode: '55411',
-            city: 'Bingen',
-            street: 'Im Schwalg 60',
-            name: 'EnglischBuecher',
+        Request: {
+          Version: 100,
+          Language: 'de_DE',
+
+          PartnerCredentials: {
+            Name: 'DPD Cloud Service Alpha2',
+            Token: process.env.DPD_PARTNER_TOKEN,
           },
-          receiver: {
-            country: shippingAddress.country || 'DE',
-            zipCode: shippingAddress.postalCode,
-            city: shippingAddress.city,
-            street: shippingAddress.address,
-            name: `${req.user?.first_name || ''} ${req.user?.last_name || ''}`.trim() || 'Customer',
+
+          UserCredentials: {
+            CloudUserID: process.env.DPD_CLOUD_USER_ID,
+            Token: process.env.DPD_USER_TOKEN,
           },
-          parcels: [
-            { weight: Math.max(1, totalWeightGrams / 1000) } // DPD expects kg
-          ],
-          productAndServiceData: {
-            product: 'CL',
-            orderType: 'CL',
-            b2c: true
-          }
-        }
+
+          Order: {
+            OrderAction: 'create',
+
+            OrderGeneralData: {
+              OrderType: 'shipment',
+            },
+
+            Sender: {
+              Name: 'EnglischBuecher',
+              Street: 'Im Schwalg 60',
+              City: 'Bingen',
+              ZipCode: '55411',
+              Country: 'DE',
+            },
+
+            Receiver: {
+              Name:
+                `${req.user?.first_name || ''} ${req.user?.last_name || ''}`.trim() ||
+                'Customer',
+              Street: shippingAddress.address,
+              City: shippingAddress.city,
+              ZipCode: shippingAddress.postalCode,
+              Country: shippingAddress.country || 'DE',
+            },
+
+            Parcels: [
+              {
+                Weight: Math.max(1, totalWeightGrams / 1000),
+              },
+            ],
+
+            ProductAndServiceData: {
+              Product: 'CL',
+              OrderType: 'CL',
+              B2C: true,
+            },
+          },
+        },
       };
 
+
+      console.log(
+        '[DPD RAW PAYLOAD]',
+        JSON.stringify(dpdPayload, null, 2)
+      );
+
+
       const { data } = await axios.post(
-        'https://cloud.dpd.com/api/v1/setOrder',
-        dpdPayload,
-        { headers: { 'Content-Type': 'application/json' }, timeout: 20000 }
+        'https://cloud.dpd.com/api/v1/createShipment',
+        JSON.stringify(dpdPayload),
+        {
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Accept': 'application/json',
+            'Content-Encoding': 'identity',   // ✅ THIS IS CRITICAL
+          },
+          decompress: false,                  // ✅ disable gzip handling
+          maxBodyLength: Infinity,
+          timeout: 20000,
+        }
       );
 
       // 5) Extract label + tracking from response
