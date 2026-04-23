@@ -700,6 +700,58 @@ module.exports = (db) => {
     }
   });
 
+
+  // === ADMIN: UPDATE ORDER (manual shipping / status) ===
+  router.put('/:id', async (req, res) => {
+    try {
+      // Admin guard
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      const orderId = Number(req.params.id);
+      if (!orderId) {
+        return res.status(400).json({ error: 'Invalid order id' });
+      }
+
+      const {
+        status,
+        shipping_amount_eur,
+        shipping_provider,
+        shipping_service,
+        tracking_number,
+        tracking_url,
+      } = req.body;
+
+      await db.execute(
+        `UPDATE orders
+       SET
+         status = ?,
+         shipping_amount_eur = ?,
+         shipping_provider = ?,
+         shipping_service = ?,
+         tracking_number = ?,
+         tracking_url = ?
+       WHERE id = ?`,
+        [
+          status || 'processing',
+          Number(shipping_amount_eur || 0),
+          shipping_provider || null,
+          shipping_service || null,
+          tracking_number || null,
+          tracking_url || null,
+          orderId,
+        ]
+      );
+
+      return res.json({ success: true });
+    } catch (err) {
+      console.error('ADMIN UPDATE ORDER FAILED:', err);
+      return res.status(500).json({ error: 'Update order failed' });
+    }
+  });
+
+
   // === GET ORDER BY ID ===
   router.get('/:id', async (req, res) => {
     const { id } = req.params;

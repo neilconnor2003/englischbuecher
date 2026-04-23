@@ -33,6 +33,10 @@ import {
 import { useGetUsersQuery } from "../features/users/usersApiSlice";
 import { format } from "date-fns";
 
+import axios from 'axios';
+import config from '@config';
+
+
 const statusConfig = {
   pending: { color: "bg-yellow-100 text-yellow-800", icon: Clock },
   processing: { color: "bg-blue-100 text-blue-800", icon: Clock },
@@ -234,16 +238,25 @@ const OrdersDashboard = () => {
     return <Icon className="w-4 h-4" />;
   };
 
-
   const handleSaveOrderEdit = async (payload) => {
     try {
-      await updateOrder(payload).unwrap();
+      const url = `${config.DIRECT_API_URL}/api/orders/${payload.id}`;
+
+      await axios.put(
+        url,
+        payload,
+        { withCredentials: true }
+      );
+
       showToast("Order updated", "success");
     } catch (e) {
-      showToast("Update failed", "error");
+      console.error('Order update failed:', e?.response?.data || e);
+      showToast(
+        e?.response?.data?.error || 'Update failed',
+        "error"
+      );
     }
   };
-
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
