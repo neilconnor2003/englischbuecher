@@ -381,8 +381,8 @@ const ProfilePage = () => {
           )}
         </div>
       )
-    },
-    {
+    }
+    /*{
       key: '3',
       label: (<span><LockOutlined /> {t('account_settings')}</span>),
       children: (
@@ -399,7 +399,7 @@ const ProfilePage = () => {
           </Button>
         </div>
       )
-    }
+    }*/
   ]), [authUser, t, orderLoading, orders, currentPage, pageSize, navigate]);
 
   if (!authUser) {
