@@ -451,7 +451,8 @@ const ProfilePage = () => {
           <Tabs
             activeKey={activeTab}
             onChange={setActiveTab}
-            centered
+            //centered
+            centered={window.innerWidth > 768}
             className="profile-tabs"
             items={tabItems}
           />

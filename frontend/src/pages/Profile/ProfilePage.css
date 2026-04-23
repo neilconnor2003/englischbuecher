@@ -281,6 +281,7 @@
     flex-direction: column;
     align-items: flex-end;
   }
+
   .reorder-btn {
     width: 100%;
     justify-content: center;
@@ -290,9 +291,12 @@
 
 /* White background circle + purple text for Avatar */
 .profile-avatar.profile-avatar--white-purple {
-  background-color: #ffffff !important; /* white background */
-  color: #722ed1 !important;            /* purple text (Ant Design purple) */
-  border: 2px solid #722ed1;            /* optional purple ring */
+  background-color: #ffffff !important;
+  /* white background */
+  color: #722ed1 !important;
+  /* purple text (Ant Design purple) */
+  border: 2px solid #722ed1;
+  /* optional purple ring */
 }
 
 /* Make the initials crisp */
@@ -304,4 +308,42 @@
 /* Optional: ensure the icon (UserOutlined) is purple when no image */
 .profile-avatar.profile-avatar--white-purple .anticon {
   color: #722ed1;
+}
+
+/* ========================================
+   TABS – RESPONSIVE FIX
+   ======================================== */
+
+/* Allow horizontal scroll on small screens */
+.profile-tabs .ant-tabs-nav-wrap {
+  overflow-x: auto;
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.profile-tabs .ant-tabs-nav-wrap::-webkit-scrollbar {
+  display: none;
+  /* Chrome/Safari */
+}
+
+/* Prevent tabs from wrapping */
+.profile-tabs .ant-tabs-nav-list {
+  flex-wrap: nowrap;
+}
+
+/* Mobile-specific tab sizing */
+@media (max-width: 768px) {
+  .profile-tabs .ant-tabs-tab {
+    padding: 12px 16px !important;
+    font-size: 0.95rem !important;
+    white-space: nowrap;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 480px) {
+  .profile-tabs .ant-tabs-tab {
+    padding: 10px 12px !important;
+    font-size: 0.9rem !important;
+  }
 }
