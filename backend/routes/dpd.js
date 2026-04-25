@@ -8,21 +8,24 @@ const DPD_BASE = 'https://cloud.dpd.com/api/v1/setOrder';
 
 // Credentials from DPD mail
 const PARTNER = {
-    name: 'DPD Cloud Service Alpha2',
-    token: process.env.DPD_PARTNER_TOKEN,
+  name: 'DPD Cloud Service Alpha2',
+  token: '33879594E70436D58685',
+  //token: process.env.DPD_PARTNER_TOKEN,
 };
 
 const USER = {
-    cloudUserID: process.env.DPD_CLOUD_USER_ID,
-    token: process.env.DPD_USER_TOKEN,
+  cloudUserID: '9687108',
+  //cloudUserID: process.env.DPD_CLOUD_USER_ID,
+  token: '635384C4734717235724',
+  //token: process.env.DPD_USER_TOKEN,
 };
 
 // Your warehouse address
 const SENDER = {
-    country: 'DE',
-    zipCode: '55411',
-    city: 'Bingen',
-    street: 'Im Schwalg 60',
+  country: 'DE',
+  zipCode: '55411',
+  city: 'Bingen',
+  street: 'Im Schwalg 60',
 };
 
 router.post('/estimate', async (req, res) => {

@@ -588,12 +588,15 @@ module.exports = (db) => {
 
           PartnerCredentials: {
             Name: 'DPD Cloud Service Alpha2',
-            Token: process.env.DPD_PARTNER_TOKEN,
+            Token: '33879594E70436D58685',
+            //Token: process.env.DPD_PARTNER_TOKEN,
           },
 
           UserCredentials: {
-            CloudUserID: process.env.DPD_CLOUD_USER_ID,
-            Token: process.env.DPD_USER_TOKEN,
+            CloudUserID: '9687108',
+            //CloudUserID: process.env.DPD_CLOUD_USER_ID,
+            Token: '635384C4734717235724',
+            //Token: process.env.DPD_USER_TOKEN,
           },
 
           Order: {
@@ -696,7 +699,8 @@ module.exports = (db) => {
       });
     } catch (err) {
       console.error('[create-dpd-label] error:', err?.response?.data || err?.message || err);
-      return res.status(500).json({ error: 'dpd_label_failed' });
+      //return res.status(500).json({ error: 'dpd_label_failed' });
+      return res.status(500).json({ error: err });
     }
   });
 

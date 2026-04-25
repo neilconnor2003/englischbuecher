@@ -238,27 +238,6 @@ const OrdersDashboard = () => {
     return <Icon className="w-4 h-4" />;
   };
 
-  /*const handleSaveOrderEdit = async (payload) => {
-    try {
-      const url = `${config.DIRECT_API_URL}/api/orders/${payload.id}`;
-
-      await axios.put(
-        url,
-        payload,
-        { withCredentials: true }
-      );
-
-      showToast("Order updated", "success");
-    } catch (e) {
-      console.error('Order update failed:', e?.response?.data || e);
-      showToast(
-        e?.response?.data?.error || 'Update failed',
-        "error"
-      );
-    }
-  };*/
-
-
   const handleSaveOrderEdit = async (payload) => {
     try {
       await updateOrder(payload).unwrap();
