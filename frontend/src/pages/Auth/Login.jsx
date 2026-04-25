@@ -117,7 +117,7 @@ function Login() {
     const allowedOrigins = new Set([apiOrigin, window.location.origin]);
 
 
-    const handleMessage = (event) => {
+    /*const handleMessage = (event) => {
       if (!allowedOrigins.has(event.origin)) return;
 
       if (event.data === 'google-login-success' || event.data?.type === 'google-login-success') {
@@ -125,7 +125,23 @@ function Login() {
         clearInterval(checkClosed);
         window.location.href = '/';
       }
+    };*/
+
+
+    const handleMessage = async (event) => {
+      if (event.data?.type === 'google-login-success') {
+        window.removeEventListener('message', handleMessage);
+        clearInterval(checkClosed);
+
+        // ✅ IMPORTANT: refresh auth state BEFORE redirect
+        await checkAuth();
+
+        window.location.href = '/';
+      }
     };
+
+    window.addEventListener('message', handleMessage);
+
 
     window.addEventListener('message', handleMessage);
 
@@ -138,7 +154,8 @@ function Login() {
         //fetch(`${config.API_URL}/api/current-user`, { credentials: 'include' })
         fetch(`${config.API_URL}/api/current-user` || '/api/current-user', { credentials: 'include' })
           .then(r => r.json())
-          .then(data => { if (data?.id) window.location.href = '/'; })
+          //.then(data => { if (data?.id) window.location.href = '/'; })
+          .then(async data => { if (data?.id) { await checkAuth(); window.location.href = '/'; } })
           .catch(() => { });
       }
     }, 500);

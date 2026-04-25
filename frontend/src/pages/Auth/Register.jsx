@@ -29,7 +29,7 @@ function Register() {
       window.location.origin              // optional, keeps it safe in local setups
     ]);
 
-    const handleMessage = (event) => {
+    /*const handleMessage = (event) => {
       if (!allowedOrigins.has(event.origin)) return;
 
       // your backend sends: 'google-login-success'
@@ -37,6 +37,17 @@ function Register() {
         window.removeEventListener('message', handleMessage);
         clearInterval(checkClosed);
         // FULL RELOAD so cookies/session are reflected everywhere
+        window.location.href = '/';
+      }
+    };*/
+
+
+    const handleMessage = (event) => {
+      if (event.data?.type === 'google-login-success') {
+        window.removeEventListener('message', handleMessage);
+        clearInterval(checkClosed);
+
+        // ✅ Force full reload so session is reflected everywhere
         window.location.href = '/';
       }
     };
@@ -51,8 +62,15 @@ function Register() {
         // Fallback: if popup closes, check session
         fetch(`${config.API_URL}/api/current-user`, { credentials: 'include' })
           .then(r => r.json())
-          .then(data => { if (data?.id) window.location.href = '/'; })
-          .catch(() => {});
+          //.then(data => { if (data?.id) window.location.href = '/'; })
+
+          .then(data => {
+            if (data?.id) {
+              window.location.href = '/';
+            }
+          })
+
+          .catch(() => { });
       }
     }, 500);
   };

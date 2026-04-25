@@ -3114,7 +3114,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
           if (window.opener && !window.opener.closed) {
             window.opener.postMessage(
               { type: 'google-login-success' },
-              FRONTEND
+              '*'
             );
             window.close();
             return;

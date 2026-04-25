@@ -6,11 +6,18 @@ const { sendWelcomeEmail } = require('../utils/email');
 //const API_URL = process.env.BACKEND_URL;
 const API_URL = process.env.FRONTEND_URL;
 
+const callbackURL =
+  process.env.NODE_ENV === 'production'
+    ? 'https://api.englischbuecher.de/auth/google/callback'
+    : 'https://api-dev.englischbuecher.de/auth/google/callback';
+
+
 module.exports = function (db) {
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: `${API_URL}/auth/google/callback`,
+    //callbackURL: `${API_URL}/auth/google/callback`,
+    callbackURL,
     scope: ['profile', 'email'],
     //state: true
     state: false
