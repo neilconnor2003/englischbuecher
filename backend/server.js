@@ -1281,6 +1281,50 @@ const computeWorkId = (titleEn, titleDe, author) => {
     }
   });
 
+
+  // Record number of views per user per session in a day
+  app.post('/api/books/:id/view', async (req, res) => {
+    try {
+      const bookId = Number(req.params.id);
+      if (!bookId) return res.status(400).json({ error: 'Invalid book id' });
+
+      const userId = req.user?.id || null;
+
+      // ✅ Optional: prevent duplicate views in short time window
+      // For logged-in users: 1 view per day
+      if (userId) {
+        const [rows] = await db.execute(
+          `
+        SELECT 1 FROM book_views
+        WHERE book_id = ?
+          AND user_id = ?
+          AND viewed_at >= NOW() - INTERVAL 1 DAY
+        LIMIT 1
+        `,
+          [bookId, userId]
+        );
+
+        if (rows.length > 0) {
+          return res.json({ success: true, skipped: true });
+        }
+      }
+
+      await db.execute(
+        `
+      INSERT INTO book_views (user_id, book_id)
+      VALUES (?, ?)
+      `,
+        [userId, bookId]
+      );
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Book view error:', err);
+      res.status(500).json({ error: 'Failed to record view' });
+    }
+  });
+
+
   // GET FEATURED BOOKS — used in hero banner
   app.get('/api/books/featured', async (req, res) => {
     try {
@@ -1533,6 +1577,11 @@ const computeWorkId = (titleEn, titleDe, author) => {
       const bookId = Number(req.params.id);
       if (!bookId) return res.status(400).json({ error: 'Invalid id' });
 
+      const [[viewRow]] = await db.execute(
+        `SELECT COUNT(*) AS views FROM book_views WHERE book_id = ?`,
+        [bookId]
+      );
+
       // 1) Book row (no author_id here)
       const [[book]] = await db.execute(`
       SELECT 
@@ -1599,6 +1648,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
       res.json({
         ...book,
+        views: Number(viewRow.views || 0),
         authors,
         author_name: primary?.name || book.author || null,
         author_bio: primary?.bio || null,

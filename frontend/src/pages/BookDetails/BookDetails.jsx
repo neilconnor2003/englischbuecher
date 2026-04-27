@@ -193,6 +193,19 @@ function BookDetails() {
     setMainImage('');
   }, [bookId]);
 
+
+  useEffect(() => {
+    if (!bookId) return;
+
+    // fire-and-forget
+    axios.post(
+      `${config.API_URL}/api/books/${bookId}/view`,
+      {},
+      { withCredentials: true }
+    ).catch(() => { });
+  }, [bookId]);
+
+
   // Persist the user's last choice (delivery vs pickup)
   /*useEffect(() => {
     try { localStorage.setItem('engb_shipping_pref', shippingMode); } catch { }
@@ -510,6 +523,13 @@ function BookDetails() {
                   <span className="text-gray-600">
                     {t('review_count', { count: reviewStats.total || 0 })}
                   </span>
+
+                  {typeof book.views === 'number' && (
+                    <span className="text-gray-500 text-sm">
+                      · 👁 {book.views.toLocaleString()} {t('views') || 'views'}
+                    </span>
+                  )}
+
                   {reviewStats.total > 0 && (
                     <Button
                       type="link"
@@ -638,7 +658,7 @@ function BookDetails() {
                     <div className="pickup-free">{t('free') || '0,00 €'}</div>
                   </div>
                 )}*/}
-                
+
                 {shippingMode === 'delivery' ? (
                   <div style={{ marginTop: 12 }}>
                     <DPDEstimator

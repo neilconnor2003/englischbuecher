@@ -436,6 +436,7 @@
   "home.new_arrivals": "New Arrivals",
   "home.just_in": "Just In",
   "customer_reviews": "Customer Reviews",
+  "views": "views",
   "write_review": "Write a Review",
   "review_count_one": "1 review",
   "review_count_other": "{{count}} reviews",
