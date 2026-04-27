@@ -766,7 +766,7 @@ const CartPage = () => {
                     t('cart.pickup_note') || 'No shipping fees. You will collect the book yourself.'
                   ) : subtotal >= FREE_SHIPPING_THRESHOLD ? (
                     <span className="free-shipping-ok">
-                      ✅ {t('cart.free_shipping_applied')}
+                      {t('cart.free_shipping_applied')}
                     </span>
                   ) : (
                     <span className="free-shipping-hint">
