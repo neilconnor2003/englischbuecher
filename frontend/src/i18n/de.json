@@ -215,9 +215,20 @@
   },
   "shipping": {
     "title": "Versand & Zahlung",
-    "costs": "Versandkosten",
-    "methods": "Versandarten",
-    "payment": "Zahlungsmethoden",
+    "costs": {
+      "title": "Versandkosten",
+      "description": "Die Versandkosten werden im Warenkorb berechnet und angezeigt. Bestellungen über 20 kg werden kostenlos versendet."
+    },
+    "methods": {
+      "title": "Versandarten",
+      "dpd": "DPD Classic (2–3 Werktage)",
+      "dpd_gogreen": "DPD Predict / klimaneutraler Versand"
+    },
+    "payment": {
+      "title": "Zahlungsarten",
+      "paypal": "PayPal",
+      "card": "Kreditkarte (Visa, Mastercard)"
+    },
     "provider_label": "DPD · Deutschlandweit (inkl. MwSt.)",
     "checkout_note": "Exakte Versandkosten werden im Checkout bestätigt"
   },

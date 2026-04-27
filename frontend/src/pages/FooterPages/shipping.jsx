@@ -11,21 +11,21 @@ const Shipping = () => {
       <div className="legal-container">
         <h1>{t('shipping.title')}</h1>
 
-        <h2>{t('shipping.costs')}</h2>
-        <p>Deutschland: 3,99 € • ab 29 € versandkostenfrei<br />
-        EU: 9,90–14,90 € • Schweiz: 19,90 €</p>
+        <h2>{t('shipping.costs.title')}</h2>
+        <p>{t('shipping.costs.description')}</p>
 
-        <h2>{t('shipping.methods')}</h2>
+        <h2>{t('shipping.methods.title')}</h2>
         <ul>
-          <li>DHL Paket (2–3 Werktage)</li>
-          <li>DHL GoGreen (CO₂-neutral)</li>
+          <li>{t('shipping.methods.dpd')}</li>
+          {/*<li>{t('shipping.methods.dpd_gogreen')}</li>*/}
         </ul>
 
-        <h2>{t('shipping.payment')}</h2>
+        <h2>{t('shipping.payment.title')}</h2>
         <ul>
-          <li>PayPal</li>
-          <li>Kreditkarte (Visa, Mastercard)</li>
+          <li>{t('shipping.payment.paypal')}</li>
+          <li>{t('shipping.payment.card')}</li>
         </ul>
+
       </div>
     </div>
   );

@@ -220,9 +220,20 @@
   },
   "shipping": {
     "title": "Shipping & Payment",
-    "costs": "Shipping Costs",
-    "methods": "Shipping Methods",
-    "payment": "Payment Methods",
+    "costs": {
+      "title": "Shipping Costs",
+      "description": "Shipping costs are displayed in the cart. Orders over 20 kg qualify for free shipping."
+    },
+    "methods": {
+      "title": "Shipping Methods",
+      "dpd": "DPD Classic (2–3 business days)",
+      "dpd_gogreen": "DPD Predict / Climate-neutral delivery"
+    },
+    "payment": {
+      "title": "Payment Methods",
+      "paypal": "PayPal",
+      "card": "Credit card (Visa, Mastercard)"
+    },
     "provider_label": "DPD · Germany-wide (incl. VAT)",
     "checkout_note": "Exact shipping confirmed at checkout"
   },
