@@ -71,6 +71,9 @@ const CartPage = () => {
     );
   }, [weightedItems]);
 
+    // Subtotal (items only)
+  const subtotal = useMemo(() => Number(totalPrice || 0), [totalPrice]);
+
   const calculatedShippingCost = useMemo(() => {
     if (shippingMode !== 'delivery') return 0;
     if (!totalWeightGrams) return 0;
@@ -301,10 +304,6 @@ const CartPage = () => {
       })
     );
   }, [shippingCost, shippingMode]);
-
-
-  // Subtotal (items only)
-  const subtotal = useMemo(() => Number(totalPrice || 0), [totalPrice]);
 
   // Final total
   const grandTotal = useMemo(() => subtotal + Number(shippingCost || 0), [subtotal, shippingCost]);
@@ -766,7 +765,7 @@ const CartPage = () => {
                     t('cart.pickup_note') || 'No shipping fees. You will collect the book yourself.'
                   ) : subtotal >= FREE_SHIPPING_THRESHOLD ? (
                     <span className="free-shipping-ok">
-                      {t('cart.free_shipping_applied')}
+                      ✅ {t('cart.free_shipping_applied')}
                     </span>
                   ) : (
                     <span className="free-shipping-hint">
