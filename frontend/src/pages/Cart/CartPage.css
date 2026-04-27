@@ -894,3 +894,13 @@
   font-weight: 900;
   color: #16a34a;
 }
+
+.free-shipping-ok {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.free-shipping-hint {
+  color: #1565c0;
+  font-weight: 500;
+}

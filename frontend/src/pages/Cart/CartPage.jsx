@@ -59,6 +59,7 @@ const CartPage = () => {
      ------------------------------------------------------------ */
   const didMergeRef = useRef(false);
 
+  const FREE_SHIPPING_THRESHOLD = 30;
 
   const ctx = getDeliveryContext() || {};
   const [shippingMode, setShippingMode] = useState(ctx.shippingMode || 'delivery');
@@ -74,8 +75,15 @@ const CartPage = () => {
     if (shippingMode !== 'delivery') return 0;
     if (!totalWeightGrams) return 0;
 
+    // ✅ FREE SHIPPING BY SUBTOTAL
+    if (subtotal >= FREE_SHIPPING_THRESHOLD) return 0;
+
     return getDPDShippingPrice(totalWeightGrams);
-  }, [shippingMode, totalWeightGrams]);
+  }, [shippingMode, totalWeightGrams, subtotal]);
+
+  const remainingForFreeShipping = useMemo(() => {
+    return Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
+  }, [subtotal]);
 
   useEffect(() => {
     if (!user) return;                 // Only after user logs in
@@ -747,11 +755,28 @@ const CartPage = () => {
                     <div className="pickup-free">{t('free') || '0,00 €'}</div>
                   </div>
                 )}
-                <div className="shipping-note">
+                {/*<div className="shipping-note">
                   {shippingMode === 'pickup'
                     ? (t('cart.pickup_note') || 'No shipping fees. You will collect the book yourself.')
                     : (t("shipping_calculated_at_checkout") || "Shipping label is purchased at checkout")}
+                </div>*/}
+
+                <div className="shipping-note">
+                  {shippingMode === 'pickup' ? (
+                    t('cart.pickup_note') || 'No shipping fees. You will collect the book yourself.'
+                  ) : subtotal >= FREE_SHIPPING_THRESHOLD ? (
+                    <span className="free-shipping-ok">
+                      ✅ {t('cart.free_shipping_applied')}
+                    </span>
+                  ) : (
+                    <span className="free-shipping-hint">
+                      {t('cart.free_shipping_remaining', {
+                        amount: currency.format(remainingForFreeShipping)
+                      })}
+                    </span>
+                  )}
                 </div>
+
               </div>
 
               {/* Right: Order Summary */}

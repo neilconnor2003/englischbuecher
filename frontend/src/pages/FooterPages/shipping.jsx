@@ -11,14 +11,14 @@ const Shipping = () => {
       <div className="legal-container">
         <h1>{t('shipping.title')}</h1>
 
-        <h2>{t('shipping.costs.title')}</h2>
-        <p>{t('shipping.costs.description')}</p>
-
         <h2>{t('shipping.methods.title')}</h2>
         <ul>
           <li>{t('shipping.methods.dpd')}</li>
           {/*<li>{t('shipping.methods.dpd_gogreen')}</li>*/}
         </ul>
+
+        <h2>{t('shipping.costs.title')}</h2>
+        <p>{t('shipping.costs.description')}</p>
 
         <h2>{t('shipping.payment.title')}</h2>
         <ul>

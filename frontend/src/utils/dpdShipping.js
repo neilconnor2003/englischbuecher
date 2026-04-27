@@ -6,11 +6,10 @@ export function getDPDShippingPrice(weightGrams) {
   if (weightKg <= 5) return 6.46;
   if (weightKg <= 10) return 7.12;
   if (weightKg <= 15) return 7.77;
-  //if (weightKg <= 20) return 8.43;
-  //if (weightKg <= 25) return 9.47;
-  //if (weightKg <= 31.5) return 10.78;
+  if (weightKg <= 20) return 8.43;
+  if (weightKg <= 25) return 9.47;
+  if (weightKg <= 31.5) return 10.78;
 
   // Safety fallback (DPD max weight is 31.5kg)
-  //return 10.78;
-  return 0;
+  return 10.78;
 }
