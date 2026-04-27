@@ -217,7 +217,7 @@
     "title": "Versand & Zahlung",
     "costs": {
       "title": "Versandkosten",
-      "description": "Die Versandkosten werden im Warenkorb berechnet und angezeigt. Bestellungen über 20 kg werden kostenlos versendet."
+      "description": "Die Versandkosten werden im Warenkorb berechnet und angezeigt."
     },
     "methods": {
       "title": "Versandarten",

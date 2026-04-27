@@ -222,7 +222,7 @@
     "title": "Shipping & Payment",
     "costs": {
       "title": "Shipping Costs",
-      "description": "Shipping costs are displayed in the cart. Orders over 20 kg qualify for free shipping."
+      "description": "Shipping costs are displayed in the cart."
     },
     "methods": {
       "title": "Shipping Methods",
