@@ -492,11 +492,11 @@ const CheckoutPage = ({ clientSecret }) => {
           </div>
         </form>
 
-        <div className="test-card" style={{ marginTop: '1rem', textAlign: 'center' }}>
+        {/*<div className="test-card" style={{ marginTop: '1rem', textAlign: 'center' }}>
           {t('test_card')}: 4242 4242 4242 4242 | {t('any_date')} | 123
           <br />
           <small>Sofort: Use test mode in Stripe Dashboard</small>
-        </div>
+        </div>*/}
       </div>
     </div>
   );
