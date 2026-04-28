@@ -101,7 +101,7 @@ const CheckoutPage = ({ clientSecret }) => {
 
     // 3. Address MUST exist (otherwise do nothing)
     //if (!deliveryAddress?.postalCode) return;
-    if (!postalCode || !city) retur
+    if (!postalCode || !city) return;
 
     // 4. Now it is safe to calculate shipping
     triggerShippingQuote();
