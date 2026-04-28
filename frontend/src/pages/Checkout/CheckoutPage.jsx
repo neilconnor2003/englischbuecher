@@ -88,6 +88,14 @@ const CheckoutPage = ({ clientSecret }) => {
     setHydrated(true);
   }, []);
 
+  const ctx1 = getDeliveryContext();
+
+  useEffect(() => {
+    if (ctx1?.forceQuote && cart.items.length > 0) {
+      triggerShippingQuote();
+      setDeliveryContext({ ...ctx1, forceQuote: false });
+    }
+  }, [cart.items]);
 
   useEffect(() => {
     if (!hydrated) return;

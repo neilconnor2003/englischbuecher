@@ -446,7 +446,8 @@ const computeWorkId = (titleEn, titleDe, author) => {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    //allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-debug-from'],
     optionsSuccessStatus: 204
   }));
 
@@ -1387,6 +1388,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
         b.author,
         b.price,
         b.original_price,
+        b.stock,
         b.image,
         b.slug,
         b.isbn13,
@@ -2498,7 +2500,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
         INNER JOIN cat_tree ct ON c.parent_id = ct.id
       )
       SELECT
-        b.id, b.title_en, b.title_de, b.author, b.price, b.original_price, b.image, b.slug,
+        b.id, b.title_en, b.title_de, b.author, b.price, b.original_price, b.stock, b.image, b.slug,
         b.isbn13, b.isbn10, b.rating, b.review_count
       FROM books b
       WHERE b.category_id IN (SELECT id FROM cat_tree)

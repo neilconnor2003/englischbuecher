@@ -366,7 +366,13 @@ function BookDetails() {
         //dispatch(mergeServerCart({ items: res.data.items || [] }));
         dispatch(replaceWithServerCart({ items: res.data.items || [] }));
       }
-      if (goToCheckout) setTimeout(() => navigate('/checkout'), 500);
+      //if (goToCheckout) setTimeout(() => navigate('/checkout'), 500);
+
+      if (goToCheckout) {
+        setDeliveryContext({ shippingMode, forceQuote: true });
+        setTimeout(() => navigate('/checkout'), 500);
+      }
+
     } catch (err) {
       if (err.response?.status === 401) message.warning(t('please_login'));
     } finally {
