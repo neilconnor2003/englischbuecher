@@ -46,6 +46,13 @@ const CheckoutPage = ({ clientSecret }) => {
 
   const COUNTRY = "DE";
 
+  const FREE_SHIPPING_THRESHOLD = 30;
+
+  const isFreeShipping =
+    shippingMode === 'delivery' &&
+    Number(totalPrice || 0) >= FREE_SHIPPING_THRESHOLD;
+
+
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -248,7 +255,7 @@ const CheckoutPage = ({ clientSecret }) => {
     if (!postalCode.trim()) return toast.error(t('postal_code_required'));
     if (!stripe || !elements || !paymentReady) return toast.error(t('payment_not_ready'));
 
-    if (shippingMode === 'delivery' && shippingAmount <= 0)
+    if (shippingMode === 'delivery' && shippingAmount <= 0 && !isFreeShipping)
       return toast.error(t('shipping_error'));
 
     setLoading(true);
@@ -366,7 +373,11 @@ const CheckoutPage = ({ clientSecret }) => {
                       : (t('cart.shipping_label') || 'Shipping')}
                   </span>
 
-                  <span className="total-price">€{shipping.toFixed(2)}</span>
+                  {/*<span className="total-price">€{shipping.toFixed(2)}</span>*/}
+                  <span className="total-price">
+                    {isFreeShipping ? t('free') || '0,00 €' : `€${shipping.toFixed(2)}`}
+                  </span>
+
                 </div>
                 <div className="total-row total-strong">
                   <span>{t('total')}</span>
@@ -468,7 +479,7 @@ const CheckoutPage = ({ clientSecret }) => {
                 !stripe ||
                 loading ||
                 !paymentReady ||
-                (shippingMode === 'delivery' && shippingAmount <= 0)
+                (shippingMode === 'delivery' && shippingAmount <= 0 && !isFreeShipping)
               }
               className="pay-button full-width"
             >
