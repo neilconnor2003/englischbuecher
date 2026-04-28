@@ -35,6 +35,8 @@ const CheckoutPage = ({ clientSecret }) => {
 
   const [shippingAmount, setShippingAmount] = useState(0);
 
+  const cart = useSelector(state => state.cart);
+  const items = cart?.items || [];
 
   const itemsSignature = cartItems
     .map(i => `${i.bookId}:${i.quantity}`)
@@ -91,11 +93,22 @@ const CheckoutPage = ({ clientSecret }) => {
   const ctx1 = getDeliveryContext();
 
   useEffect(() => {
-    if (ctx1?.forceQuote && cart.items.length > 0) {
-      triggerShippingQuote();
-      setDeliveryContext({ ...ctx1, forceQuote: false });
-    }
-  }, [cart.items]);
+    // 1. Only run if Buy Now requested it
+    if (!ctx1?.forceQuote) return;
+
+    // 2. Cart must have items
+    if (items.length === 0) return;
+
+    // 3. Address MUST exist (otherwise do nothing)
+    if (!deliveryAddress?.postalCode) return;
+
+    // 4. Now it is safe to calculate shipping
+    triggerShippingQuote();
+
+    // 5. Clear the flag so it doesn't repeat
+    setDeliveryContext({ ...ctx1, forceQuote: false });
+
+  }, [items, deliveryAddress]);
 
   useEffect(() => {
     if (!hydrated) return;
