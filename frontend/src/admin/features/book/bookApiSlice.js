@@ -125,6 +125,11 @@ export const bookApi = createApi({
           is_new_release: newBook.is_new_release ? 1 : 0,
           is_bestseller: newBook.is_bestseller ? 1 : 0,
 
+          height_cm: newBook.height_cm ?? null,
+          width_cm: newBook.width_cm ?? null,
+          length_cm: newBook.length_cm ?? null,
+
+
           _authorIds: newBook._authorIds || [],
         },
       }),
@@ -177,6 +182,9 @@ export const bookApi = createApi({
           is_featured: updatedBook.is_featured ? 1 : 0,
           is_new_release: updatedBook.is_new_release ? 1 : 0,
           is_bestseller: updatedBook.is_bestseller ? 1 : 0,
+          height_cm: updatedBook.height_cm ?? null,
+          width_cm: updatedBook.width_cm ?? null,
+          length_cm: updatedBook.length_cm ?? null,
           _authorIds: updatedBook._authorIds || [],
         },
       }),
