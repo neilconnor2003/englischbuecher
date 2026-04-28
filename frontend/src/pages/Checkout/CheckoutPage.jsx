@@ -100,7 +100,8 @@ const CheckoutPage = ({ clientSecret }) => {
     if (items.length === 0) return;
 
     // 3. Address MUST exist (otherwise do nothing)
-    if (!deliveryAddress?.postalCode) return;
+    //if (!deliveryAddress?.postalCode) return;
+    if (!postalCode || !city) retur
 
     // 4. Now it is safe to calculate shipping
     triggerShippingQuote();
@@ -108,7 +109,7 @@ const CheckoutPage = ({ clientSecret }) => {
     // 5. Clear the flag so it doesn't repeat
     setDeliveryContext({ ...ctx1, forceQuote: false });
 
-  }, [items, deliveryAddress]);
+  }, [items, postalCode, city]);
 
   useEffect(() => {
     if (!hydrated) return;
