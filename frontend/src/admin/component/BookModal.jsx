@@ -759,14 +759,6 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
       //width_cm: parsedDims?.width_cm ?? null,
       //height_cm: parsedDims?.height_cm ?? null,
 
-      // ✅ Only send numeric dimensions if parsing succeeded
-      if(parsedDims) {
-        savedBook.height_cm = parsedDims.height_cm;
-        savedBook.width_cm = parsedDims.width_cm;
-        savedBook.length_cm = parsedDims.length_cm;
-      },
-
-
       image: mainImage || null,
       images: galleryImages.length > 0 ? galleryImages : null,
 
@@ -795,6 +787,13 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
       // Many-to-many pivot payload
       _authorIds: authorIds,
     };
+
+    // ✅ Populate numeric dimensions from dimensions string
+    if (parsedDims) {
+      savedBook.height_cm = parsedDims.height_cm;
+      savedBook.width_cm = parsedDims.width_cm;
+      savedBook.length_cm = parsedDims.length_cm;
+    }
 
     onSave(savedBook);
     onClose();
