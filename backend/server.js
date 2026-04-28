@@ -1787,6 +1787,11 @@ const computeWorkId = (titleEn, titleDe, author) => {
     const images = body.images ? JSON.stringify(body.images) : null;
     const weight_grams = body.weight_grams ? parseInt(body.weight_grams) : null;
     const dimensions = body.dimensions || null;
+
+    const height_cm = body.height_cm ? Number(body.height_cm) : null;
+    const length_cm = body.length_cm ? Number(body.length_cm) : null;
+    const width_cm = body.width_cm ? Number(body.width_cm) : null;
+
     const format = body.format || 'Paperback';
     const edition = body.edition || null;
     const binding = body.binding || null;
@@ -1829,9 +1834,9 @@ const computeWorkId = (titleEn, titleDe, author) => {
         language, translator, series_name, series_volume, reading_age,
         is_featured, is_new_release, is_bestseller,
         tags,
-        rating, review_count, popularity_score,
+        rating, review_count, popularity_score,height_cm, length_cm, width_cm,
         work_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
         title_en,
         title_de,
@@ -1873,6 +1878,9 @@ const computeWorkId = (titleEn, titleDe, author) => {
         rating,
         review_count,
         popularity_score,
+        height_cm,
+        length_cm,
+        width_cm,
         work_id
       ]);
 
@@ -1942,6 +1950,11 @@ const computeWorkId = (titleEn, titleDe, author) => {
     const images = body.images ? JSON.stringify(body.images) : null;
     const weight_grams = body.weight_grams ? parseInt(body.weight_grams) : null;
     const dimensions = body.dimensions || null;
+
+    const height_cm = body.height_cm ? Number(body.height_cm) : null;
+    const length_cm = body.length_cm ? Number(body.length_cm) : null;
+    const width_cm = body.width_cm ? Number(body.width_cm) : null;
+
     const format = body.format || 'Paperback';
     const edition = body.edition || null;
     const binding = body.binding || null;
@@ -1979,7 +1992,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
         language = ?, translator = ?, series_name = ?, series_volume = ?, reading_age = ?,
         is_featured = ?, is_new_release = ?, is_bestseller = ?, tags = ?,
         rating = ?, review_count = ?, popularity_score = ?,
-        work_id = ?
+        work_id = ?, height_cm=?, length_cm=?, width_cm=?
       WHERE id = ?
     `, [
         title_en, title_de, author, isbn, isbn10, isbn13,
@@ -1991,7 +2004,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
         language, translator, series_name, series_volume, reading_age,
         is_featured, is_new_release, is_bestseller, tags,
         rating, review_count, popularity_score,
-        work_id, id
+        work_id, height_cm, length_cm, width_cm, id
       ]);
 
       if (result.affectedRows === 0) {

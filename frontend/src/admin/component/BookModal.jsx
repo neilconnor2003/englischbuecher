@@ -699,11 +699,34 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
 
   const setAsMain = (url) => setMainImage(url);
 
+  const parseDimensions = (dimStr = '') => {
+    if (!dimStr) return null;
+
+    // Extract numbers like 19.8, 12.9, 2.6
+    const nums = dimStr
+      .replace(',', '.')
+      .match(/[\d.]+/g)
+      ?.map(n => parseFloat(n))
+      .filter(n => Number.isFinite(n));
+
+    if (!nums || nums.length < 3) return null;
+
+    // Sort descending: biggest first
+    const [height, length, width] = nums.sort((a, b) => b - a);
+
+    return {
+      height_cm: height,
+      length_cm: length,
+      width_cm: width,
+    };
+  };
+
   // -----------------------------------------------------
   // Submit
   // -----------------------------------------------------
   const onSubmit = (data) => {
     const effectiveWorkId = (data.work_id?.trim()) || computeWorkId(data.title_en, data.title_de, data.author);
+    const parsedDims = parseDimensions(data.dimensions);
 
     const savedBook = {
       id: book?.id,
@@ -731,6 +754,10 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
       series_volume: data.series_volume?.trim() || null,
       reading_age: data.reading_age?.trim() || null,
       tags: data.tags?.trim() || null,
+
+      length_cm: parsedDims?.length_cm ?? null,
+      width_cm: parsedDims?.width_cm ?? null,
+      height_cm: parsedDims?.height_cm ?? null,
 
       image: mainImage || null,
       images: galleryImages.length > 0 ? galleryImages : null,
