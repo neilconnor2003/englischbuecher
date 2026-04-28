@@ -755,9 +755,17 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
       reading_age: data.reading_age?.trim() || null,
       tags: data.tags?.trim() || null,
 
-      length_cm: parsedDims?.length_cm ?? null,
-      width_cm: parsedDims?.width_cm ?? null,
-      height_cm: parsedDims?.height_cm ?? null,
+      //length_cm: parsedDims?.length_cm ?? null,
+      //width_cm: parsedDims?.width_cm ?? null,
+      //height_cm: parsedDims?.height_cm ?? null,
+
+      // ✅ Only send numeric dimensions if parsing succeeded
+      if(parsedDims) {
+        savedBook.height_cm = parsedDims.height_cm;
+        savedBook.width_cm = parsedDims.width_cm;
+        savedBook.length_cm = parsedDims.length_cm;
+      },
+
 
       image: mainImage || null,
       images: galleryImages.length > 0 ? galleryImages : null,
