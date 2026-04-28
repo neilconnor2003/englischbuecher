@@ -1260,3 +1260,10 @@
 @media (max-width: 768px) {
   .delivery-grid { grid-template-columns: 1fr; }
 }
+
+.buy-now-btn.disabled,
+.add-to-cart.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}

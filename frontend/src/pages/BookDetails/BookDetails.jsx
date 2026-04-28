@@ -449,6 +449,8 @@ function BookDetails() {
     </Swiper>
   );
 
+  const isOutOfStock = book.stock === 0;
+
   return (
     <>
       <Helmet>
@@ -683,7 +685,7 @@ function BookDetails() {
                   </div>
                 )}
 
-                <div className="buy-buttons">
+                {/*<div className="buy-buttons">
                   {user ? (
                     <>
                       <button onClick={() => handleCartAction(true)} disabled={adding || book.stock === 0} className={`buy-now-btn ${adding ? 'adding' : ''}`}>
@@ -700,6 +702,66 @@ function BookDetails() {
                       </button>
                       <button onClick={() => handleCartAction(false)} disabled={adding || book.stock === 0 || isInCart} className={`add-to-cart ${isInCart ? 'already-in-cart' : ''}`}>
                         {isInCart ? t('book_details.already_in_cart') : adding ? t('book_details.adding') : t('add_to_cart')}
+                      </button>
+                    </>
+                  )}
+                </div>*/}
+
+                <div className="buy-buttons">
+                  {user ? (
+                    <>
+                      <button
+                        onClick={() => handleCartAction(true)}
+                        disabled={adding || isOutOfStock}
+                        className={`buy-now-btn ${adding ? 'adding' : ''} ${isOutOfStock ? 'disabled' : ''}`}
+                      >
+                        {isOutOfStock
+                          ? t('out_of_stock')
+                          : adding
+                            ? t('processing')
+                            : t('buy_now')}
+                      </button>
+
+                      <button
+                        onClick={() => handleCartAction(false)}
+                        disabled={adding || isOutOfStock || isInCart}
+                        className={`add-to-cart secondary ${isInCart ? 'already-in-cart' : ''} ${isOutOfStock ? 'disabled' : ''}`}
+                      >
+                        {isOutOfStock
+                          ? t('out_of_stock')
+                          : isInCart
+                            ? t('book_details.already_in_cart')
+                            : adding
+                              ? t('book_details.adding')
+                              : t('add_to_cart')}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => handleCartAction(true)}
+                        disabled={adding || isOutOfStock}
+                        className={`buy-now-btn ${isOutOfStock ? 'disabled' : ''}`}
+                      >
+                        {isOutOfStock
+                          ? t('out_of_stock')
+                          : adding
+                            ? t('processing')
+                            : t('buy_now')}
+                      </button>
+
+                      <button
+                        onClick={() => handleCartAction(false)}
+                        disabled={adding || isOutOfStock || isInCart}
+                        className={`add-to-cart ${isInCart ? 'already-in-cart' : ''} ${isOutOfStock ? 'disabled' : ''}`}
+                      >
+                        {isOutOfStock
+                          ? t('out_of_stock')
+                          : isInCart
+                            ? t('book_details.already_in_cart')
+                            : adding
+                              ? t('book_details.adding')
+                              : t('add_to_cart')}
                       </button>
                     </>
                   )}
