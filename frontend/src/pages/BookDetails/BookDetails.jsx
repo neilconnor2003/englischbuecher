@@ -313,14 +313,14 @@ function BookDetails() {
     }, [book?.author_id]);
   */
 
-  /*useEffect(() => {
+  useEffect(() => {
     if (!book?.authors || book.authors.length === 0) {
       setAuthor(null);
       return;
     }
     // store the full authors array
     setAuthor(book.authors);
-  }, [book]);*/
+  }, [book]);
 
 
   useEffect(() => {
