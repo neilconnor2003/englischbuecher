@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import './CheckoutPage.css';
 import { getDeliveryContext, setDeliveryContext } from '../../utils/deliveryContext';
+import { getDPDShippingPrice } from '../../utils/dpdShipping';
 
 const CheckoutPage = ({ clientSecret }) => {
   const { t } = useTranslation();
@@ -34,6 +35,7 @@ const CheckoutPage = ({ clientSecret }) => {
   const [paymentReady, setPaymentReady] = useState(false);
 
   const [shippingAmount, setShippingAmount] = useState(0);
+  const [weightedItems, setWeightedItems] = useState([]);
 
   const cart = useSelector(state => state.cart);
   const items = cart?.items || [];
@@ -123,6 +125,98 @@ const CheckoutPage = ({ clientSecret }) => {
       city,
     });
   }, [hydrated, shippingMode, postalCode, city]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const requestItems = items
+      .map(it => ({
+        bookId: Number(it.bookId),
+        quantity: Math.max(1, Number(it.quantity || 1)),
+      }))
+      .filter(it => it.bookId > 0);
+
+    if (!requestItems.length) {
+      setWeightedItems([]);
+      return;
+    }
+
+    (async () => {
+      try {
+        const res = await fetch('/api/cart/weights', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ items: requestItems }),
+        });
+
+        const data = await res.json();
+        const rows = Array.isArray(data?.items) ? data.items : [];
+        const map = new Map(rows.map(r => [Number(r.book_id), r]));
+
+        const resolved = requestItems.map(it => {
+          const row = map.get(it.bookId) || {};
+          const w = Number(row?.weight_grams);
+
+          return {
+            quantity: it.quantity,
+            weight_grams: Number.isFinite(w) && w > 0 ? w : 500,
+          };
+        });
+
+        if (!cancelled) setWeightedItems(resolved);
+
+      } catch (err) {
+        if (!cancelled) {
+          setWeightedItems(
+            requestItems.map(it => ({
+              quantity: it.quantity,
+              weight_grams: 500,
+            }))
+          );
+        }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [items]);
+
+
+  const totalWeightGrams = weightedItems.reduce(
+    (sum, it) => sum + it.weight_grams * it.quantity,
+    0
+  );
+
+
+  useEffect(() => {
+    if (shippingMode !== 'delivery') {
+      setShippingAmount(0);
+      return;
+    }
+
+    if (!postalCode || !city) return;
+    if (!totalWeightGrams) return;
+
+    const FREE_SHIPPING_THRESHOLD = 30;
+    if (totalPrice >= FREE_SHIPPING_THRESHOLD) {
+      setShippingAmount(0);
+      return;
+    }
+
+    const amount = getDPDShippingPrice(totalWeightGrams);
+    setShippingAmount(amount);
+
+    localStorage.setItem(
+      'checkout_shipping_amount',
+      JSON.stringify({
+        amount_eur: amount,
+        mode: shippingMode,
+      })
+    );
+
+  }, [postalCode, city, shippingMode, totalWeightGrams, totalPrice]);
+
+
 
   {/*useEffect(() => {
     async function updatePI() {

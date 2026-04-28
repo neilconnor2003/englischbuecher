@@ -528,6 +528,7 @@
   "request.email_required": "Please enter your email",
   "request.email_invalid": "Please enter a valid email",
   "delivery_ship_to_postcode": "Deliver to postcode",
+  "delivery_method": "Delivery method",
   "click_collect": "Click & Collect (pickup in Binge 55411)",
   "pickup_title": "Click & Collect — Free",
   "pickup_hint": "Pickup in Bingen 55411. Exact address and time window will be shared after purchase.",
