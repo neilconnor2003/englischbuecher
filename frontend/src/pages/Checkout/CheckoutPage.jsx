@@ -104,7 +104,7 @@ const CheckoutPage = ({ clientSecret }) => {
     if (!postalCode || !city) return;
 
     // 4. Now it is safe to calculate shipping
-    triggerShippingQuote();
+    //triggerShippingQuote();
 
     // 5. Clear the flag so it doesn't repeat
     setDeliveryContext({ ...ctx1, forceQuote: false });
