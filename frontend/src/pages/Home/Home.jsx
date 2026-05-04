@@ -182,7 +182,7 @@ function Home() {
         </section>
       ))}
 
-      <section className="home-seo-text container">
+      {/*<section className="home-seo-text container">
         <h2>{t('home.seo.h2')}</h2>
 
         <p>
@@ -192,7 +192,7 @@ function Home() {
         <p>
           {t('home.seo.p3')}
         </p>
-      </section>
+      </section>*/}
 
     </div>
   );
