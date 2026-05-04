@@ -410,7 +410,12 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
       // 1) GOOGLE BOOKS
       // -----------------------------
       const googleUrl = `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleanIsbn}&country=DE`;
-      const googleRes = await fetch(googleUrl);
+      //const googleRes = await fetch(googleUrl);
+
+      const googleRes = await axios.get(
+        `${config.API_URL}/api/books/isbn/${cleanIsbn}`
+      );
+
       const googleData = await googleRes.json();
 
       if (googleData?.totalItems > 0) {

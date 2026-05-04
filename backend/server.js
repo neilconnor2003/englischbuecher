@@ -808,6 +808,46 @@ const computeWorkId = (titleEn, titleDe, author) => {
   });
 
 
+  app.get('/api/books/isbn/:isbn', async (req, res) => {
+    const { isbn } = req.params;
+
+    try {
+      const googleRes = await axios.get(
+        'https://www.googleapis.com/books/v1/volumes',
+        {
+          params: {
+            q: `isbn:${isbn}`,
+            key: process.env.GOOGLE_BOOKS_API_KEY,
+          },
+        }
+      );
+
+      if (googleRes.data.totalItems > 0) {
+        return res.json({ source: 'google', data: googleRes.data });
+      }
+
+      // fallback to OpenLibrary
+      const olRes = await axios.get(
+        `https://openlibrary.org/api/books`,
+        {
+          params: {
+            bibkeys: `ISBN:${isbn}`,
+            format: 'json',
+            jscmd: 'data',
+          },
+        }
+      );
+
+      return res.json({ source: 'openlibrary', data: olRes.data });
+    }
+    catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'ISBN lookup failed' });
+    }
+  });
+
+
+
   // PUT: link one book to a work_id (admin UI can call this)
   app.put('/api/admin/books/:id/work', async (req, res) => {
     const { work_id } = req.body || {};
