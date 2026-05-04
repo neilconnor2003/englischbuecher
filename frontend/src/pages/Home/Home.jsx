@@ -67,10 +67,10 @@ function Home() {
     <div className="home-page-v2">
 
       <Helmet>
-        <title>Buy English Books in Germany | EnglischBuecher.de</title>
+        <title>{t('home.meta.title')}</title>
         <meta
           name="description"
-          content="Discover and buy English books in Germany. Fiction, children’s books, exam prep and more. Delivery and Click & Collect available."
+          content={t('home.meta.description')}
         />
         https://www.englischbuecher.de/
       </Helmet>
@@ -78,7 +78,7 @@ function Home() {
       <Banner />
 
       <h1 className="sr-only">
-        Buy English Books in Germany
+        {t('home.seo.h1')}
       </h1>
 
 
@@ -182,28 +182,17 @@ function Home() {
         </section>
       ))}
 
-      <section className="home-seo-text container">
-        <h2>English Books in Germany</h2>
+      {/*<section className="home-seo-text container">
+        <h2>{t('home.seo.h2')}</h2>
 
         <p>
-          EnglischBuecher.de is an online bookstore dedicated to readers looking for
-          English books in Germany. We offer a curated collection of fiction,
-          non‑fiction, children’s books, and study materials for learners and native
-          readers alike.
+          {t('home.seo.p1')}
         </p>
 
         <p>
-          Whether you are preparing for exams, improving your English skills, or
-          simply enjoying books in English, our catalog includes popular titles,
-          new arrivals, and category‑based selections updated regularly.
+          {t('home.seo.p3')}
         </p>
-
-        <p>
-          Customers across Germany can benefit from reliable delivery options as
-          well as Click & Collect. Browse by category, discover bestsellers, and
-          explore books from well‑known and emerging authors.
-        </p>
-      </section>
+      </section>*/}
 
     </div>
   );

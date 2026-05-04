@@ -154,7 +154,18 @@
     "popular": "Most Popular Books",
     "details": "View Details",
     "new_arrivals": "New Arrivals",
-    "just_in": "– just in!"
+    "just_in": "– just in!",
+    "meta": {
+      "title": "Buy English Books in Germany | EnglischBuecher.de",
+      "description": "Discover and buy English books in Germany. Fiction, children’s books, exam prep and more. Delivery and Click & Collect available."
+    },
+    "seo": {
+      "h1": "Buy English Books in Germany",
+      "h2": "English Books in Germany",
+      "p1": "EnglischBuecher.de is an online bookstore dedicated to readers looking for English books in Germany. We offer a curated selection of fiction, non-fiction, children’s books, and learning materials.",
+      "p2": "Whether you are preparing for exams, improving your English skills, or simply enjoying books in English, our catalog includes popular titles, new arrivals, and category-based collections.",
+      "p3": "Customers across Germany benefit from reliable delivery as well as Click & Collect. Browse by category, discover bestsellers, and explore books from established and emerging authors."
+    }
   },
   "banner_subtitle": "Discover our wide range of English and German books!",
   "banner_shop_now": "Shop Now",
