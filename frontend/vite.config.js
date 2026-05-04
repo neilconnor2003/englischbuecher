@@ -10,10 +10,10 @@ export default defineConfig({
     react(),
 
     // ✅ SEO: prerender homepage so bots see real HTML
-    prerender({
+    /*prerender({
       staticDir: 'dist',   // ✅ REQUIRED
       routes: ['/'],
-    }),
+    }),*/
   ],
 
   resolve: {
