@@ -11,6 +11,7 @@ export default defineConfig({
 
     // ✅ SEO: prerender homepage so bots see real HTML
     prerender({
+      staticDir: 'dist',   // ✅ REQUIRED
       routes: ['/'],
     }),
   ],
