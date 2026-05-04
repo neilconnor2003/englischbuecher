@@ -288,3 +288,18 @@
     padding: 10px 20px;
   }
 }
+
+/* =========================================================
+   SEO TEXT → spacing before footer
+   ========================================================= */
+
+
+.home-seo-text {
+  margin-bottom: 100px;
+}
+
+@media (max-width: 768px) {
+  .home-seo-text {
+    margin-bottom: 60px;
+  }
+}

@@ -154,7 +154,18 @@
     "popular": "Beliebteste Bücher",
     "details": "Details anzeigen",
     "new_arrivals": "Neuerscheinungen",
-    "just_in": "– gerade reingekommen!"
+    "just_in": "– gerade reingekommen!",
+    "meta": {
+      "title": "Englische Bücher in Deutschland kaufen | EnglischBuecher.de",
+      "description": "Englische Bücher online in Deutschland kaufen – Romane, Kinderbücher, Lernen & mehr. Versand und Click & Collect verfügbar."
+    },
+    "seo": {
+      "h1": "Englische Bücher in Deutschland kaufen",
+      "h2": "Englische Bücher in Deutschland",
+      "p1": "EnglischBuecher.de ist ein Online‑Buchhandel für englische Bücher in Deutschland. Das Sortiment umfasst Romane, Sachbücher, Kinderbücher und Lernmaterialien.",
+      "p2": "Ob Prüfungsvorbereitung, Sprachverbesserung oder reines Lesevergnügen – entdecken Sie Bestseller, Neuerscheinungen und thematische Kategorien.",
+      "p3": "Kundinnen und Kunden in ganz Deutschland profitieren von zuverlässigem Versand sowie Click & Collect. Finden Sie neue Titel sowie bekannte und aufstrebende Autorinnen und Autoren."
+    }
   },
   "banner_subtitle": "Entdecken Sie unser breites Sortiment an englischen und deutschen Büchern!",
   "banner_shop_now": "Jetzt einkaufen",
