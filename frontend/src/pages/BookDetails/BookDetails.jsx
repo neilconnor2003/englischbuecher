@@ -635,13 +635,13 @@ function BookDetails() {
                     </div>
                   )}*/}
 
-                  {/*<Radio.Group
+                  <Radio.Group
                     value={shippingMode}
                     onChange={(e) => setShippingMode(e.target.value)}
                   >
                     <Radio value="delivery">{t('delivery_ship_to_postcode') || 'Deliver to postcode'}</Radio>
                     <Radio value="pickup">{t('click_collect') || 'Click & Collect (pickup in Ingelheim)'}</Radio>
-                  </Radio.Group>*/}
+                  </Radio.Group>
                 </div>
 
                 {/*{shippingMode === 'delivery' ? (

@@ -3606,6 +3606,67 @@ WHERE ci.user_id = ?
     });
   });
 
+  app.get('/sitemap.xml', async (req, res) => {
+    try {
+      const baseUrl = 'https://englischbuecher.de';
+
+      const [books] = await db.execute(`
+      SELECT slug, created_at
+      FROM books
+      WHERE stock > 0
+    `);
+
+      const urls = [];
+
+      const staticPages = [
+        '',
+        '/about',
+        '/contact',
+        '/faq',
+        '/imprint',
+        '/privacy',
+        '/terms',
+        '/shipping',
+        '/returns',
+        '/revocation',
+        '/books',
+        '/request-book',
+      ];
+
+      staticPages.forEach((path) => {
+        urls.push(`
+        <url>
+          <loc>${baseUrl}${path}</loc>
+          <changefreq>monthly</changefreq>
+          <priority>0.8</priority>
+        </url>
+      `);
+      });
+
+      books.forEach((book) => {
+        urls.push(`
+        <url>
+          <loc>${baseUrl}/book/${book.slug}</loc>
+          <lastmod>${new Date(book.created_at).toISOString()}</lastmod>
+          <changefreq>weekly</changefreq>
+          <priority>0.9</priority>
+        </url>
+      `);
+      });
+
+      const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.join('')}
+</urlset>`;
+
+      res.header('Content-Type', 'application/xml');
+      res.send(sitemap);
+    } catch (err) {
+      console.error('Sitemap error:', err);
+      res.status(500).send('Error generating sitemap');
+    }
+  });
+
   // ✅ Optional root endpoint (nice for quick checks)
   app.get("/", (req, res) => {
     res.status(200).send("OK - EnglischBuecher API");

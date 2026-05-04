@@ -10,6 +10,7 @@ import { useGetCategoriesQuery } from '../../admin/features/book/bookApiSlice';
 import axios from 'axios';
 import BooksSlider from '../../components/BooksSlider/BooksSlider'; // NEW
 import './Home.css';
+import { Helmet } from 'react-helmet-async';
 
 function Home() {
   const { t, i18n } = useTranslation();
@@ -64,7 +65,22 @@ function Home() {
 
   return (
     <div className="home-page-v2">
+
+      <Helmet>
+        <title>Buy English Books in Germany | EnglischBuecher.de</title>
+        <meta
+          name="description"
+          content="Discover and buy English books in Germany. Fiction, children’s books, exam prep and more. Delivery and Click & Collect available."
+        />
+        https://www.englischbuecher.de/
+      </Helmet>
+
       <Banner />
+
+      <h1 className="sr-only">
+        Buy English Books in Germany
+      </h1>
+
 
       {/* CATEGORY ICONS */}
       {visibleCategories.length > 0 && (
@@ -165,6 +181,30 @@ function Home() {
           </div>
         </section>
       ))}
+
+      <section className="home-seo-text container">
+        <h2>English Books in Germany</h2>
+
+        <p>
+          EnglischBuecher.de is an online bookstore dedicated to readers looking for
+          English books in Germany. We offer a curated collection of fiction,
+          non‑fiction, children’s books, and study materials for learners and native
+          readers alike.
+        </p>
+
+        <p>
+          Whether you are preparing for exams, improving your English skills, or
+          simply enjoying books in English, our catalog includes popular titles,
+          new arrivals, and category‑based selections updated regularly.
+        </p>
+
+        <p>
+          Customers across Germany can benefit from reliable delivery options as
+          well as Click & Collect. Browse by category, discover bestsellers, and
+          explore books from well‑known and emerging authors.
+        </p>
+      </section>
+
     </div>
   );
 }

@@ -1,16 +1,28 @@
+
 // frontend/vite.config.js
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import prerender from 'vite-plugin-prerender'
 import path from 'path'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+
+    // ✅ SEO: prerender homepage so bots see real HTML
+    prerender({
+      staticDir: 'dist',   // ✅ REQUIRED
+      routes: ['/'],
+    }),
+  ],
+
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
       '@config': path.resolve(__dirname, './src/config'),
     },
   },
+
   server: {
     port: 3000,
     open: true,
@@ -33,5 +45,6 @@ export default defineConfig({
       },
     },
   },
+
   publicDir: 'public',
 })
