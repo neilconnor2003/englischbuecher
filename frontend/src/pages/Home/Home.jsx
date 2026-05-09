@@ -118,6 +118,39 @@ function Home() {
         </section>
       )}
 
+
+      {/* REQUEST BOOK / CATALOG INFO SECTION */}
+      <section className="request-book-section">
+        <div className="container">
+          <div className="request-book-card">
+            <div className="request-book-text">
+              <h2>
+                {i18n.resolvedLanguage === 'de'
+                  ? 'Mehr englische Bücher folgen regelmäßig'
+                  : 'More English books are added regularly'}
+              </h2>
+
+              <p>
+                {i18n.resolvedLanguage === 'de'
+                  ? 'Wir erweitern unser Sortiment kontinuierlich. Falls Sie ein bestimmtes Buch nicht finden, können Sie es ganz einfach bei uns anfragen.'
+                  : 'We continuously expand our catalog. If you can’t find a specific book, you can easily request it from us.'}
+
+              </p>
+            </div>
+
+            <Link
+              to="/request-book"
+              className="home-request-book-btn"
+            >
+              {i18n.resolvedLanguage === 'de'
+                ? 'Buch anfragen'
+                : 'Request a Book'}
+            </Link>
+          </div>
+        </div>
+      </section>
+
+
       {/* POPULAR BOOKS */}
       {popularBooks.length > 0 && (
         <section className="popular-section">

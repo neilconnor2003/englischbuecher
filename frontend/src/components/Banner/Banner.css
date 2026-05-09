@@ -71,4 +71,12 @@
   .hero-banner .hero-arrow--next {
     right: 14px !important;
   }
+  .banner h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.banner p {
+  font-size: 1rem;
+}
 }
