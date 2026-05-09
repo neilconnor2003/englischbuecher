@@ -140,7 +140,7 @@ function Home() {
 
             <Link
               to="/request-book"
-              className="request-book-btn"
+              className="home-request-book-btn"
             >
               {i18n.resolvedLanguage === 'de'
                 ? 'Buch anfragen'
