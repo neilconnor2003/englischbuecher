@@ -2599,7 +2599,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
     try {
       // Current book context
-      const [[book]] = await db.execute('SELECT author, category_id FROM books WHERE id = ?', [bookId]);
+      const [[book]] = await db.execute('SELECT author, category_id, series_name FROM books WHERE id = ?', [bookId]);
       if (!book) return res.status(404).json({ error: 'Book not found' });
 
       const { author, category_id } = book;
@@ -2646,11 +2646,39 @@ const computeWorkId = (titleEn, titleDe, author) => {
         [category_id, bookId]
       );
 
-      res.json({ sameAuthor, alsoBought, similar });
+
+      // 4) Same series (only if series_name exists)
+      let series = [];
+      const seriesName = (book.series_name || '').trim();
+
+      if (seriesName) {
+        const [seriesRows] = await db.execute(
+          `
+    SELECT id, slug, rating, review_count, title_en, title_de, author, image, price, original_price, isbn13, isbn10,
+           series_name, series_volume
+    FROM books
+    WHERE series_name = ? AND id != ?
+    ORDER BY
+      CASE
+        WHEN series_volume REGEXP '^[0-9]+(\\.[0-9]+)?$'
+          THEN CAST(series_volume AS DECIMAL(10,2))
+        ELSE 999999
+      END ASC,
+      publish_date DESC,
+      created_at DESC
+    LIMIT 12
+    `,
+          [seriesName, bookId]
+        );
+
+        series = seriesRows || [];
+      }
+
+      res.json({ sameAuthor, alsoBought, similar, series });
     } catch (err) {
       console.error('Recommendations error:', err);
       // Return an empty payload on failure (no nested res.status in the object)
-      res.status(500).json({ sameAuthor: [], alsoBought: [], similar: [] });
+      res.status(500).json({ sameAuthor: [], alsoBought: [], similar: [], series: [] });
     }
   });
 

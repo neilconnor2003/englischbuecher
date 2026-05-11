@@ -177,6 +177,7 @@
   "no_popular_books": "No popular books available.",
   "no_books_in_category": "No books in this category.",
   "no_categories": "No categories available.",
+  "more_in_series": "More books in the {{series}} series",
   "imprint": {
     "title": "Imprint / Legal Notice",
     "phone": "Phone",
