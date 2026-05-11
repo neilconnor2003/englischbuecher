@@ -55,7 +55,7 @@ function BookDetails() {
   //const [postalCode, setPostalCode] = useState(initialCtx.postalCode || '');
   //const [city, setCity] = useState(initialCtx.city || '');
   const [mainImage, setMainImage] = useState('');
-  const [recommendations, setRecommendations] = useState({ sameAuthor: [], alsoBought: [], similar: [] });
+  const [recommendations, setRecommendations] = useState({ sameAuthor: [], alsoBought: [], similar: [], series: [] });
   const [authorRecs, setAuthorRecs] = useState([]); // { author, books }[]
   const [recLoading, setRecLoading] = useState(true);
   const [reviewStats, setReviewStats] = useState({ total: 0, average: 0 });
@@ -239,7 +239,7 @@ function BookDetails() {
       })
       .catch(() => {
         if (!controller.signal.aborted) {
-          setRecommendations({ sameAuthor: [], alsoBought: [], similar: [] });
+          setRecommendations({ sameAuthor: [], alsoBought: [], similar: [], series: [] });
         }
       })
       .finally(() => {
@@ -890,7 +890,7 @@ function BookDetails() {
             ) : (
               <>
 
-                {authorRecs.map(({ author: a, books }) =>
+                {/*{authorRecs.map(({ author: a, books }) =>
                   books.length > 0 && (
                     <section className="recommendations-section" key={a.id}>
                       <div className="container">
@@ -899,7 +899,29 @@ function BookDetails() {
                       </div>
                     </section>
                   )
-                )}
+                )}*/}
+
+
+                {/* To exclude the current book */}
+                {authorRecs.map(({ author: a, books }) => {
+                  const filteredBooks = books.filter(b => b.id !== book.id);
+
+                  if (filteredBooks.length === 0) return null;
+
+                  return (
+                    <section className="recommendations-section" key={a.id}>
+                      <div className="container">
+                        <h2>{t('more_from_author', { author: a.name })}</h2>
+                        <BooksSlider
+                          title=""
+                          books={filteredBooks}
+                          className="home-swiper"
+                        />
+                      </div>
+                    </section>
+                  );
+                })}
+
                 {/*{recommendations.sameAuthor.length > 0 && (
                   <section className="recommendations-section">
                     <div className="container">
@@ -940,6 +962,20 @@ function BookDetails() {
                     </div>
                   </section>
                 )}
+
+                {book?.series_name && recommendations.series?.length > 0 && (
+                  <section className="recommendations-section">
+                    <div className="container">
+                      <h2>{t('more_in_series', { series: book.series_name })}</h2>
+                      <BooksSlider
+                        title=""
+                        books={recommendations.series.filter(b => b.id !== book.id)}
+                        className="home-swiper"
+                      />
+                    </div>
+                  </section>
+                )}
+
               </>
             )}
 
