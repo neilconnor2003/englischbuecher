@@ -48,12 +48,28 @@ const CheckoutPage = ({ clientSecret }) => {
 
   const FREE_SHIPPING_THRESHOLD = 30;
 
+  //const subtotal = Number(totalPrice || 0);
+  //const shipping = Number(shippingAmount || 0);
+  //const grandTotal = subtotal + shipping;
+
+  // ✅ Always compute subtotal from cartItems (never trust totalPrice)
+  const subtotal = cartItems.reduce(
+    (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1),
+    0
+  );
+
   /*const isFreeShipping =
     shippingMode === 'delivery' &&
     Number(totalPrice || 0) >= FREE_SHIPPING_THRESHOLD;*/
   const isFreeShipping =
     shippingMode === 'delivery' &&
     Number(subtotal || 0) >= FREE_SHIPPING_THRESHOLD;
+
+  // ✅ Effective shipping: pickup = 0, free shipping = 0, otherwise shippingAmount
+  const effectiveShipping =
+    shippingMode === 'pickup' ? 0 : (isFreeShipping ? 0 : Number(shippingAmount || 0));
+
+  const grandTotal = subtotal + effectiveShipping;
 
 
 
@@ -249,24 +265,6 @@ const CheckoutPage = ({ clientSecret }) => {
 
     updatePI();
   }, [clientSecret, totalPrice, shippingAmount, t]);*/}
-
-
-  //const subtotal = Number(totalPrice || 0);
-  //const shipping = Number(shippingAmount || 0);
-  //const grandTotal = subtotal + shipping;
-
-  // ✅ Always compute subtotal from cartItems (never trust totalPrice)
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1),
-    0
-  );
-
-  // ✅ Effective shipping: pickup = 0, free shipping = 0, otherwise shippingAmount
-  const effectiveShipping =
-    shippingMode === 'pickup' ? 0 : (isFreeShipping ? 0 : Number(shippingAmount || 0));
-
-  const grandTotal = subtotal + effectiveShipping;
-
 
   useEffect(() => {
     async function updatePI() {
