@@ -48,9 +48,13 @@ const CheckoutPage = ({ clientSecret }) => {
 
   const FREE_SHIPPING_THRESHOLD = 30;
 
+  /*const isFreeShipping =
+    shippingMode === 'delivery' &&
+    Number(totalPrice || 0) >= FREE_SHIPPING_THRESHOLD;*/
   const isFreeShipping =
     shippingMode === 'delivery' &&
-    Number(totalPrice || 0) >= FREE_SHIPPING_THRESHOLD;
+    Number(subtotal || 0) >= FREE_SHIPPING_THRESHOLD;
+
 
 
   const [hydrated, setHydrated] = useState(false);
@@ -225,7 +229,7 @@ const CheckoutPage = ({ clientSecret }) => {
 
 
 
-  useEffect(() => {
+  {/*useEffect(() => {
     async function updatePI() {
       if (!clientSecret) return;
 
@@ -244,7 +248,49 @@ const CheckoutPage = ({ clientSecret }) => {
     }
 
     updatePI();
-  }, [clientSecret, totalPrice, shippingAmount, t]);
+  }, [clientSecret, totalPrice, shippingAmount, t]);*/}
+
+
+  //const subtotal = Number(totalPrice || 0);
+  //const shipping = Number(shippingAmount || 0);
+  //const grandTotal = subtotal + shipping;
+
+  // ✅ Always compute subtotal from cartItems (never trust totalPrice)
+  const subtotal = cartItems.reduce(
+    (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1),
+    0
+  );
+
+  // ✅ Effective shipping: pickup = 0, free shipping = 0, otherwise shippingAmount
+  const effectiveShipping =
+    shippingMode === 'pickup' ? 0 : (isFreeShipping ? 0 : Number(shippingAmount || 0));
+
+  const grandTotal = subtotal + effectiveShipping;
+
+
+  useEffect(() => {
+    async function updatePI() {
+      if (!clientSecret) return;
+
+      const amount_cents = Math.round(grandTotal * 100);
+
+      try {
+        const res = await axios.post(
+          '/api/orders/update-payment-intent-amount',
+          { clientSecret, amount_cents },
+          { withCredentials: true }
+        );
+
+        console.log('[PI UPDATED]', res.data);
+      } catch (e) {
+        console.error('[PI UPDATE FAILED]', e?.response?.data || e?.message);
+        toast.error(t('payment_failed_try_again'));
+      }
+    }
+
+    updatePI();
+  }, [clientSecret, grandTotal, t]);
+
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -264,12 +310,6 @@ const CheckoutPage = ({ clientSecret }) => {
       localStorage.setItem('checkout_shipping', JSON.stringify({
         email, address, city, postalCode, country: 'DE',
       }));
-
-
-      if (shippingMode === 'pickup' && shippingAmount !== 0) {
-        setShippingAmount(0);
-      }
-
 
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
@@ -308,11 +348,13 @@ const CheckoutPage = ({ clientSecret }) => {
           status: paymentIntent.status,
           email_address: email,
         },
-        totalPrice: Number(totalPrice || 0) + Number(shippingAmount || 0),
 
+        //totalPrice: Number(totalPrice || 0) + Number(shippingAmount || 0),
+        totalPrice: Number(grandTotal.toFixed(2)),
 
         // ✅ NEW: shipping metadata (backend already supports this)
-        shipping_amount_eur: Number(shippingAmount || 0),
+        //shipping_amount_eur: Number(shippingAmount || 0),
+        shipping_amount_eur: Number(effectiveShipping.toFixed(2)),
         shipping_provider: shippingMode === 'pickup' ? 'PICKUP' : 'DPD',
         shipping_service: shippingMode === 'pickup' ? 'Click & Collect' : 'Standard',
 
@@ -336,10 +378,6 @@ const CheckoutPage = ({ clientSecret }) => {
       setLoading(false);
     }
   };
-
-  const subtotal = Number(totalPrice || 0);
-  const shipping = Number(shippingAmount || 0);
-  const grandTotal = subtotal + shipping;
 
   return (
     <div className="checkout-page">
@@ -381,7 +419,16 @@ const CheckoutPage = ({ clientSecret }) => {
 
                   {/*<span className="total-price">€{shipping.toFixed(2)}</span>*/}
                   <span className="total-price">
-                    {isFreeShipping ? t('free') || '0,00 €' : `€${shipping.toFixed(2)}`}
+                    {/*{isFreeShipping ? t('free') || '0,00 €' : `€${shipping.toFixed(2)}`}*/}
+
+                    {shippingMode === 'pickup'
+                      ? (t('free') || '0,00 €')
+                      : (isFreeShipping
+                        ? (t('free') || '0,00 €')
+                        : `€${effectiveShipping.toFixed(2)}`
+                      )
+                    }
+
                   </span>
 
                 </div>
