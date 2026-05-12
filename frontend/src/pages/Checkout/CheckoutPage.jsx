@@ -225,7 +225,7 @@ const CheckoutPage = ({ clientSecret }) => {
 
 
 
-  {/*useEffect(() => {
+  useEffect(() => {
     async function updatePI() {
       if (!clientSecret) return;
 
@@ -244,7 +244,7 @@ const CheckoutPage = ({ clientSecret }) => {
     }
 
     updatePI();
-  }, [clientSecret, totalPrice, shippingAmount, t]);*/}
+  }, [clientSecret, totalPrice, shippingAmount, t]);
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -264,6 +264,12 @@ const CheckoutPage = ({ clientSecret }) => {
       localStorage.setItem('checkout_shipping', JSON.stringify({
         email, address, city, postalCode, country: 'DE',
       }));
+
+
+      if (shippingMode === 'pickup' && shippingAmount !== 0) {
+        setShippingAmount(0);
+      }
+
 
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
