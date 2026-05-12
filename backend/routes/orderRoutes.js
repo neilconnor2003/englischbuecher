@@ -148,6 +148,43 @@ module.exports = (db) => {
         payment_result: parseIfString(o.payment_result),
       }));
 
+
+      // ===== ENRICH ORDER ITEMS WITH BOOK TITLES (ADMIN DASHBOARD) =====// ===== ENRICH ORDER ITEMS WITH BOOK TITLES all bookIds from all orders
+      const bookIds = [
+        ...new Set(
+          orders
+            .flatMap(o => Array.isArray(o.order_items) ? o.order_items : [])
+            .map(it => Number(it.bookId))
+            .filter(Boolean)
+        )
+      ];
+
+      // 2. Load book titles once
+      if (bookIds.length > 0) {
+        const placeholders = bookIds.map(() => '?').join(',');
+        const [books] = await db.execute(
+          `SELECT id, title_en, title_de, price FROM books WHERE id IN (${placeholders})`,
+          bookIds
+        );
+
+        const bookMap = new Map(books.map(b => [b.id, b]));
+
+        // 3. Attach title + price to each order item
+        orders.forEach(order => {
+          order.order_items = order.order_items.map(item => {
+            const book = bookMap.get(Number(item.bookId));
+            return {
+              ...item,
+              quantity: Number(item.quantity || 1),
+              title_en: book?.title_en || 'Unknown book',
+              title_de: book?.title_de || 'Unbekanntes Buch',
+              price: Number(book?.price || 0),
+            };
+          });
+        });
+      }
+
+
       res.json(orders);
     } catch (err) {
       console.error('GET /api/orders error:', err);
