@@ -225,10 +225,16 @@ const CheckoutPage = ({ clientSecret }) => {
     if (!totalWeightGrams) return;
 
     const FREE_SHIPPING_THRESHOLD = 30;
-    if (totalPrice >= FREE_SHIPPING_THRESHOLD) {
+    /*if (totalPrice >= FREE_SHIPPING_THRESHOLD) {
+      setShippingAmount(0);
+      return;
+    }*/
+
+    if (subtotal >= FREE_SHIPPING_THRESHOLD) {
       setShippingAmount(0);
       return;
     }
+
 
     const amount = getDPDShippingPrice(totalWeightGrams);
     setShippingAmount(amount);
@@ -241,7 +247,8 @@ const CheckoutPage = ({ clientSecret }) => {
       })
     );
 
-  }, [postalCode, city, shippingMode, totalWeightGrams, totalPrice]);
+  //}, [postalCode, city, shippingMode, totalWeightGrams, totalPrice]);
+  }, [postalCode, city, shippingMode, totalWeightGrams, subtotal]);
 
 
 
