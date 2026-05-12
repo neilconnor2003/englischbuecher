@@ -375,9 +375,22 @@ const OrdersDashboard = () => {
                       <p className="flex items-center gap-1 text-gray-600">
                         <Calendar className="w-4 h-4" /> {format(new Date(order.created_at), 'MMM d, yyyy')}
                       </p>
-                      <p className="flex items-center gap-1 text-gray-600">
+                      {/*<p className="flex items-center gap-1 text-gray-600">
                         <Package className="w-4 h-4" /> {order.order_items_parsed.length} items
+                      </p>*/}
+
+                      <p className="flex items-start gap-1 text-gray-600">
+                        <Package className="w-4 h-4 mt-0.5" />
+                        <span>
+                          {order.order_items_parsed.map((item, idx) => (
+                            <div key={idx}>
+                              {item.quantity} × {item.title_en}
+                            </div>
+                          ))}
+                        </span>
                       </p>
+                      ``
+
                     </div>
                     <div className="flex gap-1 mt-3">
                       <button
@@ -466,7 +479,16 @@ const OrdersDashboard = () => {
                         )}
                       </td>
                       <td className="p-4 text-sm">{format(new Date(order.created_at), 'MMM d, yyyy HH:mm')}</td>
-                      <td className="p-4 text-center">{order.order_items_parsed.length}</td>
+                      {/*<td className="p-4 text-center">{order.order_items_parsed.length}</td>*/}
+
+                      <td className="p-4 text-sm">
+                        {order.order_items_parsed.map((item, idx) => (
+                          <div key={idx}>
+                            {item.quantity} × {item.title_en}
+                          </div>
+                        ))}
+                      </td>
+
                       <td className="p-4">
 
                         <button
