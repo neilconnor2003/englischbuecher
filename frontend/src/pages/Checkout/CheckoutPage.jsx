@@ -247,7 +247,7 @@ const CheckoutPage = ({ clientSecret }) => {
       })
     );
 
-  //}, [postalCode, city, shippingMode, totalWeightGrams, totalPrice]);
+    //}, [postalCode, city, shippingMode, totalWeightGrams, totalPrice]);
   }, [postalCode, city, shippingMode, totalWeightGrams, subtotal]);
 
 
@@ -279,10 +279,15 @@ const CheckoutPage = ({ clientSecret }) => {
 
       const amount_cents = Math.round(grandTotal * 100);
 
+
+      const shipping_provider = shippingMode === 'pickup' ? 'PICKUP' : 'DPD';
+      const shipping_service = shippingMode === 'pickup' ? 'Click & Collect' : 'Standard';
+
+
       try {
         const res = await axios.post(
           '/api/orders/update-payment-intent-amount',
-          { clientSecret, amount_cents },
+          { clientSecret, amount_cents, shipping_provider, shipping_service },
           { withCredentials: true }
         );
 
@@ -294,7 +299,7 @@ const CheckoutPage = ({ clientSecret }) => {
     }
 
     updatePI();
-  }, [clientSecret, grandTotal, t]);
+  }, [clientSecret, grandTotal, shippingMode, t]);
 
 
   const submitHandler = async (e) => {
