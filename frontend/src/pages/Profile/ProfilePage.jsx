@@ -18,6 +18,7 @@ import './ProfilePage.css';
 import { useDispatch } from 'react-redux';
 import { addItem, syncAdd } from '../../features/cart/cartSlice';
 import { toast } from 'react-toastify';
+import config from '../../config';
 
 const { Title, Text } = Typography;
 
@@ -42,9 +43,11 @@ const ProfilePage = () => {
 
   // Axios instance
   const api = axios.create({
-    baseURL: '/api',
+    //baseURL: '/api',
+    baseURL: `${config.API_URL}/api`,
     withCredentials: true,
   });
+
 
   // Normalize a photo URL if the backend returns a relative path like "/uploads/..."
   const normalizePhotoUrl = (url) => {
@@ -130,6 +133,15 @@ const ProfilePage = () => {
     }
   };
 
+
+  // ✅ redirect ONLY after auth check is finished
+  useEffect(() => {
+    if (authUser === null) {
+      navigate('/login');
+    }
+  }, [authUser, navigate]);
+
+
   // === AUTO-OPEN TAB FROM URL HASH ===
   useEffect(() => {
     if (location.hash === '#orders') {
@@ -164,15 +176,31 @@ const ProfilePage = () => {
       setOrders(ordersWithItems);
       setCurrentPage(page);
     } catch (err) {
-      message.error(t('failed_to_load_orders'));
+      //message.error(t('failed_to_load_orders'));
+
+      if (err.response?.status === 401) {
+        navigate('/login');
+      } else {
+        message.error(t('failed_to_load_orders'));
+      }
+
+
     } finally {
       setOrderLoading(false);
     }
   };
 
-  useEffect(() => {
+  /*useEffect(() => {
     fetchOrders(1);
-  }, []);
+  }, []);*/
+
+
+  useEffect(() => {
+    if (authUser) {
+      fetchOrders(1);
+    }
+  }, [authUser]);
+
 
   // === SAVE PROFILE ===
   const handleSave = async (values) => {
@@ -402,7 +430,8 @@ const ProfilePage = () => {
     }*/
   ]), [authUser, t, orderLoading, orders, currentPage, pageSize, navigate]);
 
-  if (!authUser) {
+  //if (!authUser) {
+  if (authUser === undefined) {
     return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />;
   }
 

@@ -247,7 +247,7 @@ const CheckoutPage = ({ clientSecret }) => {
       })
     );
 
-  //}, [postalCode, city, shippingMode, totalWeightGrams, totalPrice]);
+    //}, [postalCode, city, shippingMode, totalWeightGrams, totalPrice]);
   }, [postalCode, city, shippingMode, totalWeightGrams, subtotal]);
 
 
@@ -274,15 +274,25 @@ const CheckoutPage = ({ clientSecret }) => {
   }, [clientSecret, totalPrice, shippingAmount, t]);*/}
 
   useEffect(() => {
+
+    console.log('🚀 updatePI triggered');
+    console.log('🚀 shippingMode:', shippingMode);
+    console.log('🚀 grandTotal:', grandTotal);
+
     async function updatePI() {
       if (!clientSecret) return;
 
       const amount_cents = Math.round(grandTotal * 100);
 
+
+      const shipping_provider = shippingMode === 'pickup' ? 'PICKUP' : 'DPD';
+      const shipping_service = shippingMode === 'pickup' ? 'Click & Collect' : 'Standard';
+
+
       try {
         const res = await axios.post(
           '/api/orders/update-payment-intent-amount',
-          { clientSecret, amount_cents },
+          { clientSecret, amount_cents, shipping_provider, shipping_service },
           { withCredentials: true }
         );
 
@@ -294,7 +304,7 @@ const CheckoutPage = ({ clientSecret }) => {
     }
 
     updatePI();
-  }, [clientSecret, grandTotal, t]);
+  }, [clientSecret, grandTotal, shippingMode, t]);
 
 
   const submitHandler = async (e) => {
@@ -468,7 +478,15 @@ const CheckoutPage = ({ clientSecret }) => {
                       name="shippingMode"
                       value="pickup"
                       checked={shippingMode === 'pickup'}
-                      onChange={() => setShippingMode('pickup')}
+                      onChange={() => {
+
+                        console.log('🔥 USER SELECTED PICKUP');
+                        console.log('🔥 BEFORE:', shippingMode);
+
+                        setShippingMode('pickup')
+                        setTimeout(() => console.log('🔥 AFTER:', shippingMode), 0);
+                      }
+                      }
                     />
                     <span>{t('click_collect') || 'Click & Collect (pickup)'}</span>
                   </label>

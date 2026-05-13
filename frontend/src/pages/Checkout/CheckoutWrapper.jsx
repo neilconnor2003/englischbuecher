@@ -12,12 +12,37 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const CheckoutWrapper = () => {
   const { items = [], totalPrice = 0 } = useSelector((state) => state.cart);
+  const [shippingMode, setShippingMode] = useState('delivery');
   const [clientSecret, setClientSecret] = useState('');
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('checkout_shipping_amount');
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed?.mode) {
+        setShippingMode(parsed.mode);
+      }
+    } catch { }
+  }, []); // ✅ just initialize once
 
   useEffect(() => {
     let cancelled = false;
+
+    const getShippingContext = () => {
+      try {
+        const raw = localStorage.getItem('checkout_shipping_amount');
+        if (!raw) return { mode: 'delivery', amount: 0 };
+        const parsed = JSON.parse(raw);
+        return {
+          mode: parsed.mode || 'delivery',
+          amount: Number(parsed.amount_eur || 0),
+        };
+      } catch {
+        return { mode: 'delivery', amount: 0 };
+      }
+    };
 
     const getShippingAmount = () => {
       try {
@@ -37,7 +62,8 @@ const CheckoutWrapper = () => {
         return;
       }
 
-      const shippingAmount = getShippingAmount();
+      //const shippingAmount = getShippingAmount();
+      const { mode: shippingMode, amount: shippingAmount } = getShippingContext();
       const finalTotal =
         Number(totalPrice || 0) + Number(shippingAmount || 0);
 
@@ -51,6 +77,11 @@ const CheckoutWrapper = () => {
             })),
             totalPrice: finalTotal, // ✅ FINAL amount incl. shipping
             currency: 'eur',
+
+            // ✅ ADD THESE
+            shipping_provider: shippingMode === 'pickup' ? 'PICKUP' : 'DPD',
+            shipping_service: shippingMode === 'pickup' ? 'Click & Collect' : 'Standard',
+
           },
           //{ withCredentials: true }
 
@@ -82,7 +113,7 @@ const CheckoutWrapper = () => {
     return () => {
       cancelled = true;
     };
-  }, [items, totalPrice]);
+  }, [items, totalPrice, shippingMode]);
 
   /*useEffect(() => {
     let cancelled = false;

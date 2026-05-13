@@ -3616,14 +3616,29 @@ WHERE ci.user_id = ?
   // Body: { clientSecret, amount_cents }
   app.post('/api/orders/update-payment-intent-amount', async (req, res) => {
     try {
-      const { clientSecret, amount_cents } = req.body || {};
+      const { clientSecret, amount_cents, shipping_provider, shipping_service } = req.body || {};
       if (!clientSecret || !Number.isFinite(Number(amount_cents)) || amount_cents <= 0) {
         return res.status(400).json({ error: 'bad_request' });
       }
       // Extract pi id from clientSecret: 'pi_..._secret_...'
       const piId = String(clientSecret).split('_secret_')[0];
+
+      const updatePayload = {
+        amount: Number(amount_cents),
+        // ✅ set only the keys you care about (Stripe supports updating metadata) [1](https://boehringer.sharepoint.com/sites/z365apollocontrolcenter/SitePages/Notebook---Topic-Classification-with-Large-Language-Models-(LLMs).aspx?web=1)
+        metadata: {
+          ...(shipping_provider ? { shipping_provider: String(shipping_provider) } : {}),
+          ...(shipping_service ? { shipping_service: String(shipping_service) } : {}),
+        },
+      };
+
       const pi = await stripe.paymentIntents.update(piId, { amount: Number(amount_cents) });
-      return res.json({ ok: true, paymentIntent: { id: pi.id, status: pi.status, amount: pi.amount } });
+
+      return res.json({
+        ok: true,
+        paymentIntent: { id: pi.id, status: pi.status, amount: pi.amount },
+        metadata: pi.metadata,
+      });
     } catch (err) {
       console.error('[orders/update-payment-intent-amount] error:', err?.message || err);
       return res.status(500).json({ error: 'pi_update_failed' });

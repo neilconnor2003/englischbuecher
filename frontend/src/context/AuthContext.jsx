@@ -10,7 +10,8 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const { i18n } = useTranslation();
-  const [user, setUser] = useState(null);
+  //const [user, setUser] = useState(null);
+  const [user, setUser] = useState(undefined); // <-- NOT null
   const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
   const cartItems = useSelector(state => state.cart.items || []);
