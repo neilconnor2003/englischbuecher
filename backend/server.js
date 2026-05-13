@@ -3633,8 +3633,12 @@ WHERE ci.user_id = ?
       };
 
       const pi = await stripe.paymentIntents.update(piId, { amount: Number(amount_cents) });
-      
-      return res.json({ ok: true, paymentIntent: { id: pi.id, status: pi.status, amount: pi.amount } });
+
+      return res.json({
+        ok: true,
+        paymentIntent: { id: pi.id, status: pi.status, amount: pi.amount },
+        metadata: pi.metadata,
+      });
     } catch (err) {
       console.error('[orders/update-payment-intent-amount] error:', err?.message || err);
       return res.status(500).json({ error: 'pi_update_failed' });

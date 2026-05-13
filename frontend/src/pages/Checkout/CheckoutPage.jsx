@@ -274,6 +274,11 @@ const CheckoutPage = ({ clientSecret }) => {
   }, [clientSecret, totalPrice, shippingAmount, t]);*/}
 
   useEffect(() => {
+
+    console.log('🚀 updatePI triggered');
+    console.log('🚀 shippingMode:', shippingMode);
+    console.log('🚀 grandTotal:', grandTotal);
+
     async function updatePI() {
       if (!clientSecret) return;
 
@@ -473,7 +478,15 @@ const CheckoutPage = ({ clientSecret }) => {
                       name="shippingMode"
                       value="pickup"
                       checked={shippingMode === 'pickup'}
-                      onChange={() => setShippingMode('pickup')}
+                      onChange={() => {
+
+                        console.log('🔥 USER SELECTED PICKUP');
+                        console.log('🔥 BEFORE:', shippingMode);
+
+                        setShippingMode('pickup')
+                        setTimeout(() => console.log('🔥 AFTER:', shippingMode), 0);
+                      }
+                      }
                     />
                     <span>{t('click_collect') || 'Click & Collect (pickup)'}</span>
                   </label>
