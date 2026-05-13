@@ -187,9 +187,17 @@ const ProfilePage = () => {
     }
   };
 
-  useEffect(() => {
+  /*useEffect(() => {
     fetchOrders(1);
-  }, []);
+  }, []);*/
+
+
+  useEffect(() => {
+    if (authUser) {
+      fetchOrders(1);
+    }
+  }, [authUser]);
+
 
   // === SAVE PROFILE ===
   const handleSave = async (values) => {
