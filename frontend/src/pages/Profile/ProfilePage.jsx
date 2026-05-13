@@ -18,6 +18,7 @@ import './ProfilePage.css';
 import { useDispatch } from 'react-redux';
 import { addItem, syncAdd } from '../../features/cart/cartSlice';
 import { toast } from 'react-toastify';
+import config from '../../config';
 
 const { Title, Text } = Typography;
 
@@ -42,9 +43,11 @@ const ProfilePage = () => {
 
   // Axios instance
   const api = axios.create({
-    baseURL: '/api',
+    //baseURL: '/api',
+    baseURL: `${config.API_URL}/api`,
     withCredentials: true,
   });
+
 
   // Normalize a photo URL if the backend returns a relative path like "/uploads/..."
   const normalizePhotoUrl = (url) => {
