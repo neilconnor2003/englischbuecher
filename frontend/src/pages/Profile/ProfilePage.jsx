@@ -130,6 +130,15 @@ const ProfilePage = () => {
     }
   };
 
+
+  // ✅ redirect ONLY after auth check is finished
+  useEffect(() => {
+    if (authUser === null) {
+      navigate('/login');
+    }
+  }, [authUser, navigate]);
+
+
   // === AUTO-OPEN TAB FROM URL HASH ===
   useEffect(() => {
     if (location.hash === '#orders') {
@@ -410,7 +419,8 @@ const ProfilePage = () => {
     }*/
   ]), [authUser, t, orderLoading, orders, currentPage, pageSize, navigate]);
 
-  if (!authUser) {
+  //if (!authUser) {
+  if (authUser === undefined) {
     return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />;
   }
 
