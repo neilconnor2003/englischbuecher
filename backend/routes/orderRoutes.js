@@ -5,6 +5,15 @@ const router = express.Router();
 const Stripe = require('stripe');
 const axios = require('axios');
 
+
+const requireAuth = (req, res, next) => {
+  if (req.isAuthenticated && req.isAuthenticated() && req.user) {
+    return next();
+  }
+  return res.status(401).json({ error: 'Unauthorized' });
+};
+
+
 module.exports = (db) => {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -50,7 +59,8 @@ module.exports = (db) => {
       const paymentIntent = await stripe.paymentIntents.create({
         amount,
         currency: 'eur',
-        automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+        //automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+        automatic_payment_methods: { enabled: true, allow_redirects: 'always' },
         metadata: {
           userId: req.user?.id || 'guest',
           cart: JSON.stringify(items.map(i => ({ id: i.bookId, qty: i.quantity }))),
@@ -75,7 +85,7 @@ module.exports = (db) => {
 
 
   // === MY ORDERS (enriched for shipping/tracking) ===
-  router.get('/my-orders', async (req, res) => {
+  router.get('/my-orders', requireAuth, async (req, res) => {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -403,7 +413,7 @@ module.exports = (db) => {
    * Body: { paymentIntentId, shippingAddress?, email? }
    * Returns: { success: true, orderId }
    */
-  router.post('/finalize-from-payment-intent', async (req, res) => {
+  router.post('/finalize-from-payment-intent', requireAuth, async (req, res) => {
     const { paymentIntentId, shippingAddress, email } = req.body;
     if (!paymentIntentId) return res.status(400).json({ error: 'paymentIntentId required' });
 

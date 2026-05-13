@@ -164,7 +164,15 @@ const ProfilePage = () => {
       setOrders(ordersWithItems);
       setCurrentPage(page);
     } catch (err) {
-      message.error(t('failed_to_load_orders'));
+      //message.error(t('failed_to_load_orders'));
+
+      if (err.response?.status === 401) {
+        navigate('/login');
+      } else {
+        message.error(t('failed_to_load_orders'));
+      }
+
+
     } finally {
       setOrderLoading(false);
     }
