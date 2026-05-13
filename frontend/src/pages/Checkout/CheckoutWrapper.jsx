@@ -12,9 +12,20 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const CheckoutWrapper = () => {
   const { items = [], totalPrice = 0 } = useSelector((state) => state.cart);
+  const [shippingMode, setShippingMode] = useState('delivery');
   const [clientSecret, setClientSecret] = useState('');
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('checkout_shipping_amount');
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed?.mode) {
+        setShippingMode(parsed.mode);
+      }
+    } catch { }
+  }, []); // ✅ just initialize once
 
   useEffect(() => {
     let cancelled = false;
@@ -102,7 +113,7 @@ const CheckoutWrapper = () => {
     return () => {
       cancelled = true;
     };
-  }, [items, totalPrice]);
+  }, [items, totalPrice, shippingMode]);
 
   /*useEffect(() => {
     let cancelled = false;
