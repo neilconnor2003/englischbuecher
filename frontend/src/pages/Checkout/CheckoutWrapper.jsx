@@ -19,6 +19,20 @@ const CheckoutWrapper = () => {
   useEffect(() => {
     let cancelled = false;
 
+    const getShippingContext = () => {
+      try {
+        const raw = localStorage.getItem('checkout_shipping_amount');
+        if (!raw) return { mode: 'delivery', amount: 0 };
+        const parsed = JSON.parse(raw);
+        return {
+          mode: parsed.mode || 'delivery',
+          amount: Number(parsed.amount_eur || 0),
+        };
+      } catch {
+        return { mode: 'delivery', amount: 0 };
+      }
+    };
+
     const getShippingAmount = () => {
       try {
         const raw = localStorage.getItem('checkout_shipping_amount');
@@ -37,7 +51,8 @@ const CheckoutWrapper = () => {
         return;
       }
 
-      const shippingAmount = getShippingAmount();
+      //const shippingAmount = getShippingAmount();
+      const { mode: shippingMode, amount: shippingAmount } = getShippingContext();
       const finalTotal =
         Number(totalPrice || 0) + Number(shippingAmount || 0);
 
@@ -51,6 +66,11 @@ const CheckoutWrapper = () => {
             })),
             totalPrice: finalTotal, // ✅ FINAL amount incl. shipping
             currency: 'eur',
+
+            // ✅ ADD THESE
+            shipping_provider: shippingMode === 'pickup' ? 'PICKUP' : 'DPD',
+            shipping_service: shippingMode === 'pickup' ? 'Click & Collect' : 'Standard',
+
           },
           //{ withCredentials: true }
 

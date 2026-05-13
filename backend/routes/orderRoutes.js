@@ -21,7 +21,7 @@ module.exports = (db) => {
 
   // === CREATE PAYMENT INTENT — GERMANY ONLY ===
 
-  router.post('/create-payment-intent', async (req, res) => {
+  router.post('/create-payment-intent', requireAuth, async (req, res) => {
     console.log('Stripe secret key prefix:', process.env.STRIPE_SECRET_KEY.slice(0, 12));
 
     console.log(
@@ -43,7 +43,17 @@ module.exports = (db) => {
 
       console.log('[Stripe DEBUG] acct:', acct.id, 'skPrefix:', skPrefix);
 
-      const { items, totalPrice, currency = 'eur' } = req.body;
+      //const { items, totalPrice, currency = 'eur' } = req.body;
+
+      const {
+        items,
+        totalPrice,
+        currency = 'eur',
+        // ✅ ADD THESE
+        shipping_provider,
+        shipping_service,
+      } = req.body;
+
 
       if (!items?.length) return res.status(400).json({ error: 'Cart is empty' });
       const amount = Math.round(totalPrice * 100);
@@ -64,6 +74,9 @@ module.exports = (db) => {
         metadata: {
           userId: req.user?.id || 'guest',
           cart: JSON.stringify(items.map(i => ({ id: i.bookId, qty: i.quantity }))),
+          // ✅ PERSIST SHIPPING FOR PAYPAL
+          shipping_provider: shipping_provider || '',
+          shipping_service: shipping_service || '',
         },
       });
 
@@ -359,6 +372,10 @@ module.exports = (db) => {
             order_id: String(orderId),
             userId: userId ?? 'guest',
             cart: JSON.stringify(orderItems.map(i => ({ id: i.bookId, qty: i.quantity }))),
+
+            shipping_provider: shipping_provider,   // e.g. "PICKUP"
+            shipping_service: shipping_service,     // e.g. "Click & Collect"
+
           },
         });
       } catch (stripeErr) {
@@ -420,6 +437,13 @@ module.exports = (db) => {
     try {
       // 1) Get the PI from Stripe
       const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+      const shipping_provider =
+        pi.metadata?.shipping_provider || null;
+
+      const shipping_service =
+        pi.metadata?.shipping_service || null;
+
 
       if (!pi || pi.status !== 'succeeded') {
         return res.status(400).json({ error: 'Payment not succeeded' });
@@ -490,32 +514,41 @@ module.exports = (db) => {
         conn = await db.getConnection();
         await conn.beginTransaction();
 
+
         const [insert] = await conn.execute(
           `INSERT INTO orders (
-            user_id,
-            order_items,
-            shipping_address,
-            payment_method,
-            payment_result,
-            total,
-            is_paid,
-            paid_at,
-            status,
-            inventory_adjusted
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           user_id,
+           order_items,
+           shipping_address,
+           payment_method,
+           payment_result,
+           total,
+           is_paid,
+           paid_at,
+           status,
+           inventory_adjusted,
+
+           shipping_provider,
+           shipping_service
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             userId,
             JSON.stringify(orderItems),
-            JSON.stringify(shippingAddress || {}), // optional; can be {} for redirect flows
+            JSON.stringify(shippingAddress || {}),
             (pi.payment_method_types && pi.payment_method_types[0]) || 'paypal',
             JSON.stringify(paymentResult),
             Number(totalPrice.toFixed(2)),
-            1,               // payment succeeded
-            new Date(),      // paid now
+            1,
+            new Date(),
             'processing',
-            0
+            0,
+
+            // ✅ THIS IS THE FIX
+            shipping_provider,
+            shipping_service,
           ]
         );
+
 
         const orderId = insert.insertId;
 
