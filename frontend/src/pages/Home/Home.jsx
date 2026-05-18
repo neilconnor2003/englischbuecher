@@ -72,10 +72,57 @@ function Home() {
           name="description"
           content={t('home.meta.description')}
         />
-        https://www.englischbuecher.de/
+        <link rel="canonical" href="https://englischbuecher.de/" />
       </Helmet>
 
       <Banner />
+
+
+      <section className="hero-v3">
+        <div className="container hero-v3__inner">
+          <div className="hero-v3__copy">
+            <h2 className="hero-v3__title">
+              {i18n.resolvedLanguage === 'de'
+                ? 'Englische Bücher in Deutschland – schnell & zuverlässig'
+                : 'English books in Germany — fast & reliable'}
+            </h2>
+
+            <p className="hero-v3__subtitle">
+              {i18n.resolvedLanguage === 'de'
+                ? 'Entdecke Bestseller, Klassiker und Neuheiten. Sicher bezahlen – Lieferung oder Click & Collect.'
+                : 'Discover bestsellers, classics, and new arrivals. Secure payments — delivery or Click & Collect.'}
+            </p>
+
+            <div className="hero-v3__actions">
+              <Link to="/books" className="hero-v3__primary">
+                {i18n.resolvedLanguage === 'de' ? 'Jetzt stöbern' : 'Browse books'}
+              </Link>
+              <Link to="/request-book" className="hero-v3__secondary">
+                {i18n.resolvedLanguage === 'de' ? 'Buch anfragen' : 'Request a book'}
+              </Link>
+            </div>
+
+            <div className="hero-v3__trust">
+              <span>✓ {i18n.resolvedLanguage === 'de' ? 'Sichere Zahlung' : 'Secure payment'}</span>
+              <span>✓ {i18n.resolvedLanguage === 'de' ? 'Versand in DE' : 'Shipping in Germany'}</span>
+              <span>✓ {i18n.resolvedLanguage === 'de' ? 'Click & Collect' : 'Click & Collect'}</span>
+            </div>
+          </div>
+
+          <div className="hero-v3__visual" aria-hidden="true">
+            <div className="hero-v3__card">
+              <div className="hero-v3__badge">{i18n.resolvedLanguage === 'de' ? 'Neu' : 'New'}</div>
+              <div className="hero-v3__mockCover" />
+              <div className="hero-v3__lines">
+                <div className="hero-v3__line hero-v3__line--a" />
+                <div className="hero-v3__line hero-v3__line--b" />
+                <div className="hero-v3__line hero-v3__line--c" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
 
       <h1 className="sr-only">
         {t('home.seo.h1')}
@@ -149,6 +196,17 @@ function Home() {
           </div>
         </div>
       </section>
+
+
+      <section className="trust-strip">
+        <div className="container trust-strip__inner">
+          <div className="trust-item">🔒 {i18n.resolvedLanguage === 'de' ? 'Sicher bezahlen' : 'Secure payments'}</div>
+          <div className="trust-item">🚚 {i18n.resolvedLanguage === 'de' ? 'Versand in Deutschland' : 'Shipping in Germany'}</div>
+          <div className="trust-item">📦 {i18n.resolvedLanguage === 'de' ? 'Click & Collect möglich' : 'Click & Collect available'}</div>
+          <div className="trust-item">💬 {i18n.resolvedLanguage === 'de' ? 'Support & Kontakt' : 'Support & contact'}</div>
+        </div>
+      </section>
+
 
 
       {/* POPULAR BOOKS */}
