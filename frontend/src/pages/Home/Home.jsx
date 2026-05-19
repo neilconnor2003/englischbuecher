@@ -120,12 +120,24 @@ function Home() {
               <div className="wp-hero__chip">
                 {i18n.resolvedLanguage === 'de' ? 'Neu & beliebt' : 'New & popular'}
               </div>
+              {/*<div className="wp-hero__mockGrid">
+                <div className="wp-hero__mockCover" />
+                <div className="wp-hero__mockCover" />
+                <div className="wp-hero__mockCover" />
+                <div className="wp-hero__mockCover" />
+              </div>*/}
+
               <div className="wp-hero__mockGrid">
-                <div className="wp-hero__mockCover" />
-                <div className="wp-hero__mockCover" />
-                <div className="wp-hero__mockCover" />
-                <div className="wp-hero__mockCover" />
+                {popularBooks.slice(0, 4).map((book) => (
+                  <img
+                    key={book.id}
+                    src={`${config.UPLOADS_BASE_URL}${book.image_url}`}
+                    alt={book.title}
+                    className="wp-hero__bookCover"
+                  />
+                ))}
               </div>
+
               <div className="wp-hero__miniText" />
               <div className="wp-hero__miniText wp-hero__miniText--short" />
             </div>

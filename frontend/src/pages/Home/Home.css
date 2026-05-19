@@ -818,21 +818,13 @@
 }
 
 .wp-quiz__title {
+
+  font-size: 2rem;
   font-weight: 900;
-  font-size: 1.35rem;
-  color: #1f1633;
-  margin: 0 0 6px;
-  
-  font-size: 2.5rem;
-  font-weight: 800;
   text-align: center;
-  margin: 80px 0 50px;
+  margin: 40px 0 10px;
   color: #9333ea;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  position: relative;
+
 }
 
 .wp-quiz__sub {
@@ -890,4 +882,59 @@
   .wp-quiz__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* =========================================================
+   FINAL UI POLISH FIXES (COMPLETE BLOCK)
+   ========================================================= */
+
+/* 1. Bigger top label */
+.wp-hero__kicker {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #5b21b6;
+  margin: 0 0 12px;
+}
+
+/* 2. Real book covers in hero */
+.wp-hero__bookCover {
+  height: 120px;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  transition: transform 0.3s ease;
+}
+
+.wp-hero__bookCover:hover {
+  transform: scale(1.05);
+}
+
+/* 3. CENTER "Ways to Shop" properly */
+.wp-ways__grid {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.wp-ways__card {
+  width: 260px;
+  text-align: center;
+}
+
+/* 4. Center subtitle below categories */
+.wp-quiz__sub {
+  margin: 10px auto 0;
+  text-align: center;
+  color: rgba(31, 22, 51, 0.70);
+  font-weight: 600;
+  max-width: 480px;
+}
+
+/* 5. Request book title color fix */
+.request-book-text h2 {
+  color: #1f1633;
 }
