@@ -128,17 +128,18 @@ function Home() {
               </div>*/}
 
 
+
               <div className="wp-hero__mockGrid">
                 {popularBooks && popularBooks.length > 0 ? (
                   popularBooks.slice(0, 4).map((book) => (
                     <img
                       key={book.id}
                       src={
-                        book.image_url
-                          ? `${config.UPLOADS_BASE_URL}${book.image_url}`
-                          : '/placeholder-book.jpg'
+                        book.image
+                          ? book.image
+                          : 'https://via.placeholder.com/300x400?text=Book'
                       }
-                      alt={book.title || 'Book'}
+                      alt={book.title_en || book.title || 'Book'}
                       className="wp-hero__bookCover"
                     />
                   ))
@@ -151,6 +152,7 @@ function Home() {
                   </>
                 )}
               </div>
+
 
 
               <div className="wp-hero__info">
