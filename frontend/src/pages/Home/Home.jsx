@@ -78,6 +78,114 @@ function Home() {
       <Banner />
 
 
+      {/* WARBY-STYLE HERO (BOOKSTORE VERSION) */}
+      <section className="wp-hero">
+        <div className="container wp-hero__inner">
+          <div className="wp-hero__copy">
+            <p className="wp-hero__kicker">
+              {i18n.resolvedLanguage === 'de' ? 'Englische Bücher in Deutschland' : 'English books in Germany'}
+            </p>
+
+            <h2 className="wp-hero__title">
+              {i18n.resolvedLanguage === 'de'
+                ? 'Finde dein nächstes Lieblingsbuch – schnell & stressfrei'
+                : 'Find your next favorite read — fast & effortless'}
+            </h2>
+
+            <p className="wp-hero__subtitle">
+              {i18n.resolvedLanguage === 'de'
+                ? 'Bestseller, Klassiker & Neuheiten. Sicher bezahlen. Lieferung oder Click & Collect.'
+                : 'Bestsellers, classics & new arrivals. Secure checkout. Delivery or Click & Collect.'}
+            </p>
+
+            <div className="wp-hero__actions">
+              <Link className="wp-btn wp-btn--primary" to="/books">
+                {i18n.resolvedLanguage === 'de' ? 'Jetzt stöbern' : 'Browse books'}
+              </Link>
+
+              <Link className="wp-btn wp-btn--ghost" to="/request-book">
+                {i18n.resolvedLanguage === 'de' ? 'Buch anfragen' : 'Request a book'}
+              </Link>
+            </div>
+
+            <div className="wp-trust">
+              <span>✓ {i18n.resolvedLanguage === 'de' ? 'Sichere Zahlung' : 'Secure payment'}</span>
+              <span>✓ {i18n.resolvedLanguage === 'de' ? 'Versand in DE' : 'Shipping in Germany'}</span>
+              <span>✓ {i18n.resolvedLanguage === 'de' ? 'Click & Collect' : 'Click & Collect'}</span>
+            </div>
+          </div>
+
+          <div className="wp-hero__visual" aria-hidden="true">
+            <div className="wp-hero__card">
+              <div className="wp-hero__chip">
+                {i18n.resolvedLanguage === 'de' ? 'Neu & beliebt' : 'New & popular'}
+              </div>
+              <div className="wp-hero__mockGrid">
+                <div className="wp-hero__mockCover" />
+                <div className="wp-hero__mockCover" />
+                <div className="wp-hero__mockCover" />
+                <div className="wp-hero__mockCover" />
+              </div>
+              <div className="wp-hero__miniText" />
+              <div className="wp-hero__miniText wp-hero__miniText--short" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* WARBY-STYLE “WAYS TO SHOP” (INSPIRED BY “Ways to try” + quiz entry points) */}
+      <section className="wp-ways">
+        <div className="container">
+          <h3 className="wp-ways__title">
+            {i18n.resolvedLanguage === 'de' ? 'So kannst du bei uns einkaufen' : 'Ways to shop'}
+          </h3>
+
+          <div className="wp-ways__grid">
+            <Link to="/books" className="wp-ways__card">
+              <div className="wp-ways__icon">📚</div>
+              <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Online stöbern' : 'Browse online'}</div>
+              <div className="wp-ways__desc">
+                {i18n.resolvedLanguage === 'de'
+                  ? 'Entdecke Kategorien, Bestseller & Neuheiten.'
+                  : 'Explore categories, bestsellers & new arrivals.'}
+              </div>
+            </Link>
+
+            <Link to="/books" className="wp-ways__card">
+              <div className="wp-ways__icon">🚚</div>
+              <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Lieferung' : 'Delivery'}</div>
+              <div className="wp-ways__desc">
+                {i18n.resolvedLanguage === 'de'
+                  ? 'Bequem nach Hause – sicher bezahlen.'
+                  : 'Delivered to your door — secure checkout.'}
+              </div>
+            </Link>
+
+            <Link to="/books" className="wp-ways__card">
+              <div className="wp-ways__icon">🏬</div>
+              <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Click & Collect' : 'Click & Collect'}</div>
+              <div className="wp-ways__desc">
+                {i18n.resolvedLanguage === 'de'
+                  ? 'Online bezahlen & selbst abholen.'
+                  : 'Pay online and pick up yourself.'}
+              </div>
+            </Link>
+
+            <Link to="/request-book" className="wp-ways__card wp-ways__card--highlight">
+              <div className="wp-ways__icon">✨</div>
+              <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Buch‑Finder' : 'Book finder'}</div>
+              <div className="wp-ways__desc">
+                {i18n.resolvedLanguage === 'de'
+                  ? 'Nichts gefunden? Frag es an — wir erweitern ständig.'
+                  : 'Can’t find it? Request it — we add books regularly.'}
+              </div>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+
+
       <section className="hero-v3">
         <div className="container hero-v3__inner">
           <div className="hero-v3__copy">
@@ -164,6 +272,42 @@ function Home() {
           </div>
         </section>
       )}
+
+
+      <section className="wp-quiz">
+        <div className="container">
+          <div className="wp-quiz__header">
+            <h3 className="wp-quiz__title">
+              {i18n.resolvedLanguage === 'de' ? 'Finde dein nächstes Buch' : 'Find your next book'}
+            </h3>
+            <p className="wp-quiz__sub">
+              {i18n.resolvedLanguage === 'de'
+                ? 'Wähle eine Stimmung — wir bringen dich direkt zu passenden Titeln.'
+                : 'Pick a mood — jump straight to matching titles.'}
+            </p>
+          </div>
+
+          <div className="wp-quiz__grid">
+            <Link className="wp-quiz__tile" to="/books?q=classic">
+              <span className="wp-quiz__emoji">📖</span>
+              <span className="wp-quiz__label">{i18n.resolvedLanguage === 'de' ? 'Klassiker' : 'Classics'}</span>
+            </Link>
+            <Link className="wp-quiz__tile" to="/books?q=thriller">
+              <span className="wp-quiz__emoji">🕵️</span>
+              <span className="wp-quiz__label">{i18n.resolvedLanguage === 'de' ? 'Spannung' : 'Thrillers'}</span>
+            </Link>
+            <Link className="wp-quiz__tile" to="/books?q=business">
+              <span className="wp-quiz__emoji">💼</span>
+              <span className="wp-quiz__label">{i18n.resolvedLanguage === 'de' ? 'Business' : 'Business'}</span>
+            </Link>
+            <Link className="wp-quiz__tile" to="/books?q=kids">
+              <span className="wp-quiz__emoji">🧸</span>
+              <span className="wp-quiz__label">{i18n.resolvedLanguage === 'de' ? 'Kinder' : 'Kids'}</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
 
 
       {/* REQUEST BOOK / CATALOG INFO SECTION */}

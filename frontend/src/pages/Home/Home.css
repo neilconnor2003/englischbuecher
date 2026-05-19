@@ -519,3 +519,196 @@
   font-weight: 700;
 }
 .trust-item { white-space: nowrap; }
+
+/* =========================================================
+   WARBY-INSPIRED MODERN MODULES (additive only)
+   ========================================================= */
+
+.wp-hero {
+  padding: 46px 0 18px;
+  background:
+    radial-gradient(1000px 420px at 10% 0%, rgba(147,51,234,0.12), transparent 60%),
+    radial-gradient(900px 420px at 90% 10%, rgba(236,72,153,0.10), transparent 55%);
+}
+
+.wp-hero__inner {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 34px;
+  align-items: center;
+}
+
+.wp-hero__kicker {
+  color: rgba(31,22,51,0.65);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 0 0 10px;
+}
+
+.wp-hero__title {
+  font-size: clamp(2rem, 3.2vw, 3.2rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #1f1633;
+  margin: 0 0 14px;
+}
+
+.wp-hero__subtitle {
+  font-size: 1.15rem;
+  line-height: 1.65;
+  color: rgba(31,22,51,0.72);
+  margin: 0 0 20px;
+  max-width: 60ch;
+}
+
+.wp-hero__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.wp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 14px 22px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+}
+
+.wp-btn--primary {
+  background: #1f1633;
+  color: #fff;
+  box-shadow: 0 14px 36px rgba(31,22,51,0.22);
+}
+.wp-btn--primary:hover { transform: translateY(-2px); box-shadow: 0 20px 52px rgba(31,22,51,0.28); }
+
+.wp-btn--ghost {
+  background: rgba(255,255,255,0.72);
+  color: #5b21b6;
+  border: 1px solid rgba(147,51,234,0.18);
+  backdrop-filter: blur(10px);
+}
+.wp-btn--ghost:hover { transform: translateY(-2px); }
+
+.wp-trust {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 0.95rem;
+  color: rgba(31,22,51,0.60);
+  font-weight: 700;
+}
+
+.wp-hero__visual { display: flex; justify-content: flex-end; }
+.wp-hero__card {
+  width: min(360px, 100%);
+  border-radius: 28px;
+  background: rgba(255,255,255,0.65);
+  border: 1px solid rgba(147,51,234,0.16);
+  box-shadow: 0 26px 90px rgba(31,22,51,0.14);
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.wp-hero__chip {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #9333ea, #c4b5fd);
+  color: #fff;
+  font-weight: 900;
+  font-size: 0.85rem;
+}
+
+.wp-hero__mockGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 34px;
+}
+
+.wp-hero__mockCover {
+  height: 120px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(147,51,234,0.18), rgba(196,181,253,0.55));
+}
+
+.wp-hero__miniText {
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(31,22,51,0.10);
+  margin-top: 14px;
+  width: 92%;
+}
+.wp-hero__miniText--short { width: 60%; }
+
+/* Ways-to-shop cards (Warby "ways to try" energy) */
+.wp-ways { padding: 26px 0 10px; }
+.wp-ways__title {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #1f1633;
+  margin: 0 0 14px;
+}
+.wp-ways__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.wp-ways__card {
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(147,51,234,0.14);
+  border-radius: 20px;
+  padding: 16px 16px;
+  text-decoration: none;
+  color: #1f1633;
+  box-shadow: 0 12px 38px rgba(31,22,51,0.08);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.wp-ways__card:hover { transform: translateY(-3px); box-shadow: 0 18px 55px rgba(31,22,51,0.12); }
+.wp-ways__icon { font-size: 1.35rem; margin-bottom: 10px; }
+.wp-ways__name { font-weight: 900; margin-bottom: 6px; }
+.wp-ways__desc { color: rgba(31,22,51,0.70); line-height: 1.4; font-weight: 600; font-size: 0.95rem; }
+.wp-ways__card--highlight {
+  background: linear-gradient(135deg, rgba(147,51,234,0.12), rgba(236,72,153,0.10));
+}
+
+/* Mini-quiz tiles */
+.wp-quiz { padding: 26px 0 6px; }
+.wp-quiz__header { margin-bottom: 14px; }
+.wp-quiz__title { font-weight: 900; font-size: 1.35rem; color: #1f1633; margin: 0 0 6px; }
+.wp-quiz__sub { margin: 0; color: rgba(31,22,51,0.70); font-weight: 600; }
+.wp-quiz__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.wp-quiz__tile {
+  border-radius: 22px;
+  padding: 18px;
+  text-decoration: none;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(147,51,234,0.14);
+  box-shadow: 0 12px 38px rgba(31,22,51,0.08);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.wp-quiz__tile:hover { transform: translateY(-3px); box-shadow: 0 18px 55px rgba(31,22,51,0.12); }
+.wp-quiz__emoji { font-size: 1.4rem; }
+.wp-quiz__label { font-weight: 900; color: #1f1633; }
+
+@media (max-width: 980px) {
+  .wp-hero__inner { grid-template-columns: 1fr; }
+  .wp-hero__visual { justify-content: flex-start; }
+  .wp-ways__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wp-quiz__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
