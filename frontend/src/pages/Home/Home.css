@@ -81,8 +81,8 @@
 }
 
 .categories-section .category-name {
- 
-color: #1f1633;
+
+  color: #1f1633;
   font-weight: 700;
 
 }
@@ -909,12 +909,15 @@ color: #1f1633;
   width: 100%;
   object-fit: cover;
   border-radius: 14px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-  transition: transform 0.3s ease;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.4s ease;
 }
 
 .wp-hero__bookCover:hover {
-  transform: scale(1.05);
+
+  transform: translateY(-6px) scale(1.08);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.25);
+
 }
 
 /* 3. CENTER "Ways to Shop" properly */
@@ -956,5 +959,5 @@ color: #1f1633;
 
 .wp-hero__info-sub {
   font-size: 0.9rem;
-  color: rgba(31,22,51,0.65);
+  color: rgba(31, 22, 51, 0.65);
 }

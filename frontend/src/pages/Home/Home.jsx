@@ -129,20 +129,24 @@ function Home() {
 
 
 
+
               <div className="wp-hero__mockGrid">
                 {popularBooks && popularBooks.length > 0 ? (
-                  popularBooks.slice(0, 4).map((book) => (
-                    <img
-                      key={book.id}
-                      src={
-                        book.image
-                          ? book.image
-                          : 'https://via.placeholder.com/300x400?text=Book'
-                      }
-                      alt={book.title_en || book.title || 'Book'}
-                      className="wp-hero__bookCover"
-                    />
-                  ))
+                  [...popularBooks]                 // IMPORTANT: clone array
+                    .sort(() => 0.5 - Math.random()) // ✅ randomize books every load
+                    .slice(0, 4)
+                    .map((book) => (
+                      <img
+                        key={book.id}
+                        src={
+                          book.image
+                            ? book.image
+                            : 'https://via.placeholder.com/300x400?text=Book'
+                        }
+                        alt={book.title_en || book.title || 'Book'}
+                        className="wp-hero__bookCover"
+                      />
+                    ))
                 ) : (
                   <>
                     <div className="wp-hero__mockCover" />
@@ -152,6 +156,7 @@ function Home() {
                   </>
                 )}
               </div>
+
 
 
 
