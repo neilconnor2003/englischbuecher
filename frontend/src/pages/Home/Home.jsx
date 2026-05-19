@@ -243,8 +243,14 @@ function Home() {
           <div className="container">
             <h2 className="section-title">
               <Sparkles className="title-icon" size={36} />
-              {t('categories')}
+              {/*{t('categories')}*/}
+              {i18n.resolvedLanguage === 'de' ? 'Finde dein nächstes Buch' : 'Find your next book'}
             </h2>
+            <p className="wp-quiz__sub">
+              {i18n.resolvedLanguage === 'de'
+                ? 'Wähle eine Stimmung — wir bringen dich direkt zu passenden Titeln.'
+                : 'Pick a mood — jump straight to matching titles.'}
+            </p>
             <div className="categories-grid">
               {visibleCategories.map(cat => (
                 <Link
@@ -274,7 +280,7 @@ function Home() {
       )}
 
 
-      <section className="wp-quiz">
+      {/*<section className="wp-quiz">
         <div className="container">
           <div className="wp-quiz__header">
             <h3 className="wp-quiz__title">
@@ -306,7 +312,7 @@ function Home() {
             </Link>
           </div>
         </div>
-      </section>
+      </section>*/}
 
 
 
