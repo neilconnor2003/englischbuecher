@@ -94,8 +94,8 @@ function Home() {
 
             <p className="wp-hero__subtitle">
               {i18n.resolvedLanguage === 'de'
-                ? 'Bestseller, Klassiker & Neuheiten. Sicher bezahlen. Lieferung oder Click & Collect.'
-                : 'Bestsellers, classics & new arrivals. Secure checkout. Delivery or Click & Collect.'}
+                ? 'Bestseller, Klassiker & Neuheiten. Sicher bezahlen.'
+                : 'Bestsellers, classics & new arrivals. Secure checkout.'}
             </p>
 
             <div className="wp-hero__actions">
@@ -111,7 +111,7 @@ function Home() {
             <div className="wp-trust">
               <span>✓ {i18n.resolvedLanguage === 'de' ? 'Sichere Zahlung' : 'Secure payment'}</span>
               <span>✓ {i18n.resolvedLanguage === 'de' ? 'Versand in DE' : 'Shipping in Germany'}</span>
-              <span>✓ {i18n.resolvedLanguage === 'de' ? 'Click & Collect' : 'Click & Collect'}</span>
+              {/*<span>✓ {i18n.resolvedLanguage === 'de' ? 'Click & Collect' : 'Click & Collect'}</span>*/}
             </div>
           </div>
 
