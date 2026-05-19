@@ -161,7 +161,7 @@ function Home() {
               </div>
             </Link>
 
-            <Link to="/books" className="wp-ways__card">
+            {/*<Link to="/books" className="wp-ways__card">
               <div className="wp-ways__icon">🏬</div>
               <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Click & Collect' : 'Click & Collect'}</div>
               <div className="wp-ways__desc">
@@ -169,7 +169,7 @@ function Home() {
                   ? 'Online bezahlen & selbst abholen.'
                   : 'Pay online and pick up yourself.'}
               </div>
-            </Link>
+            </Link>*/}
 
             <Link to="/request-book" className="wp-ways__card wp-ways__card--highlight">
               <div className="wp-ways__icon">✨</div>
@@ -186,7 +186,7 @@ function Home() {
 
 
 
-      <section className="hero-v3">
+      {/*<section className="hero-v3">
         <div className="container hero-v3__inner">
           <div className="hero-v3__copy">
             <h2 className="hero-v3__title">
@@ -229,7 +229,7 @@ function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </section>*/}
 
 
       <h1 className="sr-only">
@@ -342,14 +342,14 @@ function Home() {
       </section>
 
 
-      <section className="trust-strip">
+      {/*<section className="trust-strip">
         <div className="container trust-strip__inner">
           <div className="trust-item">🔒 {i18n.resolvedLanguage === 'de' ? 'Sicher bezahlen' : 'Secure payments'}</div>
           <div className="trust-item">🚚 {i18n.resolvedLanguage === 'de' ? 'Versand in Deutschland' : 'Shipping in Germany'}</div>
           <div className="trust-item">📦 {i18n.resolvedLanguage === 'de' ? 'Click & Collect möglich' : 'Click & Collect available'}</div>
           <div className="trust-item">💬 {i18n.resolvedLanguage === 'de' ? 'Support & Kontakt' : 'Support & contact'}</div>
         </div>
-      </section>
+      </section>*/}
 
 
 
