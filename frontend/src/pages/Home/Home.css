@@ -81,8 +81,10 @@
 }
 
 .categories-section .category-name {
-  color: #9333ea;
+ 
+color: #1f1633;
   font-weight: 700;
+
 }
 
 /* CATEGORY SCROLLER (from your original version) */
@@ -759,10 +761,13 @@
 }
 
 .wp-ways__title {
-  font-size: 1.2rem;
+
+  font-size: 2rem;
   font-weight: 900;
   color: #1f1633;
-  margin: 0 0 14px;
+  text-align: center;
+  margin-bottom: 20px;
+
 }
 
 .wp-ways__grid {
@@ -937,4 +942,19 @@
 /* 5. Request book title color fix */
 .request-book-text h2 {
   color: #1f1633;
+}
+
+.wp-hero__info {
+  margin-top: 14px;
+}
+
+.wp-hero__info p {
+  margin: 4px 0;
+  font-weight: 700;
+  color: #1f1633;
+}
+
+.wp-hero__info-sub {
+  font-size: 0.9rem;
+  color: rgba(31,22,51,0.65);
 }

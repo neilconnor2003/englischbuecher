@@ -118,7 +118,7 @@ function Home() {
           <div className="wp-hero__visual" aria-hidden="true">
             <div className="wp-hero__card">
               <div className="wp-hero__chip">
-                {i18n.resolvedLanguage === 'de' ? 'Neu & beliebt' : 'New & popular'}
+                {i18n.resolvedLanguage === 'de' ? 'Neu & Beliebt' : 'New & Popular'}
               </div>
               {/*<div className="wp-hero__mockGrid">
                 <div className="wp-hero__mockCover" />
@@ -127,19 +127,45 @@ function Home() {
                 <div className="wp-hero__mockCover" />
               </div>*/}
 
+
               <div className="wp-hero__mockGrid">
-                {popularBooks.slice(0, 4).map((book) => (
-                  <img
-                    key={book.id}
-                    src={`${config.UPLOADS_BASE_URL}${book.image_url}`}
-                    alt={book.title}
-                    className="wp-hero__bookCover"
-                  />
-                ))}
+                {popularBooks && popularBooks.length > 0 ? (
+                  popularBooks.slice(0, 4).map((book) => (
+                    <img
+                      key={book.id}
+                      src={
+                        book.image_url
+                          ? `${config.UPLOADS_BASE_URL}${book.image_url}`
+                          : '/placeholder-book.jpg'
+                      }
+                      alt={book.title || 'Book'}
+                      className="wp-hero__bookCover"
+                    />
+                  ))
+                ) : (
+                  <>
+                    <div className="wp-hero__mockCover" />
+                    <div className="wp-hero__mockCover" />
+                    <div className="wp-hero__mockCover" />
+                    <div className="wp-hero__mockCover" />
+                  </>
+                )}
               </div>
 
-              <div className="wp-hero__miniText" />
-              <div className="wp-hero__miniText wp-hero__miniText--short" />
+
+              <div className="wp-hero__info">
+                <p>
+                  {i18n.resolvedLanguage === 'de'
+                    ? 'Beliebte Titel & aktuelle Bestseller'
+                    : 'Popular titles & current bestsellers'}
+                </p>
+                <p className="wp-hero__info-sub">
+                  {i18n.resolvedLanguage === 'de'
+                    ? 'Schnell verfügbar und regelmäßig aktualisiert'
+                    : 'Updated regularly and ready to order'}
+                </p>
+              </div>
+
             </div>
           </div>
         </div>
