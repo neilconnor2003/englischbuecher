@@ -53,7 +53,8 @@ const Banner = () => {
             <div
               className="w-full h-full bg-cover bg-center"
               style={{
-                backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, transparent 100%), url(${banner.image_url})`,
+                //backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, transparent 100%), url(${banner.image_url})`,
+                backgroundImage: `url(${banner.image_url})`,
               }}
             />
           </div>
@@ -63,7 +64,8 @@ const Banner = () => {
       {/* CONTENT GRID */}
       <div className="relative container mx-auto px-6 h-full flex items-center z-10">
         <div className="w-full max-w-7xl mx-auto">
-          <div className="text-white pl-0 md:pl-12 lg:pl-32 xl:pl-48"> {/* THIS LINE DOES THE MAGIC */}
+          {/*<div className="text-white pl-0 md:pl-12 lg:pl-32 xl:pl-48"> THIS LINE DOES THE MAGIC */}
+          <div className="pl-4 md:pl-16 lg:pl-32 max-w-2xl">
             {/*<div className="max-w-4xl">
               <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight drop-shadow-2xl">
                 {i18n.language === 'de' ? current.title_de || current.title_en : current.title_en}

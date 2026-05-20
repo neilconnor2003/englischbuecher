@@ -11,15 +11,19 @@
   overflow: hidden;
 }
 
+
+
 .banner::before {
   content: "";
   position: absolute;
   inset: 0;
 
-  /* Warby-style overlay */
-  background: linear-gradient(135deg,
-      rgba(31, 22, 51, 0.55),
-      rgba(147, 51, 234, 0.25));
+  /* LIGHT overlay like Warby */
+  background: linear-gradient(to right,
+      rgba(255, 255, 255, 0.85) 0%,
+      rgba(255, 255, 255, 0.6) 35%,
+      rgba(255, 255, 255, 0.2) 60%,
+      transparent 100%);
 
   z-index: 1;
 }
@@ -32,48 +36,30 @@
 }
 
 .banner h1 {
-  font-size: 3rem;
+  color: #1f1633;
+  /* dark readable */
+  font-size: 2.8rem;
   font-weight: 800;
-  margin-bottom: 16px;
-  /*text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);*/
-
-  color: white;
-  text-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-
+  margin-bottom: 12px;
 }
-
-
-.banner-content {
-  position: relative;
-  z-index: 2;
-
-  max-width: 900px;
-  margin: 0 auto;
-
-  padding: 28px 26px;
-
-  border-radius: 20px;
-
-  /* glass effect */
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(10px);
-
-  border: 1px solid rgba(255, 255, 255, 0.25);
-
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-}
-
 
 .banner p {
-  font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 24px;
-  opacity: 0.95;
+  color: #4b3b73;
 }
+
+.banner-content {
+  background: none;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  padding: 0;
+}
+
 
 .banner-button {
   color: white;
   padding: 14px 32px;
+  margin-top: 10px;
   font-weight: 700;
   text-decoration: none;
   display: inline-block;
