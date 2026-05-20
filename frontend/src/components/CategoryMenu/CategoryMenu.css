@@ -58,14 +58,11 @@
   position: absolute;
   top: -12px;
   left: 100%;
-  width: 48px;
-  /* wider corridor */
+  width: 48px;                 /* wider corridor */
   height: calc(100% + 24px);
   z-index: 1;
-  pointer-events: auto;
-  /* <-- critical: treat as part of the parent */
-  background: transparent;
-  /* invisible, but keeps hover alive */
+  pointer-events: auto;        /* <-- critical: treat as part of the parent */
+  background: transparent;     /* invisible, but keeps hover alive */
 }
 
 
@@ -184,17 +181,13 @@
 }
 
 /* Ensure the portaled menu sits above the header */
-.dropdown-menu--portal {
-  z-index: 1400;
-}
+.dropdown-menu--portal { z-index: 1400; }
 
 
 /* Show the entire category list (no internal scrollbars) */
 .dropdown-menu--portal.category-panel {
-  max-height: none !important;
-  /* cancel the 70vh cap */
-  overflow: visible !important;
-  /* no scrollbars inside the panel */
+  max-height: none !important;   /* cancel the 70vh cap */
+  overflow: visible !important;   /* no scrollbars inside the panel */
 }
 
 /* Optional: keep submenus unconstrained too */
@@ -214,91 +207,17 @@
 /* When a submenu is opened by click/expand, stack it under the parent item */
 /* Click-expanded second level: in-flow, indented block */
 .submenu--mobile {
-  position: relative;
-  /* in-flow, pushes next items down */
+  position: relative;       /* in-flow, pushes next items down */
   top: 0;
   left: 0;
   margin: 6px 0 10px 0;
   padding: 8px 0 6px 0;
   border-left: 3px solid #e9d5ff;
-  background: #faf5ff;
-  /* subtle contrast; optional */
+  background: #faf5ff;      /* subtle contrast; optional */
   border-radius: 8px;
 }
 
 /* Indent child items a touch */
 .submenu--mobile .submenu-item {
-  padding-left: 20px;
-  /* visually indented */
-}
-
-@media (max-width: 768px) {
-  /*.category-toggle {
-    display: none;
-  }*/
-
-  .dropdown-menu--portal.category-panel {
-    top: 0 !important;
-    left: 0 !important;
-    transform: none !important;
-    width: 100vw;
-    height: 100vh;
-    border-radius: 0;
-    padding: 20px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .submenu--mobile {
-    background: transparent;
-    border-left: none;
-    padding-left: 10px;
-  }
-
-  .category-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .dropdown-item-parent {
-    width: 100%;
-  }
-
-}
-
-/* Mobile All Books row styling */
-.category-toggle-label {
-  font-weight: 700;
-}
-
-@media (max-width: 768px) {
-  .category-toggle {
-    width: 100%;
-    justify-content: space-between;
-    padding: 14px 16px;
-    border-radius: 12px;
-    background: #faf5ff;
-    border: 1px solid #e9d5ff;
-  }
-
-  .category-toggle:hover {
-    background: #f3e8ff;
-  }
-}
-
-/* Mobile All Books row *//* Mobile All Books row}
-
-/* Rotate right arrow when expanded (optional visual cue) */
-.arrow-right--open {
-  transform: rotate(90deg);
-}
-
-/* Ensure chevron rotates inside All Books row */
-.all-books-row .chevron.open {
-  transform: rotate(180deg);
-}
-.all-books-row {
-  font-weight: 700;
+  padding-left: 20px;       /* visually indented */
 }
