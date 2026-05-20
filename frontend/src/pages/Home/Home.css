@@ -22,10 +22,10 @@
 
 /* SECTION TITLES (preserved from original) */
 .section-title {
-  font-size: 2.5rem;
+  font-size: 2.2rem;
   font-weight: 800;
   text-align: center;
-  margin: 40px 0 20px;
+  margin: 0 0 20px;
   color: #9333ea;
   display: flex;
   align-items: center;
@@ -58,7 +58,7 @@
 
 /* CATEGORIES SECTION (unchanged design) */
 .categories-section {
-  padding: 10px 0 0;
+  padding: 0;
   margin-top: -20px;
   background: linear-gradient(to bottom, #f8f5ff 0%, #ffffff 100%);
   position: relative;
@@ -149,12 +149,12 @@
 /* BOOK SECTIONS (unchanged) */
 .popular-section {
   background: white;
-  padding: 10px 0 20px;
+  padding: 0;
   margin-top: -20px;
 }
 
 .category-books-section {
-  padding: 20px 0;
+  padding: 0;
   background: #faf8ff;
   padding-top: 30px;
   margin-top: -20px;
@@ -169,7 +169,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 50px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
   gap: 20px;
 }
@@ -235,7 +235,7 @@
 
 /* NEW ARRIVALS (your original design preserved) */
 .new-arrivals-section {
-  padding: 80px 0;
+  padding: 0;
   background: linear-gradient(to bottom, #fff0fb 0%, #f8f5ff 100%);
   position: relative;
   padding-top: 30px;
@@ -291,7 +291,7 @@
 @media (max-width: 768px) {
   .section-title {
     font-size: 2rem;
-    margin: 40px 0 20px;
+    margin: 0 0 20px;
     flex-wrap: wrap;
     text-align: center;
     white-space: normal;
@@ -625,7 +625,7 @@
    ========================================================= */
 
 .wp-hero {
-  padding: 46px 0 18px;
+  padding: 30px 0 10px;
   background:
     radial-gradient(1000px 420px at 10% 0%, rgba(147, 51, 234, 0.12), transparent 60%),
     radial-gradient(900px 420px at 90% 10%, rgba(236, 72, 153, 0.10), transparent 55%);
@@ -765,7 +765,7 @@
 
 /* Ways-to-shop cards (Warby "ways to try" energy) */
 .wp-ways {
-  padding: 10px 0 10px;
+  padding: 0;
   margin-top: -10px;
   /* pulls it closer to hero */
 }
@@ -1017,4 +1017,20 @@
 .wp-hero__bookLink:hover .wp-hero__bookCover {
   transform: translateY(-6px) scale(1.07);
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.25);
+}
+
+/* =========================================================
+   GLOBAL SECTION SPACING SYSTEM (PROFESSIONAL)
+   ========================================================= */
+
+.home-page-v2 section {
+  padding: 40px 0;
+}
+
+.home-page-v2 section:first-of-type {
+  padding-top: 20px;
+}
+
+.home-page-v2 section:last-of-type {
+  padding-bottom: 60px;
 }
