@@ -434,7 +434,7 @@ function CategoryMenu() {
               }}*/
 
               onClick={() => {
-                if (!canHover) return; // don't collapse on mobile
+                //if (!canHover) return; // don't collapse on mobile
                 setAllBooksOpen(v => !v);
                 setExpandedId(null);
               }}
