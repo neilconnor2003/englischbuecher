@@ -149,13 +149,13 @@ function CategoryMenu() {
                 type="button"
                 className="dropdown-item-link"
                 onClick={() => {
-                  /*if (!canHover && hasChildren) {
+                  if (!canHover && hasChildren) {
                     setExpandedId(prev => (prev === cat.id ? null : cat.id)); // mobile expand/collapse
                   } else {
                     goToCategory(cat.id); // desktop click goes straight to category
-                  }*/
+                  }
 
-                  if (!canHover && hasChildren) {
+                  /*if (!canHover && hasChildren) {
                     // First click → expand
                     if (expandedId !== cat.id) {
                       setExpandedId(cat.id);
@@ -165,7 +165,7 @@ function CategoryMenu() {
                     }
                   } else {
                     goToCategory(cat.id);
-                  }
+                  }*/
 
                 }}
               >
@@ -245,8 +245,8 @@ function CategoryMenu() {
         aria-expanded={isOpen}
         aria-haspopup="menu"
       >
-        {/*{t('categories')}*/}
-        <span className="desktop-only">{t('categories')}</span>
+        {t('categories')}
+        {/*<span className="desktop-only">{t('categories')}</span>*/}
         {' '}
         <ChevronDown className={`chevron ${isOpen ? 'open' : ''}`} />
       </button>
@@ -256,12 +256,23 @@ function CategoryMenu() {
           ref={panelRef}
           className="category-panel dropdown-menu dropdown-menu--portal"
           role="menu"
-          style={{
+          {/*style={{
             position: 'fixed',
             top: pos.top,
             left: pos.left,
             transform: 'translateX(-50%)'
-          }}
+          }}*/}
+
+          style={
+            window.innerWidth <= 768
+              ? { top: 0, left: 0, transform: 'none' }
+              : {
+                top: pos.top,
+                left: pos.left,
+                transform: 'translateX(-50%)'
+              }
+          }
+
         >
           <MenuContent />
         </div>,
