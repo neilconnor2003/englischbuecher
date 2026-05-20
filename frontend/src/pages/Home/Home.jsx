@@ -11,12 +11,18 @@ import axios from 'axios';
 import BooksSlider from '../../components/BooksSlider/BooksSlider'; // NEW
 import './Home.css';
 import { Helmet } from 'react-helmet-async';
+import { generateBookUrl } from '../../utils/seoUrl';
 
 function Home() {
   const { t, i18n } = useTranslation();
   const [popularBooks, setPopularBooks] = useState([]);
   const [categorySections, setCategorySections] = useState([]);
   const { data = { visibleRoots: [] }, isLoading: catLoading } = useGetCategoriesQuery();
+
+  const [heroBooks, setHeroBooks] = useState([]);
+  const [heroIndex, setHeroIndex] = useState(0);
+
+  const [heroFading, setHeroFading] = useState(false);
 
   const visibleCategories = Array.isArray(data.visibleRoots)
     ? [...data.visibleRoots].sort((a, b) => a.id - b.id)
@@ -27,6 +33,40 @@ function Home() {
       .then(res => setPopularBooks(Array.isArray(res.data) ? res.data : []))
       .catch(() => setPopularBooks([]));
   }, []);
+
+  // 1) Pick a randomized hero list ONCE whenever popularBooks loads/changes
+  useEffect(() => {
+    if (popularBooks && popularBooks.length > 0) {
+      const shuffled = [...popularBooks].sort(() => 0.5 - Math.random());
+      setHeroBooks(shuffled);
+      setHeroIndex(0);
+    } else {
+      setHeroBooks([]);
+      setHeroIndex(0);
+    }
+  }, [popularBooks]);
+
+  // 2) Auto-rotate with fade
+  useEffect(() => {
+    if (!heroBooks || heroBooks.length === 0) return;
+
+    let fadeTimeout = null;
+
+    const interval = setInterval(() => {
+      setHeroFading(true);
+
+      // After fade-out, advance index and fade back in
+      fadeTimeout = setTimeout(() => {
+        setHeroIndex((prev) => (prev + 1) % heroBooks.length);
+        setHeroFading(false);
+      }, 260); // matches CSS transition duration below
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+      if (fadeTimeout) clearTimeout(fadeTimeout);
+    };
+  }, [heroBooks]);
 
   const [newArrivals, setNewArrivals] = useState([]);
   useEffect(() => {
@@ -40,6 +80,32 @@ function Home() {
         console.error('Failed to load new arrivals:', err);
         setNewArrivals([]);
       });
+  }, []);
+
+
+  // Smooth scroll-reveal animations (IntersectionObserver)
+  useEffect(() => {
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    if (reduceMotion) return; // respect reduced motion preference
+
+    const sections = document.querySelectorAll('.home-page-v2 > section');
+    sections.forEach((s) => s.classList.add('reveal'));
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('reveal--in');
+            observer.unobserve(entry.target); // reveal once (premium feel)
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -10% 0px' }
+    );
+
+    sections.forEach((s) => observer.observe(s));
+
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -65,59 +131,177 @@ function Home() {
 
   return (
     <div className="home-page-v2">
-
       <Helmet>
         <title>{t('home.meta.title')}</title>
         <meta
           name="description"
           content={t('home.meta.description')}
         />
-        https://www.englischbuecher.de/
+        <link rel="canonical" href="https://englischbuecher.de/" />
       </Helmet>
 
       <Banner />
+
+      {/* WARBY-STYLE HERO (BOOKSTORE VERSION) */}
+      <section className="wp-hero">
+        <div className="container wp-hero__inner">
+          <div className="wp-hero__copy">
+            <p className="wp-hero__kicker">
+              {i18n.resolvedLanguage === 'de' ? 'Englische Bücher in Deutschland' : 'English books in Germany'}
+            </p>
+
+            <h2 className="wp-hero__title">
+              {i18n.resolvedLanguage === 'de'
+                ? 'Finde dein nächstes Lieblingsbuch – schnell & stressfrei'
+                : 'Find your next favorite read — fast & effortless'}
+            </h2>
+
+            <p className="wp-hero__subtitle">
+              {i18n.resolvedLanguage === 'de'
+                ? 'Bestseller, Klassiker & Neuheiten. Sicher bezahlen.'
+                : 'Bestsellers, classics & new arrivals. Secure checkout.'}
+            </p>
+
+            <div className="wp-hero__actions">
+              <Link className="wp-btn wp-btn--primary" to="/books">
+                {i18n.resolvedLanguage === 'de' ? 'Jetzt stöbern' : 'Browse books'}
+              </Link>
+
+              <Link className="wp-btn wp-btn--ghost" to="/request-book">
+                {i18n.resolvedLanguage === 'de' ? 'Buch anfragen' : 'Request a book'}
+              </Link>
+            </div>
+
+            <div className="wp-trust">
+              <span>✓ {i18n.resolvedLanguage === 'de' ? 'Sichere Zahlung' : 'Secure payment'}</span>
+              <span>✓ {i18n.resolvedLanguage === 'de' ? 'Versand in DE' : 'Shipping in Germany'}</span>
+              {/*<span>✓ {i18n.resolvedLanguage === 'de' ? 'Click & Collect' : 'Click & Collect'}</span>*/}
+            </div>
+          </div>
+
+          <div className="wp-hero__visual" aria-hidden="true">
+            <div className="wp-hero__card">
+              <div className="wp-hero__chip">
+                {i18n.resolvedLanguage === 'de' ? 'Neu & Beliebt' : 'New & Popular'}
+              </div>
+
+              <div className={`wp-hero__mockGrid ${heroFading ? 'wp-hero__mockGrid--fade' : ''}`}>
+                {heroBooks && heroBooks.length > 0 ? (
+                  // show 4 books starting from heroIndex, wrap around
+                  heroBooks
+                    .slice(heroIndex, heroIndex + 4)
+                    .concat(heroBooks.slice(0, Math.max(0, heroIndex + 4 - heroBooks.length)))
+                    .map((book) => {
+                      const to = generateBookUrl(book); // same routing logic as BookCard [1](https://boehringer-my.sharepoint.com/personal/nilanjan_chatterjee_boehringer-ingelheim_com/Documents/EnglischBuecher/project/frontend/src/utils/seoUrl.js?web=1)[2](https://boehringer-my.sharepoint.com/personal/nilanjan_chatterjee_boehringer-ingelheim_com/Documents/Forms/DispForm.aspx?ID=268856&web=1)
+                      const title = book.title_en || book.title_de || book.title || 'Book';
+
+                      return (
+                        <Link
+                          key={book.id}
+                          to={to}
+                          className="wp-hero__bookLink"
+                          aria-label={`View ${title}`}
+                        >
+                          <img
+                            src={book.image ? book.image : 'https://via.placeholder.com/300x400?text=Book'}
+                            alt={title}
+                            className="wp-hero__bookCover"
+                            loading="lazy"
+                          />
+                        </Link>
+                      );
+                    })
+                ) : (
+                  <>
+                    <div className="wp-hero__mockCover" />
+                    <div className="wp-hero__mockCover" />
+                    <div className="wp-hero__mockCover" />
+                    <div className="wp-hero__mockCover" />
+                  </>
+                )}
+              </div>
+
+
+              <div className="wp-hero__info">
+                <p>
+                  {i18n.resolvedLanguage === 'de'
+                    ? 'Beliebte Titel & aktuelle Bestseller'
+                    : 'Popular titles & current bestsellers'}
+                </p>
+                <p className="wp-hero__info-sub">
+                  {i18n.resolvedLanguage === 'de'
+                    ? 'Schnell verfügbar und regelmäßig aktualisiert'
+                    : 'Updated regularly and ready to order'}
+                </p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* WARBY-STYLE “WAYS TO SHOP” (INSPIRED BY “Ways to try” + quiz entry points) */}
+      <section className="wp-ways">
+        <div className="wp-ways__container">
+          <h3 className="wp-ways__title">
+            {i18n.resolvedLanguage === 'de' ? 'So kannst du bei uns einkaufen' : 'Ways to shop'}
+          </h3>
+
+          <div className="wp-ways__grid">
+            <div className="wp-ways__card">
+              <div className="wp-ways__icon">📚</div>
+              <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Online stöbern' : 'Browse online'}</div>
+              <div className="wp-ways__desc">
+                {i18n.resolvedLanguage === 'de'
+                  ? 'Entdecke Kategorien, Bestseller & Neuheiten.'
+                  : 'Explore categories, bestsellers & new arrivals.'}
+              </div>
+            </div>
+
+            <div className="wp-ways__card">
+              <div className="wp-ways__icon">🚚</div>
+              <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Lieferung' : 'Delivery'}</div>
+              <div className="wp-ways__desc">
+                {i18n.resolvedLanguage === 'de'
+                  ? 'Bequem nach Hause – sicher bezahlen.'
+                  : 'Delivered to your door — secure checkout.'}
+              </div>
+            </div>
+
+            <div className="wp-ways__card wp-ways__card--highlight">
+              <div className="wp-ways__icon">✨</div>
+              <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Buch‑Finder' : 'Book finder'}</div>
+              <div className="wp-ways__desc">
+                {i18n.resolvedLanguage === 'de'
+                  ? 'Nichts gefunden? Frag es an — wir erweitern ständig.'
+                  : 'Can’t find it? Request it — we add books regularly.'}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
 
       <h1 className="sr-only">
         {t('home.seo.h1')}
       </h1>
 
-
-      {/* CATEGORY ICONS */}
-      {visibleCategories.length > 0 && (
-        <section className="categories-section">
+      {/* POPULAR BOOKS */}
+      {popularBooks.length > 0 && (
+        <section className="popular-section">
           <div className="container">
             <h2 className="section-title">
-              <Sparkles className="title-icon" size={36} />
-              {t('categories')}
+              <span className="fire">{t('home.popular')}</span>
             </h2>
-            <div className="categories-grid">
-              {visibleCategories.map(cat => (
-                <Link
-                  key={cat.id}
-                  to={`/books?category=${cat.id}`}
-                  className="category-card"
-                >
-                  {cat.icon_path ? (
-                    <img
-                      src={`${config.UPLOADS_BASE_URL}${cat.icon_path}?v=${cat.updated_at}`}
-                      alt=""
-                      className="category-icon"
-                    />
-                  ) : (
-                    <div className="category-icon-placeholder">
-                      <Image size={40} />
-                    </div>
-                  )}
-                  <span className="category-name">
-                    {i18n.resolvedLanguage === 'de' ? (cat.name_de || cat.name_en) : cat.name_en}
-                  </span>
-                </Link>
-              ))}
-            </div>
+
+            <BooksSlider
+              books={popularBooks}
+              variant="default"
+              className="home-swiper"
+            />
           </div>
         </section>
       )}
-
 
       {/* REQUEST BOOK / CATALOG INFO SECTION */}
       <section className="request-book-section">
@@ -150,20 +334,44 @@ function Home() {
         </div>
       </section>
 
-
-      {/* POPULAR BOOKS */}
-      {popularBooks.length > 0 && (
-        <section className="popular-section">
+      {/* CATEGORY ICONS */}
+      {visibleCategories.length > 0 && (
+        <section className="categories-section">
           <div className="container">
             <h2 className="section-title">
-              <span className="fire">{t('home.popular')}</span>
+              <Sparkles className="title-icon" size={36} />
+              {/*{t('categories')}*/}
+              {i18n.resolvedLanguage === 'de' ? 'Finde dein nächstes Buch' : 'Find your next book'}
             </h2>
-
-            <BooksSlider
-              books={popularBooks}
-              variant="default"
-              className="home-swiper"
-            />
+            <p className="wp-quiz__sub">
+              {i18n.resolvedLanguage === 'de'
+                ? 'Wähle eine Stimmung — wir bringen dich direkt zu passenden Titeln.'
+                : 'Pick a mood — jump straight to matching titles.'}
+            </p>
+            <div className="categories-grid">
+              {visibleCategories.map(cat => (
+                <Link
+                  key={cat.id}
+                  to={`/books?category=${cat.id}`}
+                  className="category-card"
+                >
+                  {cat.icon_path ? (
+                    <img
+                      src={`${config.UPLOADS_BASE_URL}${cat.icon_path}?v=${cat.updated_at}`}
+                      alt=""
+                      className="category-icon"
+                    />
+                  ) : (
+                    <div className="category-icon-placeholder">
+                      <Image size={40} />
+                    </div>
+                  )}
+                  <span className="category-name">
+                    {i18n.resolvedLanguage === 'de' ? (cat.name_de || cat.name_en) : cat.name_en}
+                  </span>
+                </Link>
+              ))}
+            </div>
           </div>
         </section>
       )}
@@ -214,18 +422,6 @@ function Home() {
           </div>
         </section>
       ))}
-
-      {/*<section className="home-seo-text container">
-        <h2>{t('home.seo.h2')}</h2>
-
-        <p>
-          {t('home.seo.p1')}
-        </p>
-
-        <p>
-          {t('home.seo.p3')}
-        </p>
-      </section>*/}
 
     </div>
   );
