@@ -269,6 +269,7 @@ function CategoryMenu() {
     return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   }, []);
   const isMobile = !canHover;
+  const [allBooksOpen, setAllBooksOpen] = useState(true); // mobile will show list by default
 
   // Refs & state
   const triggerRef = useRef(null);
@@ -331,7 +332,7 @@ function CategoryMenu() {
   }, [location.pathname, location.search]);
 
   // Toggle menu (header button)
-  const toggleOpen = () => {
+  /*const toggleOpen = () => {
     setIsOpen(v => !v);
     if (isOpen) {
       setHoveredId(null);
@@ -342,7 +343,23 @@ function CategoryMenu() {
       setAllBooksOpen(false);
       setExpandedId(null);
     }
+  };*/
+
+  const toggleOpen = () => {
+    setIsOpen(v => !v);
+
+    if (isOpen) {
+      // closing
+      setHoveredId(null);
+      setExpandedId(null);
+      setAllBooksOpen(true);
+    } else {
+      // opening
+      setExpandedId(null);
+      setAllBooksOpen(true); // ✅ start with All Books open on mobile
+    }
   };
+
 
   // Position panel just under the trigger button (and clamp a bit to viewport)
   const placePanel = () => {
@@ -444,6 +461,23 @@ function CategoryMenu() {
               <ChevronDown className={`chevron ${allBooksOpen ? 'open' : ''}`} aria-hidden />
             </button>
           )}*/}
+
+
+          {/* ✅ Mobile: All Books header row */}
+          {isMobile && (
+            <button
+              type="button"
+              className="dropdown-item-link all-books-row"
+              onClick={() => {
+                setAllBooksOpen(prev => !prev);
+                setExpandedId(null); // collapse any expanded category when toggling
+              }}
+            >
+              <span className="cat-label">All Books</span>
+              <ChevronDown className={`all-books-chevron ${allBooksOpen ? 'open' : ''}`} aria-hidden />
+            </button>
+          )}
+
 
           {/* ROOT list: Desktop always; Mobile only when All Books is expanded */}
           {(!isMobile || allBooksOpen) && roots.map(cat => {
