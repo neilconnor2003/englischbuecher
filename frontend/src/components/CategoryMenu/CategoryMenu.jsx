@@ -43,12 +43,23 @@ function CategoryMenu() {
   }, [data.hierarchy]);
 
   // Navigate and close
-  const goToCategory = (id) => {
+  /*const goToCategory = (id) => {
     const params = new URLSearchParams(location.search);
     params.set('category', String(id));
     navigate(`/books?${params.toString()}`);
     setIsOpen(false); setHoveredId(null); setExpandedId(null);
+  };*/
+
+  const goToCategory = (id) => {
+    setIsOpen(false);
+    setHoveredId(null);
+    setExpandedId(null);
+
+    const params = new URLSearchParams(location.search);
+    params.set('category', String(id));
+    navigate(`/books?${params.toString()}`);
   };
+
 
   // Close on route change
   useEffect(() => {
@@ -234,7 +245,9 @@ function CategoryMenu() {
         aria-expanded={isOpen}
         aria-haspopup="menu"
       >
-        {t('categories')}{' '}
+        {/*{t('categories')}*/}
+        <span className="desktop-only">{t('categories')}</span>
+        {' '}
         <ChevronDown className={`chevron ${isOpen ? 'open' : ''}`} />
       </button>
 

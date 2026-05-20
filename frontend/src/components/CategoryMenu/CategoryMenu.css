@@ -233,9 +233,9 @@
 }
 
 @media (max-width: 768px) {
-  .category-toggle {
+  /*.category-toggle {
     display: none;
-  }
+  }*/
 
   .dropdown-menu--portal.category-panel {
     top: 0 !important;
@@ -247,9 +247,25 @@
     padding: 20px;
     overflow-y: auto;
   }
+
   .submenu--mobile {
     background: transparent;
     border-left: none;
     padding-left: 10px;
   }
+
+  .desktop-only {
+    display: none;
+  }
+
+  .category-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .dropdown-item-parent {
+    width: 100%;
+  }
+
 }
