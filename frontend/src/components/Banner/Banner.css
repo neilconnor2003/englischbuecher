@@ -1,82 +1,148 @@
-/* frontend/src/components/Banner.css */
-.banner {
-  background-size: cover;
-  background-position: center;
-  padding: 80px 20px;
-  text-align: center;
-  border-radius: 12px;
-  margin: 20px auto;
-  color: white;
+.hero-banner {
   position: relative;
 }
 
-.banner h1 {
-  font-size: 3rem;
-  font-weight: 700;
-  margin-bottom: 16px;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+/* LIGHT overlay */
+.hero-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background: linear-gradient(to right,
+      rgba(255, 255, 255, 0.88) 0%,
+      rgba(255, 255, 255, 0.65) 35%,
+      rgba(255, 255, 255, 0.2) 60%,
+      transparent 100%);
+
+  z-index: 1;
 }
 
-.banner p {
-  font-size: 1.3rem;
-  margin-bottom: 24px;
-  opacity: 0.95;
+.hero-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background: linear-gradient(to bottom,
+      rgba(255, 255, 255, 0.0),
+      rgba(255, 255, 255, 0.15));
+
+  z-index: 1;
 }
 
-.banner-button {
-  background: #8A2BE2;
-  color: white;
-  padding: 14px 32px;
-  border-radius: 50px;
-  font-weight: 700;
-  text-decoration: none;
+/* CONTENT */
+.hero-banner-content {
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  height: 300px;
+  /* ✅ TEXT BLOCK HEIGHT */
+  max-width: 600px;
+
+  gap: 16px;
+}
+
+/* HEADLINE */
+.hero-banner h1 {
+  font-size: 4rem;
+  font-weight: 800;
+  line-height: 1.05;
+  /*color: #2d1b4e;*/
+  color: #9333ea;
+  /* softer, slightly purple */
+}
+
+/* SUBTITLE */
+.hero-banner p {
+  font-size: 1.5rem;
+  /*color: #4b3b73;*/
+  color: #9333ea;
+}
+
+/* BUTTON */
+
+.hero-banner-button {
+  margin-top: 14px;
+
   display: inline-block;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(138,43,226,0.4);
-}
+  width: fit-content;
 
-.banner-button:hover {
-  background: #6A1B9A;
-  transform: translateY(-2px);
-}
-
-.animate-fade-in {
-  animation: fadeIn 1s ease-out;
-}
-.animate-fade-in-delay {
-  animation: fadeIn 1s ease-out 0.3s both;
-}
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-
-/* =========================================================
-   MOBILE ONLY: move hero arrows to bottom (no overlap)
-   Desktop stays unchanged
-   ========================================================= */
-@media (max-width: 768px) {
-  .hero-banner .hero-arrow {
-    top: auto !important;
-    bottom: 16px !important;
-    transform: none !important;
-    padding: 10px !important;
-  }
-
-  .hero-banner .hero-arrow--prev {
-    left: 14px !important;
-  }
-
-  .hero-banner .hero-arrow--next {
-    right: 14px !important;
-  }
-  .banner h1 {
-  font-size: 2.5rem;
+  padding: 18px 36px;
+  font-size: 1.2rem;
   font-weight: 700;
+
+  color: white;
+
+  border-radius: 999px;
+
+  /* ✅ STRONGER GRADIENT */
+  background: linear-gradient(135deg,
+      #7c3aed,
+      #9333ea
+      /*#a21caf*/
+    );
+
+  /* ✅ ADD CLEAR SEPARATION */
+  border: 2px solid rgba(255, 255, 255, 0.9);
+
+  /* ✅ STRONG SHADOW */
+  box-shadow:
+    0 12px 30px rgba(147, 51, 234, 0.4),
+    0 4px 10px rgba(0, 0, 0, 0.1);
+
+  transition: all 0.25s ease;
 }
 
-.banner p {
-  font-size: 1rem;
+
+.hero-banner-button:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 16px 40px rgba(147, 51, 234, 0.5),
+    0 6px 12px rgba(0, 0, 0, 0.15);
+  /*0 0 0 3px rgba(147,51,234,0.2);*/
 }
+
+/* Mobile SCALE */
+@media (max-width: 768px) {
+  .hero-banner h1 {
+    font-size: 2rem;
+    /* ✅ BIG FIX */
+  }
+
+  .hero-banner p {
+    font-size: 1.2rem;
+  }
+}
+
+/* ==========================================
+   FIX MOBILE ARROWS OVERLAPPING TEXT
+   ========================================== */
+
+@media (max-width: 768px) {
+
+  .hero-arrow {
+    top: auto !important;
+    /* remove vertical center */
+    bottom: 20px !important;
+    /* push to bottom */
+    transform: none !important;
+
+    padding: 10px !important;
+    opacity: 0.85;
+
+    backdrop-filter: blur(6px);
+    background: rgba(255, 255, 255, 0.3);
+
+  }
+
+  .hero-arrow--prev {
+    left: 16px !important;
+  }
+
+  .hero-arrow--next {
+    right: 16px !important;
+  }
 }
