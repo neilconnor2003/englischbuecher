@@ -118,7 +118,7 @@ function Home() {
           <div className="wp-hero__visual" aria-hidden="true">
             <div className="wp-hero__card">
               <div className="wp-hero__chip">
-                {i18n.resolvedLanguage === 'de' ? 'Neu & Beliebt' : 'New & Populars'}
+                {i18n.resolvedLanguage === 'de' ? 'Neu & Beliebt' : 'New & Popular'}
               </div>
               {/*<div className="wp-hero__mockGrid">
                 <div className="wp-hero__mockCover" />
