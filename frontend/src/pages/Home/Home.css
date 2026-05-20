@@ -25,7 +25,7 @@
   font-size: 2.5rem;
   font-weight: 800;
   text-align: center;
-  margin: 80px 0 50px;
+  margin: 40px 0 20px;
   color: #9333ea;
   display: flex;
   align-items: center;
@@ -58,7 +58,8 @@
 
 /* CATEGORIES SECTION (unchanged design) */
 .categories-section {
-  padding: 20px 0 0px;
+  padding: 10px 0 0;
+  margin-top: -20px;
   background: linear-gradient(to bottom, #f8f5ff 0%, #ffffff 100%);
   position: relative;
 }
@@ -147,13 +148,17 @@
 
 /* BOOK SECTIONS (unchanged) */
 .popular-section {
-  padding: 20px 0;
   background: white;
+  padding: 10px 0 20px;
+  margin-top: -20px;
 }
 
 .category-books-section {
   padding: 20px 0;
   background: #faf8ff;
+  padding-top: 30px;
+  margin-top: -20px;
+
 }
 
 .category-books-section:nth-child(even) {
@@ -233,6 +238,9 @@
   padding: 80px 0;
   background: linear-gradient(to bottom, #fff0fb 0%, #f8f5ff 100%);
   position: relative;
+  padding-top: 30px;
+  margin-top: -20px;
+
 }
 
 .new-arrivals-section::before {
@@ -283,7 +291,7 @@
 @media (max-width: 768px) {
   .section-title {
     font-size: 2rem;
-    margin: 60px 0 40px;
+    margin: 40px 0 20px;
     flex-wrap: wrap;
     text-align: center;
     white-space: normal;
@@ -757,7 +765,9 @@
 
 /* Ways-to-shop cards (Warby "ways to try" energy) */
 .wp-ways {
-  padding: 26px 0 10px;
+  padding: 10px 0 10px;
+  margin-top: -10px;
+  /* pulls it closer to hero */
 }
 
 .wp-ways__title {
@@ -1006,5 +1016,5 @@
 
 .wp-hero__bookLink:hover .wp-hero__bookCover {
   transform: translateY(-6px) scale(1.07);
-  box-shadow: 0 18px 45px rgba(0,0,0,0.25);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.25);
 }
