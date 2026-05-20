@@ -52,14 +52,16 @@
   font-size: 3rem;
   font-weight: 800;
   line-height: 1.05;
-  color: #2d1b4e;
+  /*color: #2d1b4e;*/
+  color: #9333ea;
   /* softer, slightly purple */
 }
 
 /* SUBTITLE */
 .hero-banner p {
   font-size: 1.4rem;
-  color: #4b3b73;
+  /*color: #4b3b73;*/
+  color: #9333ea;
 }
 
 /* BUTTON */

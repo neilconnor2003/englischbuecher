@@ -98,7 +98,7 @@ const Banner = () => {
                   : current.subtitle_en}
               </p>
 
-              <Link className="banner-button">
+              <Link className="hero-banner-button">
                 {i18n.language === 'de'
                   ? current.button_text_de ?? 'Jetzt entdecken'
                   : current.button_text_en ?? 'Shop Now'}
