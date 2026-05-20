@@ -256,12 +256,12 @@ function CategoryMenu() {
           ref={panelRef}
           className="category-panel dropdown-menu dropdown-menu--portal"
           role="menu"
-          {/*style={{
+          /*style={{
             position: 'fixed',
             top: pos.top,
             left: pos.left,
             transform: 'translateX(-50%)'
-          }}*/}
+          }}*/
 
           style={
             window.innerWidth <= 768
