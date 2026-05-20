@@ -258,7 +258,7 @@ function Home() {
 
       {/* WARBY-STYLE “WAYS TO SHOP” (INSPIRED BY “Ways to try” + quiz entry points) */}
       <section className="wp-ways">
-        <div className="container">
+        <div className="wp-ways__container">
           <h3 className="wp-ways__title">
             {i18n.resolvedLanguage === 'de' ? 'So kannst du bei uns einkaufen' : 'Ways to shop'}
           </h3>
