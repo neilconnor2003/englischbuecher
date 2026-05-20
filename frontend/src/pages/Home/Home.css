@@ -94,7 +94,7 @@
   display: flex;
   gap: 24px;
   overflow-x: auto;
-  padding: 10px 16px 20px;
+  padding: 10px 0 20px;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   justify-content: flex-start;
@@ -1063,4 +1063,180 @@
 
 .home-page-v2 section + section {
   margin-top: 24px;
+}
+
+/* =========================================================
+   MOBILE SIDE PADDING FIX (CRITICAL)
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .home-page-v2 .container {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .wp-hero__card {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .home-swiper {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+}
+
+body {
+  overflow-x: hidden;
+}
+
+/* =========================================================
+   MOBILE PREMIUM PATCH (SPACING + TAP TARGETS + SEPARATORS + ANIMATIONS)
+   Paste this at the VERY BOTTOM of Home.css
+   ========================================================= */
+
+/* --- 1) MOBILE SIDE PADDING (including safe area / notch) --- */
+@media (max-width: 768px) {
+  .home-page-v2 .container,
+  .home-page-v2 .wp-ways__container {
+    /* 16px is a solid “premium” baseline; safe-area keeps iPhone notch edges safe */
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+
+  /* Slightly tighter vertical rhythm on mobile */
+  .home-page-v2 section {
+    padding-top: 22px;
+    padding-bottom: 22px;
+  }
+
+  /* Titles: smaller margins = less “empty air” */
+  .home-page-v2 .section-title {
+    margin: 18px 0 14px !important;
+    font-size: 1.75rem;
+  }
+
+  .home-page-v2 .section-header {
+    margin-bottom: 16px;
+  }
+}
+
+/* --- 2) TAP TARGETS (44x44 recommended) --- */
+.home-page-v2 a,
+.home-page-v2 button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 768px) {
+  /* Buttons and important links should be easy to tap */
+  .home-page-v2 .wp-btn,
+  .home-page-v2 .view-all-btn,
+  .home-page-v2 .home-request-book-btn {
+    min-height: 44px;          /* WCAG guidance (enhanced) */
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  /* Cards as tap targets */
+  .home-page-v2 .category-card,
+  .home-page-v2 .wp-ways__card,
+  .home-page-v2 .wp-hero__bookLink {
+    min-height: 44px;
+  }
+
+  /* Give cards a little “press” feedback (feels app-like) */
+  .home-page-v2 .category-card:active,
+  .home-page-v2 .wp-ways__card:active,
+  .home-page-v2 .wp-btn:active,
+  .home-page-v2 .view-all-btn:active,
+  .home-page-v2 .home-request-book-btn:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Visible keyboard focus (premium + accessible) */
+.home-page-v2 a:focus-visible,
+.home-page-v2 button:focus-visible {
+  outline: 3px solid rgba(147, 51, 234, 0.35);
+  outline-offset: 3px;
+  border-radius: 14px;
+}
+
+/* --- 3) SUBTLE SECTION SEPARATORS (clean, modern) --- */
+/* Add gentle divider between sections without big gaps */
+.home-page-v2 > section {
+  position: relative;
+}
+
+/* Divider line appears between sections */
+.home-page-v2 > section + section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: min(860px, calc(100% - 32px));
+  transform: translateX(-50%);
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(31, 22, 51, 0.10),
+    transparent
+  );
+}
+
+/* --- 4) MOBILE CARD GRID TUNING (premium spacing) --- */
+@media (max-width: 768px) {
+  /* Categories: 2 columns on mobile with nice spacing */
+  .home-page-v2 .categories-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .home-page-v2 .category-card {
+    border-radius: 22px;
+    padding: 16px 12px;
+  }
+
+  .home-page-v2 .category-icon,
+  .home-page-v2 .category-icon-placeholder {
+    width: 64px;
+    height: 64px;
+  }
+}
+
+/* --- 5) SMOOTH SCROLL REVEAL ANIMATIONS --- */
+.home-page-v2 .reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 500ms ease, transform 500ms ease;
+}
+
+.home-page-v2 .reveal.reveal--in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Respect reduced motion preferences (accessibility) */
+@media (prefers-reduced-motion: reduce) {
+  .home-page-v2 .reveal {
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* --- 6) A LITTLE EXTRA MOBILE POLISH --- */
+@media (max-width: 768px) {
+  .home-page-v2 .wp-hero__card {
+    width: 100%;
+  }
+
+  .home-page-v2 .wp-trust {
+    gap: 10px;
+    font-size: 0.9rem;
+  }
 }

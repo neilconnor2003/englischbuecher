@@ -82,6 +82,32 @@ function Home() {
       });
   }, []);
 
+
+  // Smooth scroll-reveal animations (IntersectionObserver)
+  useEffect(() => {
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    if (reduceMotion) return; // respect reduced motion preference
+
+    const sections = document.querySelectorAll('.home-page-v2 > section');
+    sections.forEach((s) => s.classList.add('reveal'));
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('reveal--in');
+            observer.unobserve(entry.target); // reveal once (premium feel)
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -10% 0px' }
+    );
+
+    sections.forEach((s) => observer.observe(s));
+
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     if (!visibleCategories.length || catLoading) return;
 
@@ -222,36 +248,6 @@ function Home() {
           </h3>
 
           <div className="wp-ways__grid">
-            {/*<Link to="/books" className="wp-ways__card">
-              <div className="wp-ways__icon">📚</div>
-              <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Online stöbern' : 'Browse online'}</div>
-              <div className="wp-ways__desc">
-                {i18n.resolvedLanguage === 'de'
-                  ? 'Entdecke Kategorien, Bestseller & Neuheiten.'
-                  : 'Explore categories, bestsellers & new arrivals.'}
-              </div>
-            </Link>
-
-            <Link to="/books" className="wp-ways__card">
-              <div className="wp-ways__icon">🚚</div>
-              <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Lieferung' : 'Delivery'}</div>
-              <div className="wp-ways__desc">
-                {i18n.resolvedLanguage === 'de'
-                  ? 'Bequem nach Hause – sicher bezahlen.'
-                  : 'Delivered to your door — secure checkout.'}
-              </div>
-            </Link>
-
-            <Link to="/request-book" className="wp-ways__card wp-ways__card--highlight">
-              <div className="wp-ways__icon">✨</div>
-              <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Buch‑Finder' : 'Book finder'}</div>
-              <div className="wp-ways__desc">
-                {i18n.resolvedLanguage === 'de'
-                  ? 'Nichts gefunden? Frag es an — wir erweitern ständig.'
-                  : 'Can’t find it? Request it — we add books regularly.'}
-              </div>
-            </Link>*/}
-
             <div className="wp-ways__card">
               <div className="wp-ways__icon">📚</div>
               <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Online stöbern' : 'Browse online'}</div>
