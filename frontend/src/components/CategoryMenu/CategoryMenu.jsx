@@ -238,7 +238,7 @@ function CategoryMenu() {
 
   return (
     <div className="category-dropdown" ref={triggerRef}>
-      <button
+      {/*<button
         type="button"
         className="category-toggle"
         onClick={toggleOpen}
@@ -246,39 +246,41 @@ function CategoryMenu() {
         aria-haspopup="menu"
       >
         {t('categories')}
-        {/*<span className="desktop-only">{t('categories')}</span>*/}
-        {' '}
-        <ChevronDown className={`chevron ${isOpen ? 'open' : ''}`} />
-      </button>
+        <span className="desktop-only">{t('categories')}</span>
+      {' '}
+      <ChevronDown className={`chevron ${isOpen ? 'open' : ''}`} />
+    </button> */}
 
-      {isOpen && overlayRoot && createPortal(
-        <div
-          ref={panelRef}
-          className="category-panel dropdown-menu dropdown-menu--portal"
-          role="menu"
-          /*style={{
-            position: 'fixed',
-            top: pos.top,
-            left: pos.left,
-            transform: 'translateX(-50%)'
-          }}*/
+      {
+        isOpen && overlayRoot && createPortal(
+          <div
+            ref={panelRef}
+            className="category-panel dropdown-menu dropdown-menu--portal"
+            role="menu"
+            style={{
+              position: 'fixed',
+              top: pos.top,
+              left: pos.left,
+              transform: 'translateX(-50%)'
+            }}
 
-          style={
-            window.innerWidth <= 768
-              ? { top: 0, left: 0, transform: 'none' }
-              : {
-                top: pos.top,
-                left: pos.left,
-                transform: 'translateX(-50%)'
-              }
-          }
+            /*style={
+              window.innerWidth <= 768
+                ? { top: 0, left: 0, transform: 'none' }
+                : {
+                  top: pos.top,
+                  left: pos.left,
+                  transform: 'translateX(-50%)'
+                }
+            }*/
 
-        >
-          <MenuContent />
-        </div>,
-        overlayRoot
-      )}
-    </div>
+          >
+            <MenuContent />
+          </div>,
+          overlayRoot
+        )
+      }
+    </div >
   );
 }
 
