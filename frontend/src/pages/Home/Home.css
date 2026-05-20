@@ -724,6 +724,14 @@
   padding: 18px;
   position: relative;
   overflow: hidden;
+  
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+
+  height: auto;              /* ✅ IMPORTANT */
+  min-height: unset;         /* ✅ avoid stretching */
+
 }
 
 .wp-hero__chip {
@@ -742,7 +750,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  margin-top: 34px;
+  margin-top: 16px;
 }
 
 .wp-hero__mockCover {
@@ -915,7 +923,7 @@
 
 /* 2. Real book covers in hero */
 .wp-hero__bookCover {
-  height: 120px;
+  height: 100px;
   width: 100%;
   object-fit: cover;
   border-radius: 14px;
@@ -956,7 +964,7 @@
 }
 
 .wp-hero__info {
-  margin-top: 14px;
+  margin-top: 8px;
 }
 
 .wp-hero__info p {

@@ -70,7 +70,7 @@ function Home() {
     };
   }, [heroBooks]);
 
-  useEffect(() => {
+  {/*useEffect(() => {
     if (!heroBooks || heroBooks.length === 0) return;
 
     const interval = setInterval(() => {
@@ -78,7 +78,7 @@ function Home() {
     }, 5000); // change every 5 sec
 
     return () => clearInterval(interval);
-  }, [heroBooks]);
+  }, [heroBooks]);*/}
 
   const [newArrivals, setNewArrivals] = useState([]);
   useEffect(() => {
