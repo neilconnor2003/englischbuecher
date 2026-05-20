@@ -89,7 +89,7 @@ const Banner = () => {
               </Link>
             </div>*/}
 
-            <div className="banner-content">
+            <div className="hero-banner-content">
               <h1>{i18n.language === 'de' ? current.title_de ?? current.title_en : current.title_en}</h1>
 
               <p>
