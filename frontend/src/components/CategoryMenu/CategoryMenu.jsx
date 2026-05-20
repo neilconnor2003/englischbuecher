@@ -238,7 +238,7 @@ function CategoryMenu() {
 
   return (
     <div className="category-dropdown" ref={triggerRef}>
-      {/*<button
+      <button
         type="button"
         className="category-toggle"
         onClick={toggleOpen}
@@ -247,9 +247,9 @@ function CategoryMenu() {
       >
         {t('categories')}
         <span className="desktop-only">{t('categories')}</span>
-      {' '}
-      <ChevronDown className={`chevron ${isOpen ? 'open' : ''}`} />
-    </button> */}
+        {' '}
+        <ChevronDown className={`chevron ${isOpen ? 'open' : ''}`} />
+      </button>
 
       {
         isOpen && overlayRoot && createPortal(
@@ -264,15 +264,15 @@ function CategoryMenu() {
               transform: 'translateX(-50%)'
             }}
 
-            /*style={
-              window.innerWidth <= 768
-                ? { top: 0, left: 0, transform: 'none' }
-                : {
-                  top: pos.top,
-                  left: pos.left,
-                  transform: 'translateX(-50%)'
-                }
-            }*/
+          /*style={
+            window.innerWidth <= 768
+              ? { top: 0, left: 0, transform: 'none' }
+              : {
+                top: pos.top,
+                left: pos.left,
+                transform: 'translateX(-50%)'
+              }
+          }*/
 
           >
             <MenuContent />
