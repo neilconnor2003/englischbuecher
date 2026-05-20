@@ -625,7 +625,7 @@
    ========================================================= */
 
 .wp-hero {
-  padding: 30px 0 10px;
+  padding: 20px 0 10px;
   background:
     radial-gradient(1000px 420px at 10% 0%, rgba(147, 51, 234, 0.12), transparent 60%),
     radial-gradient(900px 420px at 90% 10%, rgba(236, 72, 153, 0.10), transparent 55%);
@@ -750,7 +750,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: 10px;
 }
 
 .wp-hero__mockCover {
@@ -1041,4 +1041,18 @@
 
 .home-page-v2 section:last-of-type {
   padding-bottom: 60px;
+}
+
+/* =========================================================
+   FIX GLOBAL SECTION MARGIN BUG (HIGHEST PRIORITY)
+   ========================================================= */
+
+.home-page-v2 section {
+  margin-bottom: 0 !important;
+}
+
+/* PROFESSIONAL SPACING SYSTEM */
+
+.home-page-v2 section + section {
+  margin-top: 24px;
 }
