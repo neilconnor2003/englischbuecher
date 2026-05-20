@@ -910,14 +910,12 @@
   object-fit: cover;
   border-radius: 14px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  transition: transform 0.3s ease, box-shadow 0.4s ease;
+  transition: transform 0.5s ease, box-shadow 0.5s ease;
 }
 
 .wp-hero__bookCover:hover {
-
-  transform: translateY(-6px) scale(1.08);
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.25);
-
+  transform: translateY(-8px) scale(1.1);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
 }
 
 /* 3. CENTER "Ways to Shop" properly */
@@ -960,4 +958,22 @@
 .wp-hero__info-sub {
   font-size: 0.9rem;
   color: rgba(31, 22, 51, 0.65);
+}
+
+.wp-ways__card,
+.wp-hero__card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Hover upgrade */
+.wp-ways__card:hover,
+.wp-hero__card:hover {
+  transform: translateY(-6px);
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
 }

@@ -16,7 +16,12 @@ function Home() {
   const { t, i18n } = useTranslation();
   const [popularBooks, setPopularBooks] = useState([]);
   const [categorySections, setCategorySections] = useState([]);
+  const [heroBooks, setHeroBooks] = useState([]);
   const { data = { visibleRoots: [] }, isLoading: catLoading } = useGetCategoriesQuery();
+
+  const [heroBooks, setHeroBooks] = useState([]);
+  const [heroIndex, setHeroIndex] = useState(0);
+
 
   const visibleCategories = Array.isArray(data.visibleRoots)
     ? [...data.visibleRoots].sort((a, b) => a.id - b.id)
@@ -27,6 +32,23 @@ function Home() {
       .then(res => setPopularBooks(Array.isArray(res.data) ? res.data : []))
       .catch(() => setPopularBooks([]));
   }, []);
+
+  useEffect(() => {
+    if (popularBooks && popularBooks.length > 0) {
+      const shuffled = [...popularBooks].sort(() => 0.5 - Math.random());
+      setHeroBooks(shuffled);
+    }
+  }, [popularBooks]);
+
+  useEffect(() => {
+    if (!heroBooks || heroBooks.length === 0) return;
+
+    const interval = setInterval(() => {
+      setHeroIndex((prev) => (prev + 1) % heroBooks.length);
+    }, 5000); // change every 5 sec
+
+    return () => clearInterval(interval);
+  }, [heroBooks]);
 
   const [newArrivals, setNewArrivals] = useState([]);
   useEffect(() => {
@@ -120,21 +142,12 @@ function Home() {
               <div className="wp-hero__chip">
                 {i18n.resolvedLanguage === 'de' ? 'Neu & Beliebt' : 'New & Popular'}
               </div>
-              {/*<div className="wp-hero__mockGrid">
-                <div className="wp-hero__mockCover" />
-                <div className="wp-hero__mockCover" />
-                <div className="wp-hero__mockCover" />
-                <div className="wp-hero__mockCover" />
-              </div>*/}
-
-
-
 
               <div className="wp-hero__mockGrid">
-                {popularBooks && popularBooks.length > 0 ? (
-                  [...popularBooks]                 // IMPORTANT: clone array
-                    .sort(() => 0.5 - Math.random()) // ✅ randomize books every load
-                    .slice(0, 4)
+                {heroBooks && heroBooks.length > 0 ? (
+                  heroBooks
+                    .slice(heroIndex, heroIndex + 4)
+                    .concat(heroBooks.slice(0, Math.max(0, heroIndex + 4 - heroBooks.length)))
                     .map((book) => (
                       <img
                         key={book.id}
@@ -156,9 +169,6 @@ function Home() {
                   </>
                 )}
               </div>
-
-
-
 
               <div className="wp-hero__info">
                 <p>
