@@ -280,7 +280,8 @@ function CategoryMenu() {
   const [pos, setPos] = useState({ top: 0, left: 0 });
 
   // NEW: controls showing the root list under “All Books” on mobile
-  const [allBooksOpen, setAllBooksOpen] = useState(false);
+  //const [allBooksOpen, setAllBooksOpen] = useState(false);
+  const [allBooksOpen, setAllBooksOpen] = useState(!canHover);
 
   const hoverCloseTimer = useRef(null);
 
@@ -427,10 +428,17 @@ function CategoryMenu() {
             <button
               type="button"
               className="dropdown-item-link all-books-row"
+              /*onClick={() => {
+                setAllBooksOpen(v => !v);
+                setExpandedId(null);
+              }}*/
+
               onClick={() => {
+                if (!canHover) return; // don't collapse on mobile
                 setAllBooksOpen(v => !v);
                 setExpandedId(null);
               }}
+
             >
               <span className="cat-label">All Books</span>
               <ChevronDown className={`chevron ${allBooksOpen ? 'open' : ''}`} aria-hidden />
