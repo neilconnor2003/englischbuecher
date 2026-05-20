@@ -1,5 +1,5 @@
 
-// src/components/CategoryMenu/CategoryMenu.jsx                  {cat.children.map(child => (
+// src/components/CategoryMenu/CategoryMenu.jsx
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -19,15 +19,18 @@ function CategoryMenu() {
     if (typeof window === 'undefined' || !window.matchMedia) return true;
     return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   }, []);
+  const isMobile = !canHover;
 
   // Refs & state
-  const triggerRef = useRef(null);     // wraps the "Categories" button
-  const panelRef = useRef(null);       // floating panel element
-  const [isOpen, setIsOpen] = useState(false);
-  const [hoveredId, setHoveredId] = useState(null);    // desktop: which parent is hovered
-  const [expandedId, setExpandedId] = useState(null);  // mobile: which parent is expanded
-  const [pos, setPos] = useState({ top: 0, left: 0 }); // panel position in viewport coords
+  const triggerRef = useRef(null);
+  const panelRef = useRef(null);
 
+  const [isOpen, setIsOpen] = useState(false);
+  const [hoveredId, setHoveredId] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
+  const [mobileListOpen, setMobileListOpen] = useState(false);
+
+  const [pos, setPos] = useState({ top: 0, left: 0 });
   const hoverCloseTimer = useRef(null);
 
   // Visible, sorted categories
@@ -43,80 +46,89 @@ function CategoryMenu() {
   }, [data.hierarchy]);
 
   // Navigate and close
-  /*const goToCategory = (id) => {
-    const params = new URLSearchParams(location.search);
-    params.set('category', String(id));
-    navigate(`/books?${params.toString()}`);
-    setIsOpen(false); setHoveredId(null); setExpandedId(null);
-  };*/
-
   const goToCategory = (id) => {
     setIsOpen(false);
     setHoveredId(null);
     setExpandedId(null);
+    setMobileListOpen(false);
 
     const params = new URLSearchParams(location.search);
     params.set('category', String(id));
     navigate(`/books?${params.toString()}`);
   };
 
-
   // Close on route change
   useEffect(() => {
-    setIsOpen(false); setHoveredId(null); setExpandedId(null);
+    setIsOpen(false);
+    setHoveredId(null);
+    setExpandedId(null);
+    setMobileListOpen(false);
   }, [location.pathname, location.search]);
 
-  // Toggle menu
+  // Toggle menu (ONLY open/close; All Books toggles inside panel)
   const toggleOpen = () => {
-    setIsOpen(v => !v);
-    if (isOpen) { setHoveredId(null); setExpandedId(null); }
+    setIsOpen(prev => {
+      const next = !prev;
+
+      if (next) {
+        // opening
+        setMobileListOpen(false);
+        setExpandedId(null);
+      } else {
+        // closing
+        setHoveredId(null);
+        setExpandedId(null);
+        setMobileListOpen(false);
+      }
+      return next;
+    });
   };
 
-  // Position panel just under the trigger button
+  // Position panel under trigger on desktop
   const placePanel = () => {
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
     setPos({ top: rect.bottom + 12, left: rect.left + rect.width / 2 });
   };
 
-
-  const startHoverClose = (delay = 140) => {
-    if (hoverCloseTimer.current) clearTimeout(hoverCloseTimer.current);
-    hoverCloseTimer.current = setTimeout(() => {
-      setHoveredId(null);
-    }, delay);
-  };
-  const cancelHoverClose = () => {
-    if (hoverCloseTimer.current) clearTimeout(hoverCloseTimer.current);
-  };
-
-
   useEffect(() => {
     if (!isOpen) return;
-    placePanel();
-    window.addEventListener('resize', placePanel);
-    window.addEventListener('scroll', placePanel, true);
-    return () => {
-      window.removeEventListener('resize', placePanel);
-      window.removeEventListener('scroll', placePanel, true);
-    };
-  }, [isOpen]);
 
-  // Close on outside click / ESC (works with body-portal)
+    // only need positioning on desktop
+    if (!isMobile) {
+      placePanel();
+      window.addEventListener('resize', placePanel);
+      window.addEventListener('scroll', placePanel, true);
+      return () => {
+        window.removeEventListener('resize', placePanel);
+        window.removeEventListener('scroll', placePanel, true);
+      };
+    }
+  }, [isOpen, isMobile]);
+
+  // Close on outside click / ESC
   useEffect(() => {
     const onDocClick = (e) => {
       if (!isOpen) return;
       const inTrigger = triggerRef.current?.contains(e.target);
       const inPanel = panelRef.current?.contains(e.target);
       if (!inTrigger && !inPanel) {
-        setIsOpen(false); setHoveredId(null); setExpandedId(null);
+        setIsOpen(false);
+        setHoveredId(null);
+        setExpandedId(null);
+        setMobileListOpen(false);
       }
     };
+
     const onEsc = (e) => {
       if (e.key === 'Escape') {
-        setIsOpen(false); setHoveredId(null); setExpandedId(null);
+        setIsOpen(false);
+        setHoveredId(null);
+        setExpandedId(null);
+        setMobileListOpen(false);
       }
     };
+
     document.addEventListener('mousedown', onDocClick);
     document.addEventListener('keydown', onEsc);
     return () => {
@@ -125,18 +137,53 @@ function CategoryMenu() {
     };
   }, [isOpen]);
 
-  // Hover helpers (desktop only)
-  const onHoverParent = (id) => { if (canHover) { setHoveredId(id); if (!isOpen) setIsOpen(true); } };
-  const clearHover = () => { if (canHover) setHoveredId(null); };
+  const startHoverClose = (delay = 140) => {
+    if (hoverCloseTimer.current) clearTimeout(hoverCloseTimer.current);
+    hoverCloseTimer.current = setTimeout(() => setHoveredId(null), delay);
+  };
+  const cancelHoverClose = () => {
+    if (hoverCloseTimer.current) clearTimeout(hoverCloseTimer.current);
+  };
 
-  // Menu content (conditions are inlined to prevent "undefined" refs)
-  const MenuContent = () => (
-    <>
-      {isLoading ? (
-        <div className="dropdown-item">Loading...</div>
-      ) : roots.length > 0 ? (
-        roots.map(cat => {
+  // Desktop hover helpers
+  const onHoverParent = (id) => {
+    if (!canHover) return;
+    setHoveredId(id);
+    if (!isOpen) setIsOpen(true);
+  };
+
+  // Panel style (desktop anchored, mobile full-screen)
+  const panelStyle = isMobile
+    ? { position: 'fixed', top: 0, left: 0, transform: 'none' }
+    : { position: 'fixed', top: pos.top, left: pos.left, transform: 'translateX(-50%)' };
+
+  const MenuContent = () => {
+    if (isLoading) return <div className="dropdown-item">Loading...</div>;
+    if (!roots.length) return <div className="dropdown-item">No categories</div>;
+
+    return (
+      <>
+        {/* Mobile: always show All Books row */}
+        {isMobile && (
+          <button
+            type="button"
+            className="dropdown-item-link all-books-row"
+            onClick={() => {
+              setMobileListOpen(v => !v);
+              setExpandedId(null);
+            }}
+          >
+            <span className="cat-label">All Books</span>
+            <ChevronDown className={`chevron ${mobileListOpen ? 'open' : ''}`} aria-hidden />
+          </button>
+        )}
+
+        {/* Root list:
+            Desktop always
+            Mobile only when All Books is expanded */}
+        {(!isMobile || mobileListOpen) && roots.map(cat => {
           const hasChildren = Array.isArray(cat.children) && cat.children.length > 0;
+          const isExpanded = expandedId === cat.id;
 
           return (
             <div
@@ -149,30 +196,23 @@ function CategoryMenu() {
                 type="button"
                 className="dropdown-item-link"
                 onClick={() => {
-                  if (!canHover && hasChildren) {
-                    setExpandedId(prev => (prev === cat.id ? null : cat.id)); // mobile expand/collapse
-                  } else {
-                    goToCategory(cat.id); // desktop click goes straight to category
+                  if (isMobile && hasChildren) {
+                    setExpandedId(prev => (prev === cat.id ? null : cat.id));
+                    return;
                   }
-
-                  /*if (!canHover && hasChildren) {
-                    // First click → expand
-                    if (expandedId !== cat.id) {
-                      setExpandedId(cat.id);
-                    } else {
-                      // Second click → navigate + close
-                      goToCategory(cat.id);
-                    }
-                  } else {
-                    goToCategory(cat.id);
-                  }*/
-
+                  goToCategory(cat.id);
                 }}
               >
                 <span className="cat-label">
                   {i18n.language === 'de' ? (cat.name_de || cat.name_en) : cat.name_en}
                 </span>
-                {hasChildren && <ChevronRight className="arrow-right" aria-hidden />}
+
+                {hasChildren && (
+                  <ChevronRight
+                    className={`arrow-right ${isExpanded ? 'arrow-right--open' : ''}`}
+                    aria-hidden
+                  />
+                )}
               </button>
 
               {/* Desktop: hover submenu */}
@@ -185,6 +225,7 @@ function CategoryMenu() {
                   <button type="button" className="submenu-item" onClick={() => goToCategory(cat.id)}>
                     <span className="cat-label">{t('view_all') || 'View all'}</span>
                   </button>
+
                   {cat.children.map(child => (
                     <button
                       type="button"
@@ -199,18 +240,23 @@ function CategoryMenu() {
                   ))}
                 </div>
               )}
+
               {/* Mobile: accordion submenu */}
-              {!canHover && expandedId === cat.id && hasChildren && (
+              {isMobile && isExpanded && hasChildren && (
                 <div className="submenu submenu--mobile">
                   <button
                     type="button"
                     className="submenu-item"
                     onClick={() => goToCategory(cat.id)}
                   >
-                    <span className="cat-label">{t('view_all') || 'View all'}</span>
+                    <span className="cat-label">
+                      {i18n.language === 'de'
+                        ? `Alle ${cat.name_de || cat.name_en}`
+                        : `All ${cat.name_en}`}
+                    </span>
                   </button>
 
-                  {Array.isArray(cat.children) && cat.children.map((child) => (
+                  {cat.children.map(child => (
                     <button
                       type="button"
                       key={child.id}
@@ -226,14 +272,11 @@ function CategoryMenu() {
               )}
             </div>
           );
-        })
-      ) : (
-        <div className="dropdown-item">No categories</div>
-      )}
-    </>
-  );
+        })}
+      </>
+    );
+  };
 
-  // Always mount overlay to <body> (robust against header overflow/clip)
   const overlayRoot = typeof document !== 'undefined' ? document.body : null;
 
   return (
@@ -245,42 +288,24 @@ function CategoryMenu() {
         aria-expanded={isOpen}
         aria-haspopup="menu"
       >
-        {t('categories')}
-        <span className="desktop-only">{t('categories')}</span>
-        {' '}
+        <span className="category-toggle-label">
+          {isMobile ? 'Browse Categories' : t('categories')}
+        </span>
         <ChevronDown className={`chevron ${isOpen ? 'open' : ''}`} />
       </button>
 
-      {
-        isOpen && overlayRoot && createPortal(
-          <div
-            ref={panelRef}
-            className="category-panel dropdown-menu dropdown-menu--portal"
-            role="menu"
-            style={{
-              position: 'fixed',
-              top: pos.top,
-              left: pos.left,
-              transform: 'translateX(-50%)'
-            }}
-
-          /*style={
-            window.innerWidth <= 768
-              ? { top: 0, left: 0, transform: 'none' }
-              : {
-                top: pos.top,
-                left: pos.left,
-                transform: 'translateX(-50%)'
-              }
-          }*/
-
-          >
-            <MenuContent />
-          </div>,
-          overlayRoot
-        )
-      }
-    </div >
+      {isOpen && overlayRoot && createPortal(
+        <div
+          ref={panelRef}
+          className="category-panel dropdown-menu dropdown-menu--portal"
+          role="menu"
+          style={panelStyle}
+        >
+          <MenuContent />
+        </div>,
+        overlayRoot
+      )}
+    </div>
   );
 }
 

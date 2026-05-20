@@ -256,10 +256,6 @@
     padding-left: 10px;
   }
 
-  .desktop-only {
-    display: none;
-  }
-
   .category-panel {
     display: flex;
     flex-direction: column;
@@ -270,4 +266,39 @@
     width: 100%;
   }
 
+}
+
+/* Mobile All Books row styling */
+.category-toggle-label {
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .category-toggle {
+    width: 100%;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #faf5ff;
+    border: 1px solid #e9d5ff;
+  }
+
+  .category-toggle:hover {
+    background: #f3e8ff;
+  }
+}
+
+/* Mobile All Books row *//* Mobile All Books row}
+
+/* Rotate right arrow when expanded (optional visual cue) */
+.arrow-right--open {
+  transform: rotate(90deg);
+}
+
+/* Ensure chevron rotates inside All Books row */
+.all-books-row .chevron.open {
+  transform: rotate(180deg);
+}
+.all-books-row {
+  font-weight: 700;
 }
