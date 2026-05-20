@@ -222,7 +222,7 @@ function Home() {
           </h3>
 
           <div className="wp-ways__grid">
-            <Link to="/books" className="wp-ways__card">
+            {/*<Link to="/books" className="wp-ways__card">
               <div className="wp-ways__icon">📚</div>
               <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Online stöbern' : 'Browse online'}</div>
               <div className="wp-ways__desc">
@@ -250,7 +250,38 @@ function Home() {
                   ? 'Nichts gefunden? Frag es an — wir erweitern ständig.'
                   : 'Can’t find it? Request it — we add books regularly.'}
               </div>
-            </Link>
+            </Link>*/}
+
+            <div className="wp-ways__card">
+              <div className="wp-ways__icon">📚</div>
+              <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Online stöbern' : 'Browse online'}</div>
+              <div className="wp-ways__desc">
+                {i18n.resolvedLanguage === 'de'
+                  ? 'Entdecke Kategorien, Bestseller & Neuheiten.'
+                  : 'Explore categories, bestsellers & new arrivals.'}
+              </div>
+            </div>
+
+            <div className="wp-ways__card">
+              <div className="wp-ways__icon">🚚</div>
+              <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Lieferung' : 'Delivery'}</div>
+              <div className="wp-ways__desc">
+                {i18n.resolvedLanguage === 'de'
+                  ? 'Bequem nach Hause – sicher bezahlen.'
+                  : 'Delivered to your door — secure checkout.'}
+              </div>
+            </div>
+
+            <div className="wp-ways__card wp-ways__card--highlight">
+              <div className="wp-ways__icon">✨</div>
+              <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Buch‑Finder' : 'Book finder'}</div>
+              <div className="wp-ways__desc">
+                {i18n.resolvedLanguage === 'de'
+                  ? 'Nichts gefunden? Frag es an — wir erweitern ständig.'
+                  : 'Can’t find it? Request it — we add books regularly.'}
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
