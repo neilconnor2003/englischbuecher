@@ -138,11 +138,24 @@ function CategoryMenu() {
                 type="button"
                 className="dropdown-item-link"
                 onClick={() => {
-                  if (!canHover && hasChildren) {
+                  /*if (!canHover && hasChildren) {
                     setExpandedId(prev => (prev === cat.id ? null : cat.id)); // mobile expand/collapse
                   } else {
                     goToCategory(cat.id); // desktop click goes straight to category
+                  }*/
+
+                  if (!canHover && hasChildren) {
+                    // First click → expand
+                    if (expandedId !== cat.id) {
+                      setExpandedId(cat.id);
+                    } else {
+                      // Second click → navigate + close
+                      goToCategory(cat.id);
+                    }
+                  } else {
+                    goToCategory(cat.id);
                   }
+
                 }}
               >
                 <span className="cat-label">
