@@ -16,14 +16,14 @@
   position: absolute;
   inset: 0;
 
-  /* soft purple overlay matching your theme */
+  /* Warby-style overlay */
   background: linear-gradient(135deg,
-      rgba(31, 22, 51, 0.6) 0%,
-      rgba(147, 51, 234, 0.45) 40%,
-      rgba(255, 255, 255, 0.1) 100%);
+      rgba(31, 22, 51, 0.55),
+      rgba(147, 51, 234, 0.25));
 
   z-index: 1;
 }
+
 
 /* Make text ABOVE overlay */
 .banner>* {
@@ -33,36 +33,61 @@
 
 .banner h1 {
   font-size: 3rem;
-  font-weight: 700;
+  font-weight: 800;
   margin-bottom: 16px;
   /*text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);*/
-  
+
   color: white;
-  text-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  text-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 
 }
 
+
+.banner-content {
+  position: relative;
+  z-index: 2;
+
+  max-width: 900px;
+  margin: 0 auto;
+
+  padding: 28px 26px;
+
+  border-radius: 20px;
+
+  /* glass effect */
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+
+  border: 1px solid rgba(255, 255, 255, 0.25);
+
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+
 .banner p {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.9);
   margin-bottom: 24px;
   opacity: 0.95;
 }
 
 .banner-button {
-  background: #8A2BE2;
   color: white;
   padding: 14px 32px;
-  border-radius: 50px;
   font-weight: 700;
   text-decoration: none;
   display: inline-block;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(138, 43, 226, 0.4);
+
+  background: linear-gradient(135deg, #9333ea, #c026d3);
+  border-radius: 40px;
+
+  box-shadow: 0 10px 30px rgba(147, 51, 234, 0.4);
 }
 
 .banner-button:hover {
   background: #6A1B9A;
-  transform: translateY(-2px);
+  transform: translateY(-3px) scale(1.02)
 }
 
 .animate-fade-in {

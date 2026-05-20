@@ -64,10 +64,16 @@ const Banner = () => {
       <div className="relative container mx-auto px-6 h-full flex items-center z-10">
         <div className="w-full max-w-7xl mx-auto">
           <div className="text-white pl-0 md:pl-12 lg:pl-32 xl:pl-48"> {/* THIS LINE DOES THE MAGIC */}
-            <div className="max-w-4xl">
+            {/*<div className="max-w-4xl">
               <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight drop-shadow-2xl">
                 {i18n.language === 'de' ? current.title_de || current.title_en : current.title_en}
               </h1>
+
+            <div className="banner-content">
+              <h1>
+                {i18n.language === 'de' ? current.title_de ?? current.title_en : current.title_en}
+              </h1>
+
               <p className="text-xl md:text-3xl mb-10 opacity-95 max-w-2xl drop-shadow-lg">
                 {i18n.language === 'de' ? current.subtitle_de || current.subtitle_en : current.subtitle_en}
               </p>
@@ -79,7 +85,25 @@ const Banner = () => {
                   ? current.button_text_de || 'Jetzt entdecken'
                   : current.button_text_en || 'Shop Now'}
               </Link>
+            </div>*/}
+
+            <div className="banner-content">
+              <h1>{i18n.language === 'de' ? current.title_de ?? current.title_en : current.title_en}</h1>
+
+              <p>
+                {i18n.language === 'de'
+                  ? current.subtitle_de ?? current.subtitle_en
+                  : current.subtitle_en}
+              </p>
+
+              <Link className="banner-button">
+                {i18n.language === 'de'
+                  ? current.button_text_de ?? 'Jetzt entdecken'
+                  : current.button_text_en ?? 'Shop Now'}
+              </Link>
             </div>
+            ``
+
           </div>
         </div>
       </div>
