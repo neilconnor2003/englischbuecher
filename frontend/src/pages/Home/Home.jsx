@@ -16,7 +16,6 @@ function Home() {
   const { t, i18n } = useTranslation();
   const [popularBooks, setPopularBooks] = useState([]);
   const [categorySections, setCategorySections] = useState([]);
-  const [heroBooks, setHeroBooks] = useState([]);
   const { data = { visibleRoots: [] }, isLoading: catLoading } = useGetCategoriesQuery();
 
   const [heroBooks, setHeroBooks] = useState([]);
