@@ -104,8 +104,6 @@ const Banner = () => {
                   : current.button_text_en ?? 'Shop Now'}
               </Link>
             </div>
-            ``
-
           </div>
         </div>
       </div>
