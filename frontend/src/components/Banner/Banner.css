@@ -49,7 +49,7 @@
 
 /* HEADLINE */
 .hero-banner h1 {
-  font-size: 3rem;
+  font-size: 2.8rem;
   font-weight: 800;
   line-height: 1.05;
   /*color: #2d1b4e;*/
@@ -109,13 +109,13 @@
 }
 
 /* DESKTOP SCALE */
-@media (min-width: 1024px) {
+@media (max-width: 768px) {
   .hero-banner h1 {
-    font-size: 4rem;
+    font-size: 3rem;
     /* ✅ BIG FIX */
   }
 
   .hero-banner p {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
   }
 }
