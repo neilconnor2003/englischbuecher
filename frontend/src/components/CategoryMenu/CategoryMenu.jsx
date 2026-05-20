@@ -424,14 +424,14 @@ function CategoryMenu() {
       ) : roots.length > 0 ? (
         <>
           {/* MOBILE: All Books row is always visible at top */}
-          {isMobile && (
+          {/*{isMobile && (
             <button
               type="button"
               className="dropdown-item-link all-books-row"
-              /*onClick={() => {
-                setAllBooksOpen(v => !v);
-                setExpandedId(null);
-              }}*/
+              //onClick={() => {
+              //  setAllBooksOpen(v => !v);
+              //  setExpandedId(null);
+              //}}
 
               onClick={() => {
                 //if (!canHover) return; // don't collapse on mobile
@@ -443,7 +443,7 @@ function CategoryMenu() {
               <span className="cat-label">All Books</span>
               <ChevronDown className={`chevron ${allBooksOpen ? 'open' : ''}`} aria-hidden />
             </button>
-          )}
+          )}*/}
 
           {/* ROOT list: Desktop always; Mobile only when All Books is expanded */}
           {(!isMobile || allBooksOpen) && roots.map(cat => {

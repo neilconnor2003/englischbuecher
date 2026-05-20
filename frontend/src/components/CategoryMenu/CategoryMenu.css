@@ -237,3 +237,22 @@
   width: 18px;
   height: 18px;
 }
+
+/* All Books row (mobile) */
+.all-books-row {
+  font-weight: 700;
+}
+
+/* Chevron on All Books row */
+.all-books-chevron {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.2s;
+  margin-left: auto;
+  opacity: 0.85;
+  color: #4c1d95;
+}
+
+.all-books-chevron.open {
+  transform: rotate(180deg);
+}
