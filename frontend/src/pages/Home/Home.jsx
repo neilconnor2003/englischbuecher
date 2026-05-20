@@ -11,6 +11,7 @@ import axios from 'axios';
 import BooksSlider from '../../components/BooksSlider/BooksSlider'; // NEW
 import './Home.css';
 import { Helmet } from 'react-helmet-async';
+import { generateBookUrl } from '../../utils/seoUrl';
 
 function Home() {
   const { t, i18n } = useTranslation();
@@ -20,6 +21,9 @@ function Home() {
 
   const [heroBooks, setHeroBooks] = useState([]);
   const [heroIndex, setHeroIndex] = useState(0);
+
+  const [heroFading, setHeroFading] = useState(false);
+
 
 
   const visibleCategories = Array.isArray(data.visibleRoots)
@@ -32,12 +36,39 @@ function Home() {
       .catch(() => setPopularBooks([]));
   }, []);
 
+  // 1) Pick a randomized hero list ONCE whenever popularBooks loads/changes
   useEffect(() => {
     if (popularBooks && popularBooks.length > 0) {
       const shuffled = [...popularBooks].sort(() => 0.5 - Math.random());
       setHeroBooks(shuffled);
+      setHeroIndex(0);
+    } else {
+      setHeroBooks([]);
+      setHeroIndex(0);
     }
   }, [popularBooks]);
+
+  // 2) Auto-rotate with fade
+  useEffect(() => {
+    if (!heroBooks || heroBooks.length === 0) return;
+
+    let fadeTimeout = null;
+
+    const interval = setInterval(() => {
+      setHeroFading(true);
+
+      // After fade-out, advance index and fade back in
+      fadeTimeout = setTimeout(() => {
+        setHeroIndex((prev) => (prev + 1) % heroBooks.length);
+        setHeroFading(false);
+      }, 260); // matches CSS transition duration below
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+      if (fadeTimeout) clearTimeout(fadeTimeout);
+    };
+  }, [heroBooks]);
 
   useEffect(() => {
     if (!heroBooks || heroBooks.length === 0) return;
@@ -142,7 +173,7 @@ function Home() {
                 {i18n.resolvedLanguage === 'de' ? 'Neu & Beliebt' : 'New & Popular'}
               </div>
 
-              <div className="wp-hero__mockGrid">
+              {/*<div className="wp-hero__mockGrid">
                 {heroBooks && heroBooks.length > 0 ? (
                   heroBooks
                     .slice(heroIndex, heroIndex + 4)
@@ -167,7 +198,45 @@ function Home() {
                     <div className="wp-hero__mockCover" />
                   </>
                 )}
+              </div>*/}
+
+
+              <div className={`wp-hero__mockGrid ${heroFading ? 'wp-hero__mockGrid--fade' : ''}`}>
+                {heroBooks && heroBooks.length > 0 ? (
+                  // show 4 books starting from heroIndex, wrap around
+                  heroBooks
+                    .slice(heroIndex, heroIndex + 4)
+                    .concat(heroBooks.slice(0, Math.max(0, heroIndex + 4 - heroBooks.length)))
+                    .map((book) => {
+                      const to = generateBookUrl(book); // same routing logic as BookCard [1](https://boehringer-my.sharepoint.com/personal/nilanjan_chatterjee_boehringer-ingelheim_com/Documents/EnglischBuecher/project/frontend/src/utils/seoUrl.js?web=1)[2](https://boehringer-my.sharepoint.com/personal/nilanjan_chatterjee_boehringer-ingelheim_com/Documents/Forms/DispForm.aspx?ID=268856&web=1)
+                      const title = book.title_en || book.title_de || book.title || 'Book';
+
+                      return (
+                        <Link
+                          key={book.id}
+                          to={to}
+                          className="wp-hero__bookLink"
+                          aria-label={`View ${title}`}
+                        >
+                          <img
+                            src={book.image ? book.image : 'https://via.placeholder.com/300x400?text=Book'}
+                            alt={title}
+                            className="wp-hero__bookCover"
+                            loading="lazy"
+                          />
+                        </Link>
+                      );
+                    })
+                ) : (
+                  <>
+                    <div className="wp-hero__mockCover" />
+                    <div className="wp-hero__mockCover" />
+                    <div className="wp-hero__mockCover" />
+                    <div className="wp-hero__mockCover" />
+                  </>
+                )}
               </div>
+
 
               <div className="wp-hero__info">
                 <p>
