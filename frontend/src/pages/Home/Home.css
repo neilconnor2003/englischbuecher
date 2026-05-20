@@ -354,9 +354,9 @@
    ========================================================= */
 
 
-.home-seo-text {
+/*.home-seo-text {
   margin-bottom: 100px;
-}
+}*/
 
 @media (max-width: 768px) {
   .home-seo-text {
@@ -1031,9 +1031,9 @@
    GLOBAL SECTION SPACING SYSTEM (PROFESSIONAL)
    ========================================================= */
 
-.home-page-v2 section {
+/*.home-page-v2 section {
   padding: 40px 0;
-}
+}*/
 
 .home-page-v2 section:first-of-type {
   padding-top: 20px;
