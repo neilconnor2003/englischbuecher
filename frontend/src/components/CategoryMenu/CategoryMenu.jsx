@@ -282,7 +282,7 @@ function CategoryMenu() {
 
   // NEW: controls showing the root list under “All Books” on mobile
   //const [allBooksOpen, setAllBooksOpen] = useState(false);
-  const [allBooksOpen, setAllBooksOpen] = useState(!canHover);
+  //const [allBooksOpen, setAllBooksOpen] = useState(!canHover);
 
   const hoverCloseTimer = useRef(null);
 
