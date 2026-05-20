@@ -24,8 +24,6 @@ function Home() {
 
   const [heroFading, setHeroFading] = useState(false);
 
-
-
   const visibleCategories = Array.isArray(data.visibleRoots)
     ? [...data.visibleRoots].sort((a, b) => a.id - b.id)
     : [];
@@ -70,16 +68,6 @@ function Home() {
     };
   }, [heroBooks]);
 
-  {/*useEffect(() => {
-    if (!heroBooks || heroBooks.length === 0) return;
-
-    const interval = setInterval(() => {
-      setHeroIndex((prev) => (prev + 1) % heroBooks.length);
-    }, 5000); // change every 5 sec
-
-    return () => clearInterval(interval);
-  }, [heroBooks]);*/}
-
   const [newArrivals, setNewArrivals] = useState([]);
   useEffect(() => {
     axios.get('/api/books')
@@ -117,7 +105,6 @@ function Home() {
 
   return (
     <div className="home-page-v2">
-
       <Helmet>
         <title>{t('home.meta.title')}</title>
         <meta
@@ -128,7 +115,6 @@ function Home() {
       </Helmet>
 
       <Banner />
-
 
       {/* WARBY-STYLE HERO (BOOKSTORE VERSION) */}
       <section className="wp-hero">
@@ -172,34 +158,6 @@ function Home() {
               <div className="wp-hero__chip">
                 {i18n.resolvedLanguage === 'de' ? 'Neu & Beliebt' : 'New & Popular'}
               </div>
-
-              {/*<div className="wp-hero__mockGrid">
-                {heroBooks && heroBooks.length > 0 ? (
-                  heroBooks
-                    .slice(heroIndex, heroIndex + 4)
-                    .concat(heroBooks.slice(0, Math.max(0, heroIndex + 4 - heroBooks.length)))
-                    .map((book) => (
-                      <img
-                        key={book.id}
-                        src={
-                          book.image
-                            ? book.image
-                            : 'https://via.placeholder.com/300x400?text=Book'
-                        }
-                        alt={book.title_en || book.title || 'Book'}
-                        className="wp-hero__bookCover"
-                      />
-                    ))
-                ) : (
-                  <>
-                    <div className="wp-hero__mockCover" />
-                    <div className="wp-hero__mockCover" />
-                    <div className="wp-hero__mockCover" />
-                    <div className="wp-hero__mockCover" />
-                  </>
-                )}
-              </div>*/}
-
 
               <div className={`wp-hero__mockGrid ${heroFading ? 'wp-hero__mockGrid--fade' : ''}`}>
                 {heroBooks && heroBooks.length > 0 ? (
@@ -284,16 +242,6 @@ function Home() {
               </div>
             </Link>
 
-            {/*<Link to="/books" className="wp-ways__card">
-              <div className="wp-ways__icon">🏬</div>
-              <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Click & Collect' : 'Click & Collect'}</div>
-              <div className="wp-ways__desc">
-                {i18n.resolvedLanguage === 'de'
-                  ? 'Online bezahlen & selbst abholen.'
-                  : 'Pay online and pick up yourself.'}
-              </div>
-            </Link>*/}
-
             <Link to="/request-book" className="wp-ways__card wp-ways__card--highlight">
               <div className="wp-ways__icon">✨</div>
               <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Buch‑Finder' : 'Book finder'}</div>
@@ -307,58 +255,57 @@ function Home() {
         </div>
       </section>
 
-
-
-      {/*<section className="hero-v3">
-        <div className="container hero-v3__inner">
-          <div className="hero-v3__copy">
-            <h2 className="hero-v3__title">
-              {i18n.resolvedLanguage === 'de'
-                ? 'Englische Bücher in Deutschland – schnell & zuverlässig'
-                : 'English books in Germany — fast & reliable'}
-            </h2>
-
-            <p className="hero-v3__subtitle">
-              {i18n.resolvedLanguage === 'de'
-                ? 'Entdecke Bestseller, Klassiker und Neuheiten. Sicher bezahlen – Lieferung oder Click & Collect.'
-                : 'Discover bestsellers, classics, and new arrivals. Secure payments — delivery or Click & Collect.'}
-            </p>
-
-            <div className="hero-v3__actions">
-              <Link to="/books" className="hero-v3__primary">
-                {i18n.resolvedLanguage === 'de' ? 'Jetzt stöbern' : 'Browse books'}
-              </Link>
-              <Link to="/request-book" className="hero-v3__secondary">
-                {i18n.resolvedLanguage === 'de' ? 'Buch anfragen' : 'Request a book'}
-              </Link>
-            </div>
-
-            <div className="hero-v3__trust">
-              <span>✓ {i18n.resolvedLanguage === 'de' ? 'Sichere Zahlung' : 'Secure payment'}</span>
-              <span>✓ {i18n.resolvedLanguage === 'de' ? 'Versand in DE' : 'Shipping in Germany'}</span>
-              <span>✓ {i18n.resolvedLanguage === 'de' ? 'Click & Collect' : 'Click & Collect'}</span>
-            </div>
-          </div>
-
-          <div className="hero-v3__visual" aria-hidden="true">
-            <div className="hero-v3__card">
-              <div className="hero-v3__badge">{i18n.resolvedLanguage === 'de' ? 'Neu' : 'New'}</div>
-              <div className="hero-v3__mockCover" />
-              <div className="hero-v3__lines">
-                <div className="hero-v3__line hero-v3__line--a" />
-                <div className="hero-v3__line hero-v3__line--b" />
-                <div className="hero-v3__line hero-v3__line--c" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>*/}
-
-
       <h1 className="sr-only">
         {t('home.seo.h1')}
       </h1>
 
+      {/* POPULAR BOOKS */}
+      {popularBooks.length > 0 && (
+        <section className="popular-section">
+          <div className="container">
+            <h2 className="section-title">
+              <span className="fire">{t('home.popular')}</span>
+            </h2>
+
+            <BooksSlider
+              books={popularBooks}
+              variant="default"
+              className="home-swiper"
+            />
+          </div>
+        </section>
+      )}
+
+      {/* REQUEST BOOK / CATALOG INFO SECTION */}
+      <section className="request-book-section">
+        <div className="container">
+          <div className="request-book-card">
+            <div className="request-book-text">
+              <h2>
+                {i18n.resolvedLanguage === 'de'
+                  ? 'Mehr englische Bücher folgen regelmäßig'
+                  : 'More English books are added regularly'}
+              </h2>
+
+              <p>
+                {i18n.resolvedLanguage === 'de'
+                  ? 'Wir erweitern unser Sortiment kontinuierlich. Falls Sie ein bestimmtes Buch nicht finden, können Sie es ganz einfach bei uns anfragen.'
+                  : 'We continuously expand our catalog. If you can’t find a specific book, you can easily request it from us.'}
+
+              </p>
+            </div>
+
+            <Link
+              to="/request-book"
+              className="home-request-book-btn"
+            >
+              {i18n.resolvedLanguage === 'de'
+                ? 'Buch anfragen'
+                : 'Request a Book'}
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* CATEGORY ICONS */}
       {visibleCategories.length > 0 && (
@@ -398,103 +345,6 @@ function Home() {
                 </Link>
               ))}
             </div>
-          </div>
-        </section>
-      )}
-
-
-      {/*<section className="wp-quiz">
-        <div className="container">
-          <div className="wp-quiz__header">
-            <h3 className="wp-quiz__title">
-              {i18n.resolvedLanguage === 'de' ? 'Finde dein nächstes Buch' : 'Find your next book'}
-            </h3>
-            <p className="wp-quiz__sub">
-              {i18n.resolvedLanguage === 'de'
-                ? 'Wähle eine Stimmung — wir bringen dich direkt zu passenden Titeln.'
-                : 'Pick a mood — jump straight to matching titles.'}
-            </p>
-          </div>
-
-          <div className="wp-quiz__grid">
-            <Link className="wp-quiz__tile" to="/books?q=classic">
-              <span className="wp-quiz__emoji">📖</span>
-              <span className="wp-quiz__label">{i18n.resolvedLanguage === 'de' ? 'Klassiker' : 'Classics'}</span>
-            </Link>
-            <Link className="wp-quiz__tile" to="/books?q=thriller">
-              <span className="wp-quiz__emoji">🕵️</span>
-              <span className="wp-quiz__label">{i18n.resolvedLanguage === 'de' ? 'Spannung' : 'Thrillers'}</span>
-            </Link>
-            <Link className="wp-quiz__tile" to="/books?q=business">
-              <span className="wp-quiz__emoji">💼</span>
-              <span className="wp-quiz__label">{i18n.resolvedLanguage === 'de' ? 'Business' : 'Business'}</span>
-            </Link>
-            <Link className="wp-quiz__tile" to="/books?q=kids">
-              <span className="wp-quiz__emoji">🧸</span>
-              <span className="wp-quiz__label">{i18n.resolvedLanguage === 'de' ? 'Kinder' : 'Kids'}</span>
-            </Link>
-          </div>
-        </div>
-      </section>*/}
-
-
-
-      {/* REQUEST BOOK / CATALOG INFO SECTION */}
-      <section className="request-book-section">
-        <div className="container">
-          <div className="request-book-card">
-            <div className="request-book-text">
-              <h2>
-                {i18n.resolvedLanguage === 'de'
-                  ? 'Mehr englische Bücher folgen regelmäßig'
-                  : 'More English books are added regularly'}
-              </h2>
-
-              <p>
-                {i18n.resolvedLanguage === 'de'
-                  ? 'Wir erweitern unser Sortiment kontinuierlich. Falls Sie ein bestimmtes Buch nicht finden, können Sie es ganz einfach bei uns anfragen.'
-                  : 'We continuously expand our catalog. If you can’t find a specific book, you can easily request it from us.'}
-
-              </p>
-            </div>
-
-            <Link
-              to="/request-book"
-              className="home-request-book-btn"
-            >
-              {i18n.resolvedLanguage === 'de'
-                ? 'Buch anfragen'
-                : 'Request a Book'}
-            </Link>
-          </div>
-        </div>
-      </section>
-
-
-      {/*<section className="trust-strip">
-        <div className="container trust-strip__inner">
-          <div className="trust-item">🔒 {i18n.resolvedLanguage === 'de' ? 'Sicher bezahlen' : 'Secure payments'}</div>
-          <div className="trust-item">🚚 {i18n.resolvedLanguage === 'de' ? 'Versand in Deutschland' : 'Shipping in Germany'}</div>
-          <div className="trust-item">📦 {i18n.resolvedLanguage === 'de' ? 'Click & Collect möglich' : 'Click & Collect available'}</div>
-          <div className="trust-item">💬 {i18n.resolvedLanguage === 'de' ? 'Support & Kontakt' : 'Support & contact'}</div>
-        </div>
-      </section>*/}
-
-
-
-      {/* POPULAR BOOKS */}
-      {popularBooks.length > 0 && (
-        <section className="popular-section">
-          <div className="container">
-            <h2 className="section-title">
-              <span className="fire">{t('home.popular')}</span>
-            </h2>
-
-            <BooksSlider
-              books={popularBooks}
-              variant="default"
-              className="home-swiper"
-            />
           </div>
         </section>
       )}
@@ -545,18 +395,6 @@ function Home() {
           </div>
         </section>
       ))}
-
-      {/*<section className="home-seo-text container">
-        <h2>{t('home.seo.h2')}</h2>
-
-        <p>
-          {t('home.seo.p1')}
-        </p>
-
-        <p>
-          {t('home.seo.p3')}
-        </p>
-      </section>*/}
 
     </div>
   );
