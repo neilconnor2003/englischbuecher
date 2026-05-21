@@ -331,7 +331,9 @@ const CheckoutPage = ({ clientSecret }) => {
     updatePI();
   }, [clientSecret, grandTotal, shippingMode, t]);
 
-  const applyDiscount = async () => {
+  const [discountError, setDiscountError] = useState("");
+
+  /*const applyDiscount = async () => {
     try {
       const normalized = discountCode.trim().toUpperCase();
       const { data } = await axios.post('/api/discounts/validate', {
@@ -345,7 +347,30 @@ const CheckoutPage = ({ clientSecret }) => {
       toast.error(err.response?.data?.error || "Invalid code");
       setAppliedDiscount(null);
     }
+  };*/
+
+  const applyDiscount = async () => {
+    try {
+      setDiscountError(""); // ✅ clear old error
+
+      const normalized = discountCode.trim().toUpperCase();
+
+      const { data } = await axios.post('/api/discounts/validate', {
+        code: normalized,
+      });
+
+      setAppliedDiscount(data);
+      toast.success("Discount applied");
+
+    } catch (err) {
+      const msg = err.response?.data?.error || "Invalid code";
+
+      setDiscountError(msg);     // ✅ store error for UI
+      toast.error(msg);          // ✅ keep toast also
+      setAppliedDiscount(null);
+    }
   };
+
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -527,11 +552,22 @@ const CheckoutPage = ({ clientSecret }) => {
 
                 {!appliedDiscount ? (
                   <div className="promo-row">
+                    {discountError && (
+                      <div style={{ color: 'red', marginTop: '8px', fontSize: '14px' }}>
+                        {discountError}
+                      </div>
+                    )}
                     <input
                       className="promo-input"
                       type="text"
                       value={discountCode}
-                      onChange={(e) => setDiscountCode(e.target.value)}
+                      //onChange={(e) => setDiscountCode(e.target.value)}
+
+                      onChange={(e) => {
+                        setDiscountCode(e.target.value);
+                        setDiscountError(""); // ✅ clear error when typing
+                      }}
+
                       placeholder={t('discount_placeholder') || 'Enter code'}
                     />
                     <button
