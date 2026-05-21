@@ -796,3 +796,10 @@
   flex-shrink: 1 !important;
   min-width: 0 !important;
 }
+
+/* ✅ Hide the CategoryMenu button ONLY on mobile */
+@media (max-width: 768px) {
+  .category-dropdown > .category-toggle {
+    display: none !important;
+  }
+}
