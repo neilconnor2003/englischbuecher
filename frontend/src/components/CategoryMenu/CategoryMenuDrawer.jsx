@@ -63,7 +63,7 @@ export default function CategoryMenuDrawer({ onNavigate }) {
         <ChevronDown className={`chevron ${allBooksOpen ? 'open' : ''}`} aria-hidden />
       </button>
 
-      <button
+      {/*<button
         type="button"
         className="submenu-item submenu-item--allbooks"
         onClick={goToAllBooks}
@@ -71,7 +71,7 @@ export default function CategoryMenuDrawer({ onNavigate }) {
         <span className="cat-label">
           {i18n.language === 'de' ? 'Alle Bücher anzeigen' : 'View all books'}
         </span>
-      </button>
+      </button>*/}
 
       {/* Root list */}
       {allBooksOpen && roots.map(cat => {
