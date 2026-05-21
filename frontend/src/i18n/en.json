@@ -544,5 +544,11 @@
   "click_collect": "Click & Collect (pickup in Binge 55411)",
   "pickup_title": "Click & Collect — Free",
   "pickup_hint": "Pickup in Bingen 55411. Exact address and time window will be shared after purchase.",
-  "free": "Free"
+  "free": "Free",
+  "shipping_cost": "Shipping Cost",
+  "free_delivery_code": "🎉 You've unlocked free delivery with your code",
+  "free_delivery_threshold": "🎉 Free delivery on orders above €{{amount}}",
+  "discount_placeholder": "Enter discount code",
+  "secure_checkout_note": "🔒 Secure checkout. Payment handled by Stripe.",
+  "checkout_email_fixed": "This email is linked to your account"
 }

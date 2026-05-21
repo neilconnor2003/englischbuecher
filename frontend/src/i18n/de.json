@@ -515,5 +515,11 @@
   "click_collect": "Click & Collect (Abholung in Bingen 55411)",
   "pickup_title": "Click & Collect — Gratis",
   "pickup_hint": "Abholung in Bingen 55411. Genaue Adresse und Zeitfenster nach dem Kauf.",
-  "free": "Kostenlos"
+  "free": "Kostenlos",
+  "shipping_cost": "Versandkosten",
+  "free_delivery_code": "🎉 Dein Code aktiviert kostenlosen Versand",
+  "free_delivery_threshold": "🎉 Kostenloser Versand ab {{amount}} €",
+  "discount_placeholder": "Rabattcode eingeben",
+  "secure_checkout_note": "🔒 Sicherer Checkout. Zahlung erfolgt über Stripe.",
+  "checkout_email_fixed": "Diese E-Mail ist mit deinem Benutzerkonto verknüpft"
 }

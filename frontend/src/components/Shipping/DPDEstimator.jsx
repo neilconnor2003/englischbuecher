@@ -29,6 +29,9 @@ export default function DPDEstimator({ weightGrams }) {
       }}
     >
       <div style={{ fontWeight: 700 }}>
+        <span style={{ fontWeight: 500, marginRight: 6 }}>
+          {t('shipping_cost') || 'Shipping Cost'}:
+        </span>
         {formattedPrice}
       </div>
       <div style={{ fontSize: 13 }}>

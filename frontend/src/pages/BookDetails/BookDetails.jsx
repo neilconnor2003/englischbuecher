@@ -48,10 +48,10 @@ function BookDetails() {
   const [loading, setLoading] = useState(true);
   const [bookId, setBookId] = useState(null);
   const [adding, setAdding] = useState(false);
-  //const [shippingMode, setShippingMode] = useState('delivery');
+  const [shippingMode, setShippingMode] = useState('delivery');
   const initialCtx = getDeliveryContext() || {};
 
-  const [shippingMode, setShippingMode] = useState(initialCtx.shippingMode || 'delivery');
+  //const [shippingMode, setShippingMode] = useState(initialCtx.shippingMode || 'delivery');
   //const [postalCode, setPostalCode] = useState(initialCtx.postalCode || '');
   //const [city, setCity] = useState(initialCtx.city || '');
   const [mainImage, setMainImage] = useState('');
@@ -601,9 +601,9 @@ function BookDetails() {
                 </div>*/}
 
                 {/* Shipping choice: Delivery vs. Click & Collect */}
-                <div className="shipping-choice">
+                {/*<div className="shipping-choice">
 
-                  {/*{shippingMode === 'delivery' && (
+                  {shippingMode === 'delivery' && (
                     <div className="delivery-fields">
                       <div className="delivery-grid">
                         <div className="delivery-field">
@@ -633,7 +633,7 @@ function BookDetails() {
                         </div>
                       )}
                     </div>
-                  )}*/}
+                  )}
 
                   <Radio.Group
                     value={shippingMode}
@@ -642,6 +642,12 @@ function BookDetails() {
                     <Radio value="delivery">{t('delivery_ship_to_postcode') || 'Deliver to postcode'}</Radio>
                     <Radio value="pickup">{t('click_collect') || 'Click & Collect (pickup in Ingelheim)'}</Radio>
                   </Radio.Group>
+                </div>*/}
+
+                <div className="shipping-choice">
+                  <div className="ship-radio selected">
+                    <span>{t('delivery_ship_to_postcode') || 'Delivery (DPD)'}</span>
+                  </div>
                 </div>
 
                 {/*{shippingMode === 'delivery' ? (

@@ -62,7 +62,8 @@ const CartPage = () => {
   const FREE_SHIPPING_THRESHOLD = 30;
 
   const ctx = getDeliveryContext() || {};
-  const [shippingMode, setShippingMode] = useState(ctx.shippingMode || 'delivery');
+  //const [shippingMode, setShippingMode] = useState(ctx.shippingMode || 'delivery');
+  const [shippingMode, setShippingMode] = useState('delivery');
 
   const totalWeightGrams = useMemo(() => {
     return weightedItems.reduce(
@@ -71,7 +72,7 @@ const CartPage = () => {
     );
   }, [weightedItems]);
 
-    // Subtotal (items only)
+  // Subtotal (items only)
   const subtotal = useMemo(() => Number(totalPrice || 0), [totalPrice]);
 
   const calculatedShippingCost = useMemo(() => {
@@ -720,7 +721,7 @@ const CartPage = () => {
             <div className="cart-summary-grid">
               <div className="cart-shipping-panel">
                 {/* Shipping choice */}
-                <div className="shipping-choice">
+                {/*<div className="shipping-choice">
                   <Radio.Group
                     value={shippingMode}
                     onChange={(e) => setShippingMode(e.target.value)}
@@ -728,13 +729,21 @@ const CartPage = () => {
                     <Radio value="delivery">{t('delivery_ship_to_postcode') || 'Deliver to postcode'}</Radio>
                     <Radio value="pickup">{t('click_collect') || 'Click & Collect (pickup)'}</Radio>
                   </Radio.Group>
+                </div>*/}
+
+                <div className="shipping-choice">
+                  <div className="ship-radio selected">
+                    <span>
+                      {t('delivery_ship_to_postcode') || 'Delivery (DPD)'}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Delivery mode: existing component */}
                 {shippingMode === 'delivery' ? (
                   <div className="dpd-static-card">
                     <div className="dpd-price">
-                      {currency.format(calculatedShippingCost)}
+                      {t('shipping_cost') || 'Shipping Cost'}: {currency.format(calculatedShippingCost)}
                     </div>
                     <div className="dpd-label">
                       {isDE
