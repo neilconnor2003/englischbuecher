@@ -12,6 +12,7 @@ import axios from 'axios';
 import './CheckoutPage.css';
 import { getDeliveryContext, setDeliveryContext } from '../../utils/deliveryContext';
 import { getDPDShippingPrice } from '../../utils/dpdShipping';
+import { Link } from "react-router-dom";
 
 const CheckoutPage = ({ clientSecret }) => {
   const { t } = useTranslation();
@@ -611,7 +612,7 @@ const CheckoutPage = ({ clientSecret }) => {
                 </button>
 
                 <div className="trust-note">
-                  🔒 {t('secure_checkout_note') || 'Secure checkout. Payment handled by Stripe.'}
+                  {t('secure_checkout_note') || 'Secure checkout. Payment handled by Stripe.'}
                 </div>
               </div>
             </div>
@@ -623,17 +624,25 @@ const CheckoutPage = ({ clientSecret }) => {
 
                 <div className="summary-items">
                   {cartItems.map((item) => (
-                    <div key={item.bookId} className="summary-item">
+                    <Link
+                      key={item.bookId}
+                      to={`/book/${item.slug}`}
+                      className="summary-item clickable"
+                    >
                       <img
                         src={item.image || "/assets/book-placeholder.jpg"}
-                        alt={item.title_en || item.name || 'Book'}
+                        alt={item.title_en}
                       />
+
                       <div className="item-details">
                         <h3>{item.title_en || item.name}</h3>
                         <p>{t('quantity')}: {item.quantity}</p>
                       </div>
-                      <div className="item-price">€{(item.price * item.quantity).toFixed(2)}</div>
-                    </div>
+
+                      <div className="item-price">
+                        €{(item.price * item.quantity).toFixed(2)}
+                      </div>
+                    </Link>
                   ))}
                 </div>
 
