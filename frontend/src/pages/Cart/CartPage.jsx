@@ -62,8 +62,8 @@ const CartPage = () => {
   const FREE_SHIPPING_THRESHOLD = 30;
 
   const ctx = getDeliveryContext() || {};
-  const [shippingMode, setShippingMode] = useState(ctx.shippingMode || 'delivery');
-  //const [shippingMode, setShippingMode] = useState('delivery');
+  //const [shippingMode, setShippingMode] = useState(ctx.shippingMode || 'delivery');
+  const [shippingMode, setShippingMode] = useState('delivery');
 
   const totalWeightGrams = useMemo(() => {
     return weightedItems.reduce(
@@ -732,11 +732,11 @@ const CartPage = () => {
                 </div>*/}
 
                 <div className="shipping-choice">
-                  <Radio.Group value={shippingMode} disabled>
-                    <Radio value="delivery">
-                      {t('delivery_ship_to_postcode') || 'Deliver to postcode'}
-                    </Radio>
-                  </Radio.Group>
+                  <div className="ship-radio selected">
+                    <span>
+                      {t('delivery_ship_to_postcode') || 'Delivery (DPD)'}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Delivery mode: existing component */}
