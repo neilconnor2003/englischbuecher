@@ -2606,7 +2606,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
       // 1) Same author
       const [sameAuthor] = await db.execute(
-        `SELECT id, slug, rating, review_count, title_en, title_de, author, image, price, original_price, isbn13, isbn10
+        `SELECT id, slug, rating, review_count, title_en, title_de, author, image, price, original_price, isbn13, isbn10, stock
        FROM books
        WHERE author = ? AND id != ?
        LIMIT 8`,
@@ -2616,7 +2616,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
       // 2) Customers who bought this also bought (orders with this book → other books in those orders)
       const [alsoBought] = await db.execute(
         `
-      SELECT DISTINCT b.id, b.slug, b.rating, b.review_count, b.title_en, b.title_de, b.author, b.image, b.price, b.original_price, b.isbn10, b.isbn13
+      SELECT DISTINCT b.id, b.slug, b.rating, b.review_count, b.title_en, b.title_de, b.author, b.image, b.price, b.original_price, b.isbn10, b.isbn13, b.stock
       FROM orders o
       JOIN JSON_TABLE(o.order_items, '$[*]'
         COLUMNS (
@@ -2639,7 +2639,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
       // 3) Similar category
       const [similar] = await db.execute(
-        `SELECT id, slug, rating, review_count, title_en, title_de, author, image, price, original_price, isbn13, isbn10
+        `SELECT id, slug, rating, review_count, title_en, title_de, author, image, price, original_price, isbn13, isbn10, stock
        FROM books
        WHERE category_id = ? AND id != ?
        LIMIT 12`,
@@ -2655,7 +2655,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
         const [seriesRows] = await db.execute(
           `
     SELECT id, slug, rating, review_count, title_en, title_de, author, image, price, original_price, isbn13, isbn10,
-           series_name, series_volume
+           series_name, series_volume, stock
     FROM books
     WHERE series_name = ? AND id != ?
     ORDER BY
@@ -2735,7 +2735,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
           b.id, b.slug, b.title_en, b.title_de, b.author,
           b.image, b.price, b.original_price, b.rating, b.review_count,
-          b.isbn10, b.isbn13
+          b.isbn10, b.isbn13, b.stock
         FROM book_authors ba
         JOIN books b   ON b.id = ba.book_id
         JOIN authors a ON a.id = ba.author_id
@@ -2825,7 +2825,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
         `
       SELECT DISTINCT b.id, b.slug, b.title_en, b.title_de, b.author,
              b.image, b.price, b.original_price, b.rating, b.review_count,
-             b.isbn10, b.isbn13
+             b.isbn10, b.isbn13, b.stock
       FROM orders o
       JOIN JSON_TABLE(o.order_items, '$[*]'
            COLUMNS ( bookId INT PATH '$.bookId' )
@@ -2855,7 +2855,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
           `
         SELECT id, slug, title_en, title_de, author,
                image, price, original_price, rating, review_count,
-               isbn10, isbn13
+               isbn10, isbn13, stock
         FROM books
         WHERE category_id IN (${cPlace})
           AND id NOT IN (${nPlace})
