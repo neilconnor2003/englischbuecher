@@ -591,7 +591,8 @@ function CategoryMenu() {
         <ChevronDown className={`chevron ${isOpen ? 'open' : ''}`} />
       </button>
 
-      {isOpen && overlayRoot && createPortal(
+      {/*{isOpen && overlayRoot && createPortal(*/}
+      {(isOpen || isMobile) && overlayRoot && createPortal(
         <div
           ref={panelRef}
           className="category-panel dropdown-menu dropdown-menu--portal"
