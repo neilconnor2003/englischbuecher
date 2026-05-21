@@ -29,7 +29,8 @@ const CheckoutPage = ({ clientSecret }) => {
   const [postalCode, setPostalCode] = useState("");
   const [city, setCity] = useState("");
 
-  const [shippingMode, setShippingMode] = useState('delivery');
+  //const [shippingMode, setShippingMode] = useState('delivery');
+  const shippingMode = 'delivery';
 
   const [loading, setLoading] = useState(false);
   const [paymentReady, setPaymentReady] = useState(false);
@@ -66,8 +67,12 @@ const CheckoutPage = ({ clientSecret }) => {
     Number(subtotal || 0) >= FREE_SHIPPING_THRESHOLD;
 
   // ✅ Effective shipping: pickup = 0, free shipping = 0, otherwise shippingAmount
+  /*const effectiveShipping =
+    shippingMode === 'pickup' ? 0 : (isFreeShipping ? 0 : Number(shippingAmount || 0));*/
+
   const effectiveShipping =
-    shippingMode === 'pickup' ? 0 : (isFreeShipping ? 0 : Number(shippingAmount || 0));
+    isFreeShipping ? 0 : Number(shippingAmount || 0);
+
 
   const grandTotal = subtotal + effectiveShipping;
 
@@ -81,7 +86,8 @@ const CheckoutPage = ({ clientSecret }) => {
       if (raw) {
         const parsed = JSON.parse(raw);
         setShippingAmount(Number(parsed.amount_eur || 0));
-        setShippingMode(parsed.mode || 'delivery');
+        //setShippingMode(parsed.mode || 'delivery');
+        //setShippingMode(resolvedMode);
       }
     } catch { }
   }, []);
@@ -112,7 +118,7 @@ const CheckoutPage = ({ clientSecret }) => {
     const resolvedMode =
       ctx?.shippingMode || 'delivery';
 
-    setShippingMode(resolvedMode);
+    //setShippingMode(resolvedMode);
     setPostalCode(resolvedPostal);
     setCity(resolvedCity);
 
@@ -285,8 +291,12 @@ const CheckoutPage = ({ clientSecret }) => {
       const amount_cents = Math.round(grandTotal * 100);
 
 
-      const shipping_provider = shippingMode === 'pickup' ? 'PICKUP' : 'DPD';
-      const shipping_service = shippingMode === 'pickup' ? 'Click & Collect' : 'Standard';
+      //const shipping_provider = shippingMode === 'pickup' ? 'PICKUP' : 'DPD';
+      //const shipping_service = shippingMode === 'pickup' ? 'Click & Collect' : 'Standard';
+
+      const shipping_provider = 'DPD';
+      const shipping_service = 'Standard';
+
 
 
       try {
@@ -370,11 +380,15 @@ const CheckoutPage = ({ clientSecret }) => {
         // ✅ NEW: shipping metadata (backend already supports this)
         //shipping_amount_eur: Number(shippingAmount || 0),
         shipping_amount_eur: Number(effectiveShipping.toFixed(2)),
-        shipping_provider: shippingMode === 'pickup' ? 'PICKUP' : 'DPD',
-        shipping_service: shippingMode === 'pickup' ? 'Click & Collect' : 'Standard',
+        //shipping_provider: shippingMode === 'pickup' ? 'PICKUP' : 'DPD',
+        //shipping_service: shippingMode === 'pickup' ? 'Click & Collect' : 'Standard',
+        //shipping_mode: shippingMode,
 
 
-        shipping_mode: shippingMode,
+        shipping_provider: 'DPD',
+        shipping_service: 'Standard',
+        shipping_mode: 'delivery',
+
 
         shipping_selected_rate_id: null, // static pricing, no carrier rate
 
@@ -426,11 +440,12 @@ const CheckoutPage = ({ clientSecret }) => {
                 <div className="total-row">
                   {/*<span>{t('cart.shipping_label') || 'Shipping'}</span>*/}
 
-                  <span>
+                  {/*<span>
                     {shippingMode === 'pickup'
                       ? (t('cart.pickup_label') || 'Pickup')
                       : (t('cart.shipping_label') || 'Shipping')}
-                  </span>
+                  </span>*/}
+                  <span>{t('cart.shipping_label') || 'Shipping'}</span>
 
                   {/*<span className="total-price">€{shipping.toFixed(2)}</span>*/}
                   <span className="total-price">
@@ -460,7 +475,7 @@ const CheckoutPage = ({ clientSecret }) => {
 
               <div className="form-group">
                 <label>{t('delivery_method') || 'Delivery method'}</label>
-                <div className="shipping-choice">
+                {/*<div className="shipping-choice">
                   <label className="ship-radio">
                     <input
                       type="radio"
@@ -490,6 +505,14 @@ const CheckoutPage = ({ clientSecret }) => {
                     />
                     <span>{t('click_collect') || 'Click & Collect (pickup)'}</span>
                   </label>
+                </div>*/}
+
+                <div className="shipping-choice">
+                  <div className="ship-radio selected">
+                    <span>
+                      {t('delivery_ship_to_postcode') || 'Delivery (DPD)'}
+                    </span>
+                  </div>
                 </div>
 
                 {shippingMode === 'pickup' && (
