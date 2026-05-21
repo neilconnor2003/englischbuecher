@@ -20,6 +20,7 @@ import CategoryMenu from '../CategoryMenu/CategoryMenu';
 import axios from 'axios';
 import config from '../../config';
 import './Header.css';
+import CategoryMenuDrawer from '../CategoryMenu/CategoryMenuDrawer';
 
 function HeaderAfterLogin() {
   const { t } = useTranslation();
@@ -309,7 +310,8 @@ function HeaderAfterLogin() {
           onClose={() => setMobileMenuOpen(false)}
           bodyStyle={{ padding: 12 }}
         >
-          <CategoryMenu />
+          {/*<CategoryMenu />*/}
+          <CategoryMenuDrawer onNavigate={() => setMobileMenuOpen(false)} />
         </Drawer>
 
       </div>
