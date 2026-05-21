@@ -3645,100 +3645,130 @@ WHERE ci.user_id = ?
           ...(shipping_service ? { shipping_service } : {}),
           });*/
 
-          return res.json({
-            ok: true,
-            paymentIntent: { id: pi.id, status: pi.status, amount: pi.amount },
-            metadata: pi.metadata,
-          });
-        } catch(err) {
-          console.error('[orders/update-payment-intent-amount] error:', err?.message || err);
-          return res.status(500).json({ error: 'pi_update_failed' });
-        }
+      return res.json({
+        ok: true,
+        paymentIntent: { id: pi.id, status: pi.status, amount: pi.amount },
+        metadata: pi.metadata,
       });
+    } catch (err) {
+      console.error('[orders/update-payment-intent-amount] error:', err?.message || err);
+      return res.status(500).json({ error: 'pi_update_failed' });
+    }
+  });
 
-      /*app.post('/api/orders/update-payment-intent-amount', (req, res) => {
-        res.status(410).json({ error: 'deprecated' });
-      });*/
+  /*app.post('/api/orders/update-payment-intent-amount', (req, res) => {
+    res.status(410).json({ error: 'deprecated' });
+  });*/
 
-      // === ORDER ROUTES ===
-      console.log('✅ Mounting orders routes from:', require.resolve('./routes/orderRoutes'));
+  // === ORDER ROUTES ===
+  console.log('✅ Mounting orders routes from:', require.resolve('./routes/orderRoutes'));
 
-      const ordersRouter = require('./routes/orderRoutes')(db);
-      app.use('/api/orders', ordersRouter);
+  const ordersRouter = require('./routes/orderRoutes')(db);
+  app.use('/api/orders', ordersRouter);
 
-      // ✅ DEBUG: list actual registered routes under /api/orders
-      app.get('/api/_debug/orders-routes', (req, res) => {
-        const list = (ordersRouter.stack || [])
-          .filter(l => l.route)
-          .map(l => ({
-            methods: Object.keys(l.route.methods).join(',').toUpperCase(),
-            path: l.route.path
-          }));
-        res.json(list);
-      });
+  // ✅ DEBUG: list actual registered routes under /api/orders
+  app.get('/api/_debug/orders-routes', (req, res) => {
+    const list = (ordersRouter.stack || [])
+      .filter(l => l.route)
+      .map(l => ({
+        methods: Object.keys(l.route.methods).join(',').toUpperCase(),
+        path: l.route.path
+      }));
+    res.json(list);
+  });
 
-      app.use('/admin/wishlist', require('./routes/admin/wishlist')(db));
-      app.use('/api/admin/cart', require('./routes/admin/cart')(db));
+  app.use('/admin/wishlist', require('./routes/admin/wishlist')(db));
+  app.use('/api/admin/cart', require('./routes/admin/cart')(db));
 
-      app.use('/api/cart', require('./routes/cartWeights')(db));
+  app.use('/api/cart', require('./routes/cartWeights')(db));
 
-      // AFTER app.use('/api/orders', ...)
-      app.post('/webhook/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
-        const stripeWebhook = require('./webhook/stripeWebhook');
-        await stripeWebhook(req, res, db);
-      });
+  // AFTER app.use('/api/orders', ...)
+  app.post('/webhook/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+    const stripeWebhook = require('./webhook/stripeWebhook');
+    await stripeWebhook(req, res, db);
+  });
 
-      // === START SERVER ===
-      const PORT = process.env.PORT || 3001;
+  // CREATE DISCOUNT CODE
+  router.post('/', async (req, res) => {
+    const { code, type, value } = req.body;
 
-      // ✅ 0) Health endpoint BEFORE any SPA/static fallback
-      app.get("/health", (req, res) => {
-        res.json({
-          env: process.env.NODE_ENV,
-          port: process.env.PORT,
-          db: process.env.DB_NAME
-        });
-      });
+    await db.query(
+      'INSERT INTO discount_codes (code, type, value) VALUES (?, ?, ?)',
+      [code.toUpperCase(), type, value]
+    );
 
-      app.get('/sitemap.xml', async (req, res) => {
-        try {
-          const baseUrl = 'https://englischbuecher.de';
+    res.json({ success: true });
+  });
 
-          const [books] = await db.execute(`
+  // POST /api/discounts/validate
+  router.post('/validate', async (req, res) => {
+    const { code } = req.body;
+    const [rows] = await db.query(
+      'SELECT * FROM discount_codes WHERE code = ? AND is_active = 1',
+      [code.toUpperCase()]
+    );
+    if (!rows.length) {
+      return res.status(400).json({ error: 'Invalid code' });
+    }
+    const discount = rows[0];
+    if (discount.expiry_date && new Date(discount.expiry_date) < new Date()) {
+      return res.status(400).json({ error: 'Code expired' });
+    }
+    res.json(discount);
+  });
+
+
+  // === START SERVER ===
+  const PORT = process.env.PORT || 3001;
+
+  // ✅ 0) Health endpoint BEFORE any SPA/static fallback
+  app.get("/health", (req, res) => {
+    res.json({
+      env: process.env.NODE_ENV,
+      port: process.env.PORT,
+      db: process.env.DB_NAME
+    });
+  });
+
+  app.get('/sitemap.xml', async (req, res) => {
+    try {
+      const baseUrl = 'https://englischbuecher.de';
+
+      const [books] = await db.execute(`
       SELECT slug, created_at
       FROM books
       WHERE stock > 0
     `);
 
-          const urls = [];
+      const urls = [];
 
-          const staticPages = [
-            '',
-            '/about',
-            '/contact',
-            '/faq',
-            '/imprint',
-            '/privacy',
-            '/terms',
-            '/shipping',
-            '/returns',
-            '/revocation',
-            '/books',
-            '/request-book',
-          ];
+      const staticPages = [
+        '',
+        '/about',
+        '/contact',
+        '/faq',
+        '/imprint',
+        '/privacy',
+        '/terms',
+        '/shipping',
+        '/returns',
+        '/revocation',
+        '/books',
+        '/request-book',
+      ];
 
-          staticPages.forEach((path) => {
-            urls.push(`
+      staticPages.forEach((path) => {
+        urls.push(`
         <url>
           <loc>${baseUrl}${path}</loc>
           <changefreq>monthly</changefreq>
           <priority>0.8</priority>
         </url>
       `);
-          });
+      });
 
-          books.forEach((book) => {
-            urls.push(`
+      books.forEach((book) => {
+        urls.push(`
         <url>
           <loc>${baseUrl}/book/${book.slug}</loc>
           <lastmod>${new Date(book.created_at).toISOString()}</lastmod>
@@ -3746,42 +3776,42 @@ WHERE ci.user_id = ?
           <priority>0.9</priority>
         </url>
       `);
-          });
+      });
 
-          const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+      const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.join('')}
 </urlset>`;
 
-          res.header('Content-Type', 'application/xml');
-          res.send(sitemap);
-        } catch (err) {
-          console.error('Sitemap error:', err);
-          res.status(500).send('Error generating sitemap');
-        }
-      });
+      res.header('Content-Type', 'application/xml');
+      res.send(sitemap);
+    } catch (err) {
+      console.error('Sitemap error:', err);
+      res.status(500).send('Error generating sitemap');
+    }
+  });
 
-      // ✅ Optional root endpoint (nice for quick checks)
-      app.get("/", (req, res) => {
-        res.status(200).send("OK - EnglischBuecher API");
-      });
+  // ✅ Optional root endpoint (nice for quick checks)
+  app.get("/", (req, res) => {
+    res.status(200).send("OK - EnglischBuecher API");
+  });
 
-      // ✅ API-only 404 (keeps curl results clean)
-      app.use((req, res) => {
-        res.status(404).json({ error: "not_found" });
-      });
+  // ✅ API-only 404 (keeps curl results clean)
+  app.use((req, res) => {
+    res.status(404).json({ error: "not_found" });
+  });
 
-      //  // 1) Serve static frontend (optional on VPS, but keep if you want)
-      //  const distPath = path.join(__dirname, '..', 'frontend', 'dist');
-      //  app.use(express.static(distPath));
+  //  // 1) Serve static frontend (optional on VPS, but keep if you want)
+  //  const distPath = path.join(__dirname, '..', 'frontend', 'dist');
+  //  app.use(express.static(distPath));
 
-      //  // 2) SPA fallback for everything that is NOT an API or static/upload route
-      //  app.get(/^\/(?!api|uploads|webhook|auth|health).*/, (req, res) => {
-      //    res.sendFile(path.join(distPath, 'index.html'));
-      //  });
+  //  // 2) SPA fallback for everything that is NOT an API or static/upload route
+  //  app.get(/^\/(?!api|uploads|webhook|auth|health).*/, (req, res) => {
+  //    res.sendFile(path.join(distPath, 'index.html'));
+  //  });
 
-      app.listen(PORT, '0.0.0.0', () => {
-        console.log(`Server running on port ${PORT}`);
-      });
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 
-    })();
+})();

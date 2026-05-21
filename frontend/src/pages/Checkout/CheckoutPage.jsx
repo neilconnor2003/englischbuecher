@@ -49,6 +49,11 @@ const CheckoutPage = ({ clientSecret }) => {
 
   const FREE_SHIPPING_THRESHOLD = 30;
 
+
+  const [discountCode, setDiscountCode] = useState("");
+  const [appliedDiscount, setAppliedDiscount] = useState(null);
+
+
   //const subtotal = Number(totalPrice || 0);
   //const shipping = Number(shippingAmount || 0);
   //const grandTotal = subtotal + shipping;
@@ -70,8 +75,17 @@ const CheckoutPage = ({ clientSecret }) => {
   /*const effectiveShipping =
     shippingMode === 'pickup' ? 0 : (isFreeShipping ? 0 : Number(shippingAmount || 0));*/
 
+  /*const effectiveShipping =
+    isFreeShipping ? 0 : Number(shippingAmount || 0);*/
+
+
+  const isFreeDeliveryCode =
+    appliedDiscount?.type === 'FREE_SHIPPING';
+
   const effectiveShipping =
-    isFreeShipping ? 0 : Number(shippingAmount || 0);
+    isFreeDeliveryCode
+      ? 0
+      : (isFreeShipping ? 0 : Number(shippingAmount || 0));
 
 
   const grandTotal = subtotal + effectiveShipping;
@@ -316,6 +330,20 @@ const CheckoutPage = ({ clientSecret }) => {
     updatePI();
   }, [clientSecret, grandTotal, shippingMode, t]);
 
+  const applyDiscount = async () => {
+    try {
+      const { data } = await axios.post('/api/discounts/validate', {
+        code: discountCode,
+      });
+
+      setAppliedDiscount(data);
+      toast.success("Discount applied");
+
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Invalid code");
+      setAppliedDiscount(null);
+    }
+  };
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -373,6 +401,10 @@ const CheckoutPage = ({ clientSecret }) => {
           status: paymentIntent.status,
           email_address: email,
         },
+
+        discount_code: appliedDiscount?.code || null,
+        discount_type: appliedDiscount?.type || null,
+
 
         //totalPrice: Number(totalPrice || 0) + Number(shippingAmount || 0),
         totalPrice: Number(grandTotal.toFixed(2)),
@@ -548,6 +580,24 @@ const CheckoutPage = ({ clientSecret }) => {
                   <strong>Deutschland (DE)</strong>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Discount Code</label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input
+                type="text"
+                value={discountCode}
+                onChange={(e) => setDiscountCode(e.target.value)}
+                placeholder="Enter code"
+              />
+              <button
+                type="button"
+                onClick={applyDiscount}
+              >
+                Apply
+              </button>
             </div>
           </div>
 
