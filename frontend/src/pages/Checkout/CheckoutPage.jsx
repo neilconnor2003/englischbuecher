@@ -332,8 +332,9 @@ const CheckoutPage = ({ clientSecret }) => {
 
   const applyDiscount = async () => {
     try {
+      const normalized = discountCode.trim().toUpperCase();
       const { data } = await axios.post('/api/discounts/validate', {
-        code: discountCode,
+        code: normalized,
       });
 
       setAppliedDiscount(data);
@@ -440,212 +441,229 @@ const CheckoutPage = ({ clientSecret }) => {
     }
   };
 
+
   return (
     <div className="checkout-page">
       <div className="checkout-container">
         <h1 className="checkout-title">{t('checkout')}</h1>
 
         <form onSubmit={submitHandler} id="checkout-form">
-          <div className="top-row">
-            {/* LEFT: ORDER SUMMARY */}
-            <div className="summary-card">
-              <div className="summary-header">{t('order_summary')}</div>
-              <div className="summary-items">
-                {cartItems.map((item) => (
-                  <div key={item.bookId} className="summary-item">
-                    <img src={item.image || "/assets/book-placeholder.jpg"} alt={item.title_en} />
-                    <div className="item-details">
-                      <h3>{item.title_en || item.name}</h3>
-                      <p>{t('quantity')}: {item.quantity}</p>
+          <div className="checkout-grid">
+            {/* LEFT: Delivery + Discount + Payment */}
+            <div className="checkout-main">
+              {/* Shipping / address */}
+              <div className="address-card">
+                <div className="form-header">{t('shipping_address')}</div>
+
+                <div className="form-group">
+                  <label>{t('delivery_method') || 'Delivery method'}</label>
+                  <div className="shipping-choice">
+                    <div className="ship-radio selected">
+                      <span>{t('delivery_ship_to_postcode') || 'Delivery (DPD)'}</span>
                     </div>
-                    <div className="item-price">€{(item.price * item.quantity).toFixed(2)}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Totals with shipping */}
-              <div className="summary-total">
-                <div className="total-row">
-                  <span>{t('cart.subtotal') || 'Subtotal'}</span>
-                  <span className="total-price">€{subtotal.toFixed(2)}</span>
-                </div>
-                <div className="total-row">
-                  {/*<span>{t('cart.shipping_label') || 'Shipping'}</span>*/}
-
-                  {/*<span>
-                    {shippingMode === 'pickup'
-                      ? (t('cart.pickup_label') || 'Pickup')
-                      : (t('cart.shipping_label') || 'Shipping')}
-                  </span>*/}
-                  <span>{t('cart.shipping_label') || 'Shipping'}</span>
-
-                  {/*<span className="total-price">€{shipping.toFixed(2)}</span>*/}
-                  <span className="total-price">
-                    {/*{isFreeShipping ? t('free') || '0,00 €' : `€${shipping.toFixed(2)}`}*/}
-
-                    {shippingMode === 'pickup'
-                      ? (t('free') || '0,00 €')
-                      : (isFreeShipping
-                        ? (t('free') || '0,00 €')
-                        : `€${effectiveShipping.toFixed(2)}`
-                      )
-                    }
-
-                  </span>
-
-                </div>
-                <div className="total-row total-strong">
-                  <span>{t('total')}</span>
-                  <span className="total-price">€{grandTotal.toFixed(2)}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* RIGHT: SHIPPING ADDRESS */}
-            <div className="address-card">
-              <div className="form-header">{t('shipping_address')}</div>
-
-              <div className="form-group">
-                <label>{t('delivery_method') || 'Delivery method'}</label>
-                {/*<div className="shipping-choice">
-                  <label className="ship-radio">
-                    <input
-                      type="radio"
-                      name="shippingMode"
-                      value="delivery"
-                      checked={shippingMode === 'delivery'}
-                      onChange={() => setShippingMode('delivery')}
-                    />
-                    <span>{t('delivery_ship_to_postcode') || 'Deliver to postcode'}</span>
-                  </label>
-
-                  <label className="ship-radio">
-                    <input
-                      type="radio"
-                      name="shippingMode"
-                      value="pickup"
-                      checked={shippingMode === 'pickup'}
-                      onChange={() => {
-
-                        console.log('🔥 USER SELECTED PICKUP');
-                        console.log('🔥 BEFORE:', shippingMode);
-
-                        setShippingMode('pickup')
-                        setTimeout(() => console.log('🔥 AFTER:', shippingMode), 0);
-                      }
-                      }
-                    />
-                    <span>{t('click_collect') || 'Click & Collect (pickup)'}</span>
-                  </label>
-                </div>*/}
-
-                <div className="shipping-choice">
-                  <div className="ship-radio selected">
-                    <span>
-                      {t('delivery_ship_to_postcode') || 'Delivery (DPD)'}
-                    </span>
                   </div>
                 </div>
 
-                {shippingMode === 'pickup' && (
-                  <div className="pickup-hint">
-                    {t('pickup_hint') || 'No shipping fees. You will collect the book yourself.'}
+                <div className="form-group">
+                  <label>{t('email')}</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>{t('street_address')}</label>
+                  <input
+                    type="text"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="grid-2">
+                  <div className="form-group">
+                    <label>{t('city')}</label>
+                    <input
+                      type="text"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>{t('postal_code')}</label>
+                    <input
+                      type="text"
+                      value={postalCode}
+                      onChange={(e) => setPostalCode(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>{t('country')}</label>
+                  <div className="readonly-field">
+                    <strong>Deutschland (DE)</strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Discount card */}
+              <div className="discount-card">
+                <div className="form-header">{t('discount') || 'Discount'}</div>
+
+                {!appliedDiscount ? (
+                  <div className="promo-row">
+                    <input
+                      className="promo-input"
+                      type="text"
+                      value={discountCode}
+                      onChange={(e) => setDiscountCode(e.target.value)}
+                      placeholder={t('discount_placeholder') || 'Enter code'}
+                    />
+                    <button
+                      type="button"
+                      className="promo-apply"
+                      onClick={applyDiscount}
+                      disabled={!discountCode.trim()}
+                    >
+                      {t('apply') || 'Apply'}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="promo-applied">
+                    <div className="promo-pill">
+                      <span className="promo-label">{t('applied') || 'Applied'}:</span>
+                      <span className="promo-code">{appliedDiscount.code}</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="promo-remove"
+                      onClick={() => {
+                        setAppliedDiscount(null);
+                        setDiscountCode('');
+                      }}
+                    >
+                      {t('remove') || 'Remove'}
+                    </button>
+                  </div>
+                )}
+
+                {appliedDiscount?.type === 'FREE_SHIPPING' && (
+                  <div className="promo-success">
+                    ✅ {t('free_delivery_applied') || 'Free delivery applied'}
                   </div>
                 )}
               </div>
 
-              <div className="form-group">
-                <label>{t('email')}</label>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              </div>
-              <div className="form-group">
-                <label>{t('street_address')}</label>
-                <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} required />
-              </div>
-              <div className="grid-2">
-                <div className="form-group">
-                  <label>{t('city')}</label>
-                  <input type="text" value={city} onChange={(e) => setCity(e.target.value)} required />
-                </div>
-                <div className="form-group">
-                  <label>{t('postal_code')}</label>
-                  <input type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} required />
-                </div>
-              </div>
+              {/* Payment card */}
+              <div className="payment-card">
+                <div className="form-header">{t('payment_method')}</div>
 
-              {/* COUNTRY: FIXED, NON-EDITABLE */}
-              <div className="form-group">
-                <label>{t('country')}</label>
-                <div className="readonly-field">
-                  <strong>Deutschland (DE)</strong>
+                <div className="payment-element-container">
+                  <PaymentElement
+                    onReady={() => setPaymentReady(true)}
+                    options={{
+                      layout: "tabs",
+                      paymentMethodOrder: ['card', 'paypal', 'sofort'],
+                      fields: { billingDetails: { email: 'auto', name: 'auto' } },
+                      wallets: { applePay: 'never', googlePay: 'never' },
+                      defaultValues: {
+                        billingDetails: {
+                          email,
+                          name: user?.first_name
+                            ? `${user.first_name} ${user.last_name || ""}`.trim()
+                            : email,
+                        },
+                      },
+                    }}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={
+                    !stripe ||
+                    loading ||
+                    !paymentReady ||
+                    (shippingMode === 'delivery' && shippingAmount <= 0 && !isFreeShipping)
+                  }
+                  className="pay-button full-width"
+                >
+                  {loading ? (
+                    <span className="spinner">{t('processing')}...</span>
+                  ) : (
+                    `${t('pay')} €${grandTotal.toFixed(2)}`
+                  )}
+                </button>
+
+                <div className="trust-note">
+                  🔒 {t('secure_checkout_note') || 'Secure checkout. Payment handled by Stripe.'}
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="form-group">
-            <label>Discount Code</label>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <input
-                type="text"
-                value={discountCode}
-                onChange={(e) => setDiscountCode(e.target.value)}
-                placeholder="Enter code"
-              />
-              <button
-                type="button"
-                onClick={applyDiscount}
-              >
-                Apply
-              </button>
+            {/* RIGHT: Sticky order summary */}
+            <div className="checkout-sidebar">
+              <div className="summary-card sticky-summary">
+                <div className="summary-header">{t('order_summary')}</div>
+
+                <div className="summary-items">
+                  {cartItems.map((item) => (
+                    <div key={item.bookId} className="summary-item">
+                      <img
+                        src={item.image || "/assets/book-placeholder.jpg"}
+                        alt={item.title_en || item.name || 'Book'}
+                      />
+                      <div className="item-details">
+                        <h3>{item.title_en || item.name}</h3>
+                        <p>{t('quantity')}: {item.quantity}</p>
+                      </div>
+                      <div className="item-price">€{(item.price * item.quantity).toFixed(2)}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="summary-total">
+                  <div className="total-row">
+                    <span>{t('cart.subtotal') || 'Subtotal'}</span>
+                    <span className="total-price">€{subtotal.toFixed(2)}</span>
+                  </div>
+
+                  <div className="total-row">
+                    <span>{t('cart.shipping_label') || 'Shipping'}</span>
+                    <span className="total-price">
+                      {appliedDiscount?.type === 'FREE_SHIPPING'
+                        ? (t('free') || '0,00 €')
+                        : (isFreeShipping ? (t('free') || '0,00 €') : `€${effectiveShipping.toFixed(2)}`)
+                      }
+                    </span>
+                  </div>
+
+                  {(appliedDiscount?.type === 'FREE_SHIPPING' || isFreeShipping) && (
+                    <div className="mini-hint">
+                      {appliedDiscount?.type === 'FREE_SHIPPING'
+                        ? t('free_delivery_code')
+                        : t('free_delivery_threshold', { amount: FREE_SHIPPING_THRESHOLD })}
+                    </div>
+                  )}
+
+                  <div className="total-row total-strong">
+                    <span>{t('total')}</span>
+                    <span className="total-price">€{grandTotal.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-
-          {/* BOTTOM ROW: PAYMENT */}
-          <div className="payment-card">
-            <div className="form-header">{t('payment_method')}</div>
-            <div className="payment-element-container">
-              <PaymentElement
-                onReady={() => setPaymentReady(true)}
-                options={{
-                  layout: "tabs",
-                  paymentMethodOrder: ['card', 'paypal', 'sofort'],
-                  fields: { billingDetails: { email: 'auto', name: 'auto' } },
-                  wallets: { applePay: 'never', googlePay: 'never' },
-                  defaultValues: {
-                    billingDetails: {
-                      email,
-                      name: user?.first_name ? `${user.first_name} ${user.last_name || ""}`.trim() : email,
-                    },
-                  },
-                }}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={
-                !stripe ||
-                loading ||
-                !paymentReady ||
-                (shippingMode === 'delivery' && shippingAmount <= 0 && !isFreeShipping)
-              }
-              className="pay-button full-width"
-            >
-              {loading ? (
-                <span className="spinner">{t('processing')}...</span>
-              ) : (
-                `${t('pay')} €${grandTotal.toFixed(2)}`
-              )}
-            </button>
           </div>
         </form>
-
-        {/*<div className="test-card" style={{ marginTop: '1rem', textAlign: 'center' }}>
-          {t('test_card')}: 4242 4242 4242 4242 | {t('any_date')} | 123
-          <br />
-          <small>Sofort: Use test mode in Stripe Dashboard</small>
-        </div>*/}
       </div>
     </div>
   );

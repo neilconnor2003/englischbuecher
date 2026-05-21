@@ -545,5 +545,7 @@
   "pickup_title": "Click & Collect — Free",
   "pickup_hint": "Pickup in Bingen 55411. Exact address and time window will be shared after purchase.",
   "free": "Free",
-  "shipping_cost": "Shipping Cost"
+  "shipping_cost": "Shipping Cost",
+  "free_delivery_code": "🎉 You've unlocked free delivery with your code",
+  "free_delivery_threshold": "🎉 Free delivery on orders above €{{amount}}"
 }

@@ -3689,7 +3689,7 @@ WHERE ci.user_id = ?
   });
 
   // CREATE DISCOUNT CODE
-  router.post('/', async (req, res) => {
+  app.post('/api/discounts', async (req, res) => {
     const { code, type, value } = req.body;
 
     await db.query(
@@ -3701,7 +3701,7 @@ WHERE ci.user_id = ?
   });
 
   // POST /api/discounts/validate
-  router.post('/validate', async (req, res) => {
+  app.post('/api/discounts/validate', async (req, res) => {
     const { code } = req.body;
     const [rows] = await db.query(
       'SELECT * FROM discount_codes WHERE code = ? AND is_active = 1',
