@@ -743,7 +743,7 @@ const CartPage = () => {
                 {shippingMode === 'delivery' ? (
                   <div className="dpd-static-card">
                     <div className="dpd-price">
-                      {currency.format(calculatedShippingCost)}
+                      {t('shipping_cost') || 'Shipping Cost'}: {currency.format(calculatedShippingCost)}
                     </div>
                     <div className="dpd-label">
                       {isDE
