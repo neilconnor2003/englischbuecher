@@ -3718,6 +3718,49 @@ WHERE ci.user_id = ?
   });
 
 
+  app.get('/api/discounts', async (req, res) => {
+    try {
+      const [rows] = await db.query(`
+      SELECT id, code, type, value, is_active, expiry_date
+      FROM discount_codes
+      ORDER BY created_at DESC
+    `);
+
+      res.json(rows);
+    } catch (err) {
+      console.error('GET discounts error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  app.put('/api/discounts/:id', async (req, res) => {
+    const { id } = req.params;
+    const { code, type, value, is_active, expiry_date } = req.body;
+
+    try {
+      await db.query(`
+      UPDATE discount_codes
+      SET code = ?, type = ?, value = ?, is_active = ?, expiry_date = ?
+      WHERE id = ?
+    `, [code.toUpperCase(), type, value, is_active ? 1 : 0, expiry_date, id]);
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error('UPDATE discount error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  app.delete('/api/discounts/:id', async (req, res) => {
+    try {
+      await db.query(`DELETE FROM discount_codes WHERE id = ?`, [req.params.id]);
+      res.json({ success: true });
+    } catch (err) {
+      console.error('DELETE discount error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
   // === START SERVER ===
   const PORT = process.env.PORT || 3001;
 

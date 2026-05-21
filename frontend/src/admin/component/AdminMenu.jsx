@@ -29,6 +29,7 @@ const AdminMenu = () => {
     { name: 'Book Requests', path: 'book-requests', icon: <FileText className="w-5 h-5" /> },
     { name: 'Sessions', path: 'sessions', icon: <LogOut className="w-5 h-5" /> },
     { name: 'Hero Banner', path: 'hero-banner', icon: <Image className="w-5 h-5" /> },
+    { name: 'Discounts', path: 'discounts', icon: <Image className="w-5 h-5" /> },
   ];
 
   const footerPages = [
