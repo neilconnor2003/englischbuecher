@@ -63,6 +63,7 @@ const CartPage = () => {
 
   const ctx = getDeliveryContext() || {};
   const [shippingMode, setShippingMode] = useState(ctx.shippingMode || 'delivery');
+  //const [shippingMode, setShippingMode] = useState('delivery');
 
   const totalWeightGrams = useMemo(() => {
     return weightedItems.reduce(
@@ -71,7 +72,7 @@ const CartPage = () => {
     );
   }, [weightedItems]);
 
-    // Subtotal (items only)
+  // Subtotal (items only)
   const subtotal = useMemo(() => Number(totalPrice || 0), [totalPrice]);
 
   const calculatedShippingCost = useMemo(() => {
@@ -720,13 +721,21 @@ const CartPage = () => {
             <div className="cart-summary-grid">
               <div className="cart-shipping-panel">
                 {/* Shipping choice */}
-                <div className="shipping-choice">
+                {/*<div className="shipping-choice">
                   <Radio.Group
                     value={shippingMode}
                     onChange={(e) => setShippingMode(e.target.value)}
                   >
                     <Radio value="delivery">{t('delivery_ship_to_postcode') || 'Deliver to postcode'}</Radio>
                     <Radio value="pickup">{t('click_collect') || 'Click & Collect (pickup)'}</Radio>
+                  </Radio.Group>
+                </div>*/}
+
+                <div className="shipping-choice">
+                  <Radio.Group value={shippingMode} disabled>
+                    <Radio value="delivery">
+                      {t('delivery_ship_to_postcode') || 'Deliver to postcode'}
+                    </Radio>
                   </Radio.Group>
                 </div>
 
