@@ -256,3 +256,19 @@
 .all-books-chevron.open {
   transform: rotate(180deg);
 }
+
+/* Drawer mode wrapper (content-only) */
+.category-drawer {
+  width: 100%;
+}
+
+/* Optional row below All Books */
+.submenu-item--allbooks {
+  opacity: 0.9;
+  font-weight: 600;
+}
+
+/* Rotate arrow when expanded */
+.arrow-right--open {
+  transform: rotate(90deg);
+}
