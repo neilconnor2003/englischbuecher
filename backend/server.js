@@ -3751,15 +3751,24 @@ WHERE ci.user_id = ?
     }
   });
 
-  app.delete('/api/discounts/:id', async (req, res) => {
+
+  app.patch('/api/discounts/:id/toggle', async (req, res) => {
     try {
-      await db.query(`DELETE FROM discount_codes WHERE id = ?`, [req.params.id]);
+      const { id } = req.params;
+
+      await db.query(`
+      UPDATE discount_codes
+      SET is_active = NOT is_active
+      WHERE id = ?
+    `, [id]);
+
       res.json({ success: true });
     } catch (err) {
-      console.error('DELETE discount error:', err);
+      console.error('TOGGLE discount error:', err);
       res.status(500).json({ error: 'Server error' });
     }
   });
+
 
   // === START SERVER ===
   const PORT = process.env.PORT || 3001;

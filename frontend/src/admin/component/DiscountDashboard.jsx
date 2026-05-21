@@ -1,7 +1,6 @@
 
 import axios from "axios";
 import config from "../../config";
-import { Plus, Edit, Trash2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
 const DiscountDashboard = () => {
@@ -53,13 +52,14 @@ const DiscountDashboard = () => {
         setEditingId(d.id);
     };
 
-    // ✅ Delete
-    const handleDelete = async (id) => {
-        if (!window.confirm("Delete this discount?")) return;
+    const [statusFilter, setStatusFilter] = useState("all");
 
-        await axios.delete(`${config.API_URL}/api/discounts/${id}`);
-        fetchDiscounts();
-    };
+    const filteredDiscounts = discounts.filter(d => {
+        if (statusFilter === "active") return d.is_active;
+        if (statusFilter === "inactive") return !d.is_active;
+        return true;
+    });
+
 
     return (
         <div className="p-6 max-w-5xl mx-auto">
@@ -115,6 +115,19 @@ const DiscountDashboard = () => {
 
             {/* LIST */}
             <div className="bg-white rounded shadow overflow-hidden">
+
+                <div className="mb-4 flex gap-3">
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="border px-3 py-2 rounded"
+                    >
+                        <option value="all">All</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+
                 <table className="w-full text-sm">
                     <thead className="bg-gray-100">
                         <tr>
@@ -127,25 +140,73 @@ const DiscountDashboard = () => {
                         </tr>
                     </thead>
 
-                    <tbody>
-                        {discounts.map(d => (
-                            <tr key={d.id} className="border-t">
-                                <td className="p-3 font-bold">{d.code}</td>
-                                <td>{d.type}</td>
-                                <td>{d.value}</td>
-                                <td>{d.expiry_date || "-"}</td>
-                                <td>{d.is_active ? "Active" : "Inactive"}</td>
 
-                                <td className="flex gap-2 justify-end pr-3">
-                                    <button onClick={() => handleEdit(d)}>
-                                        <Edit size={16} />
-                                    </button>
-                                    <button onClick={() => handleDelete(d.id)}>
-                                        <Trash2 size={16} />
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
+                    <tbody>
+                        {/*{discounts.map(d => {*/}
+                        {filteredDiscounts.map(d => {
+                            const isExpired = d.expiry_date && new Date(d.expiry_date) < new Date();
+
+                            return (
+                                <tr key={d.id} className="border-t hover:bg-purple-50 transition">
+
+                                    <td className="p-4 font-bold text-purple-800">
+                                        {d.code}
+                                    </td>
+
+                                    <td className="p-4">
+                                        <span className="text-sm font-semibold">
+                                            {d.type === "PERCENT" ? "Percentage" :
+                                                d.type === "FIXED" ? "Fixed (€)" :
+                                                    "Free Shipping"}
+                                        </span>
+                                    </td>
+
+                                    <td className="p-4 font-bold text-green-600">
+                                        {d.type === "PERCENT" ? `${d.value}%` :
+                                            d.type === "FIXED" ? `€${d.value}` :
+                                                "-"}
+                                    </td>
+
+                                    <td className="p-4 text-gray-600">
+                                        {d.expiry_date || "-"}
+                                    </td>
+
+                                    <td className="p-4">
+                                        <span className={`px-3 py-1 text-xs rounded-full font-bold
+            ${!d.is_active ? "bg-gray-200 text-gray-600" :
+                                                isExpired ? "bg-red-100 text-red-700" :
+                                                    "bg-green-100 text-green-700"}
+          `}>
+                                            {!d.is_active ? "Inactive" :
+                                                isExpired ? "Expired" :
+                                                    "Active"}
+                                        </span>
+                                    </td>
+
+                                    <td className="p-4 flex gap-2 justify-end">
+
+                                        {/* ✅ TOGGLE */}
+                                        <button
+                                            onClick={async () => {
+                                                await axios.patch(`${config.API_URL}/api/discounts/${d.id}/toggle`);
+                                                fetchDiscounts();
+                                            }}
+                                            className={`px-3 py-1 rounded-lg text-xs font-bold
+              ${d.is_active ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800"}
+            `}
+                                        >
+                                            {d.is_active ? "Deactivate" : "Activate"}
+                                        </button>
+
+                                        {/* EDIT */}
+                                        <button onClick={() => handleEdit(d)}>
+                                            ✏️
+                                        </button>
+
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
