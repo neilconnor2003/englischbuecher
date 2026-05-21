@@ -547,5 +547,8 @@
   "free": "Free",
   "shipping_cost": "Shipping Cost",
   "free_delivery_code": "🎉 You've unlocked free delivery with your code",
-  "free_delivery_threshold": "🎉 Free delivery on orders above €{{amount}}"
+  "free_delivery_threshold": "🎉 Free delivery on orders above €{{amount}}",
+  "discount_placeholder": "Enter discount code",
+  "secure_checkout_note": "🔒 Secure checkout. Payment handled by Stripe.",
+  "checkout_email_fixed": "This email is linked to your account"
 }

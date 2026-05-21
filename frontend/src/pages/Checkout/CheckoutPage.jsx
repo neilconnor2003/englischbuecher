@@ -466,12 +466,18 @@ const CheckoutPage = ({ clientSecret }) => {
 
                 <div className="form-group">
                   <label>{t('email')}</label>
-                  <input
+                  {/*<input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                  />
+                  />*/}
+                  <div className="readonly-field">
+                    <strong>{email}</strong>
+                  </div>
+                  <div className="mini-hint">
+                    {t('checkout_email_fixed') || 'This email is linked to your account'}
+                  </div>
                 </div>
 
                 <div className="form-group">
