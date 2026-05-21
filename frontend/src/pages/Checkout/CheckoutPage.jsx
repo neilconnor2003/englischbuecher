@@ -552,11 +552,6 @@ const CheckoutPage = ({ clientSecret }) => {
 
                 {!appliedDiscount ? (
                   <div className="promo-row">
-                    {discountError && (
-                      <div style={{ color: 'red', marginTop: '8px', fontSize: '14px' }}>
-                        {discountError}
-                      </div>
-                    )}
                     <input
                       className="promo-input"
                       type="text"
@@ -578,6 +573,11 @@ const CheckoutPage = ({ clientSecret }) => {
                     >
                       {t('apply') || 'Apply'}
                     </button>
+                    {discountError && (
+                      <div style={{ color: 'red', marginTop: '8px', fontSize: '14px' }}>
+                        {discountError}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="promo-applied">
