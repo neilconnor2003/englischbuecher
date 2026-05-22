@@ -13,6 +13,7 @@ import './CheckoutPage.css';
 import { getDeliveryContext, setDeliveryContext } from '../../utils/deliveryContext';
 import { getDPDShippingPrice } from '../../utils/dpdShipping';
 import { Link } from "react-router-dom";
+import config from '../../config';
 
 const CheckoutPage = ({ clientSecret }) => {
   const { t } = useTranslation();
@@ -322,7 +323,7 @@ const CheckoutPage = ({ clientSecret }) => {
     //console.log('🚀 updatePI triggered');
     //console.log('🚀 shippingMode:', shippingMode);
     //console.log('🚀 grandTotal:', grandTotal);
-    console.log('PI update:', { grandTotal, walletUsed, finalTotal, amount_cents });
+    console.log('PI update:', { grandTotal, walletUsed, finalTotal });
 
     async function updatePI() {
       if (!clientSecret) return;
