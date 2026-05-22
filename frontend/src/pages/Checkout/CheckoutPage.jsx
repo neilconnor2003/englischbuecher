@@ -347,7 +347,7 @@ const CheckoutPage = ({ clientSecret }) => {
     }
 
     updatePI();
-  }, [clientSecret, grandTotal, shippingMode, t]);
+  }, [clientSecret, finalTotal, shippingMode, t]);
 
   const [discountError, setDiscountError] = useState("");
 
