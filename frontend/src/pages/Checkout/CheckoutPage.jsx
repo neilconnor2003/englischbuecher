@@ -328,7 +328,7 @@ const CheckoutPage = ({ clientSecret }) => {
       if (!clientSecret) return;
 
       //const amount_cents = Math.round(grandTotal * 100);
-      const amount_cents = Math.round(finalTotal * 100);
+      //const amount_cents = Math.round(finalTotal * 100);
       const amount_cents = Math.max(50, Math.round(finalTotal * 100));
 
 
