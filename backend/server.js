@@ -3782,20 +3782,32 @@ WHERE ci.user_id = ?
     res.json({ balance: rows[0]?.balance || 0 });
   });
 
+
   app.post('/api/wallet/add', async (req, res) => {
-    const { user_id, amount, reason } = req.body;
+    const { email, amount, reason } = req.body;
 
     try {
+      const [[user]] = await db.query(
+        `SELECT id FROM users WHERE email = ?`,
+        [email]
+      );
+
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const userId = user.id;
+
       await db.query(`
       INSERT INTO user_wallets (user_id, balance)
       VALUES (?, ?)
       ON DUPLICATE KEY UPDATE balance = balance + ?
-    `, [user_id, amount, amount]);
+    `, [userId, amount, amount]);
 
       await db.query(`
       INSERT INTO wallet_transactions (user_id, amount, type, reason)
       VALUES (?, ?, 'CREDIT', ?)
-    `, [user_id, amount, reason || 'Admin credit']);
+    `, [userId, amount, reason || 'Admin credit']);
 
       res.json({ success: true });
 
@@ -3804,6 +3816,7 @@ WHERE ci.user_id = ?
       res.status(500).json({ error: 'Error adding wallet money' });
     }
   });
+
 
   const deductWallet = async (userId, amount) => {
     await db.query(`
@@ -3817,6 +3830,19 @@ WHERE ci.user_id = ?
     VALUES (?, ?, 'DEBIT', 'Used in order')
   `, [userId, amount]);
   };
+
+  app.get('/api/wallet/transactions', async (req, res) => {
+    const userId = req.user.id;
+
+    const [rows] = await db.query(`
+    SELECT * FROM wallet_transactions
+    WHERE user_id = ?
+    ORDER BY created_at DESC
+  `, [userId]);
+
+    res.json(rows);
+  });
+
 
   // === START SERVER ===
   const PORT = process.env.PORT || 3001;

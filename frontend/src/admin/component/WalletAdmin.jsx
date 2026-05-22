@@ -44,7 +44,8 @@ const WalletAdmin = () => {
 
         <input
           type="number"
-          placeholder="User ID"
+          //placeholder="User ID"
+          placeholder="User Email"
           value={userId}
           onChange={(e) => setUserId(e.target.value)}
           className="border p-2 w-full"

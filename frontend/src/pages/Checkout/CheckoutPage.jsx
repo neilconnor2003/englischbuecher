@@ -638,28 +638,33 @@ const CheckoutPage = ({ clientSecret }) => {
                 )}
               </div>
 
-              <div className="wallet-card">
-                <div className="form-header">Wallet</div>
 
-                <div>
-                  Balance: €{walletBalance.toFixed(2)}
+              <div className="wallet-card modern-wallet">
+
+                <div className="wallet-header">
+                  <span className="wallet-title">{t('wallet')}</span>
+                  <span className="wallet-balance">
+                    €{walletBalance.toFixed(2)}
+                  </span>
                 </div>
 
-                <label style={{ marginTop: '10px', display: 'block' }}>
+                <label className="wallet-toggle">
                   <input
                     type="checkbox"
                     checked={useWallet}
                     onChange={() => setUseWallet(!useWallet)}
                   />
-                  Use wallet balance
+                  {t('use_wallet')}
                 </label>
 
-                {useWallet && (
-                  <div style={{ marginTop: '8px', color: 'green' }}>
-                    Using €{walletUsed.toFixed(2)}
+                {useWallet && walletUsed > 0 && (
+                  <div className="wallet-usage">
+                    -€{walletUsed.toFixed(2)} {t('wallet_used')}
                   </div>
                 )}
+
               </div>
+
 
               {/* Payment card */}
               <div className="payment-card">

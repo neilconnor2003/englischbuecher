@@ -390,3 +390,36 @@
   background: #f9fafb;
   transform: translateY(-1px);
 }
+
+.modern-wallet {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f5f0ff, #ffffff);
+  border: 1px solid #e5d9ff;
+}
+
+.wallet-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.wallet-balance {
+  color: #6b21a8;
+}
+
+.wallet-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.wallet-usage {
+  margin-top: 8px;
+  color: green;
+  font-weight: bold;
+}
