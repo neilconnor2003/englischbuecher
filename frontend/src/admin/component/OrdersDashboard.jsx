@@ -177,7 +177,7 @@ const OrdersDashboard = () => {
 
 
   const handleCreateDpdLabel = async (order) => {
-    console.log('[ADMIN] Create DPD label clicked for order', order.id, order.shipping_provider);
+    //console.log('[ADMIN] Create DPD label clicked for order', order.id, order.shipping_provider);
     try {
       // Guard: only DPD + paid + not already labeled
 

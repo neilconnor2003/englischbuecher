@@ -2,8 +2,8 @@
 require('dotenv').config();
 
 
-console.log('DB_USER:', process.env.DB_USER);
-console.log('DB_HOST:', process.env.DB_HOST);
+//console.log('DB_USER:', process.env.DB_USER);
+//console.log('DB_HOST:', process.env.DB_HOST);
 
 
 
@@ -22,7 +22,7 @@ const axios = require('axios');   // ← ADD THIS LINE
 const cookieParser = require('cookie-parser');
 
 const dpdRoutes = require('./routes/dpd');
-console.log('✅ LOADING dpd routes from:', require.resolve('./routes/dpd'));
+//('✅ LOADING dpd routes from:', require.resolve('./routes/dpd'));
 
 const FRONTEND_URL = process.env.FRONTEND_URL;
 
@@ -1394,7 +1394,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
       console.table(rows.map(r => ({ id: r.id, title: r.title_en, featured: r.is_featured, available: r.is_available, stock: r.stock })));
 
       if (rows.length === 0) {
-        console.log('No featured books found – returning empty array');
+        //console.log('No featured books found – returning empty array');
         return res.json([]);   // ← VERY IMPORTANT: return [] instead of error
       }
 
@@ -2314,9 +2314,9 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
   // BOOK IMAGE UPLOAD
   app.post('/api/upload-book-image', uploadBookImage.single('image'), (req, res) => {
-    console.log('FILE:', req.file);
-    console.log('MIMETYPE:', req.file?.mimetype);
-    console.log('SIZE:', req.file?.size);
+    //console.log('FILE:', req.file);
+    //console.log('MIMETYPE:', req.file?.mimetype);
+    //console.log('SIZE:', req.file?.size);
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     const origin = `${req.protocol}://${req.get('host')}`;
     res.json({ url: `${origin}/uploads/books/${req.file.filename}` });
@@ -3632,11 +3632,11 @@ WHERE ci.user_id = ?
         },
       };
 
-      console.log('🧠 Updating PI with:', updatePayload);
+      //console.log('🧠 Updating PI with:', updatePayload);
 
       const pi = await stripe.paymentIntents.update(piId, updatePayload);
 
-      console.log('🧠 PI metadata after update:', pi.metadata);
+      //console.log('🧠 PI metadata after update:', pi.metadata);
 
       /*const pi = await stripe.paymentIntents.update(piId, {
         amount: Number(amount_cents),
@@ -3661,7 +3661,7 @@ WHERE ci.user_id = ?
   });*/
 
   // === ORDER ROUTES ===
-  console.log('✅ Mounting orders routes from:', require.resolve('./routes/orderRoutes'));
+  //console.log('✅ Mounting orders routes from:', require.resolve('./routes/orderRoutes'));
 
   const ordersRouter = require('./routes/orderRoutes')(db);
   app.use('/api/orders', ordersRouter);
@@ -3769,6 +3769,54 @@ WHERE ci.user_id = ?
     }
   });
 
+  // WALLET RELATED
+
+  app.get('/api/wallet', async (req, res) => {
+    const userId = req.user.id;
+
+    const [rows] = await db.query(
+      `SELECT balance FROM user_wallets WHERE user_id = ?`,
+      [userId]
+    );
+
+    res.json({ balance: rows[0]?.balance || 0 });
+  });
+
+  app.post('/api/wallet/add', async (req, res) => {
+    const { user_id, amount, reason } = req.body;
+
+    try {
+      await db.query(`
+      INSERT INTO user_wallets (user_id, balance)
+      VALUES (?, ?)
+      ON DUPLICATE KEY UPDATE balance = balance + ?
+    `, [user_id, amount, amount]);
+
+      await db.query(`
+      INSERT INTO wallet_transactions (user_id, amount, type, reason)
+      VALUES (?, ?, 'CREDIT', ?)
+    `, [user_id, amount, reason || 'Admin credit']);
+
+      res.json({ success: true });
+
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Error adding wallet money' });
+    }
+  });
+
+  const deductWallet = async (userId, amount) => {
+    await db.query(`
+    UPDATE user_wallets
+    SET balance = balance - ?
+    WHERE user_id = ? AND balance >= ?
+  `, [amount, userId, amount]);
+
+    await db.query(`
+    INSERT INTO wallet_transactions (user_id, amount, type, reason)
+    VALUES (?, ?, 'DEBIT', 'Used in order')
+  `, [userId, amount]);
+  };
 
   // === START SERVER ===
   const PORT = process.env.PORT || 3001;
@@ -3863,7 +3911,7 @@ ${urls.join('')}
   //  });
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT}`);
+    //console.log(`Server running on port ${PORT}`);
   });
 
 })();

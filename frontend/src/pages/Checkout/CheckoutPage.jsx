@@ -54,6 +54,10 @@ const CheckoutPage = ({ clientSecret }) => {
   const [discountCode, setDiscountCode] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState(null);
 
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [useWallet, setUseWallet] = useState(false);
+
+
 
   //const subtotal = Number(totalPrice || 0);
   //const shipping = Number(shippingAmount || 0);
@@ -91,7 +95,11 @@ const CheckoutPage = ({ clientSecret }) => {
 
   const grandTotal = subtotal + effectiveShipping;
 
+  const walletUsed = useWallet
+    ? Math.min(walletBalance, grandTotal)
+    : 0;
 
+  const finalTotal = grandTotal - walletUsed;
 
   const [hydrated, setHydrated] = useState(false);
 
@@ -173,6 +181,15 @@ const CheckoutPage = ({ clientSecret }) => {
       city,
     });
   }, [hydrated, shippingMode, postalCode, city]);
+
+  useEffect(() => {
+    async function loadWallet() {
+      const res = await axios.get('/api/wallet', { withCredentials: true });
+      setWalletBalance(Number(res.data.balance || 0));
+    }
+    loadWallet();
+  }, []);
+
 
   useEffect(() => {
     let cancelled = false;
@@ -296,14 +313,15 @@ const CheckoutPage = ({ clientSecret }) => {
 
   useEffect(() => {
 
-    console.log('🚀 updatePI triggered');
-    console.log('🚀 shippingMode:', shippingMode);
-    console.log('🚀 grandTotal:', grandTotal);
+    //console.log('🚀 updatePI triggered');
+    //console.log('🚀 shippingMode:', shippingMode);
+    //console.log('🚀 grandTotal:', grandTotal);
 
     async function updatePI() {
       if (!clientSecret) return;
 
-      const amount_cents = Math.round(grandTotal * 100);
+      //const amount_cents = Math.round(grandTotal * 100);
+      const amount_cents = Math.round(finalTotal * 100);
 
 
       //const shipping_provider = shippingMode === 'pickup' ? 'PICKUP' : 'DPD';
@@ -321,7 +339,7 @@ const CheckoutPage = ({ clientSecret }) => {
           { withCredentials: true }
         );
 
-        console.log('[PI UPDATED]', res.data);
+        //console.log('[PI UPDATED]', res.data);
       } catch (e) {
         console.error('[PI UPDATE FAILED]', e?.response?.data || e?.message);
         toast.error(t('payment_failed_try_again'));
@@ -431,7 +449,7 @@ const CheckoutPage = ({ clientSecret }) => {
 
         discount_code: appliedDiscount?.code || null,
         discount_type: appliedDiscount?.type || null,
-
+        wallet_used: walletUsed,
 
         //totalPrice: Number(totalPrice || 0) + Number(shippingAmount || 0),
         totalPrice: Number(grandTotal.toFixed(2)),
@@ -442,12 +460,9 @@ const CheckoutPage = ({ clientSecret }) => {
         //shipping_provider: shippingMode === 'pickup' ? 'PICKUP' : 'DPD',
         //shipping_service: shippingMode === 'pickup' ? 'Click & Collect' : 'Standard',
         //shipping_mode: shippingMode,
-
-
         shipping_provider: 'DPD',
         shipping_service: 'Standard',
         shipping_mode: 'delivery',
-
 
         shipping_selected_rate_id: null, // static pricing, no carrier rate
 
@@ -602,6 +617,29 @@ const CheckoutPage = ({ clientSecret }) => {
                 {appliedDiscount?.type === 'FREE_SHIPPING' && (
                   <div className="promo-success">
                     ✅ {t('free_delivery_applied') || 'Free delivery applied'}
+                  </div>
+                )}
+              </div>
+
+              <div className="wallet-card">
+                <div className="form-header">Wallet</div>
+
+                <div>
+                  Balance: €{walletBalance.toFixed(2)}
+                </div>
+
+                <label style={{ marginTop: '10px', display: 'block' }}>
+                  <input
+                    type="checkbox"
+                    checked={useWallet}
+                    onChange={() => setUseWallet(!useWallet)}
+                  />
+                  Use wallet balance
+                </label>
+
+                {useWallet && (
+                  <div style={{ marginTop: '8px', color: 'green' }}>
+                    Using €{walletUsed.toFixed(2)}
                   </div>
                 )}
               </div>

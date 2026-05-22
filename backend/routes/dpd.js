@@ -104,7 +104,7 @@ router.post('/estimate', async (req, res) => {
     console.error('DPD Cloud estimate error:', dpdErr || err.message);
 
     if (dpdErr) {
-      console.log('DPD Cloud raw response:', JSON.stringify(dpdErr, null, 2));
+      //console.log('DPD Cloud raw response:', JSON.stringify(dpdErr, null, 2));
     }
 
     return res.status(500).json({ error: 'DPD estimate failed', dpd: dpdErr });
