@@ -19,6 +19,7 @@ import CartDashboard from './component/CartDashboard';
 import BookRequestsDashboard from './component/BookRequestsDashboard';
 import AuthorsDashboard from './component/AuthorsDashboard';
 import DiscountDashboard from './component/DiscountDashboard';
+import WalletAdmin from './component/WalletAdmin';
 
 function AdminApp() {
   const { user, loading } = useContext(AuthContext);
@@ -47,6 +48,7 @@ function AdminApp() {
         <Route path="book-requests" element={<BookRequestsDashboard />} />
         <Route path="authors" element={<AuthorsDashboard />} />
         <Route path="discounts" element={<DiscountDashboard />} />
+        <Route path="wallet" element={<WalletAdmin />} />
       </Route>
     </Routes>
   );
