@@ -47,7 +47,7 @@ const CheckoutPage = ({ clientSecret }) => {
     .join('|');
 
   const COUNTRY = "DE";
-
+  const API_BASE = `${config.API_URL}/api`;
   const FREE_SHIPPING_THRESHOLD = 30;
 
 
@@ -95,8 +95,13 @@ const CheckoutPage = ({ clientSecret }) => {
 
   const grandTotal = subtotal + effectiveShipping;
 
+  const MIN_STRIPE_EUR = 0.50;
+
+  // Wallet can only cover up to (grandTotal - 0.50), so Stripe always charges ≥ 0.50
+  const maxWalletAllowed = Math.max(0, grandTotal - MIN_STRIPE_EUR);
+
   const walletUsed = useWallet
-    ? Math.min(walletBalance, grandTotal)
+    ? Math.min(walletBalance, maxWalletAllowed)
     : 0;
 
   const finalTotal = grandTotal - walletUsed;
@@ -184,7 +189,8 @@ const CheckoutPage = ({ clientSecret }) => {
 
   useEffect(() => {
     async function loadWallet() {
-      const res = await axios.get('/api/wallet', { withCredentials: true });
+      //const res = await axios.get('/api/wallet', { withCredentials: true });
+      const res = await axios.get(`${API_BASE}/wallet`, { withCredentials: true });
       setWalletBalance(Number(res.data.balance || 0));
     }
     loadWallet();
@@ -316,12 +322,14 @@ const CheckoutPage = ({ clientSecret }) => {
     //console.log('🚀 updatePI triggered');
     //console.log('🚀 shippingMode:', shippingMode);
     //console.log('🚀 grandTotal:', grandTotal);
+    console.log('PI update:', { grandTotal, walletUsed, finalTotal, amount_cents });
 
     async function updatePI() {
       if (!clientSecret) return;
 
       //const amount_cents = Math.round(grandTotal * 100);
       const amount_cents = Math.round(finalTotal * 100);
+      const amount_cents = Math.max(50, Math.round(finalTotal * 100));
 
 
       //const shipping_provider = shippingMode === 'pickup' ? 'PICKUP' : 'DPD';
@@ -333,11 +341,18 @@ const CheckoutPage = ({ clientSecret }) => {
 
 
       try {
-        const res = await axios.post(
+        const res = /*await axios.post(
           '/api/orders/update-payment-intent-amount',
           { clientSecret, amount_cents, shipping_provider, shipping_service },
           { withCredentials: true }
-        );
+        );*/
+
+          await axios.post(
+            `${API_BASE}/orders/update-payment-intent-amount`,
+            { clientSecret, amount_cents, shipping_provider, shipping_service },
+            { withCredentials: true }
+          );
+
 
         //console.log('[PI UPDATED]', res.data);
       } catch (e) {
@@ -373,9 +388,10 @@ const CheckoutPage = ({ clientSecret }) => {
 
       const normalized = discountCode.trim().toUpperCase();
 
-      const { data } = await axios.post('/api/discounts/validate', {
+      /*const { data } = await axios.post('/api/discounts/validate', {
         code: normalized,
-      });
+      });*/
+      const { data } = await axios.post(`${API_BASE}/discounts/validate`, { code: normalized });
 
       setAppliedDiscount(data);
       toast.success("Discount applied");
@@ -681,7 +697,7 @@ const CheckoutPage = ({ clientSecret }) => {
                   {loading ? (
                     <span className="spinner">{t('processing')}...</span>
                   ) : (
-                    `${t('pay')} €${grandTotal.toFixed(2)}`
+                    `${t('pay')} €${finalTotal.toFixed(2)}`
                   )}
                 </button>
 
@@ -744,9 +760,17 @@ const CheckoutPage = ({ clientSecret }) => {
                     </div>
                   )}
 
+                  {useWallet && walletUsed > 0 && (
+                    <div className="total-row">
+                      <span>{t('wallet_used') || 'Wallet used'}</span>
+                      <span className="total-price">-€{walletUsed.toFixed(2)}</span>
+                    </div>
+                  )}
+
+
                   <div className="total-row total-strong">
                     <span>{t('total')}</span>
-                    <span className="total-price">€{grandTotal.toFixed(2)}</span>
+                    <span className="total-price">€{finalTotal.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
