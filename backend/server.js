@@ -3904,6 +3904,53 @@ WHERE ci.user_id = ?
   });
 
 
+  app.get('/api/admin/wallet/users/:id/transactions', authMiddleware, async (req, res) => {
+    try {
+      // ✅ 1. Strict admin check
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      // ✅ 2. Validate param
+      const userId = parseInt(req.params.id, 10);
+      if (!userId || isNaN(userId)) {
+        return res.status(400).json({ error: 'Invalid user ID' });
+      }
+
+      // ✅ 3. OPTIONAL (but recommended): ensure user exists
+      const [userRows] = await db.query(
+        'SELECT id FROM users WHERE id = ?',
+        [userId]
+      );
+
+      if (userRows.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // ✅ 4. Fetch transactions
+      const [rows] = await db.query(
+        `
+      SELECT
+        id,
+        amount,
+        type,
+        reason,
+        created_at
+      FROM wallet_transactions
+      WHERE user_id = ?
+      ORDER BY created_at DESC
+      `,
+        [userId]
+      );
+
+      res.json(rows);
+
+    } catch (err) {
+      console.error('❌ admin wallet transactions error:', err);
+      res.status(500).json({ error: 'Failed to fetch transactions' });
+    }
+  });
+
 
 
   /*const deductWallet = async (userId, amount) => {
