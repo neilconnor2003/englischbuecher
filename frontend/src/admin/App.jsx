@@ -19,7 +19,6 @@ import CartDashboard from './component/CartDashboard';
 import BookRequestsDashboard from './component/BookRequestsDashboard';
 import AuthorsDashboard from './component/AuthorsDashboard';
 import DiscountDashboard from './component/DiscountDashboard';
-import WalletAdmin from './component/WalletAdmin';
 import WalletDashboard from './component/WalletDashboard';
 
 function AdminApp() {
