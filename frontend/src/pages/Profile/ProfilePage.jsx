@@ -532,7 +532,7 @@ const ProfilePage = () => {
         </div>
       )
     }*/
-  ]), [authUser, t, orderLoading, orders, currentPage, pageSize, navigate]);
+  ]), [authUser, t, orderLoading, orders, currentPage, pageSize, navigate, walletTx, walletBalance]);
 
   //if (!authUser) {
   if (authUser === undefined) {
