@@ -459,7 +459,7 @@ const ProfilePage = () => {
           <Title level={5}>{t('wallet_transactions')}</Title>
 
           {walletTx.length === 0 ? (
-            <Text type="secondary">No transactions yet</Text>
+            <Text type="secondary">{t('wallet_no_transactions')}</Text>
           ) : (
             walletTx.map(tx => (
               <div key={tx.id} style={{

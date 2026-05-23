@@ -3831,17 +3831,27 @@ WHERE ci.user_id = ?
   `, [userId, amount]);
   };
 
-  app.get('/api/wallet/transactions', async (req, res) => {
+
+  app.get('/api/wallet/transactions', (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
     const userId = req.user.id;
 
-    const [rows] = await db.query(`
-    SELECT * FROM wallet_transactions
+    db.query(`
+    SELECT id, amount, type, reason, created_at
+    FROM wallet_transactions
     WHERE user_id = ?
     ORDER BY created_at DESC
-  `, [userId]);
-
-    res.json(rows);
+  `, [userId])
+      .then(([rows]) => res.json(rows))
+      .catch(err => {
+        console.error('Wallet transaction error:', err);
+        res.status(500).json({ error: 'Failed to fetch transactions' });
+      });
   });
+
 
 
   // === START SERVER ===

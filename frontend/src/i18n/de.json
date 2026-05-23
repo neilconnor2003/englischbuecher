@@ -521,5 +521,18 @@
   "free_delivery_threshold": "🎉 Kostenloser Versand ab {{amount}} €",
   "discount_placeholder": "Rabattcode eingeben",
   "secure_checkout_note": "🔒 Sicherer Checkout. Zahlung erfolgt über Stripe.",
-  "checkout_email_fixed": "Diese E-Mail ist mit deinem Benutzerkonto verknüpft"
+  "checkout_email_fixed": "Diese E-Mail ist mit deinem Benutzerkonto verknüpft",
+  "wallet": "Geldbörse",
+  "wallet_balance": "Guthaben",
+  "wallet_used": "Verwendetes Guthaben",
+  "use_wallet": "Guthaben verwenden",
+  "wallet_transactions": "Transaktionen",
+  "credit": "Gutschrift",
+  "debit": "Abbuchung",
+  "reason": "Grund",
+  "amount": "Betrag",
+  "wallet_no_transactions": "Keine Transaktionen vorhanden",
+  "wallet_added": "Guthaben hinzugefügt",
+  "wallet_used_order": "Verwendet in Bestellung",
+  "wallet_refund": "Rückerstattung"
 }

@@ -4,79 +4,87 @@ import axios from "axios";
 import config from "../../config";
 
 const WalletAdmin = () => {
-  const [userId, setUserId] = useState("");
-  const [amount, setAmount] = useState("");
-  const [reason, setReason] = useState("");
+    //const [userId, setUserId] = useState("");
+    const [amount, setAmount] = useState("");
+    const [reason, setReason] = useState("");
+    const [email, setEmail] = useState("");
 
-  const handleAdd = async () => {
-    if (!userId || !amount) {
-      alert("User ID and amount required");
-      return;
-    }
+    const handleAdd = async () => {
 
-    try {
-      await axios.post(`${config.API_URL}/api/wallet/add`, {
-        user_id: Number(userId),
-        amount: Number(amount),
-        reason: reason || "Admin credit"
-      }, { withCredentials: true });
+        if (!email || !amount) {
+            alert("Email and amount required");
+            return;
+        }
+        /*if (!userId || !amount) {
+            alert("User ID and amount required");
+            return;
+        }*/
 
-      alert("Wallet updated ✅");
+        try {
+            await axios.post(`${config.API_URL}/api/wallet/add`, {
+                email: email,
+                amount: Number(amount),
+                reason: reason || "Admin credit"
+            }, { withCredentials: true });
 
-      setUserId("");
-      setAmount("");
-      setReason("");
+            alert("Wallet updated ✅");
 
-    } catch (err) {
-      console.error(err);
-      alert("Error updating wallet");
-    }
-  };
+            //setUserId("");
+            setEmail("");
+            setAmount("");
+            setReason("");
 
-  return (
-    <div className="p-6 max-w-xl mx-auto">
+        } catch (err) {
+            console.error(err);
+            alert("Error updating wallet");
+        }
+    };
 
-      <h1 className="text-2xl font-bold mb-4">
-        Wallet Admin
-      </h1>
+    return (
+        <div className="p-6 max-w-xl mx-auto">
 
-      <div className="bg-white p-4 rounded shadow space-y-4">
+            <h1 className="text-2xl font-bold mb-4">
+                Wallet Admin
+            </h1>
 
-        <input
-          type="number"
-          //placeholder="User ID"
-          placeholder="User Email"
-          value={userId}
-          onChange={(e) => setUserId(e.target.value)}
-          className="border p-2 w-full"
-        />
+            <div className="bg-white p-4 rounded shadow space-y-4">
 
-        <input
-          type="number"
-          placeholder="Amount (€)"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          className="border p-2 w-full"
-        />
+                <input
+                    type="number"
+                    //placeholder="User ID"
+                    placeholder="User Email"
+                    value={userId}
+                    //onChange={(e) => setUserId(e.target.value)}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="border p-2 w-full"
+                />
 
-        <input
-          type="text"
-          placeholder="Reason (optional)"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          className="border p-2 w-full"
-        />
+                <input
+                    type="number"
+                    placeholder="Amount (€)"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    className="border p-2 w-full"
+                />
 
-        <button
-          onClick={handleAdd}
-          className="bg-green-600 text-white px-4 py-2 rounded"
-        >
-          Add to Wallet
-        </button>
+                <input
+                    type="text"
+                    placeholder="Reason (optional)"
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    className="border p-2 w-full"
+                />
 
-      </div>
-    </div>
-  );
+                <button
+                    onClick={handleAdd}
+                    className="bg-green-600 text-white px-4 py-2 rounded"
+                >
+                    Add to Wallet
+                </button>
+
+            </div>
+        </div>
+    );
 };
 
 export default WalletAdmin;
