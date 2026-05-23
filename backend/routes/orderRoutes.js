@@ -234,6 +234,8 @@ module.exports = (db) => {
 
     const userId = req.user?.id || null;
 
+    const safeWalletUse = Math.max(0, Number(wallet_used || 0));
+
     // Validation (unchanged)
     if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
       return res.status(400).json({ error: 'No items in order' });
@@ -332,18 +334,40 @@ module.exports = (db) => {
         // ✅ 3.5 Deduct from wallet
         //if (wallet_used && wallet_used > 0 && userId) {
         if (safeWalletUse > 0 && userId) {
+
+          // Lock the user row to avoid race conditions (transaction-safe)
+          await conn.execute(`SELECT id FROM users WHERE id = ? FOR UPDATE`, [userId]);
+
+
+          // Compute current balance from transactions
+          const [[balRow]] = await conn.query(`
+            SELECT
+            COALESCE(SUM(CASE WHEN type='CREDIT' THEN amount ELSE 0 END), 0) -
+            COALESCE(SUM(CASE WHEN type='DEBIT'  THEN amount ELSE 0 END), 0)
+            AS balance
+            FROM wallet_transactions
+            WHERE user_id = ?
+          `, [userId]);
+
+          const currentBalance = Number(balRow?.balance || 0);
+
+
+          if (safeWalletUse > currentBalance + 1e-9) {
+            throw new Error(`Insufficient wallet balance (have €${currentBalance.toFixed(2)})`);
+          }
+
           // 1. Reduce balance safely
-          await conn.execute(`
-    UPDATE user_wallets
-    SET balance = balance - ?
-    WHERE user_id = ? AND balance >= ?
-  `, [safeWalletUse, userId, safeWalletUse]);
+          /*await conn.execute(`
+            UPDATE user_wallets
+            SET balance = balance - ?
+            WHERE user_id = ? AND balance >= ?
+          `, [safeWalletUse, userId, safeWalletUse]);*/
 
           // 2. Store transaction
           await conn.execute(`
-    INSERT INTO wallet_transactions (user_id, amount, type, reason)
-    VALUES (?, ?, 'DEBIT', ?)
-  `, [userId, safeWalletUse, 'Used in order #' + orderId]);
+            INSERT INTO wallet_transactions (user_id, amount, type, reason)
+            VALUES (?, ?, 'DEBIT', ?)
+          `, [userId, safeWalletUse, 'Used in order #' + orderId]);
         }
 
         await conn.execute('DELETE FROM cart_items WHERE user_id = ?', [userId]);

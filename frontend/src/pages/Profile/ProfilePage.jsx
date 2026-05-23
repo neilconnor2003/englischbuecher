@@ -149,14 +149,23 @@ const ProfilePage = () => {
 
   useEffect(() => {
     async function loadWallet() {
+      console.log('🔵 loadWallet triggered');
+
       try {
         const { data } = await api.get('/wallet');
+        console.log('✅ wallet balance response:', data);
+
         setWalletBalance(Number(data.balance || 0));
 
         const tx = await api.get('/wallet/transactions');
+        console.log('✅ transactions response:', tx.data);
+
         setWalletTx(tx.data || []);
+        console.log('✅ state set walletTx:', tx.data);
+
       } catch (err) {
-        console.error('Wallet load failed', err);
+        console.error('❌ Wallet load failed:', err.response?.data || err);
+        //console.error('Wallet load failed', err);
       }
     }
 

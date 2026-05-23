@@ -3771,7 +3771,31 @@ WHERE ci.user_id = ?
 
   // WALLET RELATED
 
-  app.get('/api/wallet', async (req, res) => {
+  app.get('/api/wallet/transactions', authMiddleware, async (req, res) => {
+    //app.get('/api/wallet/transactions', requireAuth, async (req, res) => {
+    try {
+      /*if (!req.user || !req.user.id) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }*/
+
+      const userId = req.user.id;
+
+      const [rows] = await db.query(`
+      SELECT id, amount, type, reason, created_at
+      FROM wallet_transactions
+      WHERE user_id = ?
+      ORDER BY created_at DESC
+    `, [userId]);
+
+      res.json(rows);
+    } catch (err) {
+      console.error('Wallet transaction error:', err);
+      res.status(500).json({ error: 'Server error fetching wallet transactions' });
+    }
+  });
+
+
+  /*app.get('/api/wallet', async (req, res) => {
     const userId = req.user.id;
 
     const [rows] = await db.query(
@@ -3780,13 +3804,42 @@ WHERE ci.user_id = ?
     );
 
     res.json({ balance: rows[0]?.balance || 0 });
+  });*/
+
+  //app.get('/api/wallet', requireAuth, async (req, res) => {
+  app.get('/api/wallet', authMiddleware, async (req, res) => {
+    try {
+      const userId = req.user.id;
+
+      const [[result]] = await db.query(`
+      SELECT 
+        COALESCE(SUM(CASE WHEN type = 'CREDIT' THEN amount ELSE 0 END), 0) -
+        COALESCE(SUM(CASE WHEN type = 'DEBIT' THEN amount ELSE 0 END), 0)
+        AS balance
+      FROM wallet_transactions
+      WHERE user_id = ?
+    `, [userId]);
+
+      res.json({ balance: Number(result.balance || 0) });
+
+    } catch (err) {
+      console.error('Wallet balance error:', err);
+      res.status(500).json({ error: 'Failed to fetch wallet balance' });
+    }
   });
 
 
-  app.post('/api/wallet/add', async (req, res) => {
+
+  app.post('/api/wallet/add', authMiddleware, async (req, res) => {
     const { email, amount, reason } = req.body;
 
     try {
+
+      // Optional: admin-only guard
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
       const [[user]] = await db.query(
         `SELECT id FROM users WHERE email = ?`,
         [email]
@@ -3798,11 +3851,11 @@ WHERE ci.user_id = ?
 
       const userId = user.id;
 
-      await db.query(`
+      /*await db.query(`
       INSERT INTO user_wallets (user_id, balance)
       VALUES (?, ?)
       ON DUPLICATE KEY UPDATE balance = balance + ?
-    `, [userId, amount, amount]);
+    `, [userId, amount, amount]);*/
 
       await db.query(`
       INSERT INTO wallet_transactions (user_id, amount, type, reason)
@@ -3818,7 +3871,7 @@ WHERE ci.user_id = ?
   });
 
 
-  const deductWallet = async (userId, amount) => {
+  /*const deductWallet = async (userId, amount) => {
     await db.query(`
     UPDATE user_wallets
     SET balance = balance - ?
@@ -3829,30 +3882,7 @@ WHERE ci.user_id = ?
     INSERT INTO wallet_transactions (user_id, amount, type, reason)
     VALUES (?, ?, 'DEBIT', 'Used in order')
   `, [userId, amount]);
-  };
-
-
-  app.get('/api/wallet/transactions', async (req, res) => {
-    //app.get('/api/wallet/transactions', requireAuth, async (req, res) => {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    const userId = req.user.id;
-
-    db.query(`
-    SELECT id, amount, type, reason, created_at
-    FROM wallet_transactions
-    WHERE user_id = ?
-    ORDER BY created_at DESC
-  `, [userId])
-      .then(([rows]) => res.json(rows))
-      .catch(err => {
-        console.error('Wallet transaction error:', err);
-        res.status(500).json({ error: 'Failed to fetch transactions' });
-      });
-  });
-
+  };*/
 
 
   // === START SERVER ===
