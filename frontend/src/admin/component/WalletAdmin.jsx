@@ -53,7 +53,7 @@ const WalletAdmin = () => {
                     type="number"
                     //placeholder="User ID"
                     placeholder="User Email"
-                    value={userId}
+                    value={email}
                     //onChange={(e) => setUserId(e.target.value)}
                     onChange={(e) => setEmail(e.target.value)}
                     className="border p-2 w-full"
