@@ -3871,6 +3871,41 @@ WHERE ci.user_id = ?
   });
 
 
+  app.get('/admin/transactions', async (req, res) => {
+    const { email } = req.query;
+
+    const [user] = await db.query(
+      "SELECT id FROM users WHERE email = ?",
+      [email]
+    );
+
+    if (!user.length) return res.status(404).json({ error: "User not found" });
+
+    const [rows] = await db.query(
+      "SELECT * FROM wallet_transactions WHERE user_id = ? ORDER BY created_at DESC",
+      [user[0].id]
+    );
+
+    res.json(rows);
+  });
+
+
+  app.get('/admin/balance', async (req, res) => {
+    const { email } = req.query;
+
+    const [user] = await db.query(
+      "SELECT wallet_balance FROM users WHERE email = ?",
+      [email]
+    );
+
+    if (!user.length) return res.status(404).json({ error: "User not found" });
+
+    res.json({ balance: user[0].wallet_balance });
+  });
+
+
+
+
   /*const deductWallet = async (userId, amount) => {
     await db.query(`
     UPDATE user_wallets

@@ -9,6 +9,42 @@ const WalletAdmin = () => {
     const [reason, setReason] = useState("");
     const [email, setEmail] = useState("");
 
+
+    const [transactions, setTransactions] = useState([]);
+    const [balance, setBalance] = useState(null);
+    const [loading, setLoading] = useState(false);
+
+
+    const handleFetch = async () => {
+        if (!email) {
+            alert("Email required");
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const resBalance = await axios.get(
+                `${config.API_URL}/api/wallet/admin/balance?email=${email}`,
+                { withCredentials: true }
+            );
+
+            const resTx = await axios.get(
+                `${config.API_URL}/api/wallet/admin/transactions?email=${email}`,
+                { withCredentials: true }
+            );
+
+            setBalance(Number(resBalance.data.balance || 0));
+            setTransactions(resTx.data || []);
+
+        } catch (err) {
+            console.error(err);
+            alert("Error fetching wallet data");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleAdd = async () => {
 
         if (!email || !amount) {
@@ -82,6 +118,51 @@ const WalletAdmin = () => {
                 >
                     Add to Wallet
                 </button>
+
+
+                <button
+                    onClick={handleFetch}
+                    className="bg-blue-600 text-white px-4 py-2 rounded"
+                >
+                    Load Wallet
+                </button>
+
+                {balance !== null && (
+                    <div className="mt-4 p-3 bg-purple-50 rounded">
+                        <strong>Balance:</strong> €{balance.toFixed(2)}
+                    </div>
+                )}
+
+
+                {transactions.length > 0 && (
+                    <div className="mt-4">
+                        <h3 className="font-bold mb-2">Transactions</h3>
+
+                        <div className="border rounded">
+                            {transactions.map(tx => (
+                                <div key={tx.id} className="flex justify-between p-2 border-b">
+
+                                    <div>
+                                        <div className="font-medium">{tx.reason}</div>
+                                        <div className="text-xs text-gray-500">
+                                            {new Date(tx.created_at).toLocaleString()}
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        className={`font-bold ${tx.type === "CREDIT" ? "text-green-600" : "text-red-600"
+                                            }`}
+                                    >
+                                        {tx.type === "CREDIT" ? "+" : "-"}€
+                                        {Number(tx.amount).toFixed(2)}
+                                    </div>
+
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
 
             </div>
         </div>
