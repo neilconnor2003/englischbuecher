@@ -3832,7 +3832,8 @@ WHERE ci.user_id = ?
   };
 
 
-  app.get('/api/wallet/transactions', (req, res) => {
+  app.get('/api/wallet/transactions', async (req, res) => {
+    //app.get('/api/wallet/transactions', requireAuth, async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }

@@ -550,8 +550,11 @@
   "free_delivery_threshold": "🎉 Free delivery on orders above €{{amount}}",
   "discount_placeholder": "Enter discount code",
   "secure_checkout_note": "🔒 Secure checkout. Payment handled by Stripe.",
-  "checkout_email_fixed": "This email is linked to your account", 
-  "wallet": "Wallet",
+  "checkout_email_fixed": "This email is linked to your account",
+  "wallet_no_transactions": "No transactions in the wallet",
+  "wallet_added": "Credit added",
+  "wallet_used_order": "Used in Order",
+  "wallet_refund": "Refund",
   "wallet_balance": "Wallet balance",
   "wallet_used": "Wallet used",
   "use_wallet": "Use wallet balance",
@@ -560,5 +563,4 @@
   "debit": "Debit",
   "reason": "Reason",
   "amount": "Amount"
-
 }

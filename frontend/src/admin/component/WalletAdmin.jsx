@@ -50,7 +50,8 @@ const WalletAdmin = () => {
             <div className="bg-white p-4 rounded shadow space-y-4">
 
                 <input
-                    type="number"
+                    //type="number"
+                    type="email"
                     //placeholder="User ID"
                     placeholder="User Email"
                     value={email}
