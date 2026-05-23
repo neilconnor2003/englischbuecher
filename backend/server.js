@@ -3828,7 +3828,7 @@ WHERE ci.user_id = ?
     }
   });
 
-
+  const sendWalletCreditEmail = require('./utils/sendWalletCreditEmail');
 
   app.post('/api/wallet/add', authMiddleware, async (req, res) => {
     const { email, amount, reason } = req.body;
@@ -3840,10 +3840,16 @@ WHERE ci.user_id = ?
         return res.status(403).json({ error: 'Admin access required' });
       }
 
-      const [[user]] = await db.query(
+      /*const [[user]] = await db.query(
         `SELECT id FROM users WHERE email = ?`,
         [email]
+      );*/
+
+      const [[user]] = await db.query(
+        `SELECT id, email, first_name, last_name FROM users WHERE email = ?`,
+        [email]
       );
+
 
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
@@ -3861,6 +3867,29 @@ WHERE ci.user_id = ?
       INSERT INTO wallet_transactions (user_id, amount, type, reason)
       VALUES (?, ?, 'CREDIT', ?)
     `, [userId, amount, reason || 'Admin credit']);
+
+
+
+      const [[bal]] = await db.query(`
+        SELECT
+          COALESCE(SUM(CASE WHEN type='CREDIT' THEN amount ELSE 0 END),0) -
+          COALESCE(SUM(CASE WHEN type='DEBIT' THEN amount ELSE 0 END),0) AS balance
+        FROM wallet_transactions
+        WHERE user_id = ?
+      `, [user.id]);
+
+
+      // ✅ SEND EMAIL (non-blocking)
+      //sendWalletCreditEmail(user, Number(amount), reason).catch(console.error);
+
+      sendWalletCreditEmail(
+        user,
+        Number(amount),
+        reason,
+        Number(bal.balance)
+      ).catch(console.error);
+
+
 
       res.json({ success: true });
 
@@ -3901,6 +3930,55 @@ WHERE ci.user_id = ?
     if (!user.length) return res.status(404).json({ error: "User not found" });
 
     res.json({ balance: user[0].wallet_balance });
+  });
+
+
+  app.get('/api/admin/wallet/users', authMiddleware, async (req, res) => {
+    try {
+      // ✅ Admin check
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      // ✅ Fetch users with wallet activity
+      const [rows] = await db.query(`
+      SELECT
+        u.id,
+        u.email,
+        u.first_name,
+        u.last_name,
+
+        -- ✅ Calculate balance from transactions
+        COALESCE(
+          SUM(
+            CASE
+              WHEN wt.type = 'CREDIT' THEN wt.amount
+              WHEN wt.type = 'DEBIT' THEN -wt.amount
+              ELSE 0
+            END
+          ), 0
+        ) AS balance,
+
+        COUNT(wt.id) AS tx_count,
+        MAX(wt.created_at) AS last_activity
+
+      FROM users u
+      LEFT JOIN wallet_transactions wt
+        ON wt.user_id = u.id
+
+      GROUP BY u.id, u.email, u.first_name, u.last_name
+
+      HAVING COUNT(wt.id) > 0   -- ✅ IMPORTANT: only users with wallet activity
+
+      ORDER BY last_activity DESC
+    `);
+
+      res.json(rows);
+
+    } catch (err) {
+      console.error('❌ wallet users error:', err);
+      res.status(500).json({ error: 'Failed to fetch wallet users' });
+    }
   });
 
 
