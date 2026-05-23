@@ -49,6 +49,11 @@ const ProfilePage = () => {
   });
 
 
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [walletTx, setWalletTx] = useState([]);
+
+
+
   // Normalize a photo URL if the backend returns a relative path like "/uploads/..."
   const normalizePhotoUrl = (url) => {
     if (!url) return '';
@@ -142,6 +147,35 @@ const ProfilePage = () => {
   }, [authUser, navigate]);
 
 
+  useEffect(() => {
+    async function loadWallet() {
+      console.log('🔵 loadWallet triggered');
+
+      try {
+        const { data } = await api.get('/wallet');
+        console.log('✅ wallet balance response:', data);
+
+        setWalletBalance(Number(data.balance || 0));
+
+        const tx = await api.get('/wallet/transactions');
+        console.log('✅ transactions response:', tx.data);
+
+        setWalletTx(tx.data || []);
+        console.log('✅ state set walletTx:', tx.data);
+
+      } catch (err) {
+        console.error('❌ Wallet load failed:', err.response?.data || err);
+        //console.error('Wallet load failed', err);
+      }
+    }
+
+    console.log('👤 authUser in wallet effect:', authUser);
+
+    if (authUser) loadWallet();
+  }, [authUser]);
+
+
+
   // === AUTO-OPEN TAB FROM URL HASH ===
   useEffect(() => {
     if (location.hash === '#orders') {
@@ -159,13 +193,27 @@ const ProfilePage = () => {
 
       const ordersWithItems = data.map(order => {
         let parsed = [];
-        try {
+        /*try {
           if (order.order_items != null && order.order_items !== '') {
             parsed = JSON.parse(order.order_items);
           }
         } catch (err) {
           console.warn(`Failed to parse order_items for order ${order.id}:`, err);
+        }*/
+
+        try {
+          if (order.order_items != null && order.order_items !== '') {
+            if (typeof order.order_items === 'string') {
+              parsed = JSON.parse(order.order_items);
+            } else {
+              // ✅ already parsed object
+              parsed = order.order_items;
+            }
+          }
+        } catch (err) {
+          console.warn(`Failed to parse order_items for order ${order.id}:`, err);
         }
+
 
         return {
           ...order,
@@ -409,7 +457,63 @@ const ProfilePage = () => {
           )}
         </div>
       )
+    },
+
+    {
+      key: '3',
+      label: (<span>💰 {t('wallet')}</span>),
+      children: (
+        <div className="profile-section">
+
+          <Title level={4}>{t('wallet')}</Title>
+
+          {/* Balance */}
+          <div style={{
+            background: '#faf5ff',
+            padding: 16,
+            borderRadius: 10,
+            marginBottom: 20
+          }}>
+            <Text strong>{t('wallet_balance')}</Text>
+            <div style={{ fontSize: 24, fontWeight: 'bold', color: '#6b21a8' }}>
+              €{walletBalance.toFixed(2)}
+            </div>
+          </div>
+
+          {/* Transactions */}
+          <Title level={5}>{t('wallet_transactions')}</Title>
+
+          {walletTx.length === 0 ? (
+            <Text type="secondary">{t('wallet_no_transactions')}</Text>
+          ) : (
+            walletTx.map(tx => (
+              <div key={tx.id} style={{
+                padding: 10,
+                borderBottom: '1px solid #eee',
+                display: 'flex',
+                justifyContent: 'space-between'
+              }}>
+                <div>
+                  <div style={{ fontWeight: 500 }}>{tx.reason}</div>
+                  <div style={{ fontSize: 12, color: '#999' }}>
+                    {new Date(tx.created_at).toLocaleDateString()}
+                  </div>
+                </div>
+
+                <div style={{
+                  color: tx.type === 'CREDIT' ? 'green' : 'red',
+                  fontWeight: 'bold'
+                }}>
+                  {tx.type === 'CREDIT' ? '+' : '-'}€{Number(tx.amount).toFixed(2)}
+                </div>
+              </div>
+            ))
+          )}
+
+        </div>
+      )
     }
+
     /*{
       key: '3',
       label: (<span><LockOutlined /> {t('account_settings')}</span>),
@@ -428,7 +532,7 @@ const ProfilePage = () => {
         </div>
       )
     }*/
-  ]), [authUser, t, orderLoading, orders, currentPage, pageSize, navigate]);
+  ]), [authUser, t, orderLoading, orders, currentPage, pageSize, navigate, walletTx, walletBalance]);
 
   //if (!authUser) {
   if (authUser === undefined) {

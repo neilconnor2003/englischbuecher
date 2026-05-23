@@ -17,14 +17,14 @@ const requireAuth = (req, res, next) => {
 module.exports = (db) => {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-  console.log('✅ LOADING orderRoutes from:', __filename);
+  //console.log('✅ LOADING orderRoutes from:', __filename);
 
   // === CREATE PAYMENT INTENT — GERMANY ONLY ===
 
   router.post('/create-payment-intent', requireAuth, async (req, res) => {
-    console.log('Stripe secret key prefix:', process.env.STRIPE_SECRET_KEY.slice(0, 12));
+    //console.log('Stripe secret key prefix:', process.env.STRIPE_SECRET_KEY.slice(0, 12));
 
-    console.log(
+    /*console.log(
       '[HIT create-payment-intent]',
       'port=',
       process.env.PORT,
@@ -32,7 +32,7 @@ module.exports = (db) => {
       process.pid,
       'hasDebugHeader=',
       req.headers['x-debug-from']
-    );
+    );*/
 
     const sk = process.env.STRIPE_SECRET_KEY || '';
     const skPrefix = sk ? sk.slice(0, 12) : 'MISSING';
@@ -41,7 +41,7 @@ module.exports = (db) => {
       // Identify which Stripe account THIS server key belongs to
       const acct = await stripe.accounts.retrieve();
 
-      console.log('[Stripe DEBUG] acct:', acct.id, 'skPrefix:', skPrefix);
+      //console.log('[Stripe DEBUG] acct:', acct.id, 'skPrefix:', skPrefix);
 
       //const { items, totalPrice, currency = 'eur' } = req.body;
 
@@ -223,6 +223,7 @@ module.exports = (db) => {
       paymentMethod,
       paymentResult,
       totalPrice,
+      wallet_used,
 
       // NEW — shipping metadata coming from CheckoutPage
       shipping_selected_rate_id,
@@ -232,6 +233,8 @@ module.exports = (db) => {
     } = req.body;
 
     const userId = req.user?.id || null;
+
+    const safeWalletUse = Math.max(0, Number(wallet_used || 0));
 
     // Validation (unchanged)
     if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
@@ -326,6 +329,47 @@ module.exports = (db) => {
 
       // 4) Clear cart for logged-in users (same as your code)
       if (userId) {
+        const safeWalletUse = Math.max(0, Number(wallet_used || 0));
+
+        // ✅ 3.5 Deduct from wallet
+        //if (wallet_used && wallet_used > 0 && userId) {
+        if (safeWalletUse > 0 && userId) {
+
+          // Lock the user row to avoid race conditions (transaction-safe)
+          await conn.execute(`SELECT id FROM users WHERE id = ? FOR UPDATE`, [userId]);
+
+
+          // Compute current balance from transactions
+          const [[balRow]] = await conn.query(`
+            SELECT
+            COALESCE(SUM(CASE WHEN type='CREDIT' THEN amount ELSE 0 END), 0) -
+            COALESCE(SUM(CASE WHEN type='DEBIT'  THEN amount ELSE 0 END), 0)
+            AS balance
+            FROM wallet_transactions
+            WHERE user_id = ?
+          `, [userId]);
+
+          const currentBalance = Number(balRow?.balance || 0);
+
+
+          if (safeWalletUse > currentBalance + 1e-9) {
+            throw new Error(`Insufficient wallet balance (have €${currentBalance.toFixed(2)})`);
+          }
+
+          // 1. Reduce balance safely
+          /*await conn.execute(`
+            UPDATE user_wallets
+            SET balance = balance - ?
+            WHERE user_id = ? AND balance >= ?
+          `, [safeWalletUse, userId, safeWalletUse]);*/
+
+          // 2. Store transaction
+          await conn.execute(`
+            INSERT INTO wallet_transactions (user_id, amount, type, reason)
+            VALUES (?, ?, 'DEBIT', ?)
+          `, [userId, safeWalletUse, 'Used in order #' + orderId]);
+        }
+
         await conn.execute('DELETE FROM cart_items WHERE user_id = ?', [userId]);
       }
 
@@ -602,7 +646,7 @@ module.exports = (db) => {
 
   // === ADMIN: CREATE DPD LABEL FOR AN ORDER (manual packing workflow) ===
   router.post('/:id/create-dpd-label', async (req, res) => {
-    console.log('[ROUTE REGISTERED]', req.originalUrl);
+    //console.log('[ROUTE REGISTERED]', req.originalUrl);
     try {
       // Admin guard (adjust if your auth middleware uses different fields)
       if (!req.user || req.user.role !== 'admin') {
@@ -720,10 +764,10 @@ module.exports = (db) => {
       };
 
 
-      console.log(
+      /*console.log(
         '[DPD RAW PAYLOAD]',
         JSON.stringify(dpdPayload, null, 2)
-      );
+      );*/
 
 
       const { data } = await axios.post(

@@ -315,9 +315,9 @@ router.post('/rates', async (req, res) => {
     };
 
 
-    console.log('[SHIPPO DEBUG] estimate_only=', estimate_only);
-    console.log('[SHIPPO DEBUG] address_from=', address_from);
-    console.log('[SHIPPO DEBUG] address_to.email=', JSON.stringify(address_to.email));
+    //console.log('[SHIPPO DEBUG] estimate_only=', estimate_only);
+    //console.log('[SHIPPO DEBUG] address_from=', address_from);
+    //console.log('[SHIPPO DEBUG] address_to.email=', JSON.stringify(address_to.email));
 
 
     // 3) Create Shipment -> returns rates

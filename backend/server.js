@@ -2,8 +2,8 @@
 require('dotenv').config();
 
 
-console.log('DB_USER:', process.env.DB_USER);
-console.log('DB_HOST:', process.env.DB_HOST);
+//console.log('DB_USER:', process.env.DB_USER);
+//console.log('DB_HOST:', process.env.DB_HOST);
 
 
 
@@ -22,7 +22,7 @@ const axios = require('axios');   // ← ADD THIS LINE
 const cookieParser = require('cookie-parser');
 
 const dpdRoutes = require('./routes/dpd');
-console.log('✅ LOADING dpd routes from:', require.resolve('./routes/dpd'));
+//('✅ LOADING dpd routes from:', require.resolve('./routes/dpd'));
 
 const FRONTEND_URL = process.env.FRONTEND_URL;
 
@@ -1394,7 +1394,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
       console.table(rows.map(r => ({ id: r.id, title: r.title_en, featured: r.is_featured, available: r.is_available, stock: r.stock })));
 
       if (rows.length === 0) {
-        console.log('No featured books found – returning empty array');
+        //console.log('No featured books found – returning empty array');
         return res.json([]);   // ← VERY IMPORTANT: return [] instead of error
       }
 
@@ -2314,9 +2314,9 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
   // BOOK IMAGE UPLOAD
   app.post('/api/upload-book-image', uploadBookImage.single('image'), (req, res) => {
-    console.log('FILE:', req.file);
-    console.log('MIMETYPE:', req.file?.mimetype);
-    console.log('SIZE:', req.file?.size);
+    //console.log('FILE:', req.file);
+    //console.log('MIMETYPE:', req.file?.mimetype);
+    //console.log('SIZE:', req.file?.size);
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     const origin = `${req.protocol}://${req.get('host')}`;
     res.json({ url: `${origin}/uploads/books/${req.file.filename}` });
@@ -3632,11 +3632,11 @@ WHERE ci.user_id = ?
         },
       };
 
-      console.log('🧠 Updating PI with:', updatePayload);
+      //console.log('🧠 Updating PI with:', updatePayload);
 
       const pi = await stripe.paymentIntents.update(piId, updatePayload);
 
-      console.log('🧠 PI metadata after update:', pi.metadata);
+      //console.log('🧠 PI metadata after update:', pi.metadata);
 
       /*const pi = await stripe.paymentIntents.update(piId, {
         amount: Number(amount_cents),
@@ -3661,7 +3661,7 @@ WHERE ci.user_id = ?
   });*/
 
   // === ORDER ROUTES ===
-  console.log('✅ Mounting orders routes from:', require.resolve('./routes/orderRoutes'));
+  //console.log('✅ Mounting orders routes from:', require.resolve('./routes/orderRoutes'));
 
   const ordersRouter = require('./routes/orderRoutes')(db);
   app.use('/api/orders', ordersRouter);
@@ -3716,6 +3716,333 @@ WHERE ci.user_id = ?
     }
     res.json(discount);
   });
+
+
+  app.get('/api/discounts', async (req, res) => {
+    try {
+      const [rows] = await db.query(`
+      SELECT id, code, type, value, is_active, expiry_date
+      FROM discount_codes
+      ORDER BY created_at DESC
+    `);
+
+      res.json(rows);
+    } catch (err) {
+      console.error('GET discounts error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  app.put('/api/discounts/:id', async (req, res) => {
+    const { id } = req.params;
+    const { code, type, value, is_active, expiry_date } = req.body;
+
+    try {
+      await db.query(`
+      UPDATE discount_codes
+      SET code = ?, type = ?, value = ?, is_active = ?, expiry_date = ?
+      WHERE id = ?
+    `, [code.toUpperCase(), type, value, is_active ? 1 : 0, expiry_date, id]);
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error('UPDATE discount error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+
+  app.patch('/api/discounts/:id/toggle', async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      await db.query(`
+      UPDATE discount_codes
+      SET is_active = NOT is_active
+      WHERE id = ?
+    `, [id]);
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error('TOGGLE discount error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  // WALLET RELATED
+
+  app.get('/api/wallet/transactions', authMiddleware, async (req, res) => {
+    //app.get('/api/wallet/transactions', requireAuth, async (req, res) => {
+    try {
+      /*if (!req.user || !req.user.id) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }*/
+
+      const userId = req.user.id;
+
+      const [rows] = await db.query(`
+      SELECT id, amount, type, reason, created_at
+      FROM wallet_transactions
+      WHERE user_id = ?
+      ORDER BY created_at DESC
+    `, [userId]);
+
+      res.json(rows);
+    } catch (err) {
+      console.error('Wallet transaction error:', err);
+      res.status(500).json({ error: 'Server error fetching wallet transactions' });
+    }
+  });
+
+
+  /*app.get('/api/wallet', async (req, res) => {
+    const userId = req.user.id;
+
+    const [rows] = await db.query(
+      `SELECT balance FROM user_wallets WHERE user_id = ?`,
+      [userId]
+    );
+
+    res.json({ balance: rows[0]?.balance || 0 });
+  });*/
+
+  //app.get('/api/wallet', requireAuth, async (req, res) => {
+  app.get('/api/wallet', authMiddleware, async (req, res) => {
+    try {
+      const userId = req.user.id;
+
+      const [[result]] = await db.query(`
+      SELECT 
+        COALESCE(SUM(CASE WHEN type = 'CREDIT' THEN amount ELSE 0 END), 0) -
+        COALESCE(SUM(CASE WHEN type = 'DEBIT' THEN amount ELSE 0 END), 0)
+        AS balance
+      FROM wallet_transactions
+      WHERE user_id = ?
+    `, [userId]);
+
+      res.json({ balance: Number(result.balance || 0) });
+
+    } catch (err) {
+      console.error('Wallet balance error:', err);
+      res.status(500).json({ error: 'Failed to fetch wallet balance' });
+    }
+  });
+
+  const sendWalletCreditEmail = require('./utils/sendWalletCreditEmail');
+
+  app.post('/api/wallet/add', authMiddleware, async (req, res) => {
+    const { email, amount, reason } = req.body;
+
+    try {
+
+      // Optional: admin-only guard
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      /*const [[user]] = await db.query(
+        `SELECT id FROM users WHERE email = ?`,
+        [email]
+      );*/
+
+      const [[user]] = await db.query(
+        `SELECT id, email, first_name, last_name FROM users WHERE email = ?`,
+        [email]
+      );
+
+
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const userId = user.id;
+
+      /*await db.query(`
+      INSERT INTO user_wallets (user_id, balance)
+      VALUES (?, ?)
+      ON DUPLICATE KEY UPDATE balance = balance + ?
+    `, [userId, amount, amount]);*/
+
+      await db.query(`
+      INSERT INTO wallet_transactions (user_id, amount, type, reason)
+      VALUES (?, ?, 'CREDIT', ?)
+    `, [userId, amount, reason || 'Admin credit']);
+
+
+
+      const [[bal]] = await db.query(`
+        SELECT
+          COALESCE(SUM(CASE WHEN type='CREDIT' THEN amount ELSE 0 END),0) -
+          COALESCE(SUM(CASE WHEN type='DEBIT' THEN amount ELSE 0 END),0) AS balance
+        FROM wallet_transactions
+        WHERE user_id = ?
+      `, [user.id]);
+
+
+      // ✅ SEND EMAIL (non-blocking)
+      //sendWalletCreditEmail(user, Number(amount), reason).catch(console.error);
+
+      sendWalletCreditEmail(
+        user,
+        Number(amount),
+        reason,
+        Number(bal.balance)
+      ).catch(console.error);
+
+
+
+      res.json({ success: true });
+
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Error adding wallet money' });
+    }
+  });
+
+
+  app.get('/admin/transactions', async (req, res) => {
+    const { email } = req.query;
+
+    const [user] = await db.query(
+      "SELECT id FROM users WHERE email = ?",
+      [email]
+    );
+
+    if (!user.length) return res.status(404).json({ error: "User not found" });
+
+    const [rows] = await db.query(
+      "SELECT * FROM wallet_transactions WHERE user_id = ? ORDER BY created_at DESC",
+      [user[0].id]
+    );
+
+    res.json(rows);
+  });
+
+
+  app.get('/admin/balance', async (req, res) => {
+    const { email } = req.query;
+
+    const [user] = await db.query(
+      "SELECT wallet_balance FROM users WHERE email = ?",
+      [email]
+    );
+
+    if (!user.length) return res.status(404).json({ error: "User not found" });
+
+    res.json({ balance: user[0].wallet_balance });
+  });
+
+
+  app.get('/api/admin/wallet/users', authMiddleware, async (req, res) => {
+    try {
+      // ✅ Admin check
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      // ✅ Fetch users with wallet activity
+      const [rows] = await db.query(`
+      SELECT
+        u.id,
+        u.email,
+        u.first_name,
+        u.last_name,
+
+        -- ✅ Calculate balance from transactions
+        COALESCE(
+          SUM(
+            CASE
+              WHEN wt.type = 'CREDIT' THEN wt.amount
+              WHEN wt.type = 'DEBIT' THEN -wt.amount
+              ELSE 0
+            END
+          ), 0
+        ) AS balance,
+
+        COUNT(wt.id) AS tx_count,
+        MAX(wt.created_at) AS last_activity
+
+      FROM users u
+      LEFT JOIN wallet_transactions wt
+        ON wt.user_id = u.id
+
+      GROUP BY u.id, u.email, u.first_name, u.last_name
+
+      HAVING COUNT(wt.id) > 0   -- ✅ IMPORTANT: only users with wallet activity
+
+      ORDER BY last_activity DESC
+    `);
+
+      res.json(rows);
+
+    } catch (err) {
+      console.error('❌ wallet users error:', err);
+      res.status(500).json({ error: 'Failed to fetch wallet users' });
+    }
+  });
+
+
+  app.get('/api/admin/wallet/users/:id/transactions', authMiddleware, async (req, res) => {
+    try {
+      // ✅ 1. Strict admin check
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      // ✅ 2. Validate param
+      const userId = parseInt(req.params.id, 10);
+      if (!userId || isNaN(userId)) {
+        return res.status(400).json({ error: 'Invalid user ID' });
+      }
+
+      // ✅ 3. OPTIONAL (but recommended): ensure user exists
+      const [userRows] = await db.query(
+        'SELECT id FROM users WHERE id = ?',
+        [userId]
+      );
+
+      if (userRows.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // ✅ 4. Fetch transactions
+      const [rows] = await db.query(
+        `
+      SELECT
+        id,
+        amount,
+        type,
+        reason,
+        created_at
+      FROM wallet_transactions
+      WHERE user_id = ?
+      ORDER BY created_at DESC
+      `,
+        [userId]
+      );
+
+      res.json(rows);
+
+    } catch (err) {
+      console.error('❌ admin wallet transactions error:', err);
+      res.status(500).json({ error: 'Failed to fetch transactions' });
+    }
+  });
+
+
+
+  /*const deductWallet = async (userId, amount) => {
+    await db.query(`
+    UPDATE user_wallets
+    SET balance = balance - ?
+    WHERE user_id = ? AND balance >= ?
+  `, [amount, userId, amount]);
+
+    await db.query(`
+    INSERT INTO wallet_transactions (user_id, amount, type, reason)
+    VALUES (?, ?, 'DEBIT', 'Used in order')
+  `, [userId, amount]);
+  };*/
 
 
   // === START SERVER ===
@@ -3811,7 +4138,7 @@ ${urls.join('')}
   //  });
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT}`);
+    //console.log(`Server running on port ${PORT}`);
   });
 
 })();

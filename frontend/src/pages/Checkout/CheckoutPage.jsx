@@ -13,6 +13,7 @@ import './CheckoutPage.css';
 import { getDeliveryContext, setDeliveryContext } from '../../utils/deliveryContext';
 import { getDPDShippingPrice } from '../../utils/dpdShipping';
 import { Link } from "react-router-dom";
+import config from '../../config';
 
 const CheckoutPage = ({ clientSecret }) => {
   const { t } = useTranslation();
@@ -47,12 +48,16 @@ const CheckoutPage = ({ clientSecret }) => {
     .join('|');
 
   const COUNTRY = "DE";
-
+  const API_BASE = `${config.API_URL}/api`;
   const FREE_SHIPPING_THRESHOLD = 30;
 
 
   const [discountCode, setDiscountCode] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState(null);
+
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [useWallet, setUseWallet] = useState(false);
+
 
 
   //const subtotal = Number(totalPrice || 0);
@@ -91,7 +96,16 @@ const CheckoutPage = ({ clientSecret }) => {
 
   const grandTotal = subtotal + effectiveShipping;
 
+  const MIN_STRIPE_EUR = 0.50;
 
+  // Wallet can only cover up to (grandTotal - 0.50), so Stripe always charges ≥ 0.50
+  const maxWalletAllowed = Math.max(0, grandTotal - MIN_STRIPE_EUR);
+
+  const walletUsed = useWallet
+    ? Math.min(walletBalance, maxWalletAllowed)
+    : 0;
+
+  const finalTotal = grandTotal - walletUsed;
 
   const [hydrated, setHydrated] = useState(false);
 
@@ -173,6 +187,16 @@ const CheckoutPage = ({ clientSecret }) => {
       city,
     });
   }, [hydrated, shippingMode, postalCode, city]);
+
+  useEffect(() => {
+    async function loadWallet() {
+      //const res = await axios.get('/api/wallet', { withCredentials: true });
+      const res = await axios.get(`${API_BASE}/wallet`, { withCredentials: true });
+      setWalletBalance(Number(res.data.balance || 0));
+    }
+    loadWallet();
+  }, []);
+
 
   useEffect(() => {
     let cancelled = false;
@@ -296,14 +320,17 @@ const CheckoutPage = ({ clientSecret }) => {
 
   useEffect(() => {
 
-    console.log('🚀 updatePI triggered');
-    console.log('🚀 shippingMode:', shippingMode);
-    console.log('🚀 grandTotal:', grandTotal);
+    //console.log('🚀 updatePI triggered');
+    //console.log('🚀 shippingMode:', shippingMode);
+    //console.log('🚀 grandTotal:', grandTotal);
+    console.log('PI update:', { grandTotal, walletUsed, finalTotal });
 
     async function updatePI() {
       if (!clientSecret) return;
 
-      const amount_cents = Math.round(grandTotal * 100);
+      //const amount_cents = Math.round(grandTotal * 100);
+      //const amount_cents = Math.round(finalTotal * 100);
+      const amount_cents = Math.max(50, Math.round(finalTotal * 100));
 
 
       //const shipping_provider = shippingMode === 'pickup' ? 'PICKUP' : 'DPD';
@@ -315,13 +342,20 @@ const CheckoutPage = ({ clientSecret }) => {
 
 
       try {
-        const res = await axios.post(
+        const res = /*await axios.post(
           '/api/orders/update-payment-intent-amount',
           { clientSecret, amount_cents, shipping_provider, shipping_service },
           { withCredentials: true }
-        );
+        );*/
 
-        console.log('[PI UPDATED]', res.data);
+          await axios.post(
+            `${API_BASE}/orders/update-payment-intent-amount`,
+            { clientSecret, amount_cents, shipping_provider, shipping_service },
+            { withCredentials: true }
+          );
+
+
+        //console.log('[PI UPDATED]', res.data);
       } catch (e) {
         console.error('[PI UPDATE FAILED]', e?.response?.data || e?.message);
         toast.error(t('payment_failed_try_again'));
@@ -329,9 +363,11 @@ const CheckoutPage = ({ clientSecret }) => {
     }
 
     updatePI();
-  }, [clientSecret, grandTotal, shippingMode, t]);
+  }, [clientSecret, finalTotal, shippingMode, t]);
 
-  const applyDiscount = async () => {
+  const [discountError, setDiscountError] = useState("");
+
+  /*const applyDiscount = async () => {
     try {
       const normalized = discountCode.trim().toUpperCase();
       const { data } = await axios.post('/api/discounts/validate', {
@@ -345,7 +381,31 @@ const CheckoutPage = ({ clientSecret }) => {
       toast.error(err.response?.data?.error || "Invalid code");
       setAppliedDiscount(null);
     }
+  };*/
+
+  const applyDiscount = async () => {
+    try {
+      setDiscountError(""); // ✅ clear old error
+
+      const normalized = discountCode.trim().toUpperCase();
+
+      /*const { data } = await axios.post('/api/discounts/validate', {
+        code: normalized,
+      });*/
+      const { data } = await axios.post(`${API_BASE}/discounts/validate`, { code: normalized });
+
+      setAppliedDiscount(data);
+      toast.success("Discount applied");
+
+    } catch (err) {
+      const msg = err.response?.data?.error || "Invalid code";
+
+      setDiscountError(msg);     // ✅ store error for UI
+      toast.error(msg);          // ✅ keep toast also
+      setAppliedDiscount(null);
+    }
   };
+
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -406,7 +466,7 @@ const CheckoutPage = ({ clientSecret }) => {
 
         discount_code: appliedDiscount?.code || null,
         discount_type: appliedDiscount?.type || null,
-
+        wallet_used: walletUsed,
 
         //totalPrice: Number(totalPrice || 0) + Number(shippingAmount || 0),
         totalPrice: Number(grandTotal.toFixed(2)),
@@ -417,12 +477,9 @@ const CheckoutPage = ({ clientSecret }) => {
         //shipping_provider: shippingMode === 'pickup' ? 'PICKUP' : 'DPD',
         //shipping_service: shippingMode === 'pickup' ? 'Click & Collect' : 'Standard',
         //shipping_mode: shippingMode,
-
-
         shipping_provider: 'DPD',
         shipping_service: 'Standard',
         shipping_mode: 'delivery',
-
 
         shipping_selected_rate_id: null, // static pricing, no carrier rate
 
@@ -531,7 +588,13 @@ const CheckoutPage = ({ clientSecret }) => {
                       className="promo-input"
                       type="text"
                       value={discountCode}
-                      onChange={(e) => setDiscountCode(e.target.value)}
+                      //onChange={(e) => setDiscountCode(e.target.value)}
+
+                      onChange={(e) => {
+                        setDiscountCode(e.target.value);
+                        setDiscountError(""); // ✅ clear error when typing
+                      }}
+
                       placeholder={t('discount_placeholder') || 'Enter code'}
                     />
                     <button
@@ -542,6 +605,11 @@ const CheckoutPage = ({ clientSecret }) => {
                     >
                       {t('apply') || 'Apply'}
                     </button>
+                    {discountError && (
+                      <div style={{ color: 'red', marginTop: '8px', fontSize: '14px' }}>
+                        {discountError}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="promo-applied">
@@ -569,6 +637,34 @@ const CheckoutPage = ({ clientSecret }) => {
                   </div>
                 )}
               </div>
+
+
+              <div className="wallet-card modern-wallet">
+
+                <div className="wallet-header">
+                  <span className="wallet-title">{t('wallet')}</span>
+                  <span className="wallet-balance">
+                    €{walletBalance.toFixed(2)}
+                  </span>
+                </div>
+
+                <label className="wallet-toggle">
+                  <input
+                    type="checkbox"
+                    checked={useWallet}
+                    onChange={() => setUseWallet(!useWallet)}
+                  />
+                  {t('use_wallet')}
+                </label>
+
+                {useWallet && walletUsed > 0 && (
+                  <div className="wallet-usage">
+                    -€{walletUsed.toFixed(2)} {t('wallet_used')}
+                  </div>
+                )}
+
+              </div>
+
 
               {/* Payment card */}
               <div className="payment-card">
@@ -607,7 +703,7 @@ const CheckoutPage = ({ clientSecret }) => {
                   {loading ? (
                     <span className="spinner">{t('processing')}...</span>
                   ) : (
-                    `${t('pay')} €${grandTotal.toFixed(2)}`
+                    `${t('pay')} €${finalTotal.toFixed(2)}`
                   )}
                 </button>
 
@@ -670,9 +766,17 @@ const CheckoutPage = ({ clientSecret }) => {
                     </div>
                   )}
 
+                  {useWallet && walletUsed > 0 && (
+                    <div className="total-row">
+                      <span>{t('wallet_used') || 'Wallet used'}</span>
+                      <span className="total-price">-€{walletUsed.toFixed(2)}</span>
+                    </div>
+                  )}
+
+
                   <div className="total-row total-strong">
                     <span>{t('total')}</span>
-                    <span className="total-price">€{grandTotal.toFixed(2)}</span>
+                    <span className="total-price">€{finalTotal.toFixed(2)}</span>
                   </div>
                 </div>
               </div>

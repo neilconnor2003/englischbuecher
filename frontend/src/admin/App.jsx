@@ -18,6 +18,8 @@ import WishlistDashboard from './component/WishlistDashboard';
 import CartDashboard from './component/CartDashboard';
 import BookRequestsDashboard from './component/BookRequestsDashboard';
 import AuthorsDashboard from './component/AuthorsDashboard';
+import DiscountDashboard from './component/DiscountDashboard';
+import WalletDashboard from './component/WalletDashboard';
 
 function AdminApp() {
   const { user, loading } = useContext(AuthContext);
@@ -45,6 +47,8 @@ function AdminApp() {
         <Route path="carts" element={<CartDashboard />} />
         <Route path="book-requests" element={<BookRequestsDashboard />} />
         <Route path="authors" element={<AuthorsDashboard />} />
+        <Route path="discounts" element={<DiscountDashboard />} />
+        <Route path="wallet" element={<WalletDashboard />} />
       </Route>
     </Routes>
   );
