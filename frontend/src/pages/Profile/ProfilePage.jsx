@@ -169,6 +169,8 @@ const ProfilePage = () => {
       }
     }
 
+    console.log('👤 authUser in wallet effect:', authUser);
+
     if (authUser) loadWallet();
   }, [authUser]);
 
@@ -191,13 +193,27 @@ const ProfilePage = () => {
 
       const ordersWithItems = data.map(order => {
         let parsed = [];
-        try {
+        /*try {
           if (order.order_items != null && order.order_items !== '') {
             parsed = JSON.parse(order.order_items);
           }
         } catch (err) {
           console.warn(`Failed to parse order_items for order ${order.id}:`, err);
+        }*/
+
+        try {
+          if (order.order_items != null && order.order_items !== '') {
+            if (typeof order.order_items === 'string') {
+              parsed = JSON.parse(order.order_items);
+            } else {
+              // ✅ already parsed object
+              parsed = order.order_items;
+            }
+          }
+        } catch (err) {
+          console.warn(`Failed to parse order_items for order ${order.id}:`, err);
         }
+
 
         return {
           ...order,
