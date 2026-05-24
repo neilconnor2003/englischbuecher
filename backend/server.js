@@ -34,7 +34,8 @@ const VERIFIED_SENTINEL = '1970-01-01 00:00:01';
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: parseInt(process.env.SMTP_PORT) || 587,
-  secure: false,
+  //secure: false,
+  secure: true,   // ✅ VERY IMPORTANT for 465 (SSL)
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS
