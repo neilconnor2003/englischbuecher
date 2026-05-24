@@ -3828,6 +3828,32 @@ WHERE ci.user_id = ?
     }
   });
 
+
+  app.get('/api/admin/wallet/user-lookup', authMiddleware, async (req, res) => {
+    try {
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      const q = String(req.query.email || '').trim().toLowerCase();
+      if (q.length < 3) return res.json([]);
+
+      const [rows] = await db.query(`
+      SELECT id, email, first_name, last_name
+      FROM users
+      WHERE LOWER(email) LIKE ?
+      ORDER BY email ASC
+      LIMIT 8
+    `, [`%${q}%`]);
+
+      res.json(rows);
+    } catch (err) {
+      console.error('user-lookup error:', err);
+      res.status(500).json({ error: 'lookup_failed' });
+    }
+  });
+
+
   const sendWalletCreditEmail = require('./utils/sendWalletCreditEmail');
 
   app.post('/api/wallet/add', authMiddleware, async (req, res) => {
