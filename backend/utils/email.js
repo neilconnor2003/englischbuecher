@@ -117,10 +117,10 @@ function sendWelcomeEmail(transporter, to, name, method, lang = 'de', verifyUrl 
   <div class="container">
 <div class="header">
   <div style="margin-bottom: 16px;">
-    <img src="${logoUrl}" alt="${t.store_name}" style="height: 56px; display: block; margin: 0 auto;" />
+    <img src="${logoUrl}" alt="${store_name}" style="height: 56px; display: block; margin: 0 auto;" />
   </div>
   <h1 style="color: white; font-size: 32px; font-weight: 700; margin: 0; text-shadow: 0 2px 8px rgba(0,0,0,0.3);">
-    ${t.store_name}
+    ${store_name}
   </h1>
 </div>
     <div class="content">
@@ -144,10 +144,6 @@ function sendWelcomeEmail(transporter, to, name, method, lang = 'de', verifyUrl 
         <div class="team">${team}</div>
       </div>
     </div>
-    {/*<div class="footer">
-      ${t.footer.replace('{year}', new Date().getFullYear())}<br>
-      <a href="${config.FRONTEND_URL}">${config.FRONTEND_URL}</a>
-    </div>*/}
 
     ${emailFooter(lang)}
 
@@ -241,10 +237,10 @@ function sendPasswordResetEmail(transporter, to, name, resetUrl, lang = 'de') {
   <div class="container">
 <div class="header">
   <div style="margin-bottom: 16px;">
-    <img src="${logoUrl}" alt="${t.store_name}" style="height: 56px; display: block; margin: 0 auto;" />
+    <img src="${logoUrl}" alt="${store_name}" style="height: 56px; display: block; margin: 0 auto;" />
   </div>
   <h1 style="color: white; font-size: 32px; font-weight: 700; margin: 0; text-shadow: 0 2px 8px rgba(0,0,0,0.3);">
-    ${t.store_name}
+    ${store_name}
   </h1>
 </div>
     <div class="content">

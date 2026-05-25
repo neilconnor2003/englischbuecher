@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 //const { ACTIVE_SENTINEL } = require('../../frontend/src/constants');
+const ACTIVE_SENTINEL = '1970-01-01 00:00:01';
 const FRONTEND_URL = process.env.FRONTEND_URL;
 
 //const { sendWelcomeEmail } = require('../utils/email');
