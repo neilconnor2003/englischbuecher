@@ -2,7 +2,7 @@
 import React, { useContext, useState } from 'react';
 //import { Form, Input, Button, message } from 'antd';
 import { Form, Input, Button, message, AutoComplete, Spin } from 'antd';
-import { useTranslation } from 'react-i18n';
+import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
 import config from '../../config';
@@ -11,7 +11,8 @@ import './request-book.css';
 const { TextArea } = Input;
 
 export default function RequestBookPage() {
-  const { t } = useTranslation();
+  //const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useContext(AuthContext);
   const [submitting, setSubmitting] = useState(false);
   const [form] = Form.useForm();
