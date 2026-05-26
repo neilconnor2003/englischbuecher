@@ -4057,6 +4057,12 @@ WHERE ci.user_id = ?
   });
 
 
+  // REQUEST BOOK RELATED
+  const bookSearchRoutes = require('./routes/bookSearchRoutes');
+  app.use('/api/book-search', bookSearchRoutes);
+
+
+
 
   /*const deductWallet = async (userId, amount) => {
     await db.query(`

@@ -124,3 +124,10 @@
     max-width: 300px;
   }
 }
+
+.request-subtitle {
+  text-align: center;
+  color: #666;
+  margin-bottom: 24px;
+}
+
