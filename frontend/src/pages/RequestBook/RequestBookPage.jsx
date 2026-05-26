@@ -2,7 +2,7 @@
 import React, { useContext, useState } from 'react';
 //import { Form, Input, Button, message } from 'antd';
 import { Form, Input, Button, message, AutoComplete, Spin } from 'antd';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18n';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
 import config from '../../config';
