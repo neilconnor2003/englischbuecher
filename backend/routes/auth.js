@@ -331,7 +331,7 @@ module.exports = function (db, transporter) {  // ← ACCEPT transporter
       );*/
 
       try {
-        await sendWelcomeEmail(
+        const mailMeta = await sendWelcomeEmail(
           transporter,
           email,
           user.first_name || 'User',

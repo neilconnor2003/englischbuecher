@@ -28,6 +28,7 @@ module.exports = { logEmail };*/
 
 
 
+
 const mysql = require('mysql2/promise');
 
 let pool;
@@ -41,7 +42,8 @@ function getPool() {
       database: process.env.DB_NAME,
       port: Number(process.env.DB_PORT || 3306),
       waitForConnections: true,
-      connectionLimit: 5
+      connectionLimit: 5,
+      queueLimit: 0
     });
   }
   return pool;
@@ -49,15 +51,19 @@ function getPool() {
 
 async function logEmail({ to, subject, html, status, error = null, type = null }) {
   try {
-    const db = getPool();
+    const pool = getPool();
 
-    await db.execute(
+    const [result] = await pool.execute(
       `INSERT INTO sent_emails 
        (to_email, subject, html, status, error, type, created_at)
        VALUES (?, ?, ?, ?, ?, ?, NOW())`,
+      [to, subject, html, status, error, type]
     );
+
+    console.log('✅ EMAIL LOGGER INSERT RESULT:', result);
+    return result;
   } catch (err) {
-    console.error('EMAIL LOGGER FAILED:', err);
+    console.error('❌ EMAIL LOGGER FAILED:', err);
   }
 }
 

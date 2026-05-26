@@ -228,6 +228,7 @@ async function sendPasswordResetEmail(transporter, to, name, resetUrl, lang = 'd
 
   const t = CONTENT[lang] || CONTENT.de;
   const logoUrl = `${config.FRONTEND_URL}/assets/logo.png`;
+  const store_name = CONTENT[lang]?.store_name || "Dein Buchladen";
 
   const rawHtml = `
 <!DOCTYPE html>

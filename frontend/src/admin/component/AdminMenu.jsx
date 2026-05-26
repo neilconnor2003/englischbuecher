@@ -11,7 +11,11 @@ import {
   Image,
   FileText,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  BookAlert,
+  Mail,
+  Euro,
+  Percent
 } from 'lucide-react';
 
 const AdminMenu = () => {
@@ -26,11 +30,12 @@ const AdminMenu = () => {
     { name: 'Users', path: 'users', icon: <Users className="w-5 h-5" /> },
     { name: 'Wishlist', path: 'wishlist', icon: <Image className="w-5 h-5" /> },
     { name: 'Carts', path: 'carts', icon: <ShoppingCart className="w-5 h-5" /> },
-    { name: 'Book Requests', path: 'book-requests', icon: <FileText className="w-5 h-5" /> },
+    { name: 'Book Requests', path: 'book-requests', icon: <BookAlert className="w-5 h-5" /> },
     { name: 'Sessions', path: 'sessions', icon: <LogOut className="w-5 h-5" /> },
     { name: 'Hero Banner', path: 'hero-banner', icon: <Image className="w-5 h-5" /> },
-    { name: 'Discounts', path: 'discounts', icon: <Image className="w-5 h-5" /> },
-    { name: 'Wallets', path: 'wallet', icon: <Image className="w-5 h-5" /> },
+    { name: 'Discounts', path: 'discounts', icon: <Percent className="w-5 h-5" /> },
+    { name: 'Wallets', path: 'wallet', icon: <Euro className="w-5 h-5" /> },
+    { name: 'Email Logs', path: 'email-logs', icon: <Mail className="w-5 h-5" /> },
   ];
 
   const footerPages = [
