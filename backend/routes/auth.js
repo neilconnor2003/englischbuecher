@@ -12,6 +12,27 @@ const { sendWelcomeEmail, sendPasswordResetEmail } = require('../utils/email');
 module.exports = function (db, transporter) {  // ← ACCEPT transporter
   const crypto = require('crypto');
 
+
+
+  const logEmail = async ({ to, subject, html, status, error = null, type = null }) => {
+    try {
+      console.log('📥 INSERTING INTO sent_emails:', { to, subject, status, type });
+
+      const [result] = await db.execute(
+        `INSERT INTO sent_emails (to_email, subject, html, status, error, type, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, NOW())`,
+        [to, subject, html, status, error, type]
+      );
+
+      console.log('✅ EMAIL LOG INSERT RESULT:', result);
+
+    } catch (err) {
+      console.error('❌ EMAIL LOG INSERT FAILED FULL:', err);
+    }
+  };
+
+
+
   router.post('/register', async (req, res) => {
     const { first_name, last_name, email, password, language = 'de' } = req.body;
 
@@ -45,13 +66,51 @@ module.exports = function (db, transporter) {  // ← ACCEPT transporter
       const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
 
       // === SEND BEAUTIFUL EMAIL ===
-      try {
+      /*try {
         await sendWelcomeEmail(transporter, email, first_name || 'User', 'manual', language, verifyUrl);
         //console.log('Beautiful welcome email sent to:', email);
       } catch (emailErr) {
         console.error('EMAIL FAILED:', emailErr);
         // Don't fail registration
+      }*/
+
+      try {
+        const mailMeta = await sendWelcomeEmail(
+          transporter,
+          email,
+          first_name || 'User',
+          'manual',
+          language,
+          verifyUrl
+        );
+
+        await logEmail({
+          to: email,
+          subject: mailMeta.subject,
+          html: mailMeta.html,
+          status: 'sent',
+          type: 'Welcome'
+        });
+
+      } catch (emailErr) {
+        console.error('EMAIL FAILED:', emailErr);
+
+        await logEmail({
+          to: email,
+          subject: emailErr.emailMeta?.subject || (
+            language === 'de'
+              ? 'Fast geschafft – bestätige deine E-Mail'
+              : 'Almost there – verify your email'
+          ),
+          html: emailErr.emailMeta?.html || null,
+          status: 'failed',
+          error: emailErr.message,
+          type: 'Welcome'
+        });
+
+        // Don't fail registration
       }
+
 
       // Log action
       const logUserAction = async (data) => {
@@ -164,13 +223,52 @@ module.exports = function (db, transporter) {  // ← ACCEPT transporter
       const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${token}`;
 
       // THIS USES THE SAME WORKING TRANSPORTER AS WELCOME EMAIL
-      await sendPasswordResetEmail(
+      /*await sendPasswordResetEmail(
         transporter,            // ← SAME verified transporter!
         email,
         user.first_name || 'Kunde',
         resetLink,
         user.language || 'de'
-      );
+      );*/
+
+
+      try {
+        const mailMeta = await sendPasswordResetEmail(
+          transporter,
+          email,
+          user.first_name || 'Kunde',
+          resetLink,
+          user.language || 'de'
+        );
+
+        await logEmail({
+          to: email,
+          subject: mailMeta.subject,
+          html: mailMeta.html,
+          status: 'sent',
+          type: 'PWDReset'
+        });
+
+      } catch (emailErr) {
+        console.error('PASSWORD RESET EMAIL FAILED:', emailErr);
+
+        await logEmail({
+          to: email,
+          subject: emailErr.emailMeta?.subject || (
+            (user.language || 'de') === 'de'
+              ? 'Passwort zurücksetzen'
+              : 'Reset Your Password'
+          ),
+          html: emailErr.emailMeta?.html || null,
+          status: 'failed',
+          error: emailErr.message,
+          type: 'PWDReset'
+        });
+
+        // keep existing behavior
+      }
+
+
 
       res.json({ message: 'Passwort-Reset-Link gesendet!' });
 
@@ -204,29 +302,69 @@ module.exports = function (db, transporter) {  // ← ACCEPT transporter
       const user = users[0];
 
       // Check if token expired → generate new one
-      let token = user.verification_token;
-      let expires = new Date(user.verification_expires);
+      // ✅ ALWAYS generate new token on resend
+      //let token = user.verification_token;
+      //let expires = new Date(user.verification_expires);
+      const token = crypto.randomBytes(32).toString('hex');
+      const expires = new Date(Date.now() + 3600000); // 1 hour
 
-      if (expires < new Date()) {
+
+      /*if (expires < new Date()) {
         token = crypto.randomBytes(32).toString('hex');
-        expires = new Date(Date.now() + 3600000); // 1 hour
+        expires = new Date(Date.now() + 3600000); // 1 hour*/
 
-        await db.execute(
-          `UPDATE users SET verification_token = ?, verification_expires = ? WHERE id = ?`,
-          [token, expires, user.id]
-        );
-      }
+      await db.execute(
+        `UPDATE users SET verification_token = ?, verification_expires = ? WHERE id = ?`,
+        [token, expires, user.id]
+      );
+      //}
 
       const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
 
-      await sendWelcomeEmail(
+      /*await sendWelcomeEmail(
         transporter,
         email,
         user.first_name || 'User',
         'manual',
         'de', // you can detect language from user later
         verifyUrl
-      );
+      );*/
+
+      try {
+        await sendWelcomeEmail(
+          transporter,
+          email,
+          user.first_name || 'User',
+          'manual',
+          'de',
+          verifyUrl
+        );
+
+        await logEmail({
+          to: email,
+          subject: 'Fast geschafft – bestätige deine E-Mail',
+          //html: null,
+          html: mailMeta.html,
+          status: 'sent',
+          type: 'Welcome-Resend'
+        });
+
+      } catch (emailErr) {
+        console.error('RESEND EMAIL FAILED:', emailErr);
+
+        await logEmail({
+          to: email,
+          subject: 'Fast geschafft – bestätige deine E-Mail',
+          //html: null,
+          html: emailErr.emailMeta?.html || null,
+          status: 'failed',
+          error: emailErr.message,
+          type: 'Welcome-Resend'
+        });
+
+        throw emailErr;
+      }
+
 
       res.json({ success: true, message: 'Verification email resent!' });
 

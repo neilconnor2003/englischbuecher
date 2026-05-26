@@ -743,6 +743,106 @@ const computeWorkId = (titleEn, titleDe, author) => {
     }
   });
 
+
+  app.get('/api/admin/email-logs', authMiddleware, async (req, res) => {
+    try {
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+      const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 100);
+      const offset = (page - 1) * limit;
+
+      const status = (req.query.status || '').trim();
+      const type = (req.query.type || '').trim();
+      const search = (req.query.search || '').trim();
+
+      let where = [];
+      let params = [];
+
+      if (status) {
+        where.push('status = ?');
+        params.push(status);
+      }
+
+      if (type) {
+        where.push('type = ?');
+        params.push(type);
+      }
+
+      if (search) {
+        where.push('(to_email LIKE ? OR subject LIKE ? OR error LIKE ?)');
+        const like = `%${search}%`;
+        params.push(like, like, like);
+      }
+
+      const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+      const [rows] = await db.query(
+        `
+      SELECT id, to_email, subject, status, error, type, created_at
+      FROM sent_emails
+      ${whereSql}
+      ORDER BY created_at DESC
+      LIMIT ? OFFSET ?
+      `,
+        [...params, limit, offset]
+      );
+
+      const [[countRow]] = await db.query(
+        `
+      SELECT COUNT(*) AS total
+      FROM sent_emails
+      ${whereSql}
+      `,
+        params
+      );
+
+      res.json({
+        rows,
+        total: countRow.total,
+        page,
+        limit
+      });
+
+    } catch (err) {
+      console.error('GET /api/admin/email-logs error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+
+  app.get('/api/admin/email-logs/:id', authMiddleware, async (req, res) => {
+    try {
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      const [rows] = await db.query(
+        `
+      SELECT id, to_email, subject, html, status, error, type, created_at
+      FROM sent_emails
+      WHERE id = ?
+      LIMIT 1
+      `,
+        [req.params.id]
+      );
+
+      if (!rows.length) {
+        return res.status(404).json({ error: 'Email log not found' });
+      }
+
+      res.json(rows[0]);
+
+    } catch (err) {
+      console.error('GET /api/admin/email-logs/:id error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+
+
   // === AUDIT LOG VIEW ===
   app.get('/api/admin/users/:id/audit', async (req, res) => {
     const { id } = req.params;
@@ -3795,18 +3895,6 @@ WHERE ci.user_id = ?
     }
   });
 
-
-  /*app.get('/api/wallet', async (req, res) => {
-    const userId = req.user.id;
-
-    const [rows] = await db.query(
-      `SELECT balance FROM user_wallets WHERE user_id = ?`,
-      [userId]
-    );
-
-    res.json({ balance: rows[0]?.balance || 0 });
-  });*/
-
   //app.get('/api/wallet', requireAuth, async (req, res) => {
   app.get('/api/wallet', authMiddleware, async (req, res) => {
     try {
@@ -3867,11 +3955,6 @@ WHERE ci.user_id = ?
         return res.status(403).json({ error: 'Admin access required' });
       }
 
-      /*const [[user]] = await db.query(
-        `SELECT id FROM users WHERE email = ?`,
-        [email]
-      );*/
-
       const [[user]] = await db.query(
         `SELECT id, email, first_name, last_name FROM users WHERE email = ?`,
         [email]
@@ -3883,12 +3966,6 @@ WHERE ci.user_id = ?
       }
 
       const userId = user.id;
-
-      /*await db.query(`
-      INSERT INTO user_wallets (user_id, balance)
-      VALUES (?, ?)
-      ON DUPLICATE KEY UPDATE balance = balance + ?
-    `, [userId, amount, amount]);*/
 
       await db.query(`
       INSERT INTO wallet_transactions (user_id, amount, type, reason)
@@ -3905,18 +3982,12 @@ WHERE ci.user_id = ?
         WHERE user_id = ?
       `, [user.id]);
 
-
-      // ✅ SEND EMAIL (non-blocking)
-      //sendWalletCreditEmail(user, Number(amount), reason).catch(console.error);
-
       sendWalletCreditEmail(
         user,
         Number(amount),
         reason,
         Number(bal.balance)
       ).catch(console.error);
-
-
 
       res.json({ success: true });
 
