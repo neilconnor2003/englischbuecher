@@ -33,7 +33,7 @@ export default function RequestBookPage() {
 
   const fetchSuggestions = async (value) => {
     const q = value?.trim();
-    if (!q || q.length < 3) {
+    if (!q || q.length < 2) {
       setSuggestions([]);
       return;
     }
@@ -69,7 +69,22 @@ export default function RequestBookPage() {
       setSuggestions(options);
     } catch (err) {
       console.error('Autocomplete failed:', err);
-      setSuggestions([]);
+      //setSuggestions([]);
+
+      // ✅ Better UX: show fallback suggestion
+      setSuggestions([
+        {
+          value,
+          label: (
+            <div>
+              <strong>{value}</strong>
+              <div style={{ fontSize: 12 }}>Press enter to request manually</div>
+            </div>
+          ),
+          raw: { title: value }
+        }
+      ]);
+
     } finally {
       setLoadingSuggestions(false);
     }
@@ -170,13 +185,24 @@ export default function RequestBookPage() {
             </Form.Item>*/}
 
             <Form.Item label={t('request.title')} name="title" rules={[atLeastOneRule]}>
+
               <AutoComplete
                 options={suggestions}
                 onSearch={handleTitleSearch}
                 onSelect={handleSuggestionSelect}
-                notFoundContent={loadingSuggestions ? <Spin size="small" /> : null}
+                notFoundContent={loadingSuggestions ? <Spin size="small" /> : 'No results'}
               >
-                <Input placeholder={t('request.title_placeholder')} />
+                <Input
+                  placeholder={t('request.title_placeholder')}
+                  suffix={loadingSuggestions ? <Spin size="small" /> : null}
+                />
+
+                <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>
+                  {i18n.resolvedLanguage === 'de'
+                    ? 'Tippe mindestens 2 Buchstaben für Vorschläge'
+                    : 'Type at least 2 characters for suggestions'}
+                </div>
+
               </AutoComplete>
             </Form.Item>
 
