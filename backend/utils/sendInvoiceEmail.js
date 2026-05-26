@@ -1,4 +1,6 @@
 // backend/utils/sendInvoiceEmail.js
+const emailFooter = require('./emailFooter');
+
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
@@ -7,7 +9,8 @@ const nodemailer = require('nodemailer');
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: parseInt(process.env.SMTP_PORT) || 587,
-  secure: false,
+  //secure: false,
+  secure: true,   // ✅ VERY IMPORTANT for 465 (SSL)
   auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
   tls: { rejectUnauthorized: false },
 });
@@ -110,6 +113,9 @@ module.exports = async (order, user, lang = 'de') => {
           <p>${lang === 'de' ? 'Ihre Bestellung' : 'Your order'} <strong>#${order.id}</strong> ${lang === 'de' ? 'wurde erfolgreich abgeschlossen.' : 'has been successfully completed.'}</p>
           <p>${lang === 'de' ? 'Im Anhang finden Sie Ihre Rechnung als PDF.' : 'Your invoice is attached as PDF.'}</p>
           <p>${lang === 'de' ? 'Mit freundlichen Grüßen' : 'Best regards'},<br><strong>Englisch Buecher Team</strong></p>
+
+          ${emailFooter(lang)}
+          
         </div>
       `,
       attachments: [

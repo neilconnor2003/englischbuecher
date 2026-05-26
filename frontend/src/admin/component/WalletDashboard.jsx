@@ -36,6 +36,19 @@ const WalletDashboard = () => {
   const [creditAmount, setCreditAmount] = useState("");
   const [creditReason, setCreditReason] = useState("");
 
+
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [newAmount, setNewAmount] = useState('');
+  const [newReason, setNewReason] = useState('');
+  const [adding, setAdding] = useState(false);
+
+
+  const [emailSuggestions, setEmailSuggestions] = useState([]);
+  const [selectedPreview, setSelectedPreview] = useState(null);
+
+
+
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
@@ -65,6 +78,28 @@ const WalletDashboard = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+
+  useEffect(() => {
+    const q = newEmail.trim();
+    if (q.length < 3) {
+      setEmailSuggestions([]);
+      setSelectedPreview(null);
+      return;
+    }
+
+    const t = setTimeout(async () => {
+      try {
+        const { data } = await api.get(`/admin/wallet/user-lookup?email=${encodeURIComponent(q)}`);
+        setEmailSuggestions(Array.isArray(data) ? data : []);
+      } catch (e) {
+        setEmailSuggestions([]);
+      }
+    }, 250);
+
+    return () => clearTimeout(t);
+  }, [newEmail, api]);
+
 
   const filteredUsers = useMemo(() => {
     return users.filter(u => {
@@ -135,6 +170,47 @@ const WalletDashboard = () => {
     }
   };
 
+  const handleAddWallet = async () => {
+    if (!newEmail || !newAmount) {
+      alert("Email and amount required");
+      return;
+    }
+
+    const amt = Number(newAmount);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      alert("Amount must be greater than 0");
+      return;
+    }
+
+    setAdding(true);
+
+    try {
+      await api.post('/wallet/add', {
+        email: newEmail,
+        amount: Number(newAmount),
+        reason: newReason || "Admin credit"
+      });
+
+      alert("Wallet updated ✅");
+
+      // ✅ Refresh users (so new credit appears instantly)
+      fetchUsers();
+
+      // ✅ Reset form
+      setNewEmail('');
+      setNewAmount('');
+      setNewReason('');
+      setIsAddModalOpen(false);
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add wallet credit");
+    } finally {
+      setAdding(false);
+    }
+  };
+
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* HEADER */}
@@ -154,6 +230,14 @@ const WalletDashboard = () => {
             >
               <RefreshCcw className="w-5 h-5" />
             </button>
+
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 font-bold"
+            >
+              ➕ Add Wallet Credit
+            </button>
+
           </div>
         </div>
 
@@ -206,8 +290,8 @@ const WalletDashboard = () => {
             const bal = Number(u.balance || 0);
             const balColor =
               bal > 0 ? "bg-green-100 text-green-800" :
-              bal < 0 ? "bg-red-100 text-red-800" :
-              "bg-gray-100 text-gray-800";
+                bal < 0 ? "bg-red-100 text-red-800" :
+                  "bg-gray-100 text-gray-800";
 
             const last = u.last_activity ? new Date(u.last_activity).toLocaleString() : "—";
 
@@ -345,6 +429,100 @@ const WalletDashboard = () => {
           </div>
         </div>
       )}
+
+      {
+        isAddModalOpen && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+
+              <h2 className="text-xl font-bold mb-4 text-purple-800">
+                Add Wallet Credit
+              </h2>
+
+              <div className="space-y-3">
+
+                <input
+                  type="email"
+                  placeholder="User Email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  className="border p-2 w-full rounded"
+                />
+
+                {emailSuggestions.length > 0 && (
+                  <div className="border rounded bg-white max-h-48 overflow-auto">
+                    {emailSuggestions.map(u => (
+                      <button
+                        key={u.id}
+                        type="button"
+                        className="w-full text-left px-3 py-2 hover:bg-purple-50"
+                        onClick={() => {
+                          setNewEmail(u.email);
+                          setSelectedPreview(u);
+                          setEmailSuggestions([]);
+                        }}
+                      >
+                        <div className="font-semibold">{(u.first_name || '')} {(u.last_name || '')}</div>
+                        <div className="text-sm text-gray-600">{u.email}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {selectedPreview && (
+                  <div className="p-3 bg-purple-50 rounded border border-purple-100">
+                    <div className="font-semibold text-purple-900">
+                      {(selectedPreview.first_name || '')} {(selectedPreview.last_name || '')}
+                    </div>
+                    <div className="text-sm text-gray-700">{selectedPreview.email}</div>
+                    {"balance" in selectedPreview && (
+                      <div className="text-sm mt-1">
+                        Current balance: <strong>€{Number(selectedPreview.balance || 0).toFixed(2)}</strong>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+
+                <input
+                  type="number"
+                  placeholder="Amount (€)"
+                  value={newAmount}
+                  onChange={(e) => setNewAmount(e.target.value)}
+                  className="border p-2 w-full rounded"
+                />
+
+                <input
+                  type="text"
+                  placeholder="Reason (optional)"
+                  value={newReason}
+                  onChange={(e) => setNewReason(e.target.value)}
+                  className="border p-2 w-full rounded"
+                />
+
+                <div className="flex justify-end gap-2 mt-4">
+                  <button
+                    onClick={() => setIsAddModalOpen(false)}
+                    className="px-4 py-2 border rounded"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={handleAddWallet}
+                    disabled={adding}
+                    className="px-4 py-2 bg-green-600 text-white rounded font-bold"
+                  >
+                    {adding ? 'Saving...' : 'Add Credit'}
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        )
+      }
+
     </div>
   );
 };

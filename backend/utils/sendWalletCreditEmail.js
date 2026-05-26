@@ -2,11 +2,13 @@
 const nodemailer = require('nodemailer');
 const path = require('path');
 const fs = require('fs');
+const emailFooter = require('./emailFooter');
 
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT) || 587,
-    secure: false,
+    //secure: false,
+    secure: true,   // ✅ VERY IMPORTANT for 465 (SSL)
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
@@ -61,6 +63,9 @@ module.exports = async (user, amount, reason = "Admin credit", balance = null) =
             Best regards,<br/>
             <strong>Englisch Buecher Team</strong>
           </p>
+
+          ${emailFooter(user.language || 'en')}
+          
         </div>
       `,
             attachments: [
