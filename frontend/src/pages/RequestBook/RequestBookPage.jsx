@@ -1,6 +1,7 @@
 
 import React, { useContext, useState } from 'react';
-import { Form, Input, Button, message } from 'antd';
+//import { Form, Input, Button, message } from 'antd';
+import { Form, Input, Button, message, AutoComplete, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
@@ -10,7 +11,8 @@ import './request-book.css';
 const { TextArea } = Input;
 
 export default function RequestBookPage() {
-  const { t } = useTranslation();
+  //const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useContext(AuthContext);
   const [submitting, setSubmitting] = useState(false);
   const [form] = Form.useForm();
@@ -24,6 +26,94 @@ export default function RequestBookPage() {
       return Promise.reject(new Error(t('request.validation_isbn_or_title')));
     },
   });
+
+
+  const [suggestions, setSuggestions] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+
+  const fetchSuggestions = async (value) => {
+    const q = value?.trim();
+    if (!q || q.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    setLoadingSuggestions(true);
+    try {
+      const res = await axios.get(`${config.API_URL}/api/book-search/suggest`, {
+        params: { q }
+      });
+
+      const options = (Array.isArray(res.data) ? res.data : []).map(item => ({
+        value: item.title,
+        label: (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {item.cover ? (
+              <img
+                src={item.cover}
+                alt={item.title}
+                style={{ width: 32, height: 44, objectFit: 'cover', borderRadius: 4 }}
+              />
+            ) : null}
+            <div>
+              <div style={{ fontWeight: 600 }}>{item.title}</div>
+              <div style={{ fontSize: 12, color: '#666' }}>
+                {[item.author, item.year].filter(Boolean).join(' • ')}
+              </div>
+            </div>
+          </div>
+        ),
+        raw: item
+      }));
+
+      setSuggestions(options);
+    } catch (err) {
+      console.error('Autocomplete failed:', err);
+      //setSuggestions([]);
+
+      // ✅ Better UX: show fallback suggestion
+      setSuggestions([
+        {
+          value,
+          label: (
+            <div>
+              <strong>{value}</strong>
+              <div style={{ fontSize: 12 }}>Press enter to request manually</div>
+            </div>
+          ),
+          raw: { title: value }
+        }
+      ]);
+
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+
+  const handleSuggestionSelect = (_value, option) => {
+    const book = option.raw;
+    if (!book) return;
+
+    form.setFieldsValue({
+      title: book.title || undefined,
+      author: book.author || undefined,
+      publisher: book.publisher || undefined,
+      isbn13: book.isbn13 || undefined,
+      isbn10: book.isbn10 || undefined
+    });
+  };
+
+
+  // simple debounce
+  const handleTitleSearch = (() => {
+    let timer;
+    return (value) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => fetchSuggestions(value), 300);
+    };
+  })();
+
 
   const onSubmit = async (vals) => {
     setSubmitting(true);
@@ -51,6 +141,13 @@ export default function RequestBookPage() {
     <div className="request-book-page">
       <div className="request-container">
         <h1 className="request-title">{t('request.page_title')}</h1>
+
+        <p className="request-subtitle">
+          {i18n.resolvedLanguage === 'de'
+            ? 'Finde dein Buch nicht? Frag es einfach an – wir helfen dir schnell.'
+            : 'Didn’t find your book? Just request it — we’ll help you quickly.'}
+        </p>
+
         <div className="request-box">
           <Form form={form} layout="vertical" onFinish={onSubmit} className="request-form">
             {!user && (
@@ -83,9 +180,32 @@ export default function RequestBookPage() {
               <Input placeholder="0-..." />
             </Form.Item>
 
-            <Form.Item label={t('request.title')} name="title" rules={[atLeastOneRule]}>
+            {/*<Form.Item label={t('request.title')} name="title" rules={[atLeastOneRule]}>
               <Input placeholder={t('request.title_placeholder')} />
+            </Form.Item>*/}
+
+            <Form.Item label={t('request.title')} name="title" rules={[atLeastOneRule]}>
+
+              <AutoComplete
+                options={suggestions}
+                onSearch={handleTitleSearch}
+                onSelect={handleSuggestionSelect}
+                notFoundContent={loadingSuggestions ? <Spin size="small" /> : 'No results'}
+              >
+                <Input
+                  placeholder={t('request.title_placeholder')}
+                  suffix={loadingSuggestions ? <Spin size="small" /> : null}
+                />
+
+                <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>
+                  {i18n.resolvedLanguage === 'de'
+                    ? 'Tippe mindestens 2 Buchstaben für Vorschläge'
+                    : 'Type at least 2 characters for suggestions'}
+                </div>
+
+              </AutoComplete>
             </Form.Item>
+
 
             <Form.Item label={t('request.author')} name="author">
               <Input />
