@@ -4,6 +4,8 @@ const path = require('path');
 const fs = require('fs');
 const emailFooter = require('./emailFooter');
 
+const { logEmail } = require('./emailLogger');
+
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT) || 587,
@@ -18,16 +20,16 @@ const transporter = nodemailer.createTransport({
 
 //module.exports = async (user, amount, reason = "Admin credit") => {
 module.exports = async (user, amount, reason = "Admin credit", balance = null) => {
+
+    let subject = '';
+    let htmlBody = null;
+
     try {
         const logoPath = path.join(__dirname, '..', 'public', 'assets', 'logo.png');
 
-        await transporter.sendMail({
-            from: `"Englisch Buecher" <${process.env.SMTP_USER}>`,
-            to: user.email,
-            //subject: `Wallet credited €${amount.toFixed(2)}`,
-            subject: `€${amount.toFixed(2)} added to your wallet${balance !== null ? ` (New balance €${balance.toFixed(2)})` : ''}`,
-            html: `
-        <div style="font-family: Arial; max-width:600px; margin:auto; padding:20px; border:1px solid #eee; border-radius:12px;">
+
+        htmlBody = `
+            <div style="font-family: Arial; max-width:600px; margin:auto; padding:20px; border:1px solid #eee; border-radius:12px;">
           
           ${fs.existsSync(logoPath) ? `<img src="cid:logo" style="width:100px; display:block; margin:0 auto 20px;" />` : ''}
 
@@ -67,7 +69,17 @@ module.exports = async (user, amount, reason = "Admin credit", balance = null) =
           ${emailFooter(user.language || 'en')}
           
         </div>
-      `,
+        `;
+
+        subject = `€${amount.toFixed(2)} added to your wallet${balance !== null ? ` (New balance €${balance.toFixed(2)})` : ''}`;
+
+
+        await transporter.sendMail({
+            from: `"Englisch Buecher" <${process.env.SMTP_USER}>`,
+            to: user.email,
+            //subject: `Wallet credited €${amount.toFixed(2)}`,
+            subject,
+            html: htmlBody,
             attachments: [
                 fs.existsSync(logoPath)
                     ? {
@@ -79,7 +91,28 @@ module.exports = async (user, amount, reason = "Admin credit", balance = null) =
             ].filter(Boolean)
         });
 
+
+        await logEmail({
+            to: user.email,
+            subject,
+            html: htmlBody,
+            status: 'sent',
+            type: 'WalletCredit'
+        });
+
+
     } catch (err) {
         console.error('WALLET EMAIL ERROR:', err);
+
+
+        await logEmail({
+            to: user?.email || null,
+            subject: subject || 'Wallet email',
+            html: htmlBody,
+            status: 'failed',
+            error: err.message,
+            type: 'WalletCredit'
+        });
+
     }
 };

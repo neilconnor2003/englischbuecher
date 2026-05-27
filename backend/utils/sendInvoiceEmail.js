@@ -5,6 +5,7 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 const nodemailer = require('nodemailer');
+const { logEmail } = require('./emailLogger');
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -16,6 +17,10 @@ const transporter = nodemailer.createTransport({
 });
 
 module.exports = async (order, user, lang = 'de') => {
+
+  let subject = '';
+  let htmlBody = null;
+
   try {
     const invoicesDir = path.join(__dirname, '..', 'invoices');
     if (!fs.existsSync(invoicesDir)) fs.mkdirSync(invoicesDir, { recursive: true });
@@ -98,15 +103,12 @@ module.exports = async (order, user, lang = 'de') => {
     });
 
     // === EMAIL ===
-    const subject = lang === 'de' ? `Ihre Rechnung #${order.id}` : `Your Invoice #${order.id}`;
+    subject = lang === 'de' ? `Ihre Rechnung #${order.id}` : `Your Invoice #${order.id}`;
     const greeting = lang === 'de' ? `Hallo ${user.first_name},` : `Hi ${user.first_name},`;
 
-    await transporter.sendMail({
-      from: `"Englisch Buecher" <${process.env.SMTP_USER}>`,
-      to: user.email,
-      subject,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 12px;">
+
+    htmlBody = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 12px;">
           ${fs.existsSync(logoPath) ? `<img src="cid:logo" style="width: 100px; display: block; margin: 0 auto 20px;" />` : ''}
           <h2 style="color: #4f46e5; text-align: center;">${lang === 'de' ? 'Vielen Dank für Ihren Einkauf!' : 'Thank you for your purchase!'}</h2>
           <p>${greeting}</p>
@@ -117,7 +119,14 @@ module.exports = async (order, user, lang = 'de') => {
           ${emailFooter(lang)}
           
         </div>
-      `,
+    `;
+
+
+    await transporter.sendMail({
+      from: `"Englisch Buecher" <${process.env.SMTP_USER}>`,
+      to: user.email,
+      subject,
+      html: htmlBody,
       attachments: [
         { filename, path: filepath, contentType: 'application/pdf' },
         fs.existsSync(logoPath) ? {
@@ -128,8 +137,28 @@ module.exports = async (order, user, lang = 'de') => {
       ].filter(Boolean)
     });
 
+
+    await logEmail({
+      to: user.email,
+      subject,
+      html: htmlBody,
+      status: 'sent',
+      type: 'Invoice'
+    });
+
+
     //console.log(`Invoice #${order.id} sent to ${user.email} (${lang})`);
   } catch (err) {
     console.error('INVOICE EMAIL ERROR:', err);
+
+    await logEmail({
+      to: user?.email || null,
+      subject: `Invoice #${order?.id}`,
+      html: htmlBody,
+      status: 'failed',
+      error: err.message,
+      type: 'Invoice'
+    });
+
   }
 };
