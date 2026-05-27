@@ -30,6 +30,8 @@ const FRONTEND_URL = process.env.FRONTEND_URL;
 const ACTIVE_SENTINEL = '1969-12-31T23:00:01.000Z'
 const VERIFIED_SENTINEL = '1970-01-01 00:00:01';
 
+const bookEnrichmentRoutes = require('./routes/bookEnrichmentRoutes');
+
 // MOVE TRANSPORTER HERE — OUTSIDE async() — GLOBAL
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -4131,6 +4133,9 @@ WHERE ci.user_id = ?
   // REQUEST BOOK RELATED
   const bookSearchRoutes = require('./routes/bookSearchRoutes');
   app.use('/api/book-search', bookSearchRoutes);
+
+
+  app.use('/api', bookEnrichmentRoutes);
 
 
 
