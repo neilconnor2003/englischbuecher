@@ -4144,48 +4144,78 @@ WHERE ci.user_id = ?
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet);
 
+
+      let successCount = 0;
+
       for (const row of rows) {
-        await db.execute(`
-        INSERT INTO excel_books (
-          isbn13, edition, binding,
-          title_en, title_de, author,
-          isbn, isbn10,
-          price, original_price,
-          category_id,
-          description_en, description_de,
-          publisher, pages,
-          weight_grams, dimensions,
-          format, language, publish_date,
-          series_name, reading_age
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-          title_en = VALUES(title_en),
-          description_en = VALUES(description_en)
-      `, [
-          row.isbn13 || null,
-          row.edition || null,
-          row.binding || null,
-          row.title_en || null,
-          row.title_de || null,
-          row.author || null,
-          row.isbn || null,
-          row.isbn10 || null,
-          row.price || null,
-          row.original_price || null,
-          row.category_id || null,
-          row.description_en || null,
-          row.description_de || null,
-          row.publisher || null,
-          row.pages || null,
-          row.weight_grams || null,
-          row.dimensions || null,
-          row.format || null,
-          row.language || null,
-          row.publish_date || null,
-          row.series_name || null,
-          row.reading_age || null
-        ]);
+
+        if (!row.isbn13) {
+          console.log('⛔ Skipping row (no ISBN):', row);
+          continue;
+        }
+
+        try {
+
+          await db.execute(`
+      INSERT INTO excel_books (
+        isbn13, edition, binding,
+        title_en, title_de, author,
+        isbn, isbn10,
+        price, original_price,
+        category_id,
+        description_en, description_de,
+        publisher, pages,
+        weight_grams, dimensions,
+        format, language, publish_date,
+        series_name, reading_age
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        title_en = VALUES(title_en),
+        description_en = VALUES(description_en)
+    `, [
+            row.isbn13 ?? null,
+            row.edition ?? null,
+            row.binding ?? null,
+            row.title_en ?? null,
+            row.title_de ?? null,
+            row.author ?? null,
+            row.isbn ?? null,
+            row.isbn10 ?? null,
+            row.price ?? null,
+            row.original_price ?? null,
+            row.category_id ?? null,
+            row.description_en ?? null,
+            row.description_de ?? null,
+            row.publisher ?? null,
+            row.pages ?? null,
+            row.weight_grams ?? null,
+            row.dimensions ?? null,
+            row.format ?? null,
+            row.language ?? null,
+            row.publish_date ?? null,
+            row.series_name ?? null,
+            row.reading_age ?? null
+          ]);
+
+          successCount++;
+
+        } catch (err) {
+          console.error('❌ FAILED ROW ISBN:', row.isbn13);
+          console.error(err.message);
+        }
       }
+
+      /*res.json({
+        success: true,
+        inserted: successCount,
+        total: rows.length
+      });*/
+
+      res.status(200).json({
+        success: true
+      });
+
+
 
       res.json({ success: true, count: rows.length });
 
