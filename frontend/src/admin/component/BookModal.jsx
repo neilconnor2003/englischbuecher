@@ -790,7 +790,6 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
   };
 
 
-
   // -----------------------------------------------------
   // Image Uploads
   // -----------------------------------------------------
