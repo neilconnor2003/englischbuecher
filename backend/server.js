@@ -4239,6 +4239,23 @@ WHERE ci.user_id = ?
     res.json({ success: true });
   });
 
+  app.put('/api/admin/books/stock/:id', async (req, res) => {
+    const { stock } = req.body;
+
+    await db.execute(`
+    UPDATE books
+    SET stock = ?, is_available = ?
+    WHERE id = ?
+  `, [
+      stock,
+      stock > 0 ? 1 : 0,
+      req.params.id
+    ]);
+
+    res.json({ success: true });
+  });
+  ``
+
 
 
 
