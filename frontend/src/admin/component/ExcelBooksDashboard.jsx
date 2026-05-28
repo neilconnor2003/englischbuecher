@@ -6,6 +6,7 @@ const ExcelBooksDashboard = () => {
     const [books, setBooks] = useState([]);
     const [loadingId, setLoadingId] = useState(null);
     const [uploading, setUploading] = useState(false);
+    const [selectedBook, setSelectedBook] = useState(null);
 
     const fetchExcelBooks = async () => {
         const res = await fetch(`${config.API_URL}/api/admin/excel-books`, {
@@ -163,19 +164,122 @@ const ExcelBooksDashboard = () => {
 
                         {/* SAVE BUTTON */}
                         <div>
-                            <button
+                            {/*<button
                                 onClick={() => saveRow(book)}
                                 disabled={loadingId === book.id}
                                 className="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition disabled:opacity-50"
                             >
                                 {loadingId === book.id ? 'Saving...' : 'Save'}
+                            </button>*/}
+
+                            <button
+                                onClick={() => setSelectedBook(book)}
+                                Edit
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition disabled:opacity-50"
+                            >
                             </button>
+
                         </div>
 
                     </div>
                 ))}
 
             </div>
+
+
+            {selectedBook && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+
+                    <div className="bg-white w-[800px] max-h-[90vh] overflow-y-auto p-6 rounded-2xl shadow-xl">
+
+                        <h2 className="text-xl font-bold mb-4">Edit Book Details</h2>
+
+                        {/* TITLE */}
+                        <div className="mb-3">
+                            <label>Title</label>
+                            <input
+                                value={selectedBook.title_en || ''}
+                                onChange={(e) =>
+                                    setSelectedBook({ ...selectedBook, title_en: e.target.value })
+                                }
+                                className="w-full border p-2 rounded"
+                            />
+                        </div>
+
+                        {/* DESCRIPTION EN */}
+                        <div className="mb-3">
+                            <label>Description (EN)</label>
+                            <textarea
+                                value={selectedBook.description_en || ''}
+                                onChange={(e) =>
+                                    setSelectedBook({ ...selectedBook, description_en: e.target.value })
+                                }
+                                className="w-full border p-2 rounded"
+                                rows={4}
+                            />
+                        </div>
+
+                        {/* DESCRIPTION DE */}
+                        <div className="mb-3">
+                            <label>Description (DE)</label>
+                            <textarea
+                                value={selectedBook.description_de || ''}
+                                onChange={(e) =>
+                                    setSelectedBook({ ...selectedBook, description_de: e.target.value })
+                                }
+                                className="w-full border p-2 rounded"
+                                rows={4}
+                            />
+                        </div>
+
+                        {/* PUBLISHER */}
+                        <div className="mb-3">
+                            <label>Publisher</label>
+                            <input
+                                value={selectedBook.publisher || ''}
+                                onChange={(e) =>
+                                    setSelectedBook({ ...selectedBook, publisher: e.target.value })
+                                }
+                                className="w-full border p-2 rounded"
+                            />
+                        </div>
+
+                        {/* PAGES */}
+                        <div className="mb-3">
+                            <label>Pages</label>
+                            <input
+                                value={selectedBook.pages || ''}
+                                onChange={(e) =>
+                                    setSelectedBook({ ...selectedBook, pages: e.target.value })
+                                }
+                                className="w-full border p-2 rounded"
+                            />
+                        </div>
+
+                        {/* SAVE BUTTON */}
+                        <div className="flex gap-3 mt-4">
+                            <button
+                                onClick={async () => {
+                                    await saveRow(selectedBook);
+                                    setSelectedBook(null);
+                                }}
+                                className="bg-purple-600 text-white px-4 py-2 rounded"
+                            >
+                                Save
+                            </button>
+
+                            <button
+                                onClick={() => setSelectedBook(null)}
+                                className="bg-gray-300 px-4 py-2 rounded"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            )}
+
 
             {/* EMPTY STATE */}
             {books.length === 0 && (

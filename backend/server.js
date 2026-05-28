@@ -4142,37 +4142,47 @@ WHERE ci.user_id = ?
     try {
       const workbook = XLSX.readFile(req.file.path);
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet);
+      //const rows = XLSX.utils.sheet_to_json(sheet);
 
+      const rawRows = XLSX.utils.sheet_to_json(sheet, {
+        defval: null
+      });
+
+      const rows = rawRows.map(r => {
+        const newRow = {};
+        for (const key in r) {
+          const cleanKey = key.trim().toLowerCase();  // ✅ removes spaces
+          newRow[cleanKey] = r[key];
+        }
+        return newRow;
+      });
 
       let successCount = 0;
 
       for (const row of rows) {
 
         if (!row.isbn13) {
-          console.log('⛔ Skipping row (no ISBN):', row);
           continue;
         }
 
         try {
-
           await db.execute(`
-      INSERT INTO excel_books (
-        isbn13, edition, binding,
-        title_en, title_de, author,
-        isbn, isbn10,
-        price, original_price,
-        category_id,
-        description_en, description_de,
-        publisher, pages,
-        weight_grams, dimensions,
-        format, language, publish_date,
-        series_name, reading_age
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE
-        title_en = VALUES(title_en),
-        description_en = VALUES(description_en)
-    `, [
+          INSERT INTO excel_books (
+            isbn13, edition, binding,
+            title_en, title_de, author,
+            isbn, isbn10,
+            price, original_price,
+            category_id,
+            description_en, description_de,
+            publisher, pages,
+            weight_grams, dimensions,
+            format, language, publish_date,
+            series_name, reading_age
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE
+          title_en = VALUES(title_en),
+          description_en = VALUES(description_en)
+          `, [
             row.isbn13 ?? null,
             row.edition ?? null,
             row.binding ?? null,
@@ -4181,8 +4191,14 @@ WHERE ci.user_id = ?
             row.author ?? null,
             row.isbn ?? null,
             row.isbn10 ?? null,
-            row.price ?? null,
-            row.original_price ?? null,
+            //row.price ?? null,
+            //row.original_price ?? null,
+            row.price !== null && row.price !== undefined && row.price !== ''
+              ? Number(row.price)
+              : null,
+            row.original_price !== null && row.original_price !== undefined && row.original_price !== ''
+              ? Number(row.original_price)
+              : null,
             row.category_id ?? null,
             row.description_en ?? null,
             row.description_de ?? null,
@@ -4215,9 +4231,7 @@ WHERE ci.user_id = ?
         success: true
       });
 
-
-
-      res.json({ success: true, count: rows.length });
+      //res.json({ success: true, count: rows.length });
 
     } catch (err) {
       console.error('Excel upload error:', err);
