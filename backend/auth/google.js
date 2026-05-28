@@ -6,16 +6,16 @@ const { sendWelcomeEmail } = require('../utils/email');
 //const API_URL = process.env.BACKEND_URL;
 const API_URL = process.env.FRONTEND_URL;
 
-/*const callbackURL =
-  process.env.NODE_ENV === 'production'
-    ? 'https://api.englischbuecher.de/auth/google/callback'
-    : 'https://api-dev.englischbuecher.de/auth/google/callback';*/
-//const callbackURL = 'https://api-dev.englischbuecher.de/auth/google/callback';
-
 const callbackURL =
   process.env.NODE_ENV === 'production'
     ? 'https://api.englischbuecher.de/auth/google/callback'
-    : 'https://dev--englischbuecher.netlify.app/auth/google/callback';
+    : 'https://api-dev.englischbuecher.de/auth/google/callback';
+//const callbackURL = 'https://api-dev.englischbuecher.de/auth/google/callback';
+
+/*const callbackURL =
+  process.env.NODE_ENV === 'production'
+    ? 'https://api.englischbuecher.de/auth/google/callback'
+    : 'https://dev--englischbuecher.netlify.app/auth/google/callback';*/
 
 
 module.exports = function (db) {
