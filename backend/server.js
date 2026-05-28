@@ -70,6 +70,14 @@ const upload = multer({
   }
 });
 
+
+const XLSX = require('xlsx');
+
+const uploadExcel = multer({
+  dest: path.join(__dirname, 'uploads', 'excel')
+});
+
+
 // ===== Book image storage: <ISBN>-<counter>.<ext> =====
 const bookImageStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -4128,6 +4136,110 @@ WHERE ci.user_id = ?
       res.status(500).json({ error: 'Failed to fetch transactions' });
     }
   });
+
+
+  app.post('/api/admin/upload-excel', authMiddleware, uploadExcel.single('file'), async (req, res) => {
+    try {
+      const workbook = XLSX.readFile(req.file.path);
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet);
+
+      for (const row of rows) {
+        await db.execute(`
+        INSERT INTO excel_books (
+          isbn13, edition, binding,
+          title_en, title_de, author,
+          isbn, isbn10,
+          price, original_price,
+          category_id,
+          description_en, description_de,
+          publisher, pages,
+          weight_grams, dimensions,
+          format, language, publish_date,
+          series_name, reading_age
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          title_en = VALUES(title_en),
+          description_en = VALUES(description_en)
+      `, [
+          row.isbn13 || null,
+          row.edition || null,
+          row.binding || null,
+          row.title_en || null,
+          row.title_de || null,
+          row.author || null,
+          row.isbn || null,
+          row.isbn10 || null,
+          row.price || null,
+          row.original_price || null,
+          row.category_id || null,
+          row.description_en || null,
+          row.description_de || null,
+          row.publisher || null,
+          row.pages || null,
+          row.weight_grams || null,
+          row.dimensions || null,
+          row.format || null,
+          row.language || null,
+          row.publish_date || null,
+          row.series_name || null,
+          row.reading_age || null
+        ]);
+      }
+
+      res.json({ success: true, count: rows.length });
+
+    } catch (err) {
+      console.error('Excel upload error:', err);
+      res.status(500).json({ error: 'Excel upload failed' });
+    }
+  });
+
+
+  app.get('/api/admin/excel-books', async (req, res) => {
+    const [rows] = await db.execute(`SELECT * FROM excel_books ORDER BY id DESC`);
+    res.json(rows);
+  });
+
+  app.put('/api/admin/excel-books/:id', async (req, res) => {
+    const id = req.params.id;
+    const data = req.body;
+
+    await db.execute(`
+    UPDATE excel_books SET
+      title_en=?, title_de=?, author=?,
+      price=?, original_price=?, category_id=?,
+      description_en=?, description_de=?,
+      publisher=?, pages=?, weight_grams=?, dimensions=?,
+      format=?, language=?, binding=?, edition=?,
+      series_name=?, reading_age=?
+    WHERE id = ?
+  `, [
+      data.title_en,
+      data.title_de,
+      data.author,
+      data.price,
+      data.original_price,
+      data.category_id,
+      data.description_en,
+      data.description_de,
+      data.publisher,
+      data.pages,
+      data.weight_grams,
+      data.dimensions,
+      data.format,
+      data.language,
+      data.binding,
+      data.edition,
+      data.series_name,
+      data.reading_age,
+      id
+    ]);
+
+    res.json({ success: true });
+  });
+
+
 
 
   // REQUEST BOOK RELATED
