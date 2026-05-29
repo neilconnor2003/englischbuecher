@@ -30,6 +30,9 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSo
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+import config from '@config';
+
+
 const SortableBookCard = ({ book, onEdit, onDelete, isSelected, onSelect }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: book.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
