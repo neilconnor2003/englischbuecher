@@ -30,6 +30,9 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSo
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+import config from '@config';
+
+
 const SortableBookCard = ({ book, onEdit, onDelete, isSelected, onSelect }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: book.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
@@ -87,9 +90,13 @@ const SortableBookCard = ({ book, onEdit, onDelete, isSelected, onSelect }) => {
 };
 
 const Dashboard = () => {
-  const { data: books = [], isLoading } = useGetBooksQuery(undefined, { refetchOnMountOrArgChange: true });
+  //const { data: books = [], isLoading } = useGetBooksQuery(undefined, { refetchOnMountOrArgChange: true });
+  const { data: books = [], isLoading, refetch } = useGetBooksQuery(undefined, { refetchOnMountOrArgChange: true });
+
   const { data: catData = { flat: [] } } = useGetCategoriesQuery();
   const categories = Array.isArray(catData.flat) ? catData.flat : [];
+
+  const [isNewReleaseConfirmOpen, setIsNewReleaseConfirmOpen] = useState(false);
 
   const [addBook] = useAddBookMutation();
   const [updateBook] = useUpdateBookMutation();
@@ -115,6 +122,13 @@ const Dashboard = () => {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  const [lastStockAdditionDate, setLastStockAdditionDate] = useState("");
+  const [isUpdatingNewReleaseDate, setIsUpdatingNewReleaseDate] = useState(false);
+
+  const [previewData, setPreviewData] = useState(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+
 
   const filteredBooks = useMemo(() => {
     return books.filter((book) => {
@@ -221,6 +235,74 @@ const Dashboard = () => {
     URL.revokeObjectURL(url);
   };
 
+
+  const handleOpenConfirm = async () => {
+    if (!lastStockAdditionDate) {
+      showToast("Please select a date first", "error");
+      return;
+    }
+
+    setLoadingPreview(true);
+
+    try {
+      const res = await fetch(`${config.API_URL}/api/admin/books/preview-new-release-date`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ date: lastStockAdditionDate })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch preview");
+      }
+
+      setPreviewData(data);
+      setIsNewReleaseConfirmOpen(true);
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || "Failed to fetch preview", "error");
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  const handleApplyNewReleaseDate = async () => {
+    if (!lastStockAdditionDate) {
+      showToast("Please select a date first", "error");
+      return;
+    }
+
+    setIsUpdatingNewReleaseDate(true);
+
+    try {
+      const res = await fetch(`${config.API_URL}/api/admin/books/set-new-release-date`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          lastStockAdditionDate
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update new releases');
+      }
+
+      showToast(`New release flags updated! (${data.affectedRows} records)`, "success");
+      refetch();
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || "Failed to update new releases", "error");
+    } finally {
+      setIsUpdatingNewReleaseDate(false);
+    }
+  };
+
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* HEADER */}
@@ -320,6 +402,40 @@ const Dashboard = () => {
             <span>{filteredBooks.length} shown</span>
           </div>
         </div>
+      </div>
+
+      {/* NEW RELEASE DATE MANAGER */}
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <h2 className="text-xl font-bold text-purple-800 mb-4">
+          🆕 New Release Date Manager
+        </h2>
+
+        <div className="flex flex-col md:flex-row md:items-end gap-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Last Stock Addition Date
+            </label>
+            <input
+              type="date"
+              value={lastStockAdditionDate}
+              onChange={(e) => setLastStockAdditionDate(e.target.value)}
+              className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            />
+          </div>
+
+          <button
+            onClick={handleOpenConfirm}
+            disabled={isUpdatingNewReleaseDate || loadingPreview}
+            className="px-5 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:from-orange-700 hover:to-red-700 font-bold disabled:opacity-50"
+          >
+            {loadingPreview ? 'Calculating...' : isUpdatingNewReleaseDate ? 'Updating...' : 'Apply New Release Date'}
+          </button>
+        </div>
+
+        <p className="text-sm text-gray-500 mt-3">
+          Books with <code>created_at</code> on or after this date will be marked as new releases.
+          Older books will have <code>is_new_release = 0</code>.
+        </p>
       </div>
 
       {/* BULK ACTIONS */}
@@ -452,6 +568,80 @@ const Dashboard = () => {
         onSave={handleSaveBook}
         forceIsbnMode={forceIsbnMode}
       />
+
+
+      {/* NEW RELEASE CONFIRM MODAL */}
+      {isNewReleaseConfirmOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+
+            <h3 className="text-lg font-bold text-red-600 mb-4">
+              ⚠️ Confirm Update
+            </h3>
+
+            <p className="text-gray-700 mb-4">
+              This will update <strong>all books</strong>.
+            </p>
+
+
+            <div className="text-sm text-gray-600 mb-4 space-y-2">
+              <div>
+                • created_at ≥ <strong>{lastStockAdditionDate}</strong> → <strong>is_new_release = 1</strong>
+              </div>
+              <div>
+                • created_at &lt; <strong>{lastStockAdditionDate}</strong> → <strong>is_new_release = 0</strong>
+              </div>
+
+              {/* ✅ THIS IS THE MISSING PART */}
+              {previewData && (
+                <div className="mt-4 p-3 bg-gray-50 border rounded-lg space-y-2">
+                  <div>
+                    ✅ <strong>{previewData.willBeNewRelease}</strong> books will be marked as <strong>New Release</strong>
+                  </div>
+                  <div>
+                    ❌ <strong>{previewData.willBeOld}</strong> books will be marked as <strong>Not New</strong>
+                  </div>
+                </div>
+              )}
+            </div>
+
+
+            <p className="text-red-500 text-sm mb-6">
+              This action cannot be undone.
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                //onClick={() => setIsNewReleaseConfirmOpen(false)}
+
+                onClick={() => {
+                  setIsNewReleaseConfirmOpen(false);
+                  setPreviewData(null);
+                }}
+
+                className="px-4 py-2 border rounded-lg hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+
+              <button
+
+                onClick={async () => {
+                  setIsNewReleaseConfirmOpen(false);
+                  await handleApplyNewReleaseDate();
+                  setPreviewData(null);
+                }}
+
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold"
+              >
+                Yes, Update
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
 
       <DeleteModal
         isOpen={isDeleteModalOpen}

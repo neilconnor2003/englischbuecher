@@ -30,6 +30,9 @@ const FRONTEND_URL = process.env.FRONTEND_URL;
 const ACTIVE_SENTINEL = '1969-12-31T23:00:01.000Z'
 const VERIFIED_SENTINEL = '1970-01-01 00:00:01';
 
+//const bookEnrichmentRoutes = require('./routes/bookEnrichmentRoutes');
+const createBookEnrichmentRoutes = require('./routes/bookEnrichmentRoutes');
+
 // MOVE TRANSPORTER HERE — OUTSIDE async() — GLOBAL
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -67,6 +70,14 @@ const upload = multer({
     else cb(new Error('Images only!'));
   }
 });
+
+
+const XLSX = require('xlsx');
+
+const uploadExcel = multer({
+  dest: path.join(__dirname, 'uploads', 'excel')
+});
+
 
 // ===== Book image storage: <ISBN>-<counter>.<ext> =====
 const bookImageStorage = multer.diskStorage({
@@ -4128,9 +4139,254 @@ WHERE ci.user_id = ?
   });
 
 
+  app.put('/api/admin/books/set-new-release-date', authMiddleware, async (req, res) => {
+    try {
+      const { lastStockAdditionDate } = req.body;
+
+      if (!lastStockAdditionDate) {
+        return res.status(400).json({ error: 'lastStockAdditionDate is required' });
+      }
+
+      // Expecting YYYY-MM-DD from frontend
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(lastStockAdditionDate)) {
+        return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
+      }
+
+      const [result] = await db.execute(
+        `
+      UPDATE books
+      SET is_new_release = CASE
+        WHEN DATE(created_at) >= DATE(?) THEN 1
+        ELSE 0
+      END
+      `,
+        [lastStockAdditionDate]
+      );
+
+      return res.json({
+        success: true,
+        message: 'New release flags updated successfully',
+        affectedRows: result.affectedRows
+      });
+    } catch (err) {
+      console.error('SET NEW RELEASE DATE ERROR:', err);
+      return res.status(500).json({
+        error: 'Failed to update new release flags',
+        details: err.message
+      });
+    }
+  });
+
+
+  app.post('/api/admin/books/preview-new-release-date', async (req, res) => {
+    try {
+      const { date } = req.body;
+
+      if (!date) {
+        return res.status(400).json({ error: 'Date is required' });
+      }
+
+      // ✅ Count books that will become new_release = 1
+      const [[newRelease]] = await db.execute(
+        `SELECT COUNT(*) as count
+       FROM books
+       WHERE DATE(created_at) >= DATE(?)`,
+        [date]
+      );
+
+      // ✅ Count books that will become new_release = 0
+      const [[oldRelease]] = await db.execute(
+        `SELECT COUNT(*) as count
+       FROM books
+       WHERE DATE(created_at) < DATE(?)`,
+        [date]
+      );
+
+      return res.json({
+        willBeNewRelease: newRelease.count,
+        willBeOld: oldRelease.count
+      });
+
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Preview failed' });
+    }
+  });
+
+
+  app.post('/api/admin/upload-excel', authMiddleware, uploadExcel.single('file'), async (req, res) => {
+    try {
+      const workbook = XLSX.readFile(req.file.path);
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      //const rows = XLSX.utils.sheet_to_json(sheet);
+
+      const rawRows = XLSX.utils.sheet_to_json(sheet, {
+        defval: null
+      });
+
+      const rows = rawRows.map(r => {
+        const newRow = {};
+        for (const key in r) {
+          const cleanKey = key.trim().toLowerCase();  // ✅ removes spaces
+          newRow[cleanKey] = r[key];
+        }
+        return newRow;
+      });
+
+      let successCount = 0;
+
+      for (const row of rows) {
+
+        if (!row.isbn13) {
+          continue;
+        }
+
+        try {
+          await db.execute(`
+          INSERT INTO excel_books (
+            isbn13, edition, binding,
+            title_en, title_de, author,
+            isbn, isbn10,
+            price, original_price,
+            category_id,
+            description_en, description_de,
+            publisher, pages,
+            weight_grams, dimensions,
+            format, language, publish_date,
+            series_name, reading_age
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE
+          title_en = VALUES(title_en),
+          description_en = VALUES(description_en)
+          `, [
+            row.isbn13 ?? null,
+            row.edition ?? null,
+            row.binding ?? null,
+            row.title_en ?? null,
+            row.title_de ?? null,
+            row.author ?? null,
+            row.isbn ?? null,
+            row.isbn10 ?? null,
+            //row.price ?? null,
+            //row.original_price ?? null,
+            row.price !== null && row.price !== undefined && row.price !== ''
+              ? Number(row.price)
+              : null,
+            row.original_price !== null && row.original_price !== undefined && row.original_price !== ''
+              ? Number(row.original_price)
+              : null,
+            row.category_id ?? null,
+            row.description_en ?? null,
+            row.description_de ?? null,
+            row.publisher ?? null,
+            row.pages ?? null,
+            row.weight_grams ?? null,
+            row.dimensions ?? null,
+            row.format ?? null,
+            row.language ?? null,
+            row.publish_date ?? null,
+            row.series_name ?? null,
+            row.reading_age ?? null
+          ]);
+
+          successCount++;
+
+        } catch (err) {
+          console.error('❌ FAILED ROW ISBN:', row.isbn13);
+          console.error(err.message);
+        }
+      }
+
+      /*res.json({
+        success: true,
+        inserted: successCount,
+        total: rows.length
+      });*/
+
+      res.status(200).json({
+        success: true
+      });
+
+      //res.json({ success: true, count: rows.length });
+
+    } catch (err) {
+      console.error('Excel upload error:', err);
+      res.status(500).json({ error: 'Excel upload failed' });
+    }
+  });
+
+
+  app.get('/api/admin/excel-books', async (req, res) => {
+    const [rows] = await db.execute(`SELECT * FROM excel_books ORDER BY id DESC`);
+    res.json(rows);
+  });
+
+  app.put('/api/admin/excel-books/:id', async (req, res) => {
+    const id = req.params.id;
+    const data = req.body;
+
+    await db.execute(`
+    UPDATE excel_books SET
+      title_en=?, title_de=?, author=?,
+      price=?, original_price=?, category_id=?,
+      description_en=?, description_de=?,
+      publisher=?, pages=?, weight_grams=?, dimensions=?,
+      format=?, language=?, binding=?, edition=?,
+      series_name=?, reading_age=?
+    WHERE id = ?
+  `, [
+      data.title_en,
+      data.title_de,
+      data.author,
+      data.price,
+      data.original_price,
+      data.category_id,
+      data.description_en,
+      data.description_de,
+      data.publisher,
+      data.pages,
+      data.weight_grams,
+      data.dimensions,
+      data.format,
+      data.language,
+      data.binding,
+      data.edition,
+      data.series_name,
+      data.reading_age,
+      id
+    ]);
+
+    res.json({ success: true });
+  });
+
+  app.put('/api/admin/books/stock/:id', async (req, res) => {
+    const { stock } = req.body;
+
+    await db.execute(`
+    UPDATE books
+    SET stock = ?, is_available = ?
+    WHERE id = ?
+  `, [
+      stock,
+      stock > 0 ? 1 : 0,
+      req.params.id
+    ]);
+
+    res.json({ success: true });
+  });
+  ``
+
+
+
+
   // REQUEST BOOK RELATED
   const bookSearchRoutes = require('./routes/bookSearchRoutes');
   app.use('/api/book-search', bookSearchRoutes);
+
+
+  //app.use('/api', bookEnrichmentRoutes);
+  app.use('/api', createBookEnrichmentRoutes(db));
 
 
 

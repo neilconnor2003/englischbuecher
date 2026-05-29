@@ -11,6 +11,7 @@ import {
   useGetAuthorsQuery,
   useAddAuthorMutation
 } from '../features/authors/authorsApiSlice';
+import IsbnScannerModal from './IsbnScannerModal';
 
 // -----------------------------------------------------
 // Utilities
@@ -372,9 +373,230 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
     }
   }, [modalState, fetchedBookData, setValue]);
 
+
+  const buildFetchedBookDataFromEnriched = (enriched, fallbackIsbn) => {
+    const titleEn = enriched?.title_en || '';
+    const titleDe = enriched?.title_de || titleEn || '';
+    const author = enriched?.author || '';
+
+    const descriptionEn = enriched?.description_en || '';
+    const descriptionDe = enriched?.description_de || descriptionEn || '';
+
+    const metaTitleEn =
+      enriched?.meta_title_en ||
+      (titleEn && author ? `${titleEn} by ${author} – Buy Now` : titleEn || '');
+
+    const metaTitleDe =
+      enriched?.meta_title_de ||
+      (titleEn && author ? `${titleEn} von ${author} – Jetzt kaufen` : titleDe || titleEn || '');
+
+    const metaDescriptionEn =
+      enriched?.meta_description_en ||
+      (descriptionEn ? descriptionEn.substring(0, 155) + '...' : '');
+
+    const metaDescriptionDe =
+      enriched?.meta_description_de ||
+      (descriptionDe ? descriptionDe.substring(0, 155) + '...' : '');
+
+    return {
+      title_en: titleEn,
+      title_de: titleDe,
+      author,
+      publisher: enriched?.publisher || '',
+      pages: enriched?.pages ? Number(enriched.pages) : null,
+      publish_date: enriched?.publish_date ? formatDateForInput(enriched.publish_date) : '',
+
+      description_en: descriptionEn,
+      description_de: descriptionDe,
+
+      isbn: enriched?.isbn || fallbackIsbn || '',
+      isbn13: enriched?.isbn13 || '',
+      isbn10: enriched?.isbn10 || '',
+
+      price:
+        enriched?.price !== null && enriched?.price !== undefined && enriched?.price !== ''
+          ? Number(enriched.price)
+          : null,
+
+      original_price:
+        enriched?.original_price !== null && enriched?.original_price !== undefined && enriched?.original_price !== ''
+          ? Number(enriched.original_price)
+          : null,
+
+      sale_price:
+        enriched?.sale_price !== null && enriched?.sale_price !== undefined && enriched?.sale_price !== ''
+          ? Number(enriched.sale_price)
+          : null,
+
+      stock:
+        enriched?.stock !== null && enriched?.stock !== undefined && enriched?.stock !== ''
+          ? Number(enriched.stock)
+          : 0,
+
+      category_id:
+        enriched?.category_id !== null && enriched?.category_id !== undefined && enriched?.category_id !== ''
+          ? Number(enriched.category_id)
+          : '',
+
+      weight_grams:
+        enriched?.weight_grams !== null && enriched?.weight_grams !== undefined && enriched?.weight_grams !== ''
+          ? Number(enriched.weight_grams)
+          : null,
+
+      dimensions: enriched?.dimensions || '',
+      format: enriched?.format || 'Paperback',
+      language: enriched?.language || 'EN',
+      edition: enriched?.edition || '',
+      binding: enriched?.binding || enriched?.format || 'Paperback',
+
+      translator: enriched?.translator || '',
+      series_name: enriched?.series_name || '',
+      series_volume: enriched?.series_volume || '',
+      reading_age: enriched?.reading_age || '',
+
+      slug:
+        enriched?.slug ||
+        (titleEn
+          ? titleEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+          : ''),
+
+      meta_title_en: metaTitleEn,
+      meta_title_de: metaTitleDe,
+      meta_description_en: metaDescriptionEn,
+      meta_description_de: metaDescriptionDe,
+
+      rating:
+        enriched?.rating !== null && enriched?.rating !== undefined && enriched?.rating !== ''
+          ? Number(enriched.rating)
+          : 0,
+
+      review_count:
+        enriched?.review_count !== null && enriched?.review_count !== undefined && enriched?.review_count !== ''
+          ? Number(enriched.review_count)
+          : 0,
+
+      popularity_score:
+        enriched?.popularity_score !== null && enriched?.popularity_score !== undefined && enriched?.popularity_score !== ''
+          ? Number(enriched.popularity_score)
+          : 0,
+
+      tags: enriched?.tags || '',
+
+      is_featured: enriched?.is_featured ? 1 : 0,
+      is_new_release: enriched?.is_new_release ? 1 : 0,
+      is_bestseller: enriched?.is_bestseller ? 1 : 0,
+
+      work_id:
+        enriched?.work_id ||
+        computeWorkId(titleEn, titleDe, author),
+    };
+  };
+
+
   // -----------------------------------------------------
   // Fetch by ISBN
   // -----------------------------------------------------
+
+  /*const handleFetchISBN = async () => {
+    if (!isbnInput || isbnInput.length < 10) return;
+
+    const digitsOnly = isbnInput.replace(/\D/g, '');
+    if (digitsOnly.length !== 10 && digitsOnly.length !== 13) {
+      alert('Please enter a valid 10 or 13-digit ISBN');
+      return;
+    }
+
+    const cleanIsbn = digitsOnly;
+    setOriginalEnteredIsbn(cleanIsbn);
+    setIsSavingCover(true);
+
+    try {
+      const res = await axios.get(
+        `${config.API_URL}/api/books/enrich/${cleanIsbn}`
+      );
+
+      const enriched = res.data;
+
+      if (!enriched?.found) {
+        alert('Book not found from ISBN');
+        setModalState('edit');
+        setFetchedBookData({
+          isbn: cleanIsbn,
+          isbn10: cleanIsbn.length === 10 ? cleanIsbn : '',
+          isbn13: cleanIsbn.length === 13 ? cleanIsbn : '',
+          price: 0,
+          stock: 0,
+          language: 'EN',
+          format: 'Paperback',
+          binding: 'Paperback',
+          weight_grams: 500,
+          dimensions: '',
+        });
+        return;
+      }
+
+      setFetchedBookData({
+        title_en: enriched.title_en || '',
+        title_de: enriched.title_de || enriched.title_en || '',
+        author: enriched.author || '',
+        publisher: enriched.publisher || '',
+        pages: enriched.pages || null,
+        publish_date: enriched.publish_date ? formatDateForInput(enriched.publish_date) : '',
+        description_en: enriched.description_en || '',
+        description_de: enriched.description_de || enriched.description_en || '',
+        isbn: enriched.isbn || cleanIsbn,
+        isbn13: enriched.isbn13 || '',
+        isbn10: enriched.isbn10 || '',
+        price: 0.0,
+        original_price: 0.0,
+        sale_price: null,
+        stock: 0,
+        weight_grams: 500,
+        dimensions: '',
+        format: enriched.format || 'Paperback',
+        language: enriched.language || 'EN',
+        edition: '',
+        binding: enriched.binding || enriched.format || 'Paperback',
+        slug: enriched.slug || '',
+        meta_title_en: '',
+        meta_title_de: '',
+        meta_description_en: '',
+        meta_description_de: '',
+        rating: 0,
+        review_count: 0,
+        popularity_score: 0,
+        reading_age: enriched.reading_age || '',
+        tags: enriched.tags || '',
+        work_id: computeWorkId(
+          enriched.title_en || '',
+          enriched.title_de || '',
+          enriched.author || ''
+        ),
+      });
+
+      if (enriched.image) {
+        setMainImage(enriched.image);
+        setGalleryImages([enriched.image]);
+      } else {
+        setMainImage('');
+        setGalleryImages([]);
+      }
+
+      setModalState('edit');
+    } catch (error) {
+      console.error('ISBN fetch failed:', error);
+      alert(
+        error?.response?.data?.error ||
+        error?.response?.data?.details ||
+        error.message ||
+        'Failed to fetch ISBN details'
+      );
+    } finally {
+      setIsSavingCover(false);
+    }
+  };*/
+
+
   const handleFetchISBN = async () => {
     if (!isbnInput || isbnInput.length < 10) return;
 
@@ -388,239 +610,186 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
     setOriginalEnteredIsbn(cleanIsbn);
     setIsSavingCover(true);
 
-    const forceHttps = (u = '') => String(u).replace(/^http:\/\//i, 'https://');
-
-    // helper: save cover locally via your backend (names it by ISBN)
-    const saveCoverLocally = async (remoteUrl, isbn) => {
-      const url = forceHttps(remoteUrl || '');
-      if (!url || url.includes('placeholder')) return url;
-
-      try {
-        const saveRes = await axios.get(
-          `${config.API_URL}/api/fetch-and-save-cover?url=${encodeURIComponent(url)}&isbn=${encodeURIComponent(isbn)}`
-        );
-        return forceHttps(saveRes.data?.url || url);
-      } catch {
-        return url; // fallback: keep remote
-      }
-    };
-
     try {
-      // -----------------------------
-      // 1) GOOGLE BOOKS
-      // -----------------------------
-      const googleUrl = `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleanIsbn}&country=DE`;
-      //const googleRes = await fetch(googleUrl);
-
-      const googleRes = await axios.get(
-        `${config.API_URL}/api/books/isbn/${cleanIsbn}`
+      const res = await axios.get(
+        `${config.API_URL}/api/books/enrich/${cleanIsbn}`
       );
 
-      const googleData = await googleRes.json();
+      const enriched = res.data;
 
-      if (googleData?.totalItems > 0) {
-        const v = googleData.items[0].volumeInfo || {};
-
-        const title = v.title || 'Unknown Title';
-        const subtitle = v.subtitle || '';
-        const fullTitle = subtitle ? `${title}: ${subtitle}` : title;
-
-        const authors = Array.isArray(v.authors) ? v.authors.join(', ') : 'Unknown Author';
-        const descriptionEn = (v.description || 'No description available.')
-          .replace(/<[^>]*>/g, '')
-          .trim();
-
-        const publisher = v.publisher || '';
-        const publishedDate = v.publishedDate || '';
-        const pageCount = v.pageCount || 350;
-
-        const language = (v.language || 'en').toUpperCase();
-        const categories = v.categories || [];
-        const inferredAge = guessAgeGroup({ categories, description: descriptionEn });
-
-        // pick best cover url
-        let coverUrl =
-          v.imageLinks?.extraLarge ||
-          v.imageLinks?.large ||
-          v.imageLinks?.medium ||
-          v.imageLinks?.thumbnail ||
-          v.imageLinks?.smallThumbnail ||
-          '/book-placeholder.png';
-
-        // normalize coverUrl
-        coverUrl = forceHttps(coverUrl);
-        coverUrl = coverUrl.replace(/zoom=\d+/g, 'zoom=0');
-
-        const isbn13 =
-          v.industryIdentifiers?.find(i => i.type === 'ISBN_13')?.identifier || cleanIsbn;
-        const isbn10 =
-          v.industryIdentifiers?.find(i => i.type === 'ISBN_10')?.identifier || '';
-
-        const isHardcover = fullTitle.toLowerCase().includes('hardcover');
-        const baseWeight = pageCount < 300 ? 320 : pageCount < 600 ? 480 : 680;
-        const weight_grams = isHardcover ? baseWeight + 280 : baseWeight;
-        const dimensions = isHardcover ? '21.6 x 13.8 x 3.8 cm' : '19.8 x 12.9 x 2.6 cm';
-
-        const slug = fullTitle
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/(^-|-$)/g, '')
-          .substring(0, 100);
-
-        // translate (optional)
-        let descriptionDe = descriptionEn;
-        let metaTitleDe = `${fullTitle} von ${authors} – Jetzt kaufen`;
-        let metaDescDe = descriptionEn.substring(0, 155) + '...';
-
-        try {
-          const translateRes = await axios.post(`${config.API_URL}/api/translate`, {
-            text: [descriptionEn, `${fullTitle} by ${authors} – Buy Now`],
-            target: 'de'
-          });
-
-          const [translatedDesc, translatedTitle] = translateRes.data.translated || [];
-          if (translatedDesc) descriptionDe = translatedDesc;
-          if (translatedTitle) {
-            metaTitleDe = translatedTitle
-              .replace('by', 'von')
-              .replace('Buy Now', 'Jetzt kaufen');
-          }
-          metaDescDe = (translatedDesc || descriptionEn).substring(0, 155) + '...';
-        } catch {
-          // ignore translation errors, keep EN
-        }
-
-        // ✅ Save cover locally (ISBN-based filename)
-        const savedCoverUrl = await saveCoverLocally(coverUrl, cleanIsbn);
-
-        const work_id = computeWorkId(fullTitle, fullTitle, authors);
-
-        // Populate form values (react-hook-form)
-        setFetchedBookData({
-          title_en: fullTitle,
-          title_de: fullTitle,
-          author: authors,
-          publisher,
-          pages: pageCount,
-          publish_date: publishedDate ? formatDateForInput(publishedDate) : '',
-          description_en: descriptionEn,
-          description_de: descriptionDe,
-          isbn: isbn13 || isbn10,
-          isbn13,
-          isbn10,
-          price: 0.0,
-          original_price: 0.0,
-          stock: 0,
-          weight_grams: Math.round(weight_grams),
-          dimensions,
-          format: isHardcover ? 'Hardcover' : 'Paperback',
-          language,
-          edition: 'Standard Edition',
-          binding: isHardcover ? 'Hardcover' : 'Paperback',
-          slug,
-          meta_title_en: `${fullTitle} by ${authors} – Buy Now`,
-          meta_title_de: metaTitleDe,
-          meta_description_en: descriptionEn.substring(0, 155) + '...',
-          meta_description_de: metaDescDe,
-          rating: 0.0,
-          review_count: 0,
-          popularity_score: 0,
-          reading_age: inferredAge || '',
-          work_id,
-        });
-
-        // Set images for UI
-        setMainImage(savedCoverUrl);
-        setGalleryImages([savedCoverUrl]);
+      if (!enriched || enriched.found === false) {
+        alert('Book not found from ISBN');
         setModalState('edit');
+        setFetchedBookData({
+          isbn: cleanIsbn,
+          isbn10: cleanIsbn.length === 10 ? cleanIsbn : '',
+          isbn13: cleanIsbn.length === 13 ? cleanIsbn : '',
+          price: null,
+          original_price: null,
+          stock: 0,
+          language: 'EN',
+          format: 'Paperback',
+          binding: 'Paperback',
+          weight_grams: null,
+          dimensions: '',
+        });
         return;
       }
 
-      // If Google had no items, fall through to OpenLibrary:
-      throw new Error('Not found in Google Books');
+      const mapped = buildFetchedBookDataFromEnriched(enriched, cleanIsbn);
+      setFetchedBookData(mapped);
 
-    } catch (error) {
-      // -----------------------------
-      // 2) OPENLIBRARY FALLBACK
-      // -----------------------------
-      try {
-        const olUrl = `https://openlibrary.org/api/books?bibkeys=ISBN:${cleanIsbn}&format=json&jscmd=data`;
-        const olRes = await fetch(olUrl);
-        const olData = await olRes.json();
-        const bookData = olData[`ISBN:${cleanIsbn}`];
-
-        if (bookData) {
-          const title = bookData.title || 'Unknown';
-          const authors = bookData.authors?.map(a => a.name).join(', ') || 'Unknown Author';
-          const pages = bookData.number_of_pages || 350;
-          const publishDate = bookData.publish_date || '';
-          const cover = bookData.cover?.large || bookData.cover?.medium || '/book-placeholder.png';
-
-          // ✅ Save OpenLibrary cover locally too (optional but consistent)
-          const savedCover = await saveCoverLocally(cover, cleanIsbn);
-
-          const subjects = (bookData.subjects || []).map(s => s.name);
-          const description =
-            typeof bookData.description === 'string'
-              ? bookData.description
-              : (bookData.description?.value || '');
-
-          const inferredAge = guessAgeGroup({ categories: subjects, description });
-          const work_id = computeWorkId(title, title, authors);
-
-          // ✅ THIS BLOCK IS STILL NEEDED (OpenLibrary often lacks DE text)
-          setFetchedBookData({
-            title_en: title,
-            title_de: title,
-            author: authors,
-            pages,
-            publish_date: publishDate ? formatDateForInput(publishDate) : '',
-            description_en: description || 'Classic literature. No description available from source.',
-            description_de: 'Klassische Literatur. Keine Beschreibung verfügbar.',
-            weight_grams: Math.round(pages * 1.1 + 300),
-            dimensions: '19.8 x 12.9 x 2.8 cm',
-            format: 'Paperback',
-            language: 'EN',
-            rating: 0,
-            review_count: 0,
-            popularity_score: 0,
-            reading_age: inferredAge || '',
-            work_id,
-          });
-
-          setMainImage(savedCover);
-          setGalleryImages([savedCover]);
-          setModalState('edit');
-          return;
-        }
-      } catch {
-        // ignore and go to final fallback
+      if (enriched.image) {
+        setMainImage(enriched.image);
+        setGalleryImages(Array.isArray(enriched.images) && enriched.images.length > 0 ? enriched.images : [enriched.image]);
+      } else {
+        setMainImage('');
+        setGalleryImages([]);
       }
 
-      // -----------------------------
-      // 3) LAST RESORT: minimal fields
-      // -----------------------------
-      const work_id = computeWorkId('', '', '');
-      alert('Book not found in any source. Filling basic data...');
-      setFetchedBookData({
-        isbn: cleanIsbn,
-        weight_grams: 480,
-        dimensions: '19.8 x 12.9 x 2.8 cm',
-        format: 'Paperback',
-        language: 'EN',
-        rating: 0,
-        review_count: 0,
-        popularity_score: 0,
-        reading_age: '',
-        work_id,
-      });
       setModalState('edit');
-
+    } catch (error) {
+      console.error('ISBN fetch failed:', error);
+      alert(
+        error?.response?.data?.error ||
+        error?.response?.data?.details ||
+        error.message ||
+        'Failed to fetch ISBN details'
+      );
     } finally {
       setIsSavingCover(false);
     }
   };
 
+
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+
+
+  /*const handleFetchISBNFromScanned = async (isbn) => {
+    setIsbnInput(isbn);
+    setOriginalEnteredIsbn(isbn);
+
+    const digitsOnly = String(isbn).replace(/\D/g, '');
+    if (digitsOnly.length !== 10 && digitsOnly.length !== 13) {
+      alert('Scanned code is not a valid ISBN');
+      return;
+    }
+
+    setIsSavingCover(true);
+    try {
+      const res = await axios.get(
+        `${config.API_URL}/api/books/enrich/${digitsOnly}`
+      );
+
+      const enriched = res.data;
+
+      if (!enriched?.found) {
+        alert('Book not found from scanned barcode');
+        return;
+      }
+
+      setFetchedBookData({
+        title_en: enriched.title_en || '',
+        title_de: enriched.title_de || enriched.title_en || '',
+        author: enriched.author || '',
+        publisher: enriched.publisher || '',
+        pages: enriched.pages || null,
+        publish_date: enriched.publish_date ? formatDateForInput(enriched.publish_date) : '',
+        description_en: enriched.description_en || '',
+        description_de: enriched.description_de || enriched.description_en || '',
+        isbn: enriched.isbn || digitsOnly,
+        isbn13: enriched.isbn13 || '',
+        isbn10: enriched.isbn10 || '',
+        price: 0.0,
+        original_price: 0.0,
+        sale_price: null,
+        stock: 0,
+        weight_grams: 500,
+        dimensions: '',
+        format: enriched.format || 'Paperback',
+        language: enriched.language || 'EN',
+        edition: '',
+        binding: enriched.binding || enriched.format || 'Paperback',
+        slug: enriched.slug || '',
+        meta_title_en: '',
+        meta_title_de: '',
+        meta_description_en: '',
+        meta_description_de: '',
+        rating: 0,
+        review_count: 0,
+        popularity_score: 0,
+        reading_age: enriched.reading_age || '',
+        tags: enriched.tags || '',
+        work_id: computeWorkId(
+          enriched.title_en || '',
+          enriched.title_de || '',
+          enriched.author || ''
+        ),
+      });
+
+      if (enriched.image) {
+        setMainImage(enriched.image);
+        setGalleryImages([enriched.image]);
+      } else {
+        setMainImage('');
+        setGalleryImages([]);
+      }
+
+      setModalState('edit');
+    } catch (e) {
+      console.error(e);
+      alert('Failed to fetch scanned book details');
+    } finally {
+      setIsSavingCover(false);
+    }
+  };*/
+
+
+  const handleFetchISBNFromScanned = async (isbn) => {
+    setIsbnInput(isbn);
+    setOriginalEnteredIsbn(isbn);
+
+    const digitsOnly = String(isbn).replace(/\D/g, '');
+    if (digitsOnly.length !== 10 && digitsOnly.length !== 13) {
+      alert('Scanned code is not a valid ISBN');
+      return;
+    }
+
+    setIsSavingCover(true);
+
+    try {
+      const res = await axios.get(
+        `${config.API_URL}/api/books/enrich/${digitsOnly}`
+      );
+
+      const enriched = res.data;
+
+      if (!enriched || enriched.found === false) {
+        alert('Book not found from scanned barcode');
+        return;
+      }
+
+      const mapped = buildFetchedBookDataFromEnriched(enriched, digitsOnly);
+      setFetchedBookData(mapped);
+
+      if (enriched.image) {
+        setMainImage(enriched.image);
+        setGalleryImages(Array.isArray(enriched.images) && enriched.images.length > 0 ? enriched.images : [enriched.image]);
+      } else {
+        setMainImage('');
+        setGalleryImages([]);
+      }
+
+      setModalState('edit');
+    } catch (e) {
+      console.error(e);
+      alert('Failed to fetch scanned book details');
+    } finally {
+      setIsSavingCover(false);
+    }
+  };
+
+  
 
   // -----------------------------------------------------
   // Image Uploads
@@ -917,6 +1086,15 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
                           'FETCH BOOK NOW'
                         )}
                       </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsScannerOpen(true)}
+                        className="mt-4 w-full py-6 bg-white border-4 border-purple-300 text-purple-700 rounded-3xl font-bold text-2xl hover:bg-purple-50 shadow-lg"
+                      >
+                        SCAN BOOK WITH CAMERA
+                      </button>
+
                     </div>
                   </div>
                 )}
@@ -1089,6 +1267,15 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
           </div>
         </div>
       </Dialog>
+
+      <IsbnScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onDetected={(isbn) => {
+          handleFetchISBNFromScanned(isbn);
+        }}
+      />
+
     </Transition>
   );
 };

@@ -21,6 +21,8 @@ import AuthorsDashboard from './component/AuthorsDashboard';
 import DiscountDashboard from './component/DiscountDashboard';
 import WalletDashboard from './component/WalletDashboard';
 import EmailLogsPage from './component/EmailLogsPage';
+import ExcelBooksDashboard from './component/ExcelBooksDashboard';
+import StockManager from './component/StockManager';
 
 function AdminApp() {
   const { user, loading } = useContext(AuthContext);
@@ -51,6 +53,8 @@ function AdminApp() {
         <Route path="discounts" element={<DiscountDashboard />} />
         <Route path="wallet" element={<WalletDashboard />} />
         <Route path="email-logs" element={<EmailLogsPage />} />
+        <Route path="excel-books" element={<ExcelBooksDashboard />} />
+        <Route path="stock" element={<StockManager />} />
       </Route>
     </Routes>
   );

@@ -12,6 +12,11 @@ const callbackURL =
     : 'https://api-dev.englischbuecher.de/auth/google/callback';
 //const callbackURL = 'https://api-dev.englischbuecher.de/auth/google/callback';
 
+/*const callbackURL =
+  process.env.NODE_ENV === 'production'
+    ? 'https://api.englischbuecher.de/auth/google/callback'
+    : 'https://dev--englischbuecher.netlify.app/auth/google/callback';*/
+
 
 module.exports = function (db) {
   passport.use(new GoogleStrategy({
