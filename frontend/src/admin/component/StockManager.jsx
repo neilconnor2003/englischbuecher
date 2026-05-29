@@ -1,15 +1,27 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import config from '@config';
 
 const StockManager = () => {
   const [books, setBooks] = useState([]);
   const [loadingId, setLoadingId] = useState(null);
 
+  // ✅ filter state
+  const [filters, setFilters] = useState({
+    isbn: '',
+    binding: '',
+    edition: '',
+  });
+
   const fetchBooks = async () => {
-    const res = await fetch(`${config.API_URL}/api/books`);
-    const data = await res.json();
-    setBooks(data);
+    try {
+      const res = await fetch(`${config.API_URL}/api/books`);
+      const data = await res.json();
+      setBooks(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Failed to fetch books:', err);
+      setBooks([]);
+    }
   };
 
   useEffect(() => {
@@ -33,14 +45,70 @@ const StockManager = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stock: Number(book.stock) })
       });
-
     } catch (err) {
       console.error(err);
       alert('❌ Update failed');
+    } finally {
+      setLoadingId(null);
+      fetchBooks();
     }
+  };
 
-    setLoadingId(null);
-    fetchBooks();
+  // ✅ generic display ISBN
+  const getDisplayIsbn = (book) => {
+    return book.isbn13 || book.isbn10 || book.isbn || '';
+  };
+
+  // ✅ all unique filter options from books table
+  const isbnOptions = useMemo(() => {
+    const values = books
+      .map(getDisplayIsbn)
+      .filter(Boolean);
+
+    return [...new Set(values)].sort((a, b) => String(a).localeCompare(String(b)));
+  }, [books]);
+
+  const bindingOptions = useMemo(() => {
+    const values = books
+      .map(book => book.binding)
+      .filter(Boolean);
+
+    return [...new Set(values)].sort((a, b) => String(a).localeCompare(String(b)));
+  }, [books]);
+
+  const editionOptions = useMemo(() => {
+    const values = books
+      .map(book => book.edition)
+      .filter(Boolean);
+
+    return [...new Set(values)].sort((a, b) => String(a).localeCompare(String(b)));
+  }, [books]);
+
+  // ✅ filtered books
+  const filteredBooks = useMemo(() => {
+    const isbnFilter = filters.isbn.trim().toLowerCase();
+    const bindingFilter = filters.binding.trim().toLowerCase();
+    const editionFilter = filters.edition.trim().toLowerCase();
+
+    return books.filter(book => {
+      const isbnValue = String(getDisplayIsbn(book)).toLowerCase();
+      const bindingValue = String(book.binding || '').toLowerCase();
+      const editionValue = String(book.edition || '').toLowerCase();
+
+      const matchesIsbn = !isbnFilter || isbnValue.includes(isbnFilter);
+      const matchesBinding = !bindingFilter || bindingValue.includes(bindingFilter);
+      const matchesEdition = !editionFilter || editionValue.includes(editionFilter);
+
+      return matchesIsbn && matchesBinding && matchesEdition;
+    });
+  }, [books, filters]);
+
+  const clearFilters = () => {
+    setFilters({
+      isbn: '',
+      binding: '',
+      edition: '',
+    });
   };
 
   return (
@@ -49,40 +117,143 @@ const StockManager = () => {
         📦 Stock Manager
       </h2>
 
+      {/* ✅ FILTER BAR */}
+      <div className="bg-white shadow-xl rounded-2xl p-6 mb-6">
+        <div className="flex flex-col lg:flex-row lg:items-end gap-4">
+          {/* ISBN */}
+          <div className="flex-1">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Filter by ISBN
+            </label>
+            <input
+              type="text"
+              value={filters.isbn}
+              onChange={(e) =>
+                setFilters(prev => ({ ...prev, isbn: e.target.value }))
+              }
+              list="isbn-options"
+              placeholder="Type ISBN..."
+              className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+            <datalist id="isbn-options">
+              {isbnOptions.map((value) => (
+                <option key={value} value={value} />
+              ))}
+            </datalist>
+          </div>
+
+          {/* Binding */}
+          <div className="flex-1">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Filter by Binding
+            </label>
+            <input
+              type="text"
+              value={filters.binding}
+              onChange={(e) =>
+                setFilters(prev => ({ ...prev, binding: e.target.value }))
+              }
+              list="binding-options"
+              placeholder="Type binding..."
+              className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+            <datalist id="binding-options">
+              {bindingOptions.map((value) => (
+                <option key={value} value={value} />
+              ))}
+            </datalist>
+          </div>
+
+          {/* Edition */}
+          <div className="flex-1">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Filter by Edition
+            </label>
+            <input
+              type="text"
+              value={filters.edition}
+              onChange={(e) =>
+                setFilters(prev => ({ ...prev, edition: e.target.value }))
+              }
+              list="edition-options"
+              placeholder="Type edition..."
+              className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+            <datalist id="edition-options">
+              {editionOptions.map((value) => (
+                <option key={value} value={value} />
+              ))}
+            </datalist>
+          </div>
+
+          {/* Clear button */}
+          <div>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="px-5 py-3 bg-gray-200 text-gray-800 rounded-xl font-semibold hover:bg-gray-300 transition"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4 text-sm text-gray-500">
+          Showing <span className="font-semibold">{filteredBooks.length}</span> of{' '}
+          <span className="font-semibold">{books.length}</span> books
+        </div>
+      </div>
+
+      {/* ✅ TABLE */}
       <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
-        
         {/* HEADER */}
-        <div className="grid grid-cols-4 gap-4 bg-purple-100 p-4 font-bold text-gray-700">
+        <div className="grid grid-cols-6 gap-4 bg-purple-100 p-4 font-bold text-gray-700">
           <div>Book</div>
-          <div>Stock</div>
-          <div>Available</div>
+          <div>ISBN</div>
+          <div>Binding</div>
+          <div>Edition</div>
+          <div>Stock / Available</div>
           <div>Action</div>
         </div>
 
         {/* LIST */}
-        {books.map(book => (
+        {filteredBooks.map(book => (
           <div
             key={book.id}
-            className="grid grid-cols-4 gap-4 items-center p-4 border-t hover:bg-gray-50 transition"
+            className="grid grid-cols-6 gap-4 items-center p-4 border-t hover:bg-gray-50 transition"
           >
             {/* Book Title */}
             <div className="font-semibold text-gray-800">
               {book.title_en}
             </div>
 
-            {/* Stock Input */}
-            <div>
-              <input
-                type="number"
-                value={book.stock || 0}
-                onChange={(e) => handleChange(book.id, e.target.value)}
-                className="w-24 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
+            {/* ISBN */}
+            <div className="text-sm text-gray-700 break-all">
+              {getDisplayIsbn(book) || '-'}
             </div>
 
-            {/* Availability Badge */}
+            {/* Binding */}
+            <div className="text-sm text-gray-700">
+              {book.binding || '-'}
+            </div>
+
+            {/* Edition */}
+            <div className="text-sm text-gray-700">
+              {book.edition || '-'}
+            </div>
+
+            {/* Stock + Availability */}
             <div>
-              {book.stock > 0 ? (
+              <div className="mb-2">
+                <input
+                  type="number"
+                  value={book.stock || 0}
+                  onChange={(e) => handleChange(book.id, e.target.value)}
+                  className="w-24 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              {Number(book.stock) > 0 ? (
                 <span className="px-3 py-1 bg-green-200 text-green-800 rounded-full text-sm font-bold">
                   ✅ In Stock
                 </span>
@@ -105,13 +276,12 @@ const StockManager = () => {
             </div>
           </div>
         ))}
-
       </div>
 
       {/* EMPTY STATE */}
-      {books.length === 0 && (
+      {filteredBooks.length === 0 && (
         <div className="text-center mt-10 text-gray-500">
-          No books found.
+          No matching books found.
         </div>
       )}
     </div>
