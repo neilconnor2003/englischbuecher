@@ -4139,6 +4139,46 @@ WHERE ci.user_id = ?
   });
 
 
+  app.put('/api/admin/books/set-new-release-date', authMiddleware, async (req, res) => {
+    try {
+      const { lastStockAdditionDate } = req.body;
+
+      if (!lastStockAdditionDate) {
+        return res.status(400).json({ error: 'lastStockAdditionDate is required' });
+      }
+
+      // Expecting YYYY-MM-DD from frontend
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(lastStockAdditionDate)) {
+        return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
+      }
+
+      const [result] = await db.execute(
+        `
+      UPDATE books
+      SET is_new_release = CASE
+        WHEN DATE(created_at) >= DATE(?) THEN 1
+        ELSE 0
+      END
+      `,
+        [lastStockAdditionDate]
+      );
+
+      return res.json({
+        success: true,
+        message: 'New release flags updated successfully',
+        affectedRows: result.affectedRows
+      });
+    } catch (err) {
+      console.error('SET NEW RELEASE DATE ERROR:', err);
+      return res.status(500).json({
+        error: 'Failed to update new release flags',
+        details: err.message
+      });
+    }
+  });
+
+
   app.post('/api/admin/upload-excel', authMiddleware, uploadExcel.single('file'), async (req, res) => {
     try {
       const workbook = XLSX.readFile(req.file.path);
