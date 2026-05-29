@@ -4179,6 +4179,42 @@ WHERE ci.user_id = ?
   });
 
 
+  app.post('/api/admin/books/preview-new-release-date', async (req, res) => {
+    try {
+      const { date } = req.body;
+
+      if (!date) {
+        return res.status(400).json({ error: 'Date is required' });
+      }
+
+      // ✅ Count books that will become new_release = 1
+      const [[newRelease]] = await db.execute(
+        `SELECT COUNT(*) as count
+       FROM books
+       WHERE DATE(created_at) >= DATE(?)`,
+        [date]
+      );
+
+      // ✅ Count books that will become new_release = 0
+      const [[oldRelease]] = await db.execute(
+        `SELECT COUNT(*) as count
+       FROM books
+       WHERE DATE(created_at) < DATE(?)`,
+        [date]
+      );
+
+      return res.json({
+        willBeNewRelease: newRelease.count,
+        willBeOld: oldRelease.count
+      });
+
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Preview failed' });
+    }
+  });
+
+
   app.post('/api/admin/upload-excel', authMiddleware, uploadExcel.single('file'), async (req, res) => {
     try {
       const workbook = XLSX.readFile(req.file.path);

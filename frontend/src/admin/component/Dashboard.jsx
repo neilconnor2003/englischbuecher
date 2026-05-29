@@ -126,6 +126,10 @@ const Dashboard = () => {
   const [lastStockAdditionDate, setLastStockAdditionDate] = useState("");
   const [isUpdatingNewReleaseDate, setIsUpdatingNewReleaseDate] = useState(false);
 
+  const [previewData, setPreviewData] = useState(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+
+
   const filteredBooks = useMemo(() => {
     return books.filter((book) => {
       const matchesSearch = !searchTerm ||
@@ -229,6 +233,39 @@ const Dashboard = () => {
     a.download = `books_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+
+  const handleOpenConfirm = async () => {
+    if (!lastStockAdditionDate) {
+      showToast("Please select a date first", "error");
+      return;
+    }
+
+    setLoadingPreview(true);
+
+    try {
+      const res = await fetch(`${config.API_URL}/api/admin/books/preview-new-release-date`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ date: lastStockAdditionDate })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch preview");
+      }
+
+      setPreviewData(data);
+      setIsNewReleaseConfirmOpen(true);
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || "Failed to fetch preview", "error");
+    } finally {
+      setLoadingPreview(false);
+    }
   };
 
   const handleApplyNewReleaseDate = async () => {
@@ -387,20 +424,11 @@ const Dashboard = () => {
           </div>
 
           <button
-            //onClick={handleApplyNewReleaseDate}
-
-            onClick={() => {
-              if (!lastStockAdditionDate) {
-                showToast("Please select a date first", "error");
-                return;
-              }
-              setIsNewReleaseConfirmOpen(true);
-            }}
-
-            disabled={isUpdatingNewReleaseDate}
+            onClick={handleOpenConfirm}
+            disabled={isUpdatingNewReleaseDate || loadingPreview}
             className="px-5 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:from-orange-700 hover:to-red-700 font-bold disabled:opacity-50"
           >
-            {isUpdatingNewReleaseDate ? 'Updating...' : 'Apply New Release Date'}
+            {loadingPreview ? 'Calculating...' : isUpdatingNewReleaseDate ? 'Updating...' : 'Apply New Release Date'}
           </button>
         </div>
 
@@ -555,14 +583,28 @@ const Dashboard = () => {
               This will update <strong>all books</strong>.
             </p>
 
-            <div className="text-sm text-gray-600 mb-4 space-y-1">
+
+            <div className="text-sm text-gray-600 mb-4 space-y-2">
               <div>
                 • created_at ≥ <strong>{lastStockAdditionDate}</strong> → <strong>is_new_release = 1</strong>
               </div>
               <div>
-                • created_at &lt; {lastStockAdditionDate} → <strong>is_new_release = 0</strong>
+                • created_at &lt; <strong>{lastStockAdditionDate}</strong> → <strong>is_new_release = 0</strong>
               </div>
+
+              {/* ✅ THIS IS THE MISSING PART */}
+              {previewData && (
+                <div className="mt-4 p-3 bg-gray-50 border rounded-lg space-y-2">
+                  <div>
+                    ✅ <strong>{previewData.willBeNewRelease}</strong> books will be marked as <strong>New Release</strong>
+                  </div>
+                  <div>
+                    ❌ <strong>{previewData.willBeOld}</strong> books will be marked as <strong>Not New</strong>
+                  </div>
+                </div>
+              )}
             </div>
+
 
             <p className="text-red-500 text-sm mb-6">
               This action cannot be undone.
@@ -570,17 +612,26 @@ const Dashboard = () => {
 
             <div className="flex justify-end gap-3">
               <button
-                onClick={() => setIsNewReleaseConfirmOpen(false)}
+                //onClick={() => setIsNewReleaseConfirmOpen(false)}
+
+                onClick={() => {
+                  setIsNewReleaseConfirmOpen(false);
+                  setPreviewData(null);
+                }}
+
                 className="px-4 py-2 border rounded-lg hover:bg-gray-100"
               >
                 Cancel
               </button>
 
               <button
+
                 onClick={async () => {
                   setIsNewReleaseConfirmOpen(false);
                   await handleApplyNewReleaseDate();
+                  setPreviewData(null);
                 }}
+
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold"
               >
                 Yes, Update
