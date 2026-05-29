@@ -4214,6 +4214,110 @@ WHERE ci.user_id = ?
     }
   });
 
+  app.put('/api/admin/books/price/:id', async (req, res) => {
+    const { id } = req.params;
+    const { price } = req.body;
+
+    const parsedPrice = Number(price);
+
+    if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+      return res.status(400).json({ error: 'Valid price is required' });
+    }
+
+    const conn = await db.getConnection();
+
+    try {
+      await conn.beginTransaction();
+
+      // 1) Read the selected book row first
+      const [[book]] = await conn.execute(
+        `
+      SELECT id, isbn13, isbn10, isbn, binding, edition
+      FROM books
+      WHERE id = ?
+      LIMIT 1
+      `,
+        [id]
+      );
+
+      if (!book) {
+        await conn.rollback();
+        return res.status(404).json({ error: 'Book not found' });
+      }
+
+      // 2) Update only books.price
+      const [bookResult] = await conn.execute(
+        `
+      UPDATE books
+      SET price = ?
+      WHERE id = ?
+      `,
+        [parsedPrice, id]
+      );
+
+      // 3) Build ISBN match for excel_books
+      const isbnConditions = [];
+      const isbnParams = [];
+
+      if (book.isbn13) {
+        isbnConditions.push(`isbn13 = ?`);
+        isbnParams.push(book.isbn13);
+      }
+
+      if (book.isbn10) {
+        isbnConditions.push(`isbn10 = ?`);
+        isbnParams.push(book.isbn10);
+      }
+
+      if (book.isbn) {
+        isbnConditions.push(`isbn = ?`);
+        isbnParams.push(book.isbn);
+      }
+
+      let excelAffectedRows = 0;
+
+      // 4) Update only excel_books.price
+      if (isbnConditions.length > 0) {
+        const [excelResult] = await conn.execute(
+          `
+        UPDATE excel_books
+        SET price = ?
+        WHERE (${isbnConditions.join(' OR ')})
+          AND (binding <=> ?)
+          AND (edition <=> ?)
+        `,
+          [
+            parsedPrice,
+            ...isbnParams,
+            book.binding ?? null,
+            book.edition ?? null
+          ]
+        );
+
+        excelAffectedRows = excelResult.affectedRows || 0;
+      }
+
+      await conn.commit();
+
+      return res.json({
+        success: true,
+        message: 'Price updated successfully',
+        updatedBookId: Number(id),
+        updatedPrice: parsedPrice,
+        updatedBooksRows: bookResult.affectedRows || 0,
+        updatedExcelRows: excelAffectedRows
+      });
+    } catch (err) {
+      await conn.rollback();
+      console.error('UPDATE PRICE ERROR:', err);
+      return res.status(500).json({
+        error: 'Failed to update price',
+        details: err.message
+      });
+    } finally {
+      conn.release();
+    }
+  });
 
   app.post('/api/admin/upload-excel', authMiddleware, uploadExcel.single('file'), async (req, res) => {
     try {
