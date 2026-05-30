@@ -1955,7 +1955,16 @@ const computeWorkId = (titleEn, titleDe, author) => {
     const is_featured = body.is_featured ? 1 : 0;
     const is_new_release = body.is_new_release ? 1 : 0;
     const is_bestseller = body.is_bestseller ? 1 : 0;
-    const tags = body.tags || null;
+    //const tags = body.tags || null;
+
+    const tags = JSON.stringify(
+      Array.isArray(body.tags)
+        ? body.tags.map(t => String(t).trim()).filter(Boolean)
+        : typeof body.tags === 'string'
+          ? body.tags.split(',').map(t => t.trim()).filter(Boolean)
+          : []
+    );
+
     const rating = parseFloat(body.rating) || 0;
     const review_count = parseInt(body.review_count) || 0;
     const popularity_score = parseFloat(body.popularity_score) || 0;
@@ -2118,7 +2127,16 @@ const computeWorkId = (titleEn, titleDe, author) => {
     const is_featured = body.is_featured ? 1 : 0;
     const is_new_release = body.is_new_release ? 1 : 0;
     const is_bestseller = body.is_bestseller ? 1 : 0;
-    const tags = body.tags || null;
+    //const tags = body.tags || null;
+
+    const tags = JSON.stringify(
+      Array.isArray(body.tags)
+        ? body.tags.map(t => String(t).trim()).filter(Boolean)
+        : typeof body.tags === 'string'
+          ? body.tags.split(',').map(t => t.trim()).filter(Boolean)
+          : []
+    );
+
     const rating = parseFloat(body.rating) || 0;
     const review_count = parseInt(body.review_count) || 0;
     const popularity_score = parseFloat(body.popularity_score) || 0;

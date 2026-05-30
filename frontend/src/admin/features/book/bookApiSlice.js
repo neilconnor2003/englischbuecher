@@ -2,6 +2,23 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import config from '../../../config';
 
+
+const normalizeTags = (tags) => {
+  if (Array.isArray(tags)) {
+    return tags.map(t => String(t).trim()).filter(Boolean);
+  }
+
+  if (typeof tags === 'string') {
+    return tags
+      .split(',')
+      .map(t => t.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+};
+
+
 export const bookApi = createApi({
   reducerPath: 'bookApi',
   baseQuery: fetchBaseQuery({
@@ -111,7 +128,8 @@ export const bookApi = createApi({
           series_name: newBook.series_name || null,
           series_volume: newBook.series_volume || null,
           reading_age: newBook.reading_age || null,
-          tags: newBook.tags || null,
+          //tags: newBook.tags || null,
+          tags: normalizeTags(newBook.tags),
 
           // NUMBERS — WITH BULLETPROOF PARSING
           sale_price: newBook.sale_price ? parseFloat(newBook.sale_price) : null,
@@ -173,7 +191,8 @@ export const bookApi = createApi({
           series_name: updatedBook.series_name || null,
           series_volume: updatedBook.series_volume || null,
           reading_age: updatedBook.reading_age || null,
-          tags: updatedBook.tags || null,
+          //tags: updatedBook.tags || null,
+          tags: normalizeTags(updatedBook.tags),
           sale_price: updatedBook.sale_price ? parseFloat(updatedBook.sale_price) : null,
           weight_grams: updatedBook.weight_grams ? parseInt(updatedBook.weight_grams) : null,
           rating: parseFloat(updatedBook.rating) || 0,
