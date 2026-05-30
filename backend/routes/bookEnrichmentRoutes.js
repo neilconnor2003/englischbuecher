@@ -184,7 +184,20 @@ module.exports = (db) => {
 
                 found: true,
 
-                description_de: ai.description_de || enriched.description_de || '',
+                //description_de: ai.description_de || enriched.description_de || '',
+
+
+                description_en:
+                    (excelRows.length > 0 && excelRows[0].description_en)
+                        ? excelRows[0].description_en
+                        : enriched.description_en,
+
+
+                description_de:
+                    (excelRows.length > 0 && excelRows[0].description_de)
+                        ? excelRows[0].description_de
+                        : (ai.description_de || enriched.description_de || ''),
+
                 meta_title_en: ai.meta_title_en || `${enriched.title_en} by ${enriched.author} – Buy Now`,
                 meta_title_de: ai.meta_title_de || `${enriched.title_en} von ${enriched.author} – Jetzt kaufen`,
                 meta_description_en: ai.meta_description_en || (enriched.description_en || '').slice(0, 155),
