@@ -409,9 +409,13 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
       description_en: descriptionEn,
       description_de: descriptionDe,
 
-      isbn: enriched?.isbn || fallbackIsbn || '',
-      isbn13: enriched?.isbn13 || '',
-      isbn10: enriched?.isbn10 || '',
+      //isbn: enriched?.isbn || fallbackIsbn || '',
+      //isbn13: enriched?.isbn13 || '',
+      //isbn10: enriched?.isbn10 || '',
+      isbn: enriched?.isbn ? String(enriched.isbn) : (fallbackIsbn || ''),
+      isbn13: enriched?.isbn13 ? String(enriched.isbn13) : '',
+      isbn10: enriched?.isbn10 ? String(enriched.isbn10) : '',
+
 
       price:
         enriched?.price !== null && enriched?.price !== undefined && enriched?.price !== ''
@@ -789,7 +793,7 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
     }
   };
 
-  
+
 
   // -----------------------------------------------------
   // Image Uploads
