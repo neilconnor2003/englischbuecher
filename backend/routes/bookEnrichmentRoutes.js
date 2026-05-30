@@ -119,7 +119,14 @@ module.exports = (db) => {
             if (excelRows.length > 0) {
                 const excel = excelRows[0];
 
-                console.log('✅ Excel override for ISBN:', isbn);
+                //console.log('✅ Excel override for ISBN:', isbn);
+
+
+                // ✅ IMPORTANT: also override ISBN fields from excel_books
+                enriched.isbn = excel.isbn ? String(excel.isbn) : (enriched.isbn || isbn);
+                enriched.isbn13 = excel.isbn13 ? String(excel.isbn13) : (enriched.isbn13 || '');
+                enriched.isbn10 = excel.isbn10 ? String(excel.isbn10) : (enriched.isbn10 || '');
+
 
                 enriched.title_en = excel.title_en || enriched.title_en;
                 enriched.title_de = excel.title_de || enriched.title_de;
