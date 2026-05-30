@@ -13,106 +13,6 @@ import './Home.css';
 import { Helmet } from 'react-helmet-async';
 import { generateBookUrl } from '../../utils/seoUrl';
 
-
-function StatsTicker({ lang }) {
-  const stats = [
-    ['500+', lang === 'de' ? 'Titel' : 'Titles'],
-    ['60%', lang === 'de' ? 'Ersparnis' : 'Savings'],
-    ['2400+', lang === 'de' ? 'Leser' : 'Readers'],
-    ['DPD', lang === 'de' ? 'Lieferung' : 'Delivery'],
-  ];
-
-  const doubled = [...stats, ...stats];
-
-  return (
-    <div className="stats-ticker">
-      <div className="stats-ticker-track">
-        {doubled.map(([num, label], i) => (
-          <div key={i} className="ticker-item">
-            <span className="ticker-num">{num}</span>
-            <span className="ticker-label">{label}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-
-function TrustBar({ lang }) {
-  const items = [
-    {
-      icon: '🚚',
-      title: lang === 'de' ? 'Kostenlos ab €30' : 'Free shipping over €30',
-      sub: lang === 'de' ? 'DPD Lieferung in DE' : 'Fast DPD delivery in Germany'
-    },
-    {
-      icon: '💰',
-      title: lang === 'de' ? 'Bis zu 60% sparen' : 'Save up to 60%',
-      sub: lang === 'de' ? 'Direkt importiert' : 'Imported directly'
-    },
-    {
-      icon: '↩',
-      title: lang === 'de' ? '14 Tage Rückgabe' : '14-day returns',
-      sub: lang === 'de' ? 'Einfach & sicher' : 'Easy & secure'
-    },
-    {
-      icon: '🔒',
-      title: lang === 'de' ? 'Sichere Zahlung' : 'Secure checkout',
-      sub: 'Stripe · PayPal · Cards'
-    },
-  ];
-
-  return (
-    <div className="trust-bar">
-      <div className="trust-bar-inner">
-        {items.map((item, i) => (
-          <div key={i} className="trust-cell">
-            <div className="trust-icon">{item.icon}</div>
-            <div className="trust-text">
-              <div className="trust-title">{item.title}</div>
-              <div className="trust-sub">{item.sub}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-
-
-function ReadingMoods({ lang }) {
-  const moods = [
-    { name: 'Thriller', emoji: '🔪', to: '/books?mood=thriller' },
-    { name: 'Romance', emoji: '💖', to: '/books?mood=romance' },
-    { name: 'Fantasy', emoji: '🧙‍♂️', to: '/books?mood=fantasy' },
-    { name: 'Self-help', emoji: '💡', to: '/books?mood=selfhelp' },
-  ];
-
-  return (
-    <section className="moods-section">
-      <div className="container">
-        <h2 className="section-title">
-          {lang === 'de' ? 'Nach Stimmung' : 'Shop by Mood'}
-        </h2>
-
-        <div className="moods-grid">
-          {moods.map(m => (
-            <Link key={m.name} to={m.to} className="mood-card">
-              <span>{m.emoji}</span>
-              <span>{m.name}</span>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-
-
-
 function Home() {
   const { t, i18n } = useTranslation();
   const [popularBooks, setPopularBooks] = useState([]);
@@ -241,11 +141,6 @@ function Home() {
       </Helmet>
 
       <Banner />
-
-
-      <StatsTicker lang={i18n.resolvedLanguage} />
-      <TrustBar lang={i18n.resolvedLanguage} />
-
 
       {/* WARBY-STYLE HERO (BOOKSTORE VERSION) */}
       <section className="wp-hero">
@@ -480,8 +375,6 @@ function Home() {
           </div>
         </section>
       )}
-
-      <ReadingMoods lang={i18n.resolvedLanguage} />
 
       {/* NEW ARRIVALS */}
       {newArrivals.length > 0 && (
