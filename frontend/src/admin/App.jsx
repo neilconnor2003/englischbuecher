@@ -23,6 +23,7 @@ import WalletDashboard from './component/WalletDashboard';
 import EmailLogsPage from './component/EmailLogsPage';
 import ExcelBooksDashboard from './component/ExcelBooksDashboard';
 import StockManager from './component/StockManager';
+import PriceManager from './component/PriceManager';
 
 function AdminApp() {
   const { user, loading } = useContext(AuthContext);
@@ -55,6 +56,7 @@ function AdminApp() {
         <Route path="email-logs" element={<EmailLogsPage />} />
         <Route path="excel-books" element={<ExcelBooksDashboard />} />
         <Route path="stock" element={<StockManager />} />
+        <Route path="price" element={<PriceManager />} />
       </Route>
     </Routes>
   );

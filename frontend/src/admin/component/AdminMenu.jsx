@@ -40,6 +40,7 @@ const AdminMenu = () => {
     { name: 'Email Logs', path: 'email-logs', icon: <Mail className="w-5 h-5" /> },
     { name: 'Upload Excel Books', path: 'excel-books', icon: <File className="w-5 h-5" /> },
     { name: 'Update Stocks', path: 'stock', icon: <StoreIcon className="w-5 h-5" /> },
+    { name: 'Update Book Price', path: 'price', icon: <Euro className="w-5 h-5" /> },
   ];
 
   const footerPages = [
