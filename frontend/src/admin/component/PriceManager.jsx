@@ -27,10 +27,10 @@ const PriceManager = () => {
     fetchBooks();
   }, []);
 
-  const handleChange = (id, value) => {
+  const handleChange = (id, field, value) => {
     setBooks(prev =>
       prev.map(b =>
-        b.id === id ? { ...b, price: value } : b
+        b.id === id ? { ...b, [field]: value } : b
       )
     );
   };
@@ -42,7 +42,15 @@ const PriceManager = () => {
       const res = await fetch(`${config.API_URL}/api/admin/books/price/${book.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ price: Number(book.price) })
+        body: JSON.stringify({
+          price: Number(book.price),
+          original_price:
+            book.original_price !== '' &&
+            book.original_price !== null &&
+            book.original_price !== undefined
+              ? Number(book.original_price)
+              : null
+        })
       });
 
       const data = await res.json();
@@ -50,6 +58,10 @@ const PriceManager = () => {
       if (!res.ok) {
         throw new Error(data.error || 'Update failed');
       }
+
+      alert(
+        `✅ Updated successfully\nBooks rows: ${data.updatedBooksRows}\nExcel rows: ${data.updatedExcelRows}`
+      );
     } catch (err) {
       console.error(err);
       alert(`❌ Update failed: ${err.message}`);
@@ -208,19 +220,20 @@ const PriceManager = () => {
 
       {/* TABLE */}
       <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
-        <div className="grid grid-cols-6 gap-4 bg-purple-100 p-4 font-bold text-gray-700">
+        <div className="grid grid-cols-7 gap-4 bg-purple-100 p-4 font-bold text-gray-700">
           <div>Book</div>
           <div>ISBN</div>
           <div>Binding</div>
           <div>Edition</div>
           <div>Price (€)</div>
+          <div>Original Price (€)</div>
           <div>Action</div>
         </div>
 
         {filteredBooks.map(book => (
           <div
             key={book.id}
-            className="grid grid-cols-6 gap-4 items-center p-4 border-t hover:bg-gray-50 transition"
+            className="grid grid-cols-7 gap-4 items-center p-4 border-t hover:bg-gray-50 transition"
           >
             {/* Book */}
             <div className="font-semibold text-gray-800">
@@ -248,8 +261,19 @@ const PriceManager = () => {
                 type="number"
                 step="0.01"
                 value={book.price ?? 0}
-                onChange={(e) => handleChange(book.id, e.target.value)}
+                onChange={(e) => handleChange(book.id, 'price', e.target.value)}
                 className="w-28 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+
+            {/* Original Price */}
+            <div>
+              <input
+                type="number"
+                step="0.01"
+                value={book.original_price ?? ''}
+                onChange={(e) => handleChange(book.id, 'original_price', e.target.value)}
+                className="w-28 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
               />
             </div>
 
