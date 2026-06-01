@@ -1,7 +1,7 @@
 
 // frontend/src/pages/BookDetails/BookDetails.jsx
 import React, { useEffect, useState, useContext } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
 import {
   ShoppingCart, ArrowLeft, Check, Share2,
@@ -885,7 +885,9 @@ function BookDetails() {
                         .toLowerCase()
                         .replace(/[^a-z0-9]+/g, '-')
                         .replace(/(^-|-$)/g, '')
-                        }`}>
+                        }`}
+                        style={{ color: '#9333ea', fontWeight: '600' }}
+                      >
                         {book.series_name}
                       </Link>{" "}
                       {book.series_volume}
