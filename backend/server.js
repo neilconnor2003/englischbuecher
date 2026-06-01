@@ -2837,6 +2837,125 @@ const computeWorkId = (titleEn, titleDe, author) => {
     }
   });
 
+  app.get('/api/home/category-sections/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 20);
+
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ error: 'Invalid category id' });
+    }
+
+    try {
+      const [rows] = await db.execute(`
+      WITH RECURSIVE cat_tree AS (
+        SELECT id
+        FROM categories
+        WHERE id = ?
+
+        UNION ALL
+
+        SELECT c.id
+        FROM categories c
+        INNER JOIN cat_tree ct ON c.parent_id = ct.id
+      )
+      SELECT
+        b.id,
+        b.title_en,
+        b.title_de,
+        b.author,
+        b.price,
+        b.original_price,
+        b.stock,
+        b.image,
+        b.slug,
+        b.isbn13,
+        b.isbn10,
+        b.rating,
+        b.review_count,
+        b.series_name,
+        b.series_volume,
+        b.publish_date,
+        b.created_at
+      FROM books b
+      INNER JOIN cat_tree ct ON b.category_id = ct.id
+      ORDER BY b.created_at DESC
+    `, [id]);
+
+      const origin = `${req.protocol}://${req.get('host')}`;
+
+      const normalizeImage = (url) => {
+        if (!url) return null;
+        if (url.startsWith('https://')) return url;
+        if (url.startsWith('http://')) return url.replace('http://', 'https://');
+        if (url.startsWith('/')) return `${origin}${url}`;
+        return `${origin}/${url}`;
+      };
+
+      const normalizedRows = rows.map((b) => ({
+        ...b,
+        image: normalizeImage(b.image)
+      }));
+
+      // Your homepage logic:
+      // - only dedupe when series_name AND series_volume exist
+      // - for a real series keep latest by publish_date
+      // - final list sorted by created_at DESC
+      const seriesMap = new Map();
+      const standaloneBooks = [];
+
+      for (const book of normalizedRows) {
+        const hasValidSeries =
+          book.series_name &&
+          String(book.series_name).trim() !== '' &&
+          book.series_volume !== null &&
+          book.series_volume !== undefined &&
+          String(book.series_volume).trim() !== '';
+
+        if (!hasValidSeries) {
+          standaloneBooks.push(book);
+          continue;
+        }
+
+        const seriesKey = String(book.series_name).trim().toLowerCase();
+
+        if (!seriesMap.has(seriesKey)) {
+          seriesMap.set(seriesKey, book);
+          continue;
+        }
+
+        const existing = seriesMap.get(seriesKey);
+
+        const existingPublishDate = new Date(existing.publish_date || 0).getTime();
+        const currentPublishDate = new Date(book.publish_date || 0).getTime();
+
+        if (currentPublishDate > existingPublishDate) {
+          seriesMap.set(seriesKey, book);
+          continue;
+        }
+
+        // Tie-breaker: newer created_at wins
+        if (currentPublishDate === existingPublishDate) {
+          const existingCreatedAt = new Date(existing.created_at || 0).getTime();
+          const currentCreatedAt = new Date(book.created_at || 0).getTime();
+
+          if (currentCreatedAt > existingCreatedAt) {
+            seriesMap.set(seriesKey, book);
+          }
+        }
+      }
+
+      const finalBooks = [...standaloneBooks, ...Array.from(seriesMap.values())]
+        .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+        .slice(0, limit);
+
+      res.json(finalBooks);
+    } catch (err) {
+      console.error('GET /api/home/category-sections/:id error:', err);
+      res.status(500).json({ error: 'Database error' });
+    }
+  });
+
+
 
   app.get('/api/categories-with-books', async (req, res) => {
     try {
