@@ -887,10 +887,17 @@ function BookDetails() {
                         .replace(/(^-|-$)/g, '')
                         }`}
                         style={{ color: '#9333ea', fontWeight: '600' }}
+                        state={{
+                          currentBookId: book.id,
+                          currentSeriesVolume: book.series_volume,
+                          fromBookTitle: title
+                        }}
+                        className="series-link"
+
                       >
                         {book.series_name}
                       </Link>{" "}
-                      {book.series_volume}
+                      {/*{book.series_volume}*/}
                     </span>
                   </div>
                 )}
