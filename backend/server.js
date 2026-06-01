@@ -1547,6 +1547,8 @@ const computeWorkId = (titleEn, titleDe, author) => {
         b.isbn10,
         b.rating,
         b.review_count,
+        b.series_name,
+        b.publish_date,
         COALESCE(agg.total_quantity, 0) AS total_quantity
       FROM books b
       LEFT JOIN (
@@ -1573,6 +1575,30 @@ const computeWorkId = (titleEn, titleDe, author) => {
       res.status(500).json({ error: 'Database error' });
     }
   });
+
+
+  app.get('/api/series/:seriesName', async (req, res) => {
+    try {
+      const raw = req.params.seriesName;
+
+      const seriesName = raw
+        .replace(/-/g, ' ')
+        .toLowerCase();
+
+      const [rows] = await db.query(`
+      SELECT *
+      FROM books
+      WHERE LOWER(series_name) = ?
+      ORDER BY CAST(series_volume AS UNSIGNED) ASC
+    `, [seriesName]);
+
+      res.json(rows);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Failed to fetch series' });
+    }
+  });
+
 
   // backend/server.js — NEW route (keep your existing /api/books)
 
@@ -2684,7 +2710,8 @@ const computeWorkId = (titleEn, titleDe, author) => {
       )
       SELECT
         b.id, b.title_en, b.title_de, b.author, b.price, b.original_price, b.stock, b.image, b.slug,
-        b.isbn13, b.isbn10, b.rating, b.review_count
+        b.isbn13, b.isbn10, b.rating, b.review_count,
+        b.series_name, b.publish_date
       FROM books b
       WHERE b.category_id IN (SELECT id FROM cat_tree)
       ORDER BY b.created_at DESC

@@ -874,7 +874,25 @@ function BookDetails() {
                 <div className="row"><Ruler size={18} /> <span>Dimensions</span><span>{book.dimensions || '—'}</span></div>
                 <div className="row"><Book size={18} /> <span>Format</span><span>{book.format || 'Paperback'}</span></div>
                 {book.edition && <div className="row"><Award size={18} /> <span>Edition</span><span>{book.edition}</span></div>}
-                {book.series_name && <div className="row"><Layers size={18} /> <span>Series</span><span>{book.series_name} {book.series_volume}</span></div>}
+                {/*{book.series_name && <div className="row"><Layers size={18} /> <span>Series</span><span>{book.series_name} {book.series_volume}</span></div>}*/}
+
+                {book.series_name && (
+                  <div className="row">
+                    <Layers />
+                    <span>Series</span>
+                    <span>
+                      <Link to={`/series/${book.series_name
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]+/g, '-')
+                        .replace(/(^-|-$)/g, '')
+                        }`}>
+                        {book.series_name}
+                      </Link>{" "}
+                      {book.series_volume}
+                    </span>
+                  </div>
+                )}
+
               </div>
             </div>
 
