@@ -275,6 +275,14 @@ function Home() {
   }, [visibleCategories, catLoading]);
 
 
+  const visibleHeroBooks = Array.from({ length: 4 }, (_, slotIndex) => {
+    if (!heroBooks || heroBooks.length === 0) return null;
+    if (slotIndex >= heroBooks.length) return null;
+
+    const wrappedIndex = (heroIndex + slotIndex) % heroBooks.length;
+    return heroBooks[wrappedIndex];
+  });
+
   if (catLoading) return <div className="loading-home">Loading...</div>;
 
   return (
@@ -334,31 +342,32 @@ function Home() {
               </div>
 
               <div className={`wp-hero__mockGrid ${heroFading ? 'wp-hero__mockGrid--fade' : ''}`}>
-                {heroBooks && heroBooks.length > 0 ? (
-                  // show 4 books starting from heroIndex, wrap around
-                  heroBooks
-                    .slice(heroIndex, heroIndex + 4)
-                    .concat(heroBooks.slice(0, Math.max(0, heroIndex + 4 - heroBooks.length)))
-                    .map((book) => {
-                      const to = generateBookUrl(book); // same routing logic as BookCard [1](https://boehringer-my.sharepoint.com/personal/nilanjan_chatterjee_boehringer-ingelheim_com/Documents/EnglischBuecher/project/frontend/src/utils/seoUrl.js?web=1)[2](https://boehringer-my.sharepoint.com/personal/nilanjan_chatterjee_boehringer-ingelheim_com/Documents/Forms/DispForm.aspx?ID=268856&web=1)
-                      const title = book.title_en || book.title_de || book.title || 'Book';
 
-                      return (
-                        <Link
-                          key={book.id}
-                          to={to}
-                          className="wp-hero__bookLink"
-                          aria-label={`View ${title}`}
-                        >
-                          <img
-                            src={book.image ? book.image : 'https://via.placeholder.com/300x400?text=Book'}
-                            alt={title}
-                            className="wp-hero__bookCover"
-                            loading="lazy"
-                          />
-                        </Link>
-                      );
-                    })
+                {heroBooks && heroBooks.length > 0 ? (
+                  visibleHeroBooks.map((book, slotIndex) => {
+                    if (!book) {
+                      return <div key={`placeholder-${slotIndex}`} className="wp-hero__mockCover" />;
+                    }
+
+                    const to = generateBookUrl(book);
+                    const title = book.title_en || book.title_de || book.title || 'Book';
+
+                    return (
+                      <Link
+                        key={`hero-slot-${slotIndex}-${book.id}`}
+                        to={to}
+                        className="wp-hero__bookLink"
+                        aria-label={`View ${title}`}
+                      >
+                        <img
+                          src={book.image ? book.image : 'https://via.placeholder.com/300x400?text=Book'}
+                          alt={title}
+                          className="wp-hero__bookCover"
+                          loading="lazy"
+                        />
+                      </Link>
+                    );
+                  })
                 ) : (
                   <>
                     <div className="wp-hero__mockCover" />
