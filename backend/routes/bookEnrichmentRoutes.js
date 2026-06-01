@@ -198,10 +198,31 @@ module.exports = (db) => {
                         ? excelRows[0].description_de
                         : (ai.description_de || enriched.description_de || ''),
 
-                meta_title_en: ai.meta_title_en || `${enriched.title_en} by ${enriched.author} – Buy Now`,
-                meta_title_de: ai.meta_title_de || `${enriched.title_en} von ${enriched.author} – Jetzt kaufen`,
-                meta_description_en: ai.meta_description_en || (enriched.description_en || '').slice(0, 155),
-                meta_description_de: ai.meta_description_de || (enriched.description_de || enriched.description_en || '').slice(0, 155),
+                //meta_title_en: ai.meta_title_en || `${enriched.title_en} by ${enriched.author} – Buy Now`,
+                //meta_title_de: ai.meta_title_de || `${enriched.title_en} von ${enriched.author} – Jetzt kaufen`,
+
+                meta_title_en:
+                    (excelRows.length > 0 && excelRows[0].meta_title_en)
+                        ? excelRows[0].meta_title_en
+                        : (ai.meta_title_en || `${enriched.title_en} by ${enriched.author} – Buy Now`),
+
+                meta_title_de:
+                    (excelRows.length > 0 && excelRows[0].meta_title_de)
+                        ? excelRows[0].meta_title_de
+                        : (ai.meta_title_de || `${enriched.title_en} von ${enriched.author} – Jetzt kaufen`),
+
+                //meta_description_en: ai.meta_description_en || (enriched.description_en || '').slice(0, 155),
+                //meta_description_de: ai.meta_description_de || (enriched.description_de || enriched.description_en || '').slice(0, 155),
+
+                meta_description_en:
+                    (excelRows.length > 0 && excelRows[0].meta_description_en)
+                        ? excelRows[0].meta_description_en
+                        : ai.meta_description_en || (enriched.description_en || '').slice(0, 155),
+
+                meta_description_de:
+                    (excelRows.length > 0 && excelRows[0].meta_description_de)
+                        ? excelRows[0].meta_description_de
+                        : ai.meta_description_de || (enriched.description_de || enriched.description_en || '').slice(0, 155),
 
                 tags: [
                     ...new Set([

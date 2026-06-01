@@ -28,16 +28,67 @@ function Home() {
     ? [...data.visibleRoots].sort((a, b) => a.id - b.id)
     : [];
 
+
+  const dedupeBySeries = (books = []) => {
+    const map = new Map();
+
+    for (const book of books) {
+      // ✅ Normalize series_name
+      const rawSeries = book.series_name || '';
+      const seriesKey = rawSeries.trim().toLowerCase();
+
+      // ✅ If no series → treat as unique
+      const key = seriesKey ? `series_${seriesKey}` : `book_${book.id}`;
+
+      if (!map.has(key)) {
+        map.set(key, book);
+      } else {
+        const existing = map.get(key);
+
+        // ✅ Compare publish date
+        const existingDate = new Date(existing.publish_date || 0);
+        const currentDate = new Date(book.publish_date || 0);
+
+        if (currentDate > existingDate) {
+          map.set(key, book);
+        }
+        // ✅ fallback: higher stock
+        else if (
+          currentDate.getTime() === existingDate.getTime() &&
+          (book.stock || 0) > (existing.stock || 0)
+        ) {
+          map.set(key, book);
+        }
+      }
+    }
+
+    return Array.from(map.values());
+  };
+
+
   useEffect(() => {
-    axios.get('/api/books/popular')
+    /*axios.get('/api/books/popular')
       .then(res => setPopularBooks(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setPopularBooks([]));
+      .catch(() => setPopularBooks([]));*/
+
+    axios.get('/api/books/popular')
+      .then(res => {
+        const books = Array.isArray(res.data) ? res.data : [];
+        setPopularBooks(dedupeBySeries(books));
+      })
   }, []);
+
+
+
 
   // 1) Pick a randomized hero list ONCE whenever popularBooks loads/changes
   useEffect(() => {
     if (popularBooks && popularBooks.length > 0) {
-      const shuffled = [...popularBooks].sort(() => 0.5 - Math.random());
+      const deduped = dedupeBySeries(popularBooks);
+      //const shuffled = [...popularBooks].sort(() => 0.5 - Math.random());
+
+      const shuffled = [...deduped].sort(() => 0.5 - Math.random());
+
       setHeroBooks(shuffled);
       setHeroIndex(0);
     } else {
@@ -73,7 +124,12 @@ function Home() {
     axios.get('/api/books')
       .then(res => {
         const allBooks = Array.isArray(res.data) ? res.data : [];
-        const filtered = allBooks.filter(b => b.is_new_release === 1).slice(0, 12);
+        //const filtered = allBooks.filter(b => b.is_new_release === 1).slice(0, 12);
+
+        const filtered = dedupeBySeries(
+          allBooks.filter(b => b.is_new_release === 1)
+        ).slice(0, 12);
+
         setNewArrivals(filtered);
       })
       .catch(err => {
@@ -116,7 +172,11 @@ function Home() {
       for (const cat of visibleCategories) {
         try {
           const res = await axios.get(`/api/books/category/${cat.id}`);
-          const books = Array.isArray(res.data) ? res.data.slice(0, 8) : [];
+          //const books = Array.isArray(res.data) ? res.data.slice(0, 8) : [];
+
+          const booksRaw = Array.isArray(res.data) ? res.data : [];
+          const books = dedupeBySeries(booksRaw).slice(0, 8);
+
           if (books.length > 0) sections.push({ category: cat, books });
         } catch (err) {
           console.error('Failed to load books for', cat.name_en);
