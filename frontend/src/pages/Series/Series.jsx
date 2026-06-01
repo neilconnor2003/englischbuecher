@@ -18,6 +18,7 @@ import config from '../../config';
 import BooksSlider from '../../components/BooksSlider/BooksSlider';
 import { generateBookUrl } from '../../utils/seoUrl';
 import './Series.css';
+import BookCard from '../../components/Book/BookCard';
 
 function Series() {
     const { series_slug } = useParams();
@@ -295,6 +296,51 @@ function Series() {
                         )}
                     </section>
 
+                    {/* AUTHOR BIO */}
+                    {seriesDetailBook?.authors?.length > 0 && (
+                        <section className="series-author-section">
+                            <h2 className="series-section-title">
+                                {isDE ? 'Über den Autor' : 'About the author'}
+                            </h2>
+
+                            <div className="series-author-grid">
+                                {seriesDetailBook.authors.map((author) => (
+                                    <div key={author.id} className="series-author-card">
+                                        <div className="series-author-photo-wrap">
+
+                                            {author.photo ? (
+                                                <img
+                                                    src={author.photo}
+                                                    alt={author.name}
+                                                    className="series-author-photo"
+                                                />
+                                            ) : (
+                                                <div className="series-author-photo placeholder">
+                                                    {author.name?.slice(0, 1)?.toUpperCase() || '?'}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="series-author-text">
+                                            <h3>{author.name}</h3>
+                                            <p>
+                                                {isDE
+                                                    ? (author.bio_de || author.bio || 'Keine Biografie verfügbar.')
+                                                    : (author.bio || author.bio_de || 'No biography available.')}
+                                            </p>
+
+                                            {author.slug && (
+                                                <Link to={`/author/${author.slug}`} className="series-inline-link">
+                                                    {isDE ? 'Autorenseite ansehen' : 'View author page'}
+                                                </Link>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
                     {/* TIMELINE */}
                     <section className="series-timeline-section">
                         <h2 className="series-section-title">
@@ -336,7 +382,7 @@ function Series() {
                                                 )}
                                             </div>
 
-                                            <div className="series-book-grid">
+                                            {/*<div className="series-book-grid}">
 
                                                 <div className="series-book-cover-wrap">
                                                     <img
@@ -393,7 +439,12 @@ function Series() {
                                                         {isDE ? 'Buch ansehen' : 'View book'}
                                                     </Link>
                                                 </div>
+                                            </div>*/}
+
+                                            <div className="series-bookcard-wrapper">
+                                                <BookCard book={book} />
                                             </div>
+
                                         </div>
                                     </div>
                                 );
@@ -401,50 +452,7 @@ function Series() {
                         </div>
                     </section>
 
-                    {/* AUTHOR BIO */}
-                    {seriesDetailBook?.authors?.length > 0 && (
-                        <section className="series-author-section">
-                            <h2 className="series-section-title">
-                                {isDE ? 'Über den Autor' : 'About the author'}
-                            </h2>
-
-                            <div className="series-author-grid">
-                                {seriesDetailBook.authors.map((author) => (
-                                    <div key={author.id} className="series-author-card">
-                                        <div className="series-author-photo-wrap">
-
-                                            {author.photo ? (
-                                                <img
-                                                    src={author.photo}
-                                                    alt={author.name}
-                                                    className="series-author-photo"
-                                                />
-                                            ) : (
-                                                <div className="series-author-photo placeholder">
-                                                    {author.name?.slice(0, 1)?.toUpperCase() || '?'}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="series-author-text">
-                                            <h3>{author.name}</h3>
-                                            <p>
-                                                {isDE
-                                                    ? (author.bio_de || author.bio || 'Keine Biografie verfügbar.')
-                                                    : (author.bio || author.bio_de || 'No biography available.')}
-                                            </p>
-
-                                            {author.slug && (
-                                                <Link to={`/author/${author.slug}`} className="series-inline-link">
-                                                    {isDE ? 'Autorenseite ansehen' : 'View author page'}
-                                                </Link>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-                    )}
+                    
 
                     {/* IN THIS GENRE */}
                     {genreBooks.length > 0 && (

@@ -560,3 +560,13 @@
   align-items: center;
   justify-content: center;
 }
+
+.series-bookcard-wrapper {
+  max-width: 320px;
+}
+
+.series-timeline-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
