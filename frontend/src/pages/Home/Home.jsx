@@ -115,7 +115,7 @@ function Home() {
 
 
   // 1) Pick a randomized hero list ONCE whenever popularBooks loads/changes
-  useEffect(() => {
+  /*useEffect(() => {
     if (popularBooks && popularBooks.length > 0) {
       const deduped = dedupeBySeries(popularBooks);
       //const shuffled = [...popularBooks].sort(() => 0.5 - Math.random());
@@ -128,7 +128,25 @@ function Home() {
       setHeroBooks([]);
       setHeroIndex(0);
     }
+  }, [popularBooks]);*/
+
+  useEffect(() => {
+    if (!popularBooks || popularBooks.length === 0) return;
+
+    setHeroBooks(prev => {
+      // ✅ if already set, do NOT reinitialize
+      if (prev.length > 0) return prev;
+
+      const deduped = dedupeBySeries(popularBooks);
+      const shuffled = [...deduped].sort(() => 0.5 - Math.random());
+
+      return shuffled;
+    });
+
+    setHeroIndex(0);
+
   }, [popularBooks]);
+
 
   // 2) Auto-rotate with fade
   useEffect(() => {
