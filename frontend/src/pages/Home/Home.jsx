@@ -99,16 +99,25 @@ function Home() {
 
 
 
-  useEffect(() => {
-    /*axios.get('/api/books/popular')
-      .then(res => setPopularBooks(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setPopularBooks([]));*/
+  //useEffect(() => {
+  /*axios.get('/api/books/popular')
+    .then(res => setPopularBooks(Array.isArray(res.data) ? res.data : []))
+    .catch(() => setPopularBooks([]));*/
 
+  /*axios.get('/api/books/popular')
+    .then(res => {
+      const books = Array.isArray(res.data) ? res.data : [];
+      setPopularBooks(dedupeBySeries(books));
+    })
+}, []);*/
+
+  useEffect(() => {
     axios.get('/api/books/popular')
       .then(res => {
         const books = Array.isArray(res.data) ? res.data : [];
-        setPopularBooks(dedupeBySeries(books));
+        setPopularBooks(books); // already deduped + capped to 20 in backend
       })
+      .catch(() => setPopularBooks([]));
   }, []);
 
 
@@ -130,7 +139,7 @@ function Home() {
     }
   }, [popularBooks]);*/
 
-  useEffect(() => {
+  /*useEffect(() => {
     if (!popularBooks || popularBooks.length === 0) return;
 
     setHeroBooks(prev => {
@@ -145,7 +154,21 @@ function Home() {
 
     setHeroIndex(0);
 
+  }, [popularBooks]);*/
+
+  useEffect(() => {
+    if (!popularBooks || popularBooks.length === 0) {
+      setHeroBooks([]);
+      setHeroIndex(0);
+      return;
+    }
+
+    // hero uses the same final popular pool, just shuffled once
+    const shuffled = [...popularBooks].sort(() => 0.5 - Math.random());
+    setHeroBooks(shuffled);
+    setHeroIndex(0);
   }, [popularBooks]);
+
 
 
   // 2) Auto-rotate with fade
