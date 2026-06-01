@@ -382,6 +382,11 @@ function Series() {
                         <h2 className="series-section-title">
                             {isDE ? 'Lesereihenfolge' : 'Reading order'}
                         </h2>
+                        <p>
+                            {isDE
+                                ? `Auf dieser Seite findest du alle aktuell verfügbaren Bücher der Reihe ${displaySeriesName} in der richtigen Reihenfolge. Starte mit Band 1 oder springe direkt zu dem Band, den du gerade brauchst.`
+                                : `This page shows all currently available books in the ${displaySeriesName} series in the correct order. Start with Book 1 or jump directly to the volume you need.`}
+                        </p>
 
                         <div className="series-timeline">
                             {sortedBooks.map((book, index) => {
