@@ -29,7 +29,7 @@ function Home() {
     : [];
 
 
-  const dedupeBySeries = (books = []) => {
+  /*const dedupeBySeries = (books = []) => {
     const map = new Map();
 
     for (const book of books) {
@@ -63,7 +63,40 @@ function Home() {
     }
 
     return Array.from(map.values());
+  };*/
+
+  const dedupeBySeries = (books = []) => {
+    const map = new Map();
+
+    for (const book of books) {
+      const hasValidSeries =
+        book.series_name &&
+        book.series_volume !== null &&
+        book.series_volume !== '';
+
+      // ✅ only treat as series IF both exist
+      const key = hasValidSeries
+        ? `series_${book.series_name.trim().toLowerCase()}`
+        : `book_${book.id}`;
+
+      if (!map.has(key)) {
+        map.set(key, book);
+      } else {
+        const existing = map.get(key);
+
+        // ✅ pick latest by publish_date
+        const existingDate = new Date(existing.publish_date || 0);
+        const currentDate = new Date(book.publish_date || 0);
+
+        if (currentDate > existingDate) {
+          map.set(key, book);
+        }
+      }
+    }
+
+    return Array.from(map.values());
   };
+
 
 
   useEffect(() => {
@@ -164,7 +197,7 @@ function Home() {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
+  /*useEffect(() => {
     if (!visibleCategories.length || catLoading) return;
 
     const fetchBooks = async () => {
@@ -175,7 +208,15 @@ function Home() {
           //const books = Array.isArray(res.data) ? res.data.slice(0, 8) : [];
 
           const booksRaw = Array.isArray(res.data) ? res.data : [];
-          const books = dedupeBySeries(booksRaw).slice(0, 8);
+          console.log(`Category ${cat.name_en}:`, res.data.length);
+          //const books = dedupeBySeries(booksRaw).slice(0, 20);
+
+          const deduped = dedupeBySeries(booksRaw);
+
+          const books = deduped
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .slice(0, 20);
+
 
           if (books.length > 0) sections.push({ category: cat, books });
         } catch (err) {
@@ -185,7 +226,36 @@ function Home() {
       setCategorySections(sections);
     };
     fetchBooks();
+  }, [visibleCategories, catLoading]);*/
+
+  useEffect(() => {
+    if (!visibleCategories.length || catLoading) return;
+
+    const fetchBooks = async () => {
+      const sections = [];
+
+      for (const cat of visibleCategories) {
+        try {
+          const res = await axios.get(`/api/home/category-sections/${cat.id}`, {
+            params: { limit: 20 }
+          });
+
+          const books = Array.isArray(res.data) ? res.data : [];
+
+          if (books.length > 0) {
+            sections.push({ category: cat, books });
+          }
+        } catch (err) {
+          console.error('Failed to load books for', cat.name_en, err);
+        }
+      }
+
+      setCategorySections(sections);
+    };
+
+    fetchBooks();
   }, [visibleCategories, catLoading]);
+
 
   if (catLoading) return <div className="loading-home">Loading...</div>;
 
