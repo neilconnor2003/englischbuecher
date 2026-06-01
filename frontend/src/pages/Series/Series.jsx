@@ -28,10 +28,13 @@ function Series() {
 
     const isDE = i18n.resolvedLanguage === 'de';
 
+
     const [books, setBooks] = useState([]);
+    const [seriesAuthors, setSeriesAuthors] = useState([]);
     const [seriesDetailBook, setSeriesDetailBook] = useState(null);
     const [genreBooks, setGenreBooks] = useState([]);
     const [loading, setLoading] = useState(true);
+
 
     const currentBookId = location.state?.currentBookId || null;
     const currentSeriesVolume = location.state?.currentSeriesVolume || null;
@@ -116,12 +119,19 @@ function Series() {
             setLoading(true);
 
             try {
+
                 const seriesRes = await axios.get(`${config.API_URL}/api/series/${series_slug}`);
-                const seriesBooks = Array.isArray(seriesRes.data) ? seriesRes.data : [];
+                const payload = seriesRes.data || {};
+                const seriesBooks = Array.isArray(payload.books) ? payload.books : [];
+                const allSeriesAuthors = Array.isArray(payload.authors) ? payload.authors : [];
+
 
                 if (cancelled) return;
 
+
                 setBooks(seriesBooks);
+                setSeriesAuthors(allSeriesAuthors);
+
 
                 if (seriesBooks.length > 0) {
                     // Fetch one full book detail to get authors + category_id + richer metadata
@@ -129,7 +139,13 @@ function Series() {
 
                     if (cancelled) return;
 
-                    setSeriesDetailBook(detailRes.data || null);
+                    //setSeriesDetailBook(detailRes.data || null);
+
+                    setSeriesDetailBook({
+                        ...(detailRes.data || {}),
+                        authors: allSeriesAuthors.length > 0 ? allSeriesAuthors : (detailRes.data?.authors || [])
+                    });
+
 
                     const categoryId = detailRes.data?.category_id;
 
@@ -158,15 +174,21 @@ function Series() {
                         setGenreBooks([]);
                     }
                 } else {
+
                     setSeriesDetailBook(null);
+                    setSeriesAuthors([]);
                     setGenreBooks([]);
+
                 }
             } catch (err) {
                 console.error('Failed to load series page:', err);
                 if (!cancelled) {
+
                     setBooks([]);
+                    setSeriesAuthors([]);
                     setSeriesDetailBook(null);
                     setGenreBooks([]);
+
                 }
             } finally {
                 if (!cancelled) setLoading(false);
@@ -208,10 +230,12 @@ function Series() {
     const displaySeriesName =
         seriesDetailBook?.series_name || prettySeriesName;
 
+
     const authorNames =
-        seriesDetailBook?.authors?.length > 0
-            ? seriesDetailBook.authors.map(a => a.name).join(', ')
+        seriesAuthors.length > 0
+            ? seriesAuthors.map(a => a.name).join(', ')
             : (seriesDetailBook?.author || '');
+
 
     const seoTitle = `${displaySeriesName} ${isDE ? 'Reihenfolge' : 'Books in Order'} | EnglischBuecher`;
 
@@ -224,7 +248,7 @@ function Series() {
             <Helmet>
                 <title>{seoTitle}</title>
                 <meta name="description" content={seoDescription} />
-                {`${window.location.origin}/series/${series_slug}`}
+                <link rel="canonical" href={`${window.location.origin}/series/${series_slug}`} />
             </Helmet>
 
             <div className="series-page">
@@ -296,53 +320,51 @@ function Series() {
                         )}
                     </section>
 
+
                     {/* AUTHOR BIO */}
+                    {seriesAuthors.length > 0 && (
+                        <section className="series-author-section">
+                            <h2 className="series-section-title">
+                                {isDE ? 'Über die Autoren' : 'About the author(s)'}
+                            </h2>
 
-                    {seriesDetailBook?.authors?.length > 0 ? (
-                        seriesDetailBook.authors.map((author) => (
-                            <div key={author.id} className="series-author-card">
-
-                                <div className="series-author-photo-wrap">
-                                    {author.photo ? (
-                                        <img
-                                            src={author.photo}
-                                            alt={author.name}
-                                            className="series-author-photo"
-                                        />
-                                    ) : (
-                                        <div className="series-author-photo placeholder">
-                                            {author.name?.slice(0, 1)?.toUpperCase() || '?'}
+                            <div className="series-author-grid">
+                                {seriesAuthors.map((author) => (
+                                    <div key={author.id} className="series-author-card">
+                                        <div className="series-author-photo-wrap">
+                                            {author.photo ? (
+                                                <img
+                                                    src={author.photo}
+                                                    alt={author.name}
+                                                    className="series-author-photo"
+                                                />
+                                            ) : (
+                                                <div className="series-author-photo placeholder">
+                                                    {author.name?.slice(0, 1)?.toUpperCase() || '?'}
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
 
-                                <div className="series-author-text">
-                                    <h3>{author.name}</h3>
-                                    <p>
-                                        {isDE
-                                            ? (author.bio_de || author.bio || 'Keine Biografie verfügbar.')
-                                            : (author.bio || author.bio_de || 'No biography available.')
-                                        }
-                                    </p>
-                                </div>
+                                        <div className="series-author-text">
+                                            <h3>{author.name}</h3>
+                                            <p>
+                                                {isDE
+                                                    ? (author.bio_de || author.bio || 'Keine Biografie verfügbar.')
+                                                    : (author.bio || author.bio_de || 'No biography available.')}
+                                            </p>
 
+                                            {author.slug && (
+                                                <Link to={`/author/${author.slug}`} className="series-inline-link">
+                                                    {isDE ? 'Autorenseite ansehen' : 'View author page'}
+                                                </Link>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                        ))
-                    ) : (
-                        // Fallback when ONLY "author" string exists
-                        <div className="series-author-card">
-
-                            <div className="series-author-photo placeholder">
-                                {seriesDetailBook.author?.slice(0, 1)?.toUpperCase() || '?'}
-                            </div>
-
-                            <div className="series-author-text">
-                                <h3>{seriesDetailBook.author}</h3>
-                                <p>No biography available.</p>
-                            </div>
-
-                        </div>
+                        </section>
                     )}
+
 
 
                     {/* TIMELINE */}

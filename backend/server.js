@@ -1576,28 +1576,89 @@ const computeWorkId = (titleEn, titleDe, author) => {
     }
   });
 
-
-  app.get('/api/series/:seriesName', async (req, res) => {
+  app.get('/api/series/:slug', async (req, res) => {
     try {
-      const raw = req.params.seriesName;
+      const { slug } = req.params;
 
-      const seriesName = raw
+      const normalizedSeries = String(slug || '')
+        .toLowerCase()
         .replace(/-/g, ' ')
-        .toLowerCase();
+        .replace(/\s+/g, ' ')
+        .trim();
 
-      const [rows] = await db.query(`
-      SELECT *
-      FROM books
-      WHERE LOWER(series_name) = ?
-      ORDER BY CAST(series_volume AS UNSIGNED) ASC
-    `, [seriesName]);
+      // 1) Get all books in the series
+      const [bookRows] = await db.execute(`
+      SELECT 
+        b.*
+      FROM books b
+      WHERE LOWER(TRIM(b.series_name)) = ?
+      ORDER BY
+        CASE
+          WHEN b.series_volume REGEXP '^[0-9]+(\\.[0-9]+)?$'
+            THEN CAST(b.series_volume AS DECIMAL(10,2))
+          ELSE 999999
+        END ASC,
+        b.publish_date ASC,
+        b.created_at ASC
+    `, [normalizedSeries]);
 
-      res.json(rows);
+      if (!bookRows.length) {
+        return res.json({
+          seriesName: null,
+          books: [],
+          authors: []
+        });
+      }
+
+      const origin = `${req.protocol}://${req.get('host')}`;
+
+      const normalizeUrl = (url) => {
+        if (!url) return null;
+        if (url.startsWith('http://') || url.startsWith('https://')) return url;
+        if (url.startsWith('/')) return `${origin}${url}`;
+        return `${origin}/${url}`;
+      };
+
+      const books = bookRows.map((b) => ({
+        ...b,
+        image: normalizeUrl(b.image)
+      }));
+
+      // 2) Get ALL DISTINCT authors across ALL books in the series
+      const [authorRows] = await db.execute(`
+      SELECT DISTINCT
+        a.id,
+        a.name,
+        a.bio,
+        a.bio_de,
+        a.photo,
+        a.slug
+      FROM books b
+      JOIN book_authors ba
+        ON ba.book_id = b.id
+      JOIN authors a
+        ON a.id = ba.author_id
+      WHERE LOWER(TRIM(b.series_name)) = ?
+      ORDER BY a.name ASC
+    `, [normalizedSeries]);
+
+      const authors = authorRows.map((a) => ({
+        ...a,
+        photo: normalizeUrl(a.photo)
+      }));
+
+      return res.json({
+        seriesName: books[0].series_name || normalizedSeries,
+        books,
+        authors
+      });
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Failed to fetch series' });
+      console.error('GET /api/series/:slug error:', err);
+      return res.status(500).json({ error: 'Failed to fetch series' });
     }
   });
+
+
 
 
   // backend/server.js — NEW route (keep your existing /api/books)
