@@ -297,49 +297,53 @@ function Series() {
                     </section>
 
                     {/* AUTHOR BIO */}
-                    {seriesDetailBook?.authors?.length > 0 && (
-                        <section className="series-author-section">
-                            <h2 className="series-section-title">
-                                {isDE ? 'Über den Autor' : 'About the author'}
-                            </h2>
 
-                            <div className="series-author-grid">
-                                {seriesDetailBook.authors.map((author) => (
-                                    <div key={author.id} className="series-author-card">
-                                        <div className="series-author-photo-wrap">
+                    {seriesDetailBook?.authors?.length > 0 ? (
+                        seriesDetailBook.authors.map((author) => (
+                            <div key={author.id} className="series-author-card">
 
-                                            {author.photo ? (
-                                                <img
-                                                    src={author.photo}
-                                                    alt={author.name}
-                                                    className="series-author-photo"
-                                                />
-                                            ) : (
-                                                <div className="series-author-photo placeholder">
-                                                    {author.name?.slice(0, 1)?.toUpperCase() || '?'}
-                                                </div>
-                                            )}
+                                <div className="series-author-photo-wrap">
+                                    {author.photo ? (
+                                        <img
+                                            src={author.photo}
+                                            alt={author.name}
+                                            className="series-author-photo"
+                                        />
+                                    ) : (
+                                        <div className="series-author-photo placeholder">
+                                            {author.name?.slice(0, 1)?.toUpperCase() || '?'}
                                         </div>
+                                    )}
+                                </div>
 
-                                        <div className="series-author-text">
-                                            <h3>{author.name}</h3>
-                                            <p>
-                                                {isDE
-                                                    ? (author.bio_de || author.bio || 'Keine Biografie verfügbar.')
-                                                    : (author.bio || author.bio_de || 'No biography available.')}
-                                            </p>
+                                <div className="series-author-text">
+                                    <h3>{author.name}</h3>
+                                    <p>
+                                        {isDE
+                                            ? (author.bio_de || author.bio || 'Keine Biografie verfügbar.')
+                                            : (author.bio || author.bio_de || 'No biography available.')
+                                        }
+                                    </p>
+                                </div>
 
-                                            {author.slug && (
-                                                <Link to={`/author/${author.slug}`} className="series-inline-link">
-                                                    {isDE ? 'Autorenseite ansehen' : 'View author page'}
-                                                </Link>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
                             </div>
-                        </section>
+                        ))
+                    ) : (
+                        // Fallback when ONLY "author" string exists
+                        <div className="series-author-card">
+
+                            <div className="series-author-photo placeholder">
+                                {seriesDetailBook.author?.slice(0, 1)?.toUpperCase() || '?'}
+                            </div>
+
+                            <div className="series-author-text">
+                                <h3>{seriesDetailBook.author}</h3>
+                                <p>No biography available.</p>
+                            </div>
+
+                        </div>
                     )}
+
 
                     {/* TIMELINE */}
                     <section className="series-timeline-section">
@@ -452,7 +456,7 @@ function Series() {
                         </div>
                     </section>
 
-                    
+
 
                     {/* IN THIS GENRE */}
                     {genreBooks.length > 0 && (
