@@ -42,6 +42,7 @@ import Returns from './pages/FooterPages/returns';
 import NotFound from './pages/FooterPages/notfound';
 import Books from './pages/Books/Books';
 import AuthorDetails from './pages/AuthorDetails/AuthorDetails';
+import Series from './pages/Series/Series';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -87,6 +88,7 @@ const AppContent = () => {
         <Route path="/books" element={<Books />} />
         <Route path="/request-book" element={<RequestBookPage />} />
         <Route path="/author/:slug" element={<AuthorDetails />} />
+        <Route path="/series/:series_slug" element={<Series />} />
 
         <Route
           path="/admin/*"
