@@ -1565,7 +1565,13 @@ const computeWorkId = (titleEn, titleDe, author) => {
         GROUP BY oi.bookId
       ) AS agg
         ON agg.bookId = b.id
-      ORDER BY total_quantity DESC
+            
+      ORDER BY 
+        (total_quantity * 10) + 
+        (b.popularity_score * 5) + 
+        TIMESTAMPDIFF(DAY, b.created_at, NOW()) * -0.1
+      DESC
+
       LIMIT 10;
     `);
 
@@ -2754,7 +2760,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
   });
 
   // Descendant-aware category listing (MySQL 8+)
-  app.get('/api/books/category/:id', async (req, res) => {
+  /*app.get('/api/books/category/:id', async (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
       return res.status(400).json({ error: 'Invalid category id' });
@@ -2776,7 +2782,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
       FROM books b
       WHERE b.category_id IN (SELECT id FROM cat_tree)
       ORDER BY b.created_at DESC
-      LIMIT 20
+      LIMIT 100
     `;
       const [rows] = await db.execute(sql, [id]);
       res.json(rows);
@@ -2784,7 +2790,53 @@ const computeWorkId = (titleEn, titleDe, author) => {
       console.error('GET /api/books/category/:id (tree) error:', err);
       res.status(500).json({ error: 'Database error' });
     }
+  });*/
+
+  app.get('/api/books/category/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    const excludeSeries = (req.query.excludeSeries || '').toLowerCase().trim();
+
+    try {
+      const [rows] = await db.execute(`
+      WITH RECURSIVE cat_tree AS (
+        SELECT id FROM categories WHERE id = ?
+        UNION ALL
+        SELECT c.id
+        FROM categories c
+        INNER JOIN cat_tree ct ON c.parent_id = ct.id
+      )
+      SELECT b.*
+      FROM books b
+      WHERE b.category_id IN (SELECT id FROM cat_tree)
+    `, [id]);
+
+      const normalize = (s = '') =>
+        String(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+      let filtered = rows;
+
+      if (excludeSeries) {
+        filtered = rows.filter(b =>
+          normalize(b.series_name || '') !== normalize(excludeSeries)
+        );
+      }
+
+      // ✅ sort AFTER filtering
+      filtered.sort((a, b) =>
+        (b.popularity_score || 0) - (a.popularity_score || 0)
+      );
+
+      // ✅ NOW apply limit
+      filtered = filtered.slice(0, 20);
+
+      res.json(filtered);
+
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Database error' });
+    }
   });
+
 
   app.get('/api/categories-with-books', async (req, res) => {
     try {

@@ -151,7 +151,17 @@ function Series() {
 
                     if (categoryId) {
                         try {
-                            const genreRes = await axios.get(`${config.API_URL}/api/books/category/${categoryId}`);
+                            //const genreRes = await axios.get(`${config.API_URL}/api/books/category/${categoryId}`);
+
+                            const genreRes = await axios.get(
+                                `${config.API_URL}/api/books/category/${categoryId}`,
+                                {
+                                    params: {
+                                        excludeSeries: seriesBooks[0].series_name
+                                    }
+                                }
+                            );
+
                             if (!cancelled) {
                                 const rawGenreBooks = Array.isArray(genreRes.data) ? genreRes.data : [];
 
