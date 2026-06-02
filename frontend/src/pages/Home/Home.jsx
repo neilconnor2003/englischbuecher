@@ -26,7 +26,7 @@ function Home() {
 
 
   // ✅ TRUST ROTATION (must be before any return!)
-  const [trustIndex, setTrustIndex] = useState(0);
+  /*const [trustIndex, setTrustIndex] = useState(0);
 
   const trustMessages = [
     i18n.resolvedLanguage === 'de'
@@ -52,7 +52,7 @@ function Home() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [trustMessages.length]);
+  }, [trustMessages.length]);*/
 
 
   const visibleCategories = Array.isArray(data.visibleRoots)
@@ -397,11 +397,11 @@ function Home() {
 
               <div className="wp-hero__review">
                 ⭐ 4.8 · {i18n.resolvedLanguage === 'de' ? 'Top bewertet' : 'Top rated'}
-              </div>
+              </div>*/}
 
               <div className="wp-hero__chip">
                 {i18n.resolvedLanguage === 'de' ? 'Neu & Beliebt' : 'New & Popular'}
-              </div>*/}
+              </div>
 
               <div className={`wp-hero__mockGrid ${heroFading ? 'wp-hero__mockGrid--fade' : ''}`}>
 
@@ -458,15 +458,32 @@ function Home() {
         </div>
       </section>
 
-
-      <section className="trust-strip">
+      {/*<section className="trust-strip">
         <div className="container trust-strip__inner">
           <span className="trust-rotating">
             {trustMessages[trustIndex]}
           </span>
         </div>
-      </section>
+      </section>*/}
 
+      <section className="trust-strip">
+        <div className="trust-strip__wrapper">
+          <div className="trust-strip__track">
+
+            <span>🚚 {i18n.resolvedLanguage === 'de' ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</span>
+            <span>💰 {i18n.resolvedLanguage === 'de' ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</span>
+            <span>↩ {i18n.resolvedLanguage === 'de' ? '14 Tage Rückgabe' : '14-day returns'}</span>
+            <span>🔒 {i18n.resolvedLanguage === 'de' ? 'Sicher bezahlen' : 'Secure checkout'}</span>
+
+            {/* duplicate for seamless loop */}
+            <span>🚚 {i18n.resolvedLanguage === 'de' ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</span>
+            <span>💰 {i18n.resolvedLanguage === 'de' ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</span>
+            <span>↩ {i18n.resolvedLanguage === 'de' ? '14 Tage Rückgabe' : '14-day returns'}</span>
+            <span>🔒 {i18n.resolvedLanguage === 'de' ? 'Sicher bezahlen' : 'Secure checkout'}</span>
+
+          </div>
+        </div>
+      </section>
 
       {/* WARBY-STYLE “WAYS TO SHOP” (INSPIRED BY “Ways to try” + quiz entry points) */}
       <section className="wp-ways">

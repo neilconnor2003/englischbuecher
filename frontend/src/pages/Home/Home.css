@@ -1413,3 +1413,58 @@ body {
   }
 
 }
+
+/* ===============================
+   TRUST STRIP SCROLLING (MARQUEE)
+   =============================== */
+
+.trust-strip {
+  overflow: hidden;
+  background: #f8f5ff;
+  border-top: 1px solid rgba(147, 51, 234, 0.08);
+  border-bottom: 1px solid rgba(147, 51, 234, 0.08);
+}
+
+.trust-strip__wrapper {
+  width: 100%;
+  overflow: hidden;
+}
+
+.trust-strip__track {
+  display: flex;
+  gap: 40px;
+  white-space: nowrap;
+
+  animation: trust-scroll 18s linear infinite;
+}
+
+.trust-strip__track span {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #5b21b6;
+}
+
+/* Animation */
+@keyframes trust-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.trust-strip__track:hover {
+  animation-play-state: paused;
+}
+
+@media (max-width: 768px) {
+  .trust-strip__track {
+    gap: 24px;
+    animation-duration: 14s;
+  }
+
+  .trust-strip__track span {
+    font-size: 0.8rem;
+  }
+}
