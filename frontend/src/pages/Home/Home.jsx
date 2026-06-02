@@ -547,9 +547,20 @@ function Home() {
       {popularBooks.length > 0 && (
         <section className="popular-section">
           <div className="container">
-            <h2 className="section-title">
+            {/*<h2 className="section-title">
               <span className="fire">{t('home.popular')}</span>
-            </h2>
+            </h2>*/}
+
+            <div className="section-header">
+              <h2 className="section-title">
+                {t('home.popular')}
+              </h2>
+
+              <Link to="/books" className="view-all-btn">
+                {t('view_all')} →
+              </Link>
+            </div>
+
 
             <BooksSlider
               books={popularBooks}
