@@ -603,12 +603,11 @@ function Home() {
       </section>
 
       {/* CATEGORY ICONS */}
-      {visibleCategories.length > 0 && (
+      {/*{visibleCategories.length > 0 && (
         <section className="categories-section">
           <div className="container">
             <h2 className="section-title">
               <Sparkles className="title-icon" size={36} />
-              {/*{t('categories')}*/}
               {i18n.resolvedLanguage === 'de' ? 'Finde dein nächstes Buch' : 'Find your next book'}
             </h2>
             <p className="wp-quiz__sub">
@@ -642,7 +641,65 @@ function Home() {
             </div>
           </div>
         </section>
+      )}*/}
+
+      {/* CATEGORY PREVIEW SECTION */}
+      {categorySections.length > 0 && (
+        <section className="categories-section">
+          <div className="container">
+
+            <h2 className="section-title">
+              {i18n.resolvedLanguage === 'de'
+                ? 'Finde dein nächstes Buch'
+                : 'Find your next book'}
+            </h2>
+
+            <p className="category-sub">
+              {i18n.resolvedLanguage === 'de'
+                ? 'Durchsuche Kategorien und entdecke dein nächstes Buch'
+                : 'Browse categories and discover your next read'}
+            </p>
+
+            <div className="categories-grid">
+
+              {categorySections.map(section => (
+                <Link
+                  key={section.category.id}
+                  to={`/books?category=${section.category.id}`}
+                  className="category-card"
+                >
+
+                  <div className="category-header">
+                    <h3>
+                      {i18n.resolvedLanguage === 'de'
+                        ? (section.category.name_de || section.category.name_en)
+                        : section.category.name_en}
+                    </h3>
+
+                    <span className="category-cta">
+                      {i18n.resolvedLanguage === 'de' ? 'Ansehen →' : 'Browse →'}
+                    </span>
+                  </div>
+
+                  <div className="category-preview">
+                    {section.books.slice(0, 3).map(book => (
+                      <img
+                        key={book.id}
+                        src={book.image || 'https://via.placeholder.com/80x120'}
+                        alt={book.title_en || 'Book'}
+                      />
+                    ))}
+                  </div>
+
+                </Link>
+              ))}
+
+            </div>
+
+          </div>
+        </section>
       )}
+
 
       {/* NEW ARRIVALS */}
       {newArrivals.length > 0 && (
