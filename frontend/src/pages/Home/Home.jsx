@@ -655,7 +655,7 @@ function Home() {
                   >
 
                     {/* ICON (keep your existing logic) */}
-                    {cat.icon_path ? (
+                    {/*{cat.icon_path ? (
                       <img
                         src={`${config.UPLOADS_BASE_URL}${cat.icon_path}?v=${cat.updated_at}`}
                         alt=""
@@ -665,7 +665,27 @@ function Home() {
                       <div className="category-icon-placeholder">
                         <Image size={40} />
                       </div>
-                    )}
+                    )}*/}
+
+                    {/* ✅ BOOK STACK FIRST */}
+                    <div className="category-book-stack">
+                      {(() => {
+                        const section = categorySections.find(
+                          s => s.category.id === cat.id
+                        );
+
+                        const previewBooks = section?.books?.slice(0, 3) || [];
+
+                        return previewBooks.map((book, index) => (
+                          <img
+                            key={book.id}
+                            src={book.image || 'https://via.placeholder.com/100x150'}
+                            alt={book.title_en || 'Book'}
+                            className={`stack-book stack-book-${index}`}
+                          />
+                        ));
+                      })()}
+                    </div>
 
                     {/* NAME */}
                     <span className="category-name">
@@ -673,21 +693,6 @@ function Home() {
                         ? (cat.name_de || cat.name_en)
                         : cat.name_en}
                     </span>
-
-                    {/* ✅ NEW: POKER BOOK STACK */}
-                    <div className="category-book-stack">
-
-                      {previewBooks.map((book, index) => (
-                        <img
-                          key={book.id}
-                          src={book.image || 'https://via.placeholder.com/80x120'}
-                          alt={book.title_en || 'Book'}
-                          className={`stack-book stack-book-${index}`}
-                        />
-                      ))}
-
-                    </div>
-
                   </Link>
                 );
               })}
