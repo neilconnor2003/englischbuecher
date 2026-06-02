@@ -13,13 +13,13 @@
 .home-page-v2 .container {
   max-width: 1400px;
   margin: 0 auto;
-  /*padding: 0 20px;*/
   padding: 20px 0 20px;
-  /*max-width: 100% !important;
-  width: 100% !important;
-  padding-left: 40px;
-  padding-right: 40px;*/
 }
+
+
+/* TO CLEAN FROM HERE */
+
+
 
 /* SECTION TITLES (preserved from original) */
 .section-title {
@@ -615,24 +615,34 @@
 }
 
 .trust-strip {
-  padding: 22px 0;
-  background: rgba(147, 51, 234, 0.06);
-  border-top: 1px solid rgba(147, 51, 234, 0.10);
-  border-bottom: 1px solid rgba(147, 51, 234, 0.10);
+  padding: 10px 0;
+  background: #f8f5ff;
+  border-top: 1px solid rgba(147, 51, 234, 0.08);
+  border-bottom: 1px solid rgba(147, 51, 234, 0.08);
 }
 
 .trust-strip__inner {
   display: flex;
   gap: 18px;
   flex-wrap: wrap;
-  justify-content: space-between;
+  /*justify-content: space-between;*/
   color: rgba(31, 22, 51, 0.75);
   font-weight: 700;
+  justify-content: center;
+  align-items: cente
 }
 
 .trust-item {
   white-space: nowrap;
 }
+
+.trust-rotating {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #5b21b6;
+  text-align: center;
+}
+
 
 /* =========================================================
    WARBY-INSPIRED MODERN MODULES (additive only)
@@ -645,12 +655,29 @@
     radial-gradient(900px 420px at 90% 10%, rgba(236, 72, 153, 0.10), transparent 55%);
 }
 
-.wp-hero__inner {
+/*.wp-hero__inner {
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
   gap: 34px;
   align-items: center;
+}*/
+
+.wp-hero__inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  /* cleaner balance */
+  gap: 32px;
+  align-items: center;
 }
+
+.wp-hero__copy {
+  max-width: 520px;
+}
+
+.wp-hero__actions {
+  flex-wrap: wrap;
+}
+
 
 .wp-hero__kicker {
   color: rgba(31, 22, 51, 0.65);
@@ -729,7 +756,7 @@
   justify-content: flex-end;
 }
 
-.wp-hero__card {
+/*.wp-hero__card {
   width: min(360px, 100%);
   border-radius: 28px;
   background: rgba(255, 255, 255, 0.65);
@@ -745,11 +772,25 @@
   justify-content: flex-start;
 
   height: auto;
-  /* ✅ IMPORTANT */
+  /* ✅ IMPORTANT 
   min-height: unset;
-  /* ✅ avoid stretching */
+  /* ✅ avoid stretching 
 
+}*/
+
+.wp-hero__card {
+  width: 100%;
+  max-width: 340px;
+
+  border-radius: 16px;
+  background: #ffffff;
+
+  border: 1px solid rgba(147, 51, 234, 0.12);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+
+  padding: 14px;
 }
+
 
 .wp-hero__chip {
   position: absolute;
@@ -1346,4 +1387,29 @@ body {
   .category-card {
     max-width: unset;
   }
+}
+
+@media (max-width: 768px) {
+
+  .wp-hero__inner {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .wp-hero__visual {
+    justify-content: center;
+  }
+
+  .wp-hero__card {
+    max-width: 100%;
+  }
+
+  .wp-hero__title {
+    font-size: 1.6rem;
+  }
+
+  .wp-hero__subtitle {
+    font-size: 1rem;
+  }
+
 }

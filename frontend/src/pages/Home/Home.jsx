@@ -24,6 +24,37 @@ function Home() {
 
   const [heroFading, setHeroFading] = useState(false);
 
+
+  // ✅ TRUST ROTATION (must be before any return!)
+  const [trustIndex, setTrustIndex] = useState(0);
+
+  const trustMessages = [
+    i18n.resolvedLanguage === 'de'
+      ? '🚚 Kostenlose Lieferung ab 30€'
+      : '🚚 Free shipping over €30',
+
+    i18n.resolvedLanguage === 'de'
+      ? '💰 Bis zu 60% günstiger'
+      : '💰 Up to 60% cheaper',
+
+    i18n.resolvedLanguage === 'de'
+      ? '↩ 14 Tage Rückgabe'
+      : '↩ 14-day returns',
+
+    i18n.resolvedLanguage === 'de'
+      ? '🔒 Sicher bezahlen'
+      : '🔒 Secure checkout'
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTrustIndex(prev => (prev + 1) % trustMessages.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [trustMessages.length]);
+
+
   const visibleCategories = Array.isArray(data.visibleRoots)
     ? [...data.visibleRoots].sort((a, b) => a.id - b.id)
     : [];
@@ -305,33 +336,6 @@ function Home() {
     return heroBooks[wrappedIndex];
   });
 
-  const [trustIndex, setTrustIndex] = useState(0);
-
-  const trustMessages = [
-    i18n.resolvedLanguage === 'de'
-      ? 'Kostenlose Lieferung ab 30€'
-      : 'Free shipping over €30',
-
-    i18n.resolvedLanguage === 'de'
-      ? 'Bis zu 60% günstiger'
-      : 'Up to 60% cheaper',
-
-    i18n.resolvedLanguage === 'de'
-      ? '14 Tage Rückgabe'
-      : '14-day returns',
-
-    i18n.resolvedLanguage === 'de'
-      ? 'Sicher bezahlen'
-      : 'Secure checkout'
-  ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTrustIndex(prev => (prev + 1) % trustMessages.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
   if (catLoading) return <div className="loading-home">Loading...</div>;
 
   return (
@@ -387,8 +391,8 @@ function Home() {
           <div className="wp-hero__visual" aria-hidden="true">
             <div className="wp-hero__card">
 
-              <div className="wp-hero__badge-save">
-                {i18n.resolvedLanguage === 'de' ? 'Bis zu 30% günstiger' : 'Up to 30% cheaper'}
+              {/*<div className="wp-hero__badge-save">
+                {i18n.resolvedLanguage === 'de' ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}
               </div>
 
               <div className="wp-hero__review">
@@ -397,7 +401,7 @@ function Home() {
 
               <div className="wp-hero__chip">
                 {i18n.resolvedLanguage === 'de' ? 'Neu & Beliebt' : 'New & Popular'}
-              </div>
+              </div>*/}
 
               <div className={`wp-hero__mockGrid ${heroFading ? 'wp-hero__mockGrid--fade' : ''}`}>
 
