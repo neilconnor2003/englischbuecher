@@ -1659,54 +1659,32 @@ body {
    CATEGORY BOOK STACK (POKER STYLE)
    =============================== */
 
-.category-book-stack {
-  position: relative;
-  width: 80px;
-  height: 60px;
-  margin-top: 10px;
-}
-
 /* Base style */
+
 .stack-book {
   position: absolute;
-  width: 38px;
-  height: 55px;
-  object-fit: cover;
-  border-radius: 6px;
 
-  box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+  width: 70px;
+  height: 100px;
+
+  object-fit: cover;
+  border-radius: 10px;
+
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
 
   transition: transform 0.3s ease;
 }
 
-/* Left card */
-.stack-book-0 {
-  left: 0;
-  transform: rotate(-6deg);
-  z-index: 1;
-}
-
-/* Center card */
-.stack-book-1 {
-  left: 18px;
-  transform: rotate(0deg);
-  z-index: 2;
-}
-
-/* Right card */
-.stack-book-2 {
-  left: 36px;
-  transform: rotate(6deg);
-  z-index: 1;
-}
 
 /* subtle hover effect */
 .category-card:hover .stack-book-0 {
   transform: rotate(-8deg) translateY(-2px);
 }
+
 .category-card:hover .stack-book-1 {
   transform: translateY(-4px);
 }
+
 .category-card:hover .stack-book-2 {
   transform: rotate(8deg) translateY(-2px);
 }
@@ -1719,7 +1697,7 @@ body {
   min-width: 180px;
   max-width: 180px;
 
-  height: 180px;
+  height: 220px;
 
   border-radius: 22px;
   padding: 16px;
@@ -1734,7 +1712,7 @@ body {
   background: #ffffff;
   border: 1px solid rgba(147, 51, 234, 0.12);
 
-  box-shadow: 0 10px 28px rgba(0,0,0,0.06);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
 
   transition: all 0.25s ease;
 }
@@ -1745,36 +1723,22 @@ body {
 
 .category-book-stack {
   position: relative;
-  width: 90px;
-  height: 90px;
-}
-
-/* base */
-.stack-book {
-  position: absolute;
-
-  width: 50px;
-  height: 75px;
-
-  object-fit: cover;
-  border-radius: 8px;
-
-  box-shadow: 0 8px 18px rgba(0,0,0,0.2);
-
-  transition: transform 0.3s ease;
+  width: 120px;
+  height: 110px;
+  margin-top: 10px;
 }
 
 /* left */
 .stack-book-0 {
   left: 0;
-  top: 10px;
+  top: 25px;
   transform: rotate(-8deg);
   z-index: 1;
 }
 
 /* center (top) */
 .stack-book-1 {
-  left: 20px;
+  left: 25px;
   top: 0;
   transform: rotate(0deg);
   z-index: 2;
@@ -1782,8 +1746,8 @@ body {
 
 /* right */
 .stack-book-2 {
-  left: 40px;
-  top: 10px;
+  left: 55px;
+  top: 25px;
   transform: rotate(8deg);
   z-index: 1;
 }
@@ -1792,9 +1756,11 @@ body {
 .category-card:hover .stack-book-1 {
   transform: translateY(-6px);
 }
+
 .category-card:hover .stack-book-0 {
   transform: rotate(-10deg) translateY(-2px);
 }
+
 .category-card:hover .stack-book-2 {
   transform: rotate(10deg) translateY(-2px);
 }
