@@ -360,6 +360,15 @@ function Home() {
 
           <div className="wp-hero__visual" aria-hidden="true">
             <div className="wp-hero__card">
+
+              <div className="wp-hero__badge-save">
+                {i18n.resolvedLanguage === 'de' ? 'Bis zu 30% günstiger' : 'Up to 30% cheaper'}
+              </div>
+
+              <div className="wp-hero__review">
+                ⭐ 4.8 · {i18n.resolvedLanguage === 'de' ? 'Top bewertet' : 'Top rated'}
+              </div>
+
               <div className="wp-hero__chip">
                 {i18n.resolvedLanguage === 'de' ? 'Neu & Beliebt' : 'New & Popular'}
               </div>
@@ -386,7 +395,7 @@ function Home() {
                           src={book.image ? book.image : 'https://via.placeholder.com/300x400?text=Book'}
                           alt={title}
                           className="wp-hero__bookCover"
-                          loading="lazy"
+                          loading={slotIndex === 0 ? "eager" : "lazy"}
                         />
                       </Link>
                     );
@@ -400,7 +409,6 @@ function Home() {
                   </>
                 )}
               </div>
-
 
               <div className="wp-hero__info">
                 <p>
@@ -417,6 +425,15 @@ function Home() {
 
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="trust-strip">
+        <div className="container trust-strip__inner">
+          <div className="trust-item">🚚 {i18n.resolvedLanguage === 'de' ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</div>
+          <div className="trust-item">💰 {i18n.resolvedLanguage === 'de' ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</div>
+          <div className="trust-item">🔒 {i18n.resolvedLanguage === 'de' ? 'Sicher bezahlen' : 'Secure checkout'}</div>
+          <div className="trust-item">↩ {i18n.resolvedLanguage === 'de' ? '14 Tage Rückgabe' : '14-day returns'}</div>
         </div>
       </section>
 
