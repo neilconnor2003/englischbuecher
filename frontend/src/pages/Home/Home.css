@@ -1444,16 +1444,6 @@ body {
   color: #5b21b6;
 }
 
-/* Animation */
-@keyframes trust-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
 .trust-strip__track:hover {
   animation-play-state: paused;
 }
@@ -1513,16 +1503,6 @@ body {
   box-shadow: 0 6px 18px rgba(0,0,0,0.05);
 }
 
-/* smooth infinite scroll */
-@keyframes trust-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
 /* hover pause (nice UX) */
 .trust-strip__track:hover {
   animation-play-state: paused;
@@ -1565,7 +1545,8 @@ body {
   width: max-content;
 
   /* ✅ Slower, smoother, no jump feeling */
-  animation: trust-scroll 25s linear infinite;
+  animation: trust-scroll 35s linear infinite;
+  will-change: transform;
 }
 
 /* pill style */
@@ -1589,13 +1570,13 @@ body {
   flex-shrink: 0; /* ✅ CRITICAL */
 }
 
-/* ✅ KEY FIX: PERFECT LOOP */
+/* ✅ KEY FIX: SMOOTH PERFECT LOOP */
 @keyframes trust-scroll {
   from {
     transform: translateX(0);
   }
   to {
-    transform: translateX(-50%);
+    transform: translateX(-33.333%);
   }
 }
 
