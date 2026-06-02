@@ -308,6 +308,35 @@ function Home() {
 
   if (catLoading) return <div className="loading-home">Loading...</div>;
 
+
+  const trustMessages = [
+    i18n.resolvedLanguage === 'de'
+      ? 'Kostenlose Lieferung ab 30€'
+      : 'Free shipping over €30',
+
+    i18n.resolvedLanguage === 'de'
+      ? 'Bis zu 60% günstiger'
+      : 'Up to 60% cheaper',
+
+    i18n.resolvedLanguage === 'de'
+      ? '14 Tage Rückgabe'
+      : '14-day returns',
+
+    i18n.resolvedLanguage === 'de'
+      ? 'Sicher bezahlen'
+      : 'Secure checkout'
+  ];
+
+  const [trustIndex, setTrustIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTrustIndex(prev => (prev + 1) % trustMessages.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+
   return (
     <div className="home-page-v2">
       <Helmet>
@@ -428,14 +457,15 @@ function Home() {
         </div>
       </section>
 
+
       <section className="trust-strip">
         <div className="container trust-strip__inner">
-          <div className="trust-item">🚚 {i18n.resolvedLanguage === 'de' ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</div>
-          <div className="trust-item">💰 {i18n.resolvedLanguage === 'de' ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</div>
-          <div className="trust-item">🔒 {i18n.resolvedLanguage === 'de' ? 'Sicher bezahlen' : 'Secure checkout'}</div>
-          <div className="trust-item">↩ {i18n.resolvedLanguage === 'de' ? '14 Tage Rückgabe' : '14-day returns'}</div>
+          <span className="trust-rotating">
+            {trustMessages[trustIndex]}
+          </span>
         </div>
       </section>
+
 
       {/* WARBY-STYLE “WAYS TO SHOP” (INSPIRED BY “Ways to try” + quiz entry points) */}
       <section className="wp-ways">

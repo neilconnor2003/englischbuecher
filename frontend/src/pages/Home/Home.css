@@ -118,8 +118,13 @@
   border-radius: 24px;
   padding: 24px 20px;
 
-  background: linear-gradient(135deg, #9333ea, #7c3aed);
-  color: white;
+  /*background: linear-gradient(135deg, #9333ea, #7c3aed);
+  color: white;*/
+
+  background: white;
+  color: #1f1633;
+  border: 1px solid rgba(147, 51, 234, 0.15);
+
 
   box-shadow: 0 14px 40px rgba(147, 51, 234, 0.35);
   transition: all 0.35s ease;
@@ -732,14 +737,17 @@
   box-shadow: 0 26px 90px rgba(31, 22, 51, 0.14);
   padding: 18px;
   position: relative;
+  padding-top: 50px;
   overflow: hidden;
-  
+
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
 
-  height: auto;              /* ✅ IMPORTANT */
-  min-height: unset;         /* ✅ avoid stretching */
+  height: auto;
+  /* ✅ IMPORTANT */
+  min-height: unset;
+  /* ✅ avoid stretching */
 
 }
 
@@ -759,7 +767,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  margin-top: 10px;
+  margin-top: 20px;
 }
 
 .wp-hero__mockCover {
@@ -1068,10 +1076,32 @@
 }
 
 /* PROFESSIONAL SPACING SYSTEM */
-
-.home-page-v2 section + section {
+/*}.home-page-v2 section + section {
   margin-top: 24px;
+}*/
+
+/* CLEAN SECTION SPACING SYSTEM */
+.home-page-v2 section {
+  padding: 28px 0;
 }
+
+.home-page-v2 section:first-of-type {
+  padding-top: 12px;
+}
+
+.home-page-v2 section+section {
+  margin-top: 0;
+}
+
+/* tighter stacking */
+.wp-hero {
+  padding: 20px 0 10px;
+}
+
+.wp-ways {
+  margin-top: 10px;
+}
+
 
 /* =========================================================
    MOBILE SIDE PADDING FIX (CRITICAL)
@@ -1108,6 +1138,7 @@ body {
 
 /* --- 1) MOBILE SIDE PADDING (including safe area / notch) --- */
 @media (max-width: 768px) {
+
   .home-page-v2 .container,
   .home-page-v2 .wp-ways__container {
     /* 16px is a solid “premium” baseline; safe-area keeps iPhone notch edges safe */
@@ -1139,11 +1170,13 @@ body {
 }
 
 @media (max-width: 768px) {
+
   /* Buttons and important links should be easy to tap */
   .home-page-v2 .wp-btn,
   .home-page-v2 .view-all-btn,
   .home-page-v2 .home-request-book-btn {
-    min-height: 44px;          /* WCAG guidance (enhanced) */
+    min-height: 44px;
+    /* WCAG guidance (enhanced) */
     padding-top: 12px;
     padding-bottom: 12px;
   }
@@ -1175,12 +1208,12 @@ body {
 
 /* --- 3) SUBTLE SECTION SEPARATORS (clean, modern) --- */
 /* Add gentle divider between sections without big gaps */
-.home-page-v2 > section {
+.home-page-v2>section {
   position: relative;
 }
 
 /* Divider line appears between sections */
-.home-page-v2 > section + section::before {
+.home-page-v2>section+section::before {
   content: "";
   position: absolute;
   top: 0;
@@ -1188,16 +1221,15 @@ body {
   width: min(860px, calc(100% - 32px));
   transform: translateX(-50%);
   height: 1px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(31, 22, 51, 0.10),
-    transparent
-  );
+  background: linear-gradient(to right,
+      transparent,
+      rgba(31, 22, 51, 0.10),
+      transparent);
 }
 
 /* --- 4) MOBILE CARD GRID TUNING (premium spacing) --- */
 @media (max-width: 768px) {
+
   /* Categories: 2 columns on mobile with nice spacing */
   .home-page-v2 .categories-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1252,28 +1284,66 @@ body {
 /* HERO NEW BADGE */
 .wp-hero__badge-save {
   position: absolute;
-  bottom: 14px;
-  left: 14px;
+  bottom: 10px;
+  left: 10px;
   background: linear-gradient(135deg, #9333ea, #ec4899);
   color: white;
   font-weight: 900;
   font-size: 0.8rem;
   padding: 8px 12px;
   border-radius: 999px;
-  box-shadow: 0 10px 25px rgba(147,51,234,0.4);
+  box-shadow: 0 10px 25px rgba(147, 51, 234, 0.4);
 }
 
 /* HERO REVIEW CARD */
 .wp-hero__review {
   position: absolute;
-  top: 14px;
-  right: 14px;
-  background: rgba(255,255,255,0.9);
+  top: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(12px);
   border-radius: 14px;
   padding: 8px 12px;
   font-weight: 800;
   font-size: 0.75rem;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
   color: #1f1633;
+}
+
+.trust-strip__inner {
+  justify-content: center;
+}
+
+.trust-rotating {
+  font-weight: 800;
+  color: #5b21b6;
+  transition: opacity 0.4s ease;
+}
+
+@media (max-width: 768px) {
+  .wp-hero__inner {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .wp-hero__visual {
+    justify-content: center;
+  }
+
+  .wp-hero__card {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .categories-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    overflow-x: unset;
+  }
+
+  .category-card {
+    max-width: unset;
+  }
 }
