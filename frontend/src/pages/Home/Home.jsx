@@ -730,7 +730,16 @@ function Home() {
               })}*/}
 
               {visibleCategories
+                .filter(cat => {
+                  const section = categorySections.find(
+                    s => s.category.id === cat.id
+                  );
+                  return section && section.books && section.books.length > 0;
+                })
                 .map(cat => {
+
+                  //{visibleCategories
+                  //.map(cat => {
                   const section = categorySections.find(
                     s => s.category.id === cat.id
                   );
@@ -750,7 +759,8 @@ function Home() {
                       {/* BOOK STACK */}
                       <div className="category-book-stack">
                         {(() => {
-                          let books = section.books;
+                          //let books = section.books;
+                          let books = [...section.books];
 
                           if (books.length === 1) {
                             books = [books[0], books[0], books[0]];
@@ -763,7 +773,8 @@ function Home() {
                           return books.map((book, index) => (
                             <img
                               key={`${book.id}-${index}`}
-                              src={book.image}
+                              //src={book.image}
+                              src={book.image || ""}
                               alt={book.title_en || 'Book'}
                               className={`stack-book stack-book-${index}`}
                             />
