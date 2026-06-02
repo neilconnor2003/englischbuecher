@@ -645,7 +645,7 @@ function Home() {
                   s => s.category.id === cat.id
                 );
 
-                const previewBooks = section?.books?.slice(0, 3) || [];
+                //const previewBooks = section?.books?.slice(0, 3) || [];
 
                 return (
                   <Link
@@ -674,7 +674,17 @@ function Home() {
                           s => s.category.id === cat.id
                         );
 
-                        const previewBooks = section?.books?.slice(0, 3) || [];
+                        //const previewBooks = section?.books?.slice(0, 3) || [];
+
+                        const previewBooks =
+                          section?.books?.length > 0
+                            ? section.books.slice(0, 3)
+                            : [
+                              { id: 'p1', image: 'https://via.placeholder.com/100x150' },
+                              { id: 'p2', image: 'https://via.placeholder.com/100x150' },
+                              { id: 'p3', image: 'https://via.placeholder.com/100x150' }
+                            ];
+
 
                         return previewBooks.map((book, index) => (
                           <img
