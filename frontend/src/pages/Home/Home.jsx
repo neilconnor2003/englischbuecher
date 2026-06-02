@@ -297,7 +297,6 @@ function Home() {
     fetchBooks();
   }, [visibleCategories, catLoading]);
 
-
   const visibleHeroBooks = Array.from({ length: 4 }, (_, slotIndex) => {
     if (!heroBooks || heroBooks.length === 0) return null;
     if (slotIndex >= heroBooks.length) return null;
@@ -306,8 +305,7 @@ function Home() {
     return heroBooks[wrappedIndex];
   });
 
-  if (catLoading) return <div className="loading-home">Loading...</div>;
-
+  const [trustIndex, setTrustIndex] = useState(0);
 
   const trustMessages = [
     i18n.resolvedLanguage === 'de'
@@ -327,8 +325,6 @@ function Home() {
       : 'Secure checkout'
   ];
 
-  const [trustIndex, setTrustIndex] = useState(0);
-
   useEffect(() => {
     const interval = setInterval(() => {
       setTrustIndex(prev => (prev + 1) % trustMessages.length);
@@ -336,6 +332,7 @@ function Home() {
     return () => clearInterval(interval);
   }, []);
 
+  if (catLoading) return <div className="loading-home">Loading...</div>;
 
   return (
     <div className="home-page-v2">
