@@ -616,7 +616,7 @@ function Home() {
                 : 'Pick a mood — jump straight to matching titles.'}
             </p>
             <div className="categories-grid">
-              {visibleCategories.map(cat => (
+              {/*{visibleCategories.map(cat => (
                 <Link
                   key={cat.id}
                   to={`/books?category=${cat.id}`}
@@ -637,7 +637,60 @@ function Home() {
                     {i18n.resolvedLanguage === 'de' ? (cat.name_de || cat.name_en) : cat.name_en}
                   </span>
                 </Link>
-              ))}
+              ))}*/}
+
+              {visibleCategories.map(cat => {
+
+                const section = categorySections.find(
+                  s => s.category.id === cat.id
+                );
+
+                const previewBooks = section?.books?.slice(0, 3) || [];
+
+                return (
+                  <Link
+                    key={cat.id}
+                    to={`/books?category=${cat.id}`}
+                    className="category-card"
+                  >
+
+                    {/* ICON (keep your existing logic) */}
+                    {cat.icon_path ? (
+                      <img
+                        src={`${config.UPLOADS_BASE_URL}${cat.icon_path}?v=${cat.updated_at}`}
+                        alt=""
+                        className="category-icon"
+                      />
+                    ) : (
+                      <div className="category-icon-placeholder">
+                        <Image size={40} />
+                      </div>
+                    )}
+
+                    {/* NAME */}
+                    <span className="category-name">
+                      {i18n.resolvedLanguage === 'de'
+                        ? (cat.name_de || cat.name_en)
+                        : cat.name_en}
+                    </span>
+
+                    {/* ✅ NEW: POKER BOOK STACK */}
+                    <div className="category-book-stack">
+
+                      {previewBooks.map((book, index) => (
+                        <img
+                          key={book.id}
+                          src={book.image || 'https://via.placeholder.com/80x120'}
+                          alt={book.title_en || 'Book'}
+                          className={`stack-book stack-book-${index}`}
+                        />
+                      ))}
+
+                    </div>
+
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </section>

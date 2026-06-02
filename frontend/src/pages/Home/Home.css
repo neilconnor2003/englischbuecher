@@ -1654,3 +1654,59 @@ body {
     font-size: 0.75rem;
   }
 }
+
+/* ===============================
+   CATEGORY BOOK STACK (POKER STYLE)
+   =============================== */
+
+.category-book-stack {
+  position: relative;
+  width: 80px;
+  height: 60px;
+  margin-top: 10px;
+}
+
+/* Base style */
+.stack-book {
+  position: absolute;
+  width: 38px;
+  height: 55px;
+  object-fit: cover;
+  border-radius: 6px;
+
+  box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+
+  transition: transform 0.3s ease;
+}
+
+/* Left card */
+.stack-book-0 {
+  left: 0;
+  transform: rotate(-6deg);
+  z-index: 1;
+}
+
+/* Center card */
+.stack-book-1 {
+  left: 18px;
+  transform: rotate(0deg);
+  z-index: 2;
+}
+
+/* Right card */
+.stack-book-2 {
+  left: 36px;
+  transform: rotate(6deg);
+  z-index: 1;
+}
+
+/* subtle hover effect */
+.category-card:hover .stack-book-0 {
+  transform: rotate(-8deg) translateY(-2px);
+}
+.category-card:hover .stack-book-1 {
+  transform: translateY(-4px);
+}
+.category-card:hover .stack-book-2 {
+  transform: rotate(8deg) translateY(-2px);
+}
