@@ -1468,3 +1468,74 @@ body {
     font-size: 0.8rem;
   }
 }
+
+/* ===============================
+   CLEAN PREMIUM TRUST STRIP
+   =============================== */
+
+.trust-strip {
+  overflow: hidden;
+  background: #f6f3ff;
+  border-top: 1px solid rgba(147, 51, 234, 0.08);
+  border-bottom: 1px solid rgba(147, 51, 234, 0.08);
+  padding: 10px 0;
+}
+
+.trust-strip__wrapper {
+  overflow: hidden;
+  width: 100%;
+}
+
+.trust-strip__track {
+  display: flex;
+  gap: 20px;
+  width: max-content;
+
+  animation: trust-scroll 22s linear infinite;
+}
+
+/* ⭐ IMPORTANT: make items look like pills */
+.trust-strip__track span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  background: white;
+  padding: 10px 16px;
+
+  border-radius: 50px;
+  border: 1px solid rgba(147, 51, 234, 0.12);
+
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1f1633;
+
+  box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+}
+
+/* smooth infinite scroll */
+@keyframes trust-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* hover pause (nice UX) */
+.trust-strip__track:hover {
+  animation-play-state: paused;
+}
+
+@media (max-width: 768px) {
+  .trust-strip__track {
+    gap: 14px;
+    animation-duration: 16s;
+  }
+
+  .trust-strip__track span {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+  }
+}
