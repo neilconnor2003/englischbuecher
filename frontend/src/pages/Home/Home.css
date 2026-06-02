@@ -1707,7 +1707,7 @@ body {
   align-items: center;
   justify-content: center;
 
-  gap: 12px;
+  gap: 18px;
 
   background: #ffffff;
   border: 1px solid rgba(147, 51, 234, 0.12);
@@ -1770,4 +1770,5 @@ body {
   font-weight: 800;
   color: #1f1633;
   text-align: center;
+  margin-top: 8px; /* ✅ adds breathing space */
 }
