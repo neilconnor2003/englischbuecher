@@ -729,25 +729,35 @@ function Home() {
                 );
               })}*/}
 
+
               {visibleCategories
-                .filter(cat => {
-                  const section = categorySections.find(
-                    s => s.category.id === cat.id
-                  );
-                  return section && section.books && section.books.length > 0;
-                })
                 .map(cat => {
-
-                  //{visibleCategories
-                  //.map(cat => {
                   const section = categorySections.find(
                     s => s.category.id === cat.id
                   );
 
-                  // ✅ RULE 1: skip categories with no books
-                  /*if (!section || !section.books || section.books.length === 0) {
-                    return null;
-                  }*/
+                  if (!section || !Array.isArray(section.books)) return null;
+
+                  // ✅ STEP 1 — sanitize data
+                  let books = section.books.filter(
+                    b =>
+                      b &&
+                      typeof b === "object" &&
+                      typeof b.image === "string" &&
+                      b.image.trim() !== ""
+                  );
+
+                  // ✅ STEP 2 — skip empty
+                  if (books.length === 0) return null;
+
+                  // ✅ STEP 3 — normalize to 3
+                  if (books.length === 1) {
+                    books = [books[0], books[0], books[0]];
+                  } else if (books.length === 2) {
+                    books = [books[0], books[1], books[0]];
+                  } else {
+                    books = books.slice(0, 3);
+                  }
 
                   return (
                     <Link
@@ -755,56 +765,32 @@ function Home() {
                       to={`/books?category=${cat.id}`}
                       className="category-card"
                     >
-
-                      {/* BOOK STACK */}
                       <div className="category-book-stack">
-                        {(() => {
-                          //let books = section.books;
-                          //let books = [...section.books];
-
-                          let books = (section.books || [])
-                            .filter(
-                              b =>
-                                b &&
-                                typeof b === "object" &&
-                                typeof b.image === "string" &&
-                                b.image.trim() !== ""
-                            );
-
-
-                          if (books.length === 1) {
-                            books = [books[0], books[0], books[0]];
-                          } else if (books.length === 2) {
-                            books = [books[0], books[1], books[0]];
-                          } else {
-                            books = books.slice(0, 3);
-                          }
-
-                          return books.map((book, index) => (
-                            <img
-                              key={`${book.id}-${index}`}
-                              //src={book.image}
-                              //src={book.image || ""}
-                              src={typeof book.image === "string" ? book.image : ""}
-                              //alt={book.title_en || 'Book'}
-                              alt={typeof book.title_en === "string" ? book.title_en : "Book"}
-                              className={`stack-book stack-book-${index}`}
-                            />
-                          ));
-                        })()}
+                        {books.map((book, index) => (
+                          <img
+                            key={`${book.id}-${index}`}
+                            src={book.image}
+                            alt={
+                              typeof book.title_en === "string"
+                                ? book.title_en
+                                : "Book"
+                            }
+                            className={`stack-book stack-book-${index}`}
+                          />
+                        ))}
                       </div>
 
-                      {/* NAME */}
                       <span className="category-name">
                         {i18n.resolvedLanguage === 'de'
                           ? (cat.name_de || cat.name_en)
                           : cat.name_en}
                       </span>
-
                     </Link>
                   );
                 })
+                .filter(Boolean)
               }
+
 
             </div>
           </div>
