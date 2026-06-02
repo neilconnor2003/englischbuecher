@@ -745,9 +745,9 @@ function Home() {
                   );
 
                   // ✅ RULE 1: skip categories with no books
-                  if (!section || !section.books || section.books.length === 0) {
+                  /*if (!section || !section.books || section.books.length === 0) {
                     return null;
-                  }
+                  }*/
 
                   return (
                     <Link
@@ -760,7 +760,17 @@ function Home() {
                       <div className="category-book-stack">
                         {(() => {
                           //let books = section.books;
-                          let books = [...section.books];
+                          //let books = [...section.books];
+
+                          let books = (section.books || [])
+                            .filter(
+                              b =>
+                                b &&
+                                typeof b === "object" &&
+                                typeof b.image === "string" &&
+                                b.image.trim() !== ""
+                            );
+
 
                           if (books.length === 1) {
                             books = [books[0], books[0], books[0]];
