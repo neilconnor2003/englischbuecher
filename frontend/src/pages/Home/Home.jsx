@@ -603,7 +603,7 @@ function Home() {
       </section>
 
       {/* CATEGORY ICONS */}
-      {/*{visibleCategories.length > 0 && (
+      {visibleCategories.length > 0 && (
         <section className="categories-section">
           <div className="container">
             <h2 className="section-title">
@@ -641,10 +641,10 @@ function Home() {
             </div>
           </div>
         </section>
-      )}*/}
+      )}
 
       {/* CATEGORY PREVIEW SECTION */}
-      {categorySections.length > 0 && (
+      {/*{categorySections.length > 0 && (
         <section className="categories-section">
           <div className="container">
 
@@ -698,7 +698,7 @@ function Home() {
 
           </div>
         </section>
-      )}
+      )}*/}
 
 
       {/* NEW ARRIVALS */}
