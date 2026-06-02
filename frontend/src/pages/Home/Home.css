@@ -1539,3 +1539,79 @@ body {
     font-size: 0.75rem;
   }
 }
+
+/* ===============================
+   TRUE INFINITE TRUST RIBBON
+   =============================== */
+
+.trust-strip {
+  overflow: hidden;
+  background: #f6f3ff;
+  border-top: 1px solid rgba(147, 51, 234, 0.08);
+  border-bottom: 1px solid rgba(147, 51, 234, 0.08);
+  padding: 12px 0;
+}
+
+/* container */
+.trust-strip__wrapper {
+  overflow: hidden;
+  width: 100%;
+}
+
+/* KEY FIX: continuous flow */
+.trust-strip__track {
+  display: flex;
+  gap: 16px;
+  width: max-content;
+
+  /* ✅ Slower, smoother, no jump feeling */
+  animation: trust-scroll 25s linear infinite;
+}
+
+/* pill style */
+.trust-strip__track span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  background: white;
+  padding: 8px 14px;
+
+  border-radius: 999px;
+  border: 1px solid rgba(147, 51, 234, 0.10);
+
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1f1633;
+
+  box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+
+  flex-shrink: 0; /* ✅ CRITICAL */
+}
+
+/* ✅ KEY FIX: PERFECT LOOP */
+@keyframes trust-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* hover pause */
+.trust-strip__track:hover {
+  animation-play-state: paused;
+}
+
+@media (max-width: 768px) {
+  .trust-strip__track {
+    gap: 10px;
+    animation-duration: 18s;
+  }
+
+  .trust-strip__track span {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+}
