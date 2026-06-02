@@ -774,8 +774,10 @@ function Home() {
                             <img
                               key={`${book.id}-${index}`}
                               //src={book.image}
-                              src={book.image || ""}
-                              alt={book.title_en || 'Book'}
+                              //src={book.image || ""}
+                              src={typeof book.image === "string" ? book.image : ""}
+                              //alt={book.title_en || 'Book'}
+                              alt={typeof book.title_en === "string" ? book.title_en : "Book"}
                               className={`stack-book stack-book-${index}`}
                             />
                           ));
