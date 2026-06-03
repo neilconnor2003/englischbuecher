@@ -668,7 +668,7 @@ function Home() {
                     to={`/books?category=${String(cat.id)}`}
                     className="category-card"
                   >
-                    Category: {String(cat.id)}
+                    {/*Category: {String(cat.id)}*/}
                     <div className="category-book-stack">
                       {books.map((book, index) => (
                         <img
