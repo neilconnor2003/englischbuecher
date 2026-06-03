@@ -650,6 +650,18 @@ function Home() {
                     b.image.trim() !== ""
                 );
 
+                // ✅ STEP 2 — skip empty
+                if (books.length === 0) return null;
+
+                // ✅ STEP 3 — normalize to 3
+                if (books.length === 1) {
+                  books = [books[0], books[0], books[0]];
+                } else if (books.length === 2) {
+                  books = [books[0], books[1], books[0]];
+                } else {
+                  books = books.slice(0, 3);
+                }
+
                 return (
                   <Link
                     key={String(cat.id)}
@@ -679,7 +691,7 @@ function Home() {
                   </Link>
                 );
               })
-              //  .filter(Boolean)
+                //  .filter(Boolean)
               }
             </div>
           </div>
