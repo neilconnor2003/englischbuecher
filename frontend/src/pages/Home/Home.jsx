@@ -625,126 +625,12 @@ function Home() {
                 : 'Pick a mood — jump straight to matching titles.'}
             </p>
             <div className="categories-grid">
-              {/*{visibleCategories.map(cat => {
-
-                const section = categorySections.find(
-                  s => s.category.id === cat.id
-                );
-
-                return (
-                  <Link
-                    key={cat.id}
-                    to={`/books?category=${cat.id}`}
-                    className="category-card"
-                  >
-
-                    {/* ICON (keep your existing logic) */
-                {/*{cat.icon_path ? (
-                      <img
-                        src={`${config.UPLOADS_BASE_URL}${cat.icon_path}?v=${cat.updated_at}`}
-                        alt=""
-                        className="category-icon"
-                      />
-                    ) : (
-                      <div className="category-icon-placeholder">
-                        <Image size={40} />
-                      </div>
-                    )}*/}
-
-                    /* ✅ BOOK STACK FIRST */
-                    /*<div className="category-book-stack">
-                      {(() => {
-                        const section = categorySections.find(
-                          s => s.category.id === cat.id
-                        );
-
-                        //const previewBooks = section?.books?.slice(0, 3) || [];
-
-                        /*const previewBooks =
-                          section?.books?.length > 0
-                            ? section.books.slice(0, 3)
-                            : [
-                              { id: 'p1', image: '/images/default-book.png' },
-                              { id: 'p2', image: '/images/default-book.png' },
-                              { id: 'p3', image: '/images/default-book.png' }
-                            ];*/
-
-                    /*let previewBooks = section?.books || [];
-
-                        if (previewBooks.length >= 3) {
-                          previewBooks = previewBooks.slice(0, 3);
-                        } else if (previewBooks.length > 0) {
-                          while (previewBooks.length < 3) {
-                            previewBooks.push(previewBooks[0]); // duplicate first book
-                          }
-                        } else {
-                          previewBooks = [
-                            { id: 'p1', image: '/images/default-book.png' },
-                            { id: 'p2', image: '/images/default-book.png' },
-                            { id: 'p3', image: '/images/default-book.png' }
-                          ];
-                        }
-
-                        return previewBooks.map((book, index) => (
-                          <img
-                            key={book.id}
-                            src={book.image || 'https://via.placeholder.com/100x150'}
-                            alt={book.title_en || 'Book'}
-                            className={`stack-book stack-book-${index}`}
-                          />
-                        ));
-                      })()}
-                    </div>
-
-                    <div className="category-book-stack">
-                      {(() => {
-                        const section = categorySections.find(
-                          s => s.category.id === cat.id
-                        );
-
-                        let books = section?.books || [];
-
-                        // ✅ RULE 1: if no books → do NOT render this category at all
-                        if (books.length === 0) return null;
-
-                        // ✅ RULE 2–3: normalize to exactly 3 books
-                        if (books.length === 1) {
-                          books = [books[0], books[0], books[0]];
-                        } else if (books.length === 2) {
-                          books = [books[0], books[1], books[0]];
-                        } else {
-                          books = books.slice(0, 3);
-                        }
-
-                        return books.map((book, index) => (
-                          <img
-                            key={`${book.id}-${index}`}
-                            src={book.image}
-                            alt={book.title_en || 'Book'}
-                            className={`stack-book stack-book-${index}`}
-                          />
-                        ));
-                      })()}
-                    </div>
-
-
-                    {/* NAME 
-                    <span className="category-name">
-                      {i18n.resolvedLanguage === 'de'
-                        ? (cat.name_de || cat.name_en)
-                        : cat.name_en}
-                    </span>
-                  </Link>
-                );
-              })}*/}
-
-
               {/*{visibleCategories*/}
-              {safeCategories
+              {/*{safeCategories
                 .map(cat => {
                   /*const section = categorySections.find(
                     s => s.category.id === cat.id
-                  );*/
+                  ); removed here
 
                   const section = categorySections.find(
                     s =>
@@ -817,7 +703,16 @@ function Home() {
                   );
                 })
                 .filter(Boolean)
-              }
+              }*/}
+
+              {safeCategories.map(cat => {
+                return (
+                  <div key={String(cat.id)}>
+                    Category: {String(cat.id)}
+                  </div>
+                );
+              })}
+
 
 
             </div>
