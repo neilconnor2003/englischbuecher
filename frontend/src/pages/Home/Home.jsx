@@ -732,9 +732,18 @@ function Home() {
 
               {visibleCategories
                 .map(cat => {
-                  const section = categorySections.find(
+                  /*const section = categorySections.find(
                     s => s.category.id === cat.id
+                  );*/
+
+                  const section = categorySections.find(
+                    s =>
+                      s &&
+                      s.category &&
+                      typeof s.category.id !== "undefined" &&
+                      s.category.id === cat.id
                   );
+
 
                   if (!section || !Array.isArray(section.books)) return null;
 
@@ -780,11 +789,11 @@ function Home() {
                         ))}
                       </div>
 
-                      {/*<span className="category-name">
+                      <span className="category-name">
                         {i18n.resolvedLanguage === 'de'
                           ? (cat.name_de || cat.name_en)
                           : cat.name_en}
-                      </span>*/}
+                      </span>
                     </Link>
                   );
                 })
