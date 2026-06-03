@@ -745,7 +745,14 @@ function Home() {
                   );
 
 
-                  if (!section || !Array.isArray(section.books)) return null;
+                  //if (!section || !Array.isArray(section.books)) return null;
+
+                  if (
+                    !section ||
+                    !section.books ||
+                    !Array.isArray(section.books)
+                  ) return null;
+
 
                   // ✅ STEP 1 — sanitize data
                   let books = section.books.filter(
