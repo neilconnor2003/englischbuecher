@@ -1,6 +1,6 @@
 
 // frontend/src/pages/Home/Home.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Banner from '../../components/Banner/Banner';
@@ -58,8 +58,6 @@ function Home() {
   /*const visibleCategories = Array.isArray(data.visibleRoots)
     ? [...data.visibleRoots].sort((a, b) => a.id - b.id)
     : [];*/
-
-  import { useMemo } from 'react';
 
   const visibleCategories = useMemo(() => {
     return Array.isArray(data.visibleRoots)
