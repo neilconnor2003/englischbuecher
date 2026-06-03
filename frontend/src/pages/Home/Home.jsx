@@ -705,28 +705,24 @@ function Home() {
                 .filter(Boolean)
               }*/}
 
-              {/*{safeCategories.map(cat => {
-                return (
-                  <div key={String(cat.id)}>
-                    Category: {String(cat.id)}
-                  </div>
+              {safeCategories.map(cat => {
+                const section = categorySections.find(
+                  s =>
+                    s &&
+                    s.category &&
+                    typeof s.category.id !== "undefined" &&
+                    s.category.id === cat.id
                 );
-              })}*/}
-              
-{safeCategories.map(cat => {
-  return (
-    <Link
-      key={String(cat.id)}
-      to={`/books?category=${String(cat.id)}`}
-    >
-      Category: {String(cat.id)}
-    </Link>
-  );
-})}
-
-
-
-
+                
+                return (
+                  <Link
+                    key={String(cat.id)}
+                    to={`/books?category=${String(cat.id)}`}
+                  >
+                    Category: {String(cat.id)}
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </section>
