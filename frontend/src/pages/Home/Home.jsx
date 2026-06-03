@@ -544,12 +544,12 @@ function Home() {
       </h1>
 
       {/* POPULAR BOOKS */}
-      {popularBooks.length > 0 && (
+      {/*{popularBooks.length > 0 && (
         <section className="popular-section">
           <div className="container">
             {/*<h2 className="section-title">
               <span className="fire">{t('home.popular')}</span>
-            </h2>*/}
+            </h2> put the closing here
 
             <div className="section-header">
               <h2 className="section-title">
@@ -569,7 +569,7 @@ function Home() {
             />
           </div>
         </section>
-      )}
+      )}*/}
 
       {/* REQUEST BOOK / CATALOG INFO SECTION */}
       <section className="request-book-section">
