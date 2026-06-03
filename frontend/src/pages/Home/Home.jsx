@@ -612,7 +612,7 @@ function Home() {
 
       {/* CATEGORY ICONS */}
       {/*{visibleCategories.length > 0 && (*/}
-      {safeCategories.length > 0 && (
+      {safeCategories.length > 0 && categorySections.length > 0 && (
         <section className="categories-section">
           <div className="container">
             <h2 className="section-title">
@@ -627,13 +627,24 @@ function Home() {
             <div className="categories-grid">
 
               {safeCategories.map(cat => {
-                const section = categorySections.find(
+                /*const section = categorySections.find(
                   s =>
                     s &&
                     s.category &&
                     typeof s.category.id !== "undefined" &&
                     s.category.id === cat.id
-                );
+                );*/
+
+                const section = Array.isArray(categorySections)
+                  ? categorySections.find(
+                    s =>
+                      s &&
+                      s.category &&
+                      (typeof s.category.id === "number" || typeof s.category.id === "string") &&
+                      s.category.id == cat.id
+                  )
+                  : null;
+
 
                 if (
                   !section ||
