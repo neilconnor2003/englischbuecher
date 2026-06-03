@@ -55,9 +55,18 @@ function Home() {
   }, [trustMessages.length]);*/
 
 
-  const visibleCategories = Array.isArray(data.visibleRoots)
+  /*const visibleCategories = Array.isArray(data.visibleRoots)
     ? [...data.visibleRoots].sort((a, b) => a.id - b.id)
-    : [];
+    : [];*/
+
+  import { useMemo } from 'react';
+
+  const visibleCategories = useMemo(() => {
+    return Array.isArray(data.visibleRoots)
+      ? [...data.visibleRoots].sort((a, b) => a.id - b.id)
+      : [];
+  }, [data.visibleRoots]);
+
 
   const safeCategories = visibleCategories.filter(
     cat =>
@@ -339,7 +348,8 @@ function Home() {
     };
 
     fetchBooks();
-  }, [visibleCategories, catLoading]);
+  //}, [visibleCategories, catLoading]);
+  }, [catLoading, data.visibleRoots]);
 
 
   const visibleHeroBooks = Array.from({ length: 4 }, (_, slotIndex) => {
