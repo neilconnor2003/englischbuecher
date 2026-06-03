@@ -705,13 +705,25 @@ function Home() {
                 .filter(Boolean)
               }*/}
 
-              {safeCategories.map(cat => {
+              {/*{safeCategories.map(cat => {
                 return (
                   <div key={String(cat.id)}>
                     Category: {String(cat.id)}
                   </div>
                 );
-              })}
+              })}*/}
+              
+{safeCategories.map(cat => {
+  return (
+    <Link
+      key={String(cat.id)}
+      to={`/books?category=${String(cat.id)}`}
+    >
+      Category: {String(cat.id)}
+    </Link>
+  );
+})}
+
 
 
 
