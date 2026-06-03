@@ -59,6 +59,14 @@ function Home() {
     ? [...data.visibleRoots].sort((a, b) => a.id - b.id)
     : [];
 
+  const safeCategories = visibleCategories.filter(
+    cat =>
+      cat &&
+      typeof cat === "object" &&
+      (typeof cat.id === "number" || typeof cat.id === "string")
+  );
+
+
 
   /*const dedupeBySeries = (books = []) => {
     const map = new Map();
@@ -603,7 +611,8 @@ function Home() {
       </section>
 
       {/* CATEGORY ICONS */}
-      {visibleCategories.length > 0 && (
+      {/*{visibleCategories.length > 0 && (*/}
+      {safeCategories.length > 0 && (
         <section className="categories-section">
           <div className="container">
             <h2 className="section-title">
@@ -730,7 +739,8 @@ function Home() {
               })}*/}
 
 
-              {visibleCategories
+              {/*{visibleCategories*/}
+              {safeCategories
                 .map(cat => {
                   /*const section = categorySections.find(
                     s => s.category.id === cat.id
@@ -777,8 +787,10 @@ function Home() {
 
                   return (
                     <Link
-                      key={cat.id}
-                      to={`/books?category=${cat.id}`}
+                      //key={cat.id}
+                      key={String(cat.id)}
+                      //to={`/books?category=${cat.id}`}
+                      to={`/books?category=${String(cat.id)}`}
                       className="category-card"
                     >
                       <div className="category-book-stack">
