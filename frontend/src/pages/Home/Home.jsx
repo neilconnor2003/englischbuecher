@@ -421,12 +421,12 @@ function Home() {
                         className="wp-hero__bookLink"
                         aria-label={`View ${title}`}
                       >
-                        <img
+                        {/*<img
                           src={book.image ? book.image : 'https://via.placeholder.com/300x400?text=Book'}
                           alt={title}
                           className="wp-hero__bookCover"
                           loading={slotIndex === 0 ? "eager" : "lazy"}
-                        />
+                        />*/}
                       </Link>
                     );
                   })
@@ -544,12 +544,12 @@ function Home() {
       </h1>
 
       {/* POPULAR BOOKS */}
-      {/*{popularBooks.length > 0 && (
+      {popularBooks.length > 0 && (
         <section className="popular-section">
           <div className="container">
             {/*<h2 className="section-title">
               <span className="fire">{t('home.popular')}</span>
-            </h2> put the closing here
+            </h2> */}
 
             <div className="section-header">
               <h2 className="section-title">
@@ -569,7 +569,7 @@ function Home() {
             />
           </div>
         </section>
-      )}*/}
+      )}
 
       {/* REQUEST BOOK / CATALOG INFO SECTION */}
       <section className="request-book-section">
