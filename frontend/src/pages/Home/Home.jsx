@@ -625,85 +625,6 @@ function Home() {
                 : 'Pick a mood — jump straight to matching titles.'}
             </p>
             <div className="categories-grid">
-              {/*{visibleCategories*/}
-              {/*{safeCategories
-                .map(cat => {
-                  /*const section = categorySections.find(
-                    s => s.category.id === cat.id
-                  ); removed here
-
-                  const section = categorySections.find(
-                    s =>
-                      s &&
-                      s.category &&
-                      typeof s.category.id !== "undefined" &&
-                      s.category.id === cat.id
-                  );
-
-
-                  //if (!section || !Array.isArray(section.books)) return null;
-
-                  if (
-                    !section ||
-                    !section.books ||
-                    !Array.isArray(section.books)
-                  ) return null;
-
-
-                  // ✅ STEP 1 — sanitize data
-                  let books = section.books.filter(
-                    b =>
-                      b &&
-                      typeof b === "object" &&
-                      typeof b.image === "string" &&
-                      b.image.trim() !== ""
-                  );
-
-                  // ✅ STEP 2 — skip empty
-                  if (books.length === 0) return null;
-
-                  // ✅ STEP 3 — normalize to 3
-                  if (books.length === 1) {
-                    books = [books[0], books[0], books[0]];
-                  } else if (books.length === 2) {
-                    books = [books[0], books[1], books[0]];
-                  } else {
-                    books = books.slice(0, 3);
-                  }
-
-                  return (
-                    <Link
-                      //key={cat.id}
-                      key={String(cat.id)}
-                      //to={`/books?category=${cat.id}`}
-                      to={`/books?category=${String(cat.id)}`}
-                      className="category-card"
-                    >
-                      <div className="category-book-stack">
-                        {books.map((book, index) => (
-                          <img
-                            key={`${book.id}-${index}`}
-                            src={book.image}
-                            alt={
-                              typeof book.title_en === "string"
-                                ? book.title_en
-                                : "Book"
-                            }
-                            className={`stack-book stack-book-${index}`}
-                          />
-                        ))}
-                      </div>
-
-                      <span className="category-name">
-                        {i18n.resolvedLanguage === 'de'
-                          ? (cat.name_de || cat.name_en)
-                          : cat.name_en}
-                      </span>
-                    </Link>
-                  );
-                })
-                .filter(Boolean)
-              }*/}
 
               {safeCategories.map(cat => {
                 const section = categorySections.find(
@@ -719,7 +640,7 @@ function Home() {
                   !section.books ||
                   !Array.isArray(section.books)
                 ) return null;
-                
+
                 // ✅ STEP 1 — sanitize data
                 let books = section.books.filter(
                   b =>
@@ -736,7 +657,7 @@ function Home() {
                     className="category-card"
                   >
                     Category: {String(cat.id)}
-                    {/*<div className="category-book-stack">
+                    <div className="category-book-stack">
                       {books.map((book, index) => (
                         <img
                           key={`${book.id}-${index}`}
@@ -749,7 +670,7 @@ function Home() {
                           className={`stack-book stack-book-${index}`}
                         />
                       ))}
-                    </div>*/}
+                    </div>
                   </Link>
                 );
               })}
