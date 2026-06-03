@@ -24,9 +24,6 @@ function Home() {
 
   const [heroFading, setHeroFading] = useState(false);
 
-  const categoryRef = useRef(null);
-  const [showCategories, setShowCategories] = useState(false);
-
   const visibleCategories = useMemo(() => {
     return Array.isArray(data.visibleRoots)
       ? [...data.visibleRoots].sort((a, b) => a.id - b.id)
@@ -72,20 +69,6 @@ function Home() {
     return Array.from(map.values());
   };
 
-
-
-  //useEffect(() => {
-  /*axios.get('/api/books/popular')
-    .then(res => setPopularBooks(Array.isArray(res.data) ? res.data : []))
-    .catch(() => setPopularBooks([]));*/
-
-  /*axios.get('/api/books/popular')
-    .then(res => {
-      const books = Array.isArray(res.data) ? res.data : [];
-      setPopularBooks(dedupeBySeries(books));
-    })
-}, []);*/
-
   useEffect(() => {
     axios.get('/api/books/popular')
       .then(res => {
@@ -93,25 +76,6 @@ function Home() {
         setPopularBooks(books); // already deduped + capped to 20 in backend
       })
       .catch(() => setPopularBooks([]));
-  }, []);
-
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setShowCategories(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.2 }
-    );
-
-    if (categoryRef.current) {
-      observer.observe(categoryRef.current);
-    }
-
-    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -537,8 +501,7 @@ function Home() {
       {/* CATEGORY ICONS */}
       {/*{visibleCategories.length > 0 && (*/}
       {safeCategories.length > 0 && categorySections.length > 0 && (
-        /*<section className="categories-section">*/
-        <section className="categories-section" ref={categoryRef}>
+        <section className="categories-section">
           <div className="container">
             <h2 className="section-title">
               <Sparkles className="title-icon" size={36} />
@@ -549,7 +512,7 @@ function Home() {
                 ? 'Wähle eine Stimmung — wir bringen dich direkt zu passenden Titeln.'
                 : 'Pick a mood — jump straight to matching titles.'}
             </p>
-            {/*<div className="categories-grid">
+            <div className="categories-grid">
 
               {safeCategories.map(cat => {
                 /*const section = categorySections.find(
@@ -558,7 +521,7 @@ function Home() {
                     s.category &&
                     typeof s.category.id !== "undefined" &&
                     s.category.id === cat.id
-                );removed here
+                );*/
 
                 const section = Array.isArray(categorySections)
                   ? categorySections.find(
@@ -604,7 +567,7 @@ function Home() {
                     to={`/books?category=${String(cat.id)}`}
                     className="category-card"
                   >
-                    {/*Category: {String(cat.id)} removed here
+                    {/*Category: {String(cat.id)} */}
                     <div className="category-book-stack">
                       {books.map((book, index) => (
                         <img
@@ -631,79 +594,6 @@ function Home() {
               })
                 .filter(Boolean)
               }
-            </div>*/}
-
-            <div className="categories-grid">
-              {!showCategories ? (
-                Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="category-card skeleton-card" />
-                ))
-              ) : (
-                safeCategories
-                  .map(cat => {
-                    const section = Array.isArray(categorySections)
-                      ? categorySections.find(
-                        s =>
-                          s &&
-                          s.category &&
-                          (typeof s.category.id === "number" ||
-                            typeof s.category.id === "string") &&
-                          s.category.id == cat.id
-                      )
-                      : null;
-
-                    if (!section || !Array.isArray(section.books)) return null;
-
-                    let books = section.books.filter(
-                      b =>
-                        b &&
-                        typeof b === "object" &&
-                        typeof b.image === "string" &&
-                        b.image.trim() !== ""
-                    );
-
-                    if (books.length === 0) return null;
-
-                    if (books.length === 1) {
-                      books = [books[0], books[0], books[0]];
-                    } else if (books.length === 2) {
-                      books = [books[0], books[1], books[0]];
-                    } else {
-                      books = books.slice(0, 3);
-                    }
-
-                    return (
-                      <Link
-                        key={String(cat.id)}
-                        to={`/books?category=${String(cat.id)}`}
-                        className="category-card"
-                      >
-                        <div className="category-book-stack">
-                          {books.map((book, index) => (
-                            <img
-                              key={`${book.id}-${index}`}
-                              src={book.image}
-                              alt={
-                                typeof book.title_en === "string"
-                                  ? book.title_en
-                                  : "Book"
-                              }
-                              loading="lazy"
-                              className={`stack-book stack-book-${index}`}
-                            />
-                          ))}
-                        </div>
-
-                        <span className="category-name">
-                          {i18n.resolvedLanguage === 'de'
-                            ? (cat.name_de || cat.name_en)
-                            : cat.name_en}
-                        </span>
-                      </Link>
-                    );
-                  })
-                  .filter(Boolean)
-              )}
             </div>
 
           </div>
