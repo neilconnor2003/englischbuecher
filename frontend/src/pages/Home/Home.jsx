@@ -671,9 +671,16 @@ function Home() {
                         />
                       ))}
                     </div>
+                    <span className="category-name">
+                      {i18n.resolvedLanguage === 'de'
+                        ? (cat.name_de || cat.name_en)
+                        : cat.name_en}
+                    </span>
                   </Link>
                 );
-              })}
+              })
+              //  .filter(Boolean)
+              }
             </div>
           </div>
         </section>
