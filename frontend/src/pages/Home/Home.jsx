@@ -282,37 +282,6 @@ function Home() {
 
     const fetchBooks = async () => {
       const sections = [];
-      for (const cat of visibleCategories) {
-        try {
-          const res = await axios.get(`/api/books/category/${cat.id}`);
-          //const books = Array.isArray(res.data) ? res.data.slice(0, 8) : [];
-
-          const booksRaw = Array.isArray(res.data) ? res.data : [];
-          console.log(`Category ${cat.name_en}:`, res.data.length);
-          //const books = dedupeBySeries(booksRaw).slice(0, 20);
-
-          const deduped = dedupeBySeries(booksRaw);
-
-          const books = deduped
-            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-            .slice(0, 20);
-
-
-          if (books.length > 0) sections.push({ category: cat, books });
-        } catch (err) {
-          console.error('Failed to load books for', cat.name_en);
-        }
-      }
-      setCategorySections(sections);
-    };
-    fetchBooks();
-  }, [visibleCategories, catLoading]);*/
-
-  useEffect(() => {
-    if (!visibleCategories.length || catLoading) return;
-
-    const fetchBooks = async () => {
-      const sections = [];
 
       for (const cat of visibleCategories) {
         try {
@@ -334,7 +303,44 @@ function Home() {
     };
 
     fetchBooks();
+  }, [visibleCategories, catLoading]);*/
+
+
+  useEffect(() => {
+    if (!visibleCategories.length || catLoading) return;
+
+    const fetchBooks = async () => {
+      try {
+        const requests = visibleCategories.map(cat =>
+          axios
+            .get(`/api/home/category-sections/${cat.id}`, {
+              params: { limit: 20 }
+            })
+            .then(res => ({
+              category: cat,
+              books: Array.isArray(res.data) ? res.data : []
+            }))
+            .catch(err => {
+              console.error('Failed to load books for', cat.name_en, err);
+              return null;
+            })
+        );
+
+        const results = await Promise.all(requests);
+
+        const sections = results.filter(
+          item => item && item.books.length > 0
+        );
+
+        setCategorySections(sections);
+      } catch (err) {
+        console.error('Category sections fetch failed:', err);
+      }
+    };
+
+    fetchBooks();
   }, [visibleCategories, catLoading]);
+
 
   const visibleHeroBooks = Array.from({ length: 4 }, (_, slotIndex) => {
     if (!heroBooks || heroBooks.length === 0) return null;
@@ -685,6 +691,8 @@ function Home() {
                         <img
                           key={`${book.id}-${index}`}
                           src={book.image}
+                          loading="lazy"
+                          decoding="async"
                           alt={
                             typeof book.title_en === "string"
                               ? book.title_en
