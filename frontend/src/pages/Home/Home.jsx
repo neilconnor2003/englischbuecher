@@ -719,6 +719,15 @@ function Home() {
                   !section.books ||
                   !Array.isArray(section.books)
                 ) return null;
+                
+                // ✅ STEP 1 — sanitize data
+                let books = section.books.filter(
+                  b =>
+                    b &&
+                    typeof b === "object" &&
+                    typeof b.image === "string" &&
+                    b.image.trim() !== ""
+                );
 
                 return (
                   <Link
@@ -727,6 +736,20 @@ function Home() {
                     className="category-card"
                   >
                     Category: {String(cat.id)}
+                    {/*<div className="category-book-stack">
+                      {books.map((book, index) => (
+                        <img
+                          key={`${book.id}-${index}`}
+                          src={book.image}
+                          alt={
+                            typeof book.title_en === "string"
+                              ? book.title_en
+                              : "Book"
+                          }
+                          className={`stack-book stack-book-${index}`}
+                        />
+                      ))}
+                    </div>*/}
                   </Link>
                 );
               })}
