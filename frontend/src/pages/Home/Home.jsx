@@ -1,6 +1,6 @@
 
 // frontend/src/pages/Home/Home.jsx
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Banner from '../../components/Banner/Banner';
@@ -24,40 +24,8 @@ function Home() {
 
   const [heroFading, setHeroFading] = useState(false);
 
-
-  // ✅ TRUST ROTATION (must be before any return!)
-  /*const [trustIndex, setTrustIndex] = useState(0);
-
-  const trustMessages = [
-    i18n.resolvedLanguage === 'de'
-      ? '🚚 Kostenlose Lieferung ab 30€'
-      : '🚚 Free shipping over €30',
-
-    i18n.resolvedLanguage === 'de'
-      ? '💰 Bis zu 60% günstiger'
-      : '💰 Up to 60% cheaper',
-
-    i18n.resolvedLanguage === 'de'
-      ? '↩ 14 Tage Rückgabe'
-      : '↩ 14-day returns',
-
-    i18n.resolvedLanguage === 'de'
-      ? '🔒 Sicher bezahlen'
-      : '🔒 Secure checkout'
-  ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTrustIndex(prev => (prev + 1) % trustMessages.length);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [trustMessages.length]);*/
-
-
-  /*const visibleCategories = Array.isArray(data.visibleRoots)
-    ? [...data.visibleRoots].sort((a, b) => a.id - b.id)
-    : [];*/
+  const categoryRef = useRef(null);
+  const [showCategories, setShowCategories] = useState(false);
 
   const visibleCategories = useMemo(() => {
     return Array.isArray(data.visibleRoots)
@@ -65,51 +33,12 @@ function Home() {
       : [];
   }, [data.visibleRoots]);
 
-
   const safeCategories = visibleCategories.filter(
     cat =>
       cat &&
       typeof cat === "object" &&
       (typeof cat.id === "number" || typeof cat.id === "string")
   );
-
-
-
-  /*const dedupeBySeries = (books = []) => {
-    const map = new Map();
-
-    for (const book of books) {
-      // ✅ Normalize series_name
-      const rawSeries = book.series_name || '';
-      const seriesKey = rawSeries.trim().toLowerCase();
-
-      // ✅ If no series → treat as unique
-      const key = seriesKey ? `series_${seriesKey}` : `book_${book.id}`;
-
-      if (!map.has(key)) {
-        map.set(key, book);
-      } else {
-        const existing = map.get(key);
-
-        // ✅ Compare publish date
-        const existingDate = new Date(existing.publish_date || 0);
-        const currentDate = new Date(book.publish_date || 0);
-
-        if (currentDate > existingDate) {
-          map.set(key, book);
-        }
-        // ✅ fallback: higher stock
-        else if (
-          currentDate.getTime() === existingDate.getTime() &&
-          (book.stock || 0) > (existing.stock || 0)
-        ) {
-          map.set(key, book);
-        }
-      }
-    }
-
-    return Array.from(map.values());
-  };*/
 
   const dedupeBySeries = (books = []) => {
     const map = new Map();
@@ -167,40 +96,23 @@ function Home() {
   }, []);
 
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShowCategories(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.2 }
+    );
 
-
-  // 1) Pick a randomized hero list ONCE whenever popularBooks loads/changes
-  /*useEffect(() => {
-    if (popularBooks && popularBooks.length > 0) {
-      const deduped = dedupeBySeries(popularBooks);
-      //const shuffled = [...popularBooks].sort(() => 0.5 - Math.random());
-
-      const shuffled = [...deduped].sort(() => 0.5 - Math.random());
-
-      setHeroBooks(shuffled);
-      setHeroIndex(0);
-    } else {
-      setHeroBooks([]);
-      setHeroIndex(0);
+    if (categoryRef.current) {
+      observer.observe(categoryRef.current);
     }
-  }, [popularBooks]);*/
 
-  /*useEffect(() => {
-    if (!popularBooks || popularBooks.length === 0) return;
-
-    setHeroBooks(prev => {
-      // ✅ if already set, do NOT reinitialize
-      if (prev.length > 0) return prev;
-
-      const deduped = dedupeBySeries(popularBooks);
-      const shuffled = [...deduped].sort(() => 0.5 - Math.random());
-
-      return shuffled;
-    });
-
-    setHeroIndex(0);
-
-  }, [popularBooks]);*/
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!popularBooks || popularBooks.length === 0) {
@@ -214,8 +126,6 @@ function Home() {
     setHeroBooks(shuffled);
     setHeroIndex(0);
   }, [popularBooks]);
-
-
 
   // 2) Auto-rotate with fade
   useEffect(() => {
@@ -346,7 +256,7 @@ function Home() {
     };
 
     fetchBooks();
-  //}, [visibleCategories, catLoading]);
+    //}, [visibleCategories, catLoading]);
   }, [catLoading, data.visibleRoots]);
 
 
@@ -627,7 +537,8 @@ function Home() {
       {/* CATEGORY ICONS */}
       {/*{visibleCategories.length > 0 && (*/}
       {safeCategories.length > 0 && categorySections.length > 0 && (
-        <section className="categories-section">
+        /*<section className="categories-section">*/
+        <section className="categories-section" ref={categoryRef}>
           <div className="container">
             <h2 className="section-title">
               <Sparkles className="title-icon" size={36} />
@@ -638,7 +549,7 @@ function Home() {
                 ? 'Wähle eine Stimmung — wir bringen dich direkt zu passenden Titeln.'
                 : 'Pick a mood — jump straight to matching titles.'}
             </p>
-            <div className="categories-grid">
+            {/*<div className="categories-grid">
 
               {safeCategories.map(cat => {
                 /*const section = categorySections.find(
@@ -647,7 +558,7 @@ function Home() {
                     s.category &&
                     typeof s.category.id !== "undefined" &&
                     s.category.id === cat.id
-                );*/
+                );removed here
 
                 const section = Array.isArray(categorySections)
                   ? categorySections.find(
@@ -693,7 +604,7 @@ function Home() {
                     to={`/books?category=${String(cat.id)}`}
                     className="category-card"
                   >
-                    {/*Category: {String(cat.id)}*/}
+                    {/*Category: {String(cat.id)} removed here
                     <div className="category-book-stack">
                       {books.map((book, index) => (
                         <img
@@ -720,68 +631,84 @@ function Home() {
               })
                 .filter(Boolean)
               }
+            </div>*/}
+
+            <div className="categories-grid">
+              {!showCategories ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="category-card skeleton-card" />
+                ))
+              ) : (
+                safeCategories
+                  .map(cat => {
+                    const section = Array.isArray(categorySections)
+                      ? categorySections.find(
+                        s =>
+                          s &&
+                          s.category &&
+                          (typeof s.category.id === "number" ||
+                            typeof s.category.id === "string") &&
+                          s.category.id == cat.id
+                      )
+                      : null;
+
+                    if (!section || !Array.isArray(section.books)) return null;
+
+                    let books = section.books.filter(
+                      b =>
+                        b &&
+                        typeof b === "object" &&
+                        typeof b.image === "string" &&
+                        b.image.trim() !== ""
+                    );
+
+                    if (books.length === 0) return null;
+
+                    if (books.length === 1) {
+                      books = [books[0], books[0], books[0]];
+                    } else if (books.length === 2) {
+                      books = [books[0], books[1], books[0]];
+                    } else {
+                      books = books.slice(0, 3);
+                    }
+
+                    return (
+                      <Link
+                        key={String(cat.id)}
+                        to={`/books?category=${String(cat.id)}`}
+                        className="category-card"
+                      >
+                        <div className="category-book-stack">
+                          {books.map((book, index) => (
+                            <img
+                              key={`${book.id}-${index}`}
+                              src={book.image}
+                              alt={
+                                typeof book.title_en === "string"
+                                  ? book.title_en
+                                  : "Book"
+                              }
+                              loading="lazy"
+                              className={`stack-book stack-book-${index}`}
+                            />
+                          ))}
+                        </div>
+
+                        <span className="category-name">
+                          {i18n.resolvedLanguage === 'de'
+                            ? (cat.name_de || cat.name_en)
+                            : cat.name_en}
+                        </span>
+                      </Link>
+                    );
+                  })
+                  .filter(Boolean)
+              )}
             </div>
+
           </div>
         </section>
       )}
-
-      {/* CATEGORY PREVIEW SECTION */}
-      {/*{categorySections.length > 0 && (
-        <section className="categories-section">
-          <div className="container">
-
-            <h2 className="section-title">
-              {i18n.resolvedLanguage === 'de'
-                ? 'Finde dein nächstes Buch'
-                : 'Find your next book'}
-            </h2>
-
-            <p className="category-sub">
-              {i18n.resolvedLanguage === 'de'
-                ? 'Durchsuche Kategorien und entdecke dein nächstes Buch'
-                : 'Browse categories and discover your next read'}
-            </p>
-
-            <div className="categories-grid">
-
-              {categorySections.map(section => (
-                <Link
-                  key={section.category.id}
-                  to={`/books?category=${section.category.id}`}
-                  className="category-card"
-                >
-
-                  <div className="category-header">
-                    <h3>
-                      {i18n.resolvedLanguage === 'de'
-                        ? (section.category.name_de || section.category.name_en)
-                        : section.category.name_en}
-                    </h3>
-
-                    <span className="category-cta">
-                      {i18n.resolvedLanguage === 'de' ? 'Ansehen →' : 'Browse →'}
-                    </span>
-                  </div>
-
-                  <div className="category-preview">
-                    {section.books.slice(0, 3).map(book => (
-                      <img
-                        key={book.id}
-                        src={book.image || 'https://via.placeholder.com/80x120'}
-                        alt={book.title_en || 'Book'}
-                      />
-                    ))}
-                  </div>
-
-                </Link>
-              ))}
-
-            </div>
-
-          </div>
-        </section>
-      )}*/}
-
 
       {/* NEW ARRIVALS */}
       {newArrivals.length > 0 && (
