@@ -421,12 +421,12 @@ function Home() {
                         className="wp-hero__bookLink"
                         aria-label={`View ${title}`}
                       >
-                        {/*<img
+                        <img
                           src={book.image ? book.image : 'https://via.placeholder.com/300x400?text=Book'}
                           alt={title}
                           className="wp-hero__bookCover"
                           loading={slotIndex === 0 ? "eager" : "lazy"}
-                        />*/}
+                        />
                       </Link>
                     );
                   })
@@ -603,7 +603,7 @@ function Home() {
       </section>
 
       {/* CATEGORY ICONS */}
-      {visibleCategories.length > 0 && (
+      {/*{visibleCategories.length > 0 && (
         <section className="categories-section">
           <div className="container">
             <h2 className="section-title">
@@ -629,7 +629,7 @@ function Home() {
                     className="category-card"
                   >
 
-                    {/* ICON (keep your existing logic) */
+                    {/* ICON (keep your existing logic) removed here
                 {/*{cat.icon_path ? (
                       <img
                         src={`${config.UPLOADS_BASE_URL}${cat.icon_path}?v=${cat.updated_at}`}
@@ -640,7 +640,7 @@ function Home() {
                       <div className="category-icon-placeholder">
                         <Image size={40} />
                       </div>
-                    )}*/}
+                    )} removed here
 
                     /* ✅ BOOK STACK FIRST */
                     /*<div className="category-book-stack">
@@ -727,7 +727,7 @@ function Home() {
                     </span>
                   </Link>
                 );
-              })}*/}
+              })} removed here
 
 
               {visibleCategories
@@ -795,7 +795,7 @@ function Home() {
             </div>
           </div>
         </section>
-      )}
+      )}*/}
 
       {/* CATEGORY PREVIEW SECTION */}
       {/*{categorySections.length > 0 && (
