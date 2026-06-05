@@ -1530,7 +1530,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
   // === BOOK APIs ===
 
 
-  app.get('/api/books/popular', async (req, res) => {
+  /*app.get('/api/books/popular', async (req, res) => {
     try {
       const [rows] = await db.execute(`
       SELECT 
@@ -1572,7 +1572,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
         TIMESTAMPDIFF(DAY, b.created_at, NOW()) * -0.1
       DESC
 
-      LIMIT 10;
+      LIMIT 30;
     `);
 
       res.json(rows);
@@ -1580,7 +1580,144 @@ const computeWorkId = (titleEn, titleDe, author) => {
       console.error('GET /api/books/popular error:', err);
       res.status(500).json({ error: 'Database error' });
     }
+  });*/
+
+  app.get('/api/books/popular', async (req, res) => {
+    try {
+      // Step 1: fetch a larger raw pool first
+      const [rows] = await db.execute(`
+      SELECT
+        b.id,
+        b.title_en,
+        b.title_de,
+        b.author,
+        b.price,
+        b.original_price,
+        b.stock,
+        b.image,
+        b.slug,
+        b.isbn13,
+        b.isbn10,
+        b.rating,
+        b.review_count,
+        b.series_name,
+        b.series_volume,
+        b.publish_date,
+        b.created_at,
+        b.popularity_score,
+        COALESCE(agg.total_quantity, 0) AS total_quantity
+      FROM books b
+      LEFT JOIN (
+        SELECT
+          oi.bookId,
+          SUM(oi.quantity) AS total_quantity
+        FROM orders o
+        JOIN JSON_TABLE(o.order_items, '$[*]'
+          COLUMNS (
+            bookId INT PATH '$.bookId',
+            quantity INT PATH '$.quantity'
+          )
+        ) AS oi
+        GROUP BY oi.bookId
+      ) AS agg
+        ON agg.bookId = b.id
+      ORDER BY
+        (COALESCE(agg.total_quantity, 0) * 10) +
+        (COALESCE(b.popularity_score, 0) * 5) +
+        (TIMESTAMPDIFF(DAY, b.created_at, NOW()) * -0.1)
+      DESC
+      LIMIT 100
+    `);
+
+      const origin = `${req.protocol}://${req.get('host')}`;
+
+      const normalizeImage = (url) => {
+        if (!url) return null;
+        if (url.startsWith('https://')) return url;
+        if (url.startsWith('http://')) return url.replace('http://', 'https://');
+        if (url.startsWith('/')) return `${origin}${url}`;
+        return `${origin}/${url}`;
+      };
+
+      const normalizedRows = rows.map((b) => ({
+        ...b,
+        image: normalizeImage(b.image),
+      }));
+
+      // Step 2: dedupe only real series
+      const seriesMap = new Map();
+      const standaloneBooks = [];
+
+      for (const book of normalizedRows) {
+        const hasValidSeries =
+          book.series_name &&
+          String(book.series_name).trim() !== '' &&
+          book.series_volume !== null &&
+          book.series_volume !== undefined &&
+          String(book.series_volume).trim() !== '';
+
+        if (!hasValidSeries) {
+          standaloneBooks.push(book);
+          continue;
+        }
+
+        const seriesKey = String(book.series_name).trim().toLowerCase();
+
+        if (!seriesMap.has(seriesKey)) {
+          seriesMap.set(seriesKey, book);
+          continue;
+        }
+
+        const existing = seriesMap.get(seriesKey);
+
+        const existingPublishDate = new Date(existing.publish_date || 0).getTime();
+        const currentPublishDate = new Date(book.publish_date || 0).getTime();
+
+        if (currentPublishDate > existingPublishDate) {
+          seriesMap.set(seriesKey, book);
+          continue;
+        }
+
+        // tie-breaker: higher popularity wins
+        if (currentPublishDate === existingPublishDate) {
+          const existingScore =
+            (Number(existing.total_quantity || 0) * 10) +
+            (Number(existing.popularity_score || 0) * 5);
+
+          const currentScore =
+            (Number(book.total_quantity || 0) * 10) +
+            (Number(book.popularity_score || 0) * 5);
+
+          if (currentScore > existingScore) {
+            seriesMap.set(seriesKey, book);
+          }
+        }
+      }
+
+      // Step 3: rebuild final pool, keep same ranking order, then cap at 20
+      const deduped = [...standaloneBooks, ...Array.from(seriesMap.values())]
+        .sort((a, b) => {
+          const scoreA =
+            (Number(a.total_quantity || 0) * 10) +
+            (Number(a.popularity_score || 0) * 5) +
+            (new Date(a.created_at || 0).getTime() / 1000000000000);
+
+          const scoreB =
+            (Number(b.total_quantity || 0) * 10) +
+            (Number(b.popularity_score || 0) * 5) +
+            (new Date(b.created_at || 0).getTime() / 1000000000000);
+
+          return scoreB - scoreA;
+        })
+        .slice(0, 20);
+
+      res.json(deduped);
+    } catch (err) {
+      console.error('GET /api/books/popular error:', err);
+      res.status(500).json({ error: 'Database error' });
+    }
   });
+
 
   app.get('/api/series/:slug', async (req, res) => {
     try {

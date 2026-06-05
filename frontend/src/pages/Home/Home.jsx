@@ -1,6 +1,5 @@
-
 // frontend/src/pages/Home/Home.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Banner from '../../components/Banner/Banner';
@@ -13,6 +12,32 @@ import './Home.css';
 import { Helmet } from 'react-helmet-async';
 import { generateBookUrl } from '../../utils/seoUrl';
 
+
+function useLazySection() {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "300px" } // preload early
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  return [ref, visible];
+}
+
 function Home() {
   const { t, i18n } = useTranslation();
   const [popularBooks, setPopularBooks] = useState([]);
@@ -23,47 +48,20 @@ function Home() {
   const [heroIndex, setHeroIndex] = useState(0);
 
   const [heroFading, setHeroFading] = useState(false);
+  const [categoryRef, showCategories] = useLazySection();
 
-  const visibleCategories = Array.isArray(data.visibleRoots)
-    ? [...data.visibleRoots].sort((a, b) => a.id - b.id)
-    : [];
+  const visibleCategories = useMemo(() => {
+    return Array.isArray(data.visibleRoots)
+      ? [...data.visibleRoots].sort((a, b) => a.id - b.id)
+      : [];
+  }, [data.visibleRoots]);
 
-
-  /*const dedupeBySeries = (books = []) => {
-    const map = new Map();
-
-    for (const book of books) {
-      // ✅ Normalize series_name
-      const rawSeries = book.series_name || '';
-      const seriesKey = rawSeries.trim().toLowerCase();
-
-      // ✅ If no series → treat as unique
-      const key = seriesKey ? `series_${seriesKey}` : `book_${book.id}`;
-
-      if (!map.has(key)) {
-        map.set(key, book);
-      } else {
-        const existing = map.get(key);
-
-        // ✅ Compare publish date
-        const existingDate = new Date(existing.publish_date || 0);
-        const currentDate = new Date(book.publish_date || 0);
-
-        if (currentDate > existingDate) {
-          map.set(key, book);
-        }
-        // ✅ fallback: higher stock
-        else if (
-          currentDate.getTime() === existingDate.getTime() &&
-          (book.stock || 0) > (existing.stock || 0)
-        ) {
-          map.set(key, book);
-        }
-      }
-    }
-
-    return Array.from(map.values());
-  };*/
+  const safeCategories = visibleCategories.filter(
+    cat =>
+      cat &&
+      typeof cat === "object" &&
+      (typeof cat.id === "number" || typeof cat.id === "string")
+  );
 
   const dedupeBySeries = (books = []) => {
     const map = new Map();
@@ -97,56 +95,27 @@ function Home() {
     return Array.from(map.values());
   };
 
-
-
   useEffect(() => {
-    /*axios.get('/api/books/popular')
-      .then(res => setPopularBooks(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setPopularBooks([]));*/
-
     axios.get('/api/books/popular')
       .then(res => {
         const books = Array.isArray(res.data) ? res.data : [];
-        setPopularBooks(dedupeBySeries(books));
+        setPopularBooks(books); // already deduped + capped to 20 in backend
       })
+      .catch(() => setPopularBooks([]));
   }, []);
 
-
-
-
-  // 1) Pick a randomized hero list ONCE whenever popularBooks loads/changes
-  /*useEffect(() => {
-    if (popularBooks && popularBooks.length > 0) {
-      const deduped = dedupeBySeries(popularBooks);
-      //const shuffled = [...popularBooks].sort(() => 0.5 - Math.random());
-
-      const shuffled = [...deduped].sort(() => 0.5 - Math.random());
-
-      setHeroBooks(shuffled);
-      setHeroIndex(0);
-    } else {
+  useEffect(() => {
+    if (!popularBooks || popularBooks.length === 0) {
       setHeroBooks([]);
       setHeroIndex(0);
+      return;
     }
-  }, [popularBooks]);*/
 
-  useEffect(() => {
-    if (!popularBooks || popularBooks.length === 0) return;
-
-    setHeroBooks(prev => {
-      // ✅ if already set, do NOT reinitialize
-      if (prev.length > 0) return prev;
-
-      const deduped = dedupeBySeries(popularBooks);
-      const shuffled = [...deduped].sort(() => 0.5 - Math.random());
-
-      return shuffled;
-    });
-
+    // hero uses the same final popular pool, just shuffled once
+    const shuffled = [...popularBooks].sort(() => 0.5 - Math.random());
+    setHeroBooks(shuffled);
     setHeroIndex(0);
-
   }, [popularBooks]);
-
 
   // 2) Auto-rotate with fade
   useEffect(() => {
@@ -220,37 +189,6 @@ function Home() {
 
     const fetchBooks = async () => {
       const sections = [];
-      for (const cat of visibleCategories) {
-        try {
-          const res = await axios.get(`/api/books/category/${cat.id}`);
-          //const books = Array.isArray(res.data) ? res.data.slice(0, 8) : [];
-
-          const booksRaw = Array.isArray(res.data) ? res.data : [];
-          console.log(`Category ${cat.name_en}:`, res.data.length);
-          //const books = dedupeBySeries(booksRaw).slice(0, 20);
-
-          const deduped = dedupeBySeries(booksRaw);
-
-          const books = deduped
-            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-            .slice(0, 20);
-
-
-          if (books.length > 0) sections.push({ category: cat, books });
-        } catch (err) {
-          console.error('Failed to load books for', cat.name_en);
-        }
-      }
-      setCategorySections(sections);
-    };
-    fetchBooks();
-  }, [visibleCategories, catLoading]);*/
-
-  useEffect(() => {
-    if (!visibleCategories.length || catLoading) return;
-
-    const fetchBooks = async () => {
-      const sections = [];
 
       for (const cat of visibleCategories) {
         try {
@@ -272,7 +210,44 @@ function Home() {
     };
 
     fetchBooks();
-  }, [visibleCategories, catLoading]);
+  }, [visibleCategories, catLoading]);*/
+
+
+  useEffect(() => {
+    if (!visibleCategories.length || catLoading) return;
+
+    const fetchBooks = async () => {
+      try {
+        const requests = visibleCategories.map(cat =>
+          axios
+            .get(`/api/home/category-sections/${cat.id}`, {
+              params: { limit: 20 }
+            })
+            .then(res => ({
+              category: cat,
+              books: Array.isArray(res.data) ? res.data : []
+            }))
+            .catch(err => {
+              console.error('Failed to load books for', cat.name_en, err);
+              return null;
+            })
+        );
+
+        const results = await Promise.all(requests);
+
+        const sections = results.filter(
+          item => item && item.books.length > 0
+        );
+
+        setCategorySections(sections);
+      } catch (err) {
+        console.error('Category sections fetch failed:', err);
+      }
+    };
+
+    fetchBooks();
+    //}, [visibleCategories, catLoading]);
+  }, [catLoading, data.visibleRoots]);
 
 
   const visibleHeroBooks = Array.from({ length: 4 }, (_, slotIndex) => {
@@ -337,6 +312,15 @@ function Home() {
 
           <div className="wp-hero__visual" aria-hidden="true">
             <div className="wp-hero__card">
+
+              {/*<div className="wp-hero__badge-save">
+                {i18n.resolvedLanguage === 'de' ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}
+              </div>
+
+              <div className="wp-hero__review">
+                ⭐ 4.8 · {i18n.resolvedLanguage === 'de' ? 'Top bewertet' : 'Top rated'}
+              </div>*/}
+
               <div className="wp-hero__chip">
                 {i18n.resolvedLanguage === 'de' ? 'Neu & Beliebt' : 'New & Popular'}
               </div>
@@ -363,7 +347,7 @@ function Home() {
                           src={book.image ? book.image : 'https://via.placeholder.com/300x400?text=Book'}
                           alt={title}
                           className="wp-hero__bookCover"
-                          loading="lazy"
+                          loading={slotIndex === 0 ? "eager" : "lazy"}
                         />
                       </Link>
                     );
@@ -377,7 +361,6 @@ function Home() {
                   </>
                 )}
               </div>
-
 
               <div className="wp-hero__info">
                 <p>
@@ -393,6 +376,45 @@ function Home() {
               </div>
 
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/*<section className="trust-strip">
+        <div className="container trust-strip__inner">
+          <span className="trust-rotating">
+            {trustMessages[trustIndex]}
+          </span>
+        </div>
+      </section>*/}
+
+      <section className="trust-strip">
+        <div className="trust-strip__wrapper">
+          <div className="trust-strip__track">
+
+            <span>🚚 {i18n.resolvedLanguage === 'de' ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</span>
+            <span>💰 {i18n.resolvedLanguage === 'de' ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</span>
+            <span>↩ {i18n.resolvedLanguage === 'de' ? '14 Tage Rückgabe' : '14-day returns'}</span>
+            <span>🔒 {i18n.resolvedLanguage === 'de' ? 'Sicher bezahlen' : 'Secure checkout'}</span>
+
+            {/* duplicate for seamless loop */}
+            <span>🚚 {i18n.resolvedLanguage === 'de' ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</span>
+            <span>💰 {i18n.resolvedLanguage === 'de' ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</span>
+            <span>↩ {i18n.resolvedLanguage === 'de' ? '14 Tage Rückgabe' : '14-day returns'}</span>
+            <span>🔒 {i18n.resolvedLanguage === 'de' ? 'Sicher bezahlen' : 'Secure checkout'}</span>
+
+            {/* duplicate for seamless loop */}
+            <span>🚚 {i18n.resolvedLanguage === 'de' ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</span>
+            <span>💰 {i18n.resolvedLanguage === 'de' ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</span>
+            <span>↩ {i18n.resolvedLanguage === 'de' ? '14 Tage Rückgabe' : '14-day returns'}</span>
+            <span>🔒 {i18n.resolvedLanguage === 'de' ? 'Sicher bezahlen' : 'Secure checkout'}</span>
+
+            {/* duplicate for seamless loop */}
+            <span>🚚 {i18n.resolvedLanguage === 'de' ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</span>
+            <span>💰 {i18n.resolvedLanguage === 'de' ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</span>
+            <span>↩ {i18n.resolvedLanguage === 'de' ? '14 Tage Rückgabe' : '14-day returns'}</span>
+            <span>🔒 {i18n.resolvedLanguage === 'de' ? 'Sicher bezahlen' : 'Secure checkout'}</span>
+
           </div>
         </div>
       </section>
@@ -447,9 +469,20 @@ function Home() {
       {popularBooks.length > 0 && (
         <section className="popular-section">
           <div className="container">
-            <h2 className="section-title">
+            {/*<h2 className="section-title">
               <span className="fire">{t('home.popular')}</span>
-            </h2>
+            </h2> */}
+
+            <div className="section-header">
+              <h2 className="section-title">
+                {t('home.popular')}
+              </h2>
+
+              <Link to="/books" className="view-all-btn">
+                {t('view_all')} →
+              </Link>
+            </div>
+
 
             <BooksSlider
               books={popularBooks}
@@ -492,12 +525,12 @@ function Home() {
       </section>
 
       {/* CATEGORY ICONS */}
-      {visibleCategories.length > 0 && (
+      {/*{visibleCategories.length > 0 && (*/}
+      {safeCategories.length > 0 && categorySections.length > 0 && (
         <section className="categories-section">
           <div className="container">
             <h2 className="section-title">
               <Sparkles className="title-icon" size={36} />
-              {/*{t('categories')}*/}
               {i18n.resolvedLanguage === 'de' ? 'Finde dein nächstes Buch' : 'Find your next book'}
             </h2>
             <p className="wp-quiz__sub">
@@ -506,29 +539,89 @@ function Home() {
                 : 'Pick a mood — jump straight to matching titles.'}
             </p>
             <div className="categories-grid">
-              {visibleCategories.map(cat => (
-                <Link
-                  key={cat.id}
-                  to={`/books?category=${cat.id}`}
-                  className="category-card"
-                >
-                  {cat.icon_path ? (
-                    <img
-                      src={`${config.UPLOADS_BASE_URL}${cat.icon_path}?v=${cat.updated_at}`}
-                      alt=""
-                      className="category-icon"
-                    />
-                  ) : (
-                    <div className="category-icon-placeholder">
-                      <Image size={40} />
+
+              {safeCategories.map(cat => {
+                /*const section = categorySections.find(
+                  s =>
+                    s &&
+                    s.category &&
+                    typeof s.category.id !== "undefined" &&
+                    s.category.id === cat.id
+                );*/
+
+                const section = Array.isArray(categorySections)
+                  ? categorySections.find(
+                    s =>
+                      s &&
+                      s.category &&
+                      (typeof s.category.id === "number" || typeof s.category.id === "string") &&
+                      s.category.id == cat.id
+                  )
+                  : null;
+
+
+                if (
+                  !section ||
+                  !section.books ||
+                  !Array.isArray(section.books)
+                ) return null;
+
+                // ✅ STEP 1 — sanitize data
+                let books = section.books.filter(
+                  b =>
+                    b &&
+                    typeof b === "object" &&
+                    typeof b.image === "string" &&
+                    b.image.trim() !== ""
+                );
+
+                // ✅ STEP 2 — skip empty
+                if (books.length === 0) return null;
+
+                // ✅ STEP 3 — normalize to 3
+                if (books.length === 1) {
+                  books = [books[0], books[0], books[0]];
+                } else if (books.length === 2) {
+                  books = [books[0], books[1], books[0]];
+                } else {
+                  books = books.slice(0, 3);
+                }
+
+                return (
+                  <Link
+                    key={String(cat.id)}
+                    to={`/books?category=${String(cat.id)}`}
+                    className="category-card"
+                  >
+                    {/*Category: {String(cat.id)} */}
+                    <div className="category-book-stack">
+                      {books.map((book, index) => (
+                        <img
+                          key={`${book.id}-${index}`}
+                          src={book.image}
+                          loading="lazy"
+                          decoding="async"
+                          alt={
+                            typeof book.title_en === "string"
+                              ? book.title_en
+                              : "Book"
+                          }
+                          className={`stack-book stack-book-${index}`}
+                        />
+                      ))}
                     </div>
-                  )}
-                  <span className="category-name">
-                    {i18n.resolvedLanguage === 'de' ? (cat.name_de || cat.name_en) : cat.name_en}
-                  </span>
-                </Link>
-              ))}
+                    <span className="category-name">
+                      {i18n.resolvedLanguage === 'de'
+                        ? (cat.name_de || cat.name_en)
+                        : cat.name_en}
+                    </span>
+                  </Link>
+                );
+              })
+                .filter(Boolean)
+              }
             </div>
+
           </div>
         </section>
       )}
