@@ -12,6 +12,32 @@ import './Home.css';
 import { Helmet } from 'react-helmet-async';
 import { generateBookUrl } from '../../utils/seoUrl';
 
+
+function useLazySection() {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "300px" } // preload early
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  return [ref, visible];
+}
+
 function Home() {
   const { t, i18n } = useTranslation();
   const [popularBooks, setPopularBooks] = useState([]);
@@ -22,6 +48,7 @@ function Home() {
   const [heroIndex, setHeroIndex] = useState(0);
 
   const [heroFading, setHeroFading] = useState(false);
+  const [categoryRef, showCategories] = useLazySection();
 
   const visibleCategories = useMemo(() => {
     return Array.isArray(data.visibleRoots)
@@ -499,7 +526,7 @@ function Home() {
 
       {/* CATEGORY ICONS */}
       {/*{visibleCategories.length > 0 && (*/}
-      {safeCategories.length > 0 && categorySections.length > 0 && (
+      {/*{safeCategories.length > 0 && categorySections.length > 0 && (
         <section className="categories-section">
           <div className="container">
             <h2 className="section-title">
@@ -520,7 +547,7 @@ function Home() {
                     s.category &&
                     typeof s.category.id !== "undefined" &&
                     s.category.id === cat.id
-                );*/
+                );removed here
 
                 const section = Array.isArray(categorySections)
                   ? categorySections.find(
@@ -566,7 +593,7 @@ function Home() {
                     to={`/books?category=${String(cat.id)}`}
                     className="category-card"
                   >
-                    {/*Category: {String(cat.id)} */}
+                    {/*Category: {String(cat.id)} removed here
                     <div className="category-book-stack">
                       {books.map((book, index) => (
                         <img
@@ -597,7 +624,90 @@ function Home() {
 
           </div>
         </section>
-      )}
+      )}*/}
+
+      <section className="categories-section" ref={categoryRef}>
+        <div className="container">
+          <h2 className="section-title">
+            <Sparkles className="title-icon" size={36} />
+            {i18n.resolvedLanguage === 'de'
+              ? 'Finde dein nächstes Buch'
+              : 'Find your next book'}
+          </h2>
+
+          <p className="wp-quiz__sub">
+            {i18n.resolvedLanguage === 'de'
+              ? 'Wähle eine Stimmung — wir bringen dich direkt zu passenden Titeln.'
+              : 'Pick a mood — jump straight to matching titles.'}
+          </p>
+
+          <div className="categories-grid">
+            {showCategories &&
+              safeCategories.length > 0 &&
+              categorySections.length > 0 &&
+              safeCategories.map(cat => {
+                const section = Array.isArray(categorySections)
+                  ? categorySections.find(
+                    s =>
+                      s &&
+                      s.category &&
+                      (typeof s.category.id === "number" ||
+                        typeof s.category.id === "string") &&
+                      s.category.id == cat.id
+                  )
+                  : null;
+
+                if (!section || !Array.isArray(section.books)) return null;
+
+                let books = section.books.filter(
+                  b =>
+                    b &&
+                    typeof b === "object" &&
+                    typeof b.image === "string" &&
+                    b.image.trim() !== ""
+                );
+
+                if (books.length === 0) return null;
+
+                if (books.length === 1) {
+                  books = [books[0], books[0], books[0]];
+                } else if (books.length === 2) {
+                  books = [books[0], books[1], books[0]];
+                } else {
+                  books = books.slice(0, 3);
+                }
+
+                return (
+                  <Link
+                    key={String(cat.id)}
+                    to={`/books?category=${String(cat.id)}`}
+                    className="category-card"
+                  >
+                    <div className="category-book-stack">
+                      {books.map((book, index) => (
+                        <img
+                          key={`${book.id}-${index}`}
+                          src={book.image}
+                          loading="lazy"
+                          decoding="async"
+                          alt={book.title_en || "Book"}
+                          className={`stack-book stack-book-${index}`}
+                        />
+                      ))}
+                    </div>
+
+                    <span className="category-name">
+                      {i18n.resolvedLanguage === 'de'
+                        ? (cat.name_de || cat.name_en)
+                        : cat.name_en}
+                    </span>
+                  </Link>
+                );
+              })}
+          </div>
+        </div>
+      </section>
+
 
       {/* NEW ARRIVALS */}
       {newArrivals.length > 0 && (
