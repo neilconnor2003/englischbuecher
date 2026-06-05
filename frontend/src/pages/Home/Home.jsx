@@ -234,6 +234,35 @@ function Home() {
 
   if (catLoading) return <div className="loading-home">Loading...</div>;
 
+
+  function useLazySection() {
+    const ref = useRef(null);
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+      if (visible) return;
+
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setVisible(true);
+            observer.disconnect();
+          }
+        },
+        { rootMargin: "200px" } // 👈 preload before user reaches
+      );
+
+      if (ref.current) observer.observe(ref.current);
+
+      return () => observer.disconnect();
+    }, [visible]);
+
+    return [ref, visible];
+  }
+
+  const [categoryRef, showCategories] = useLazySection();
+
+
   return (
     <div className="home-page-v2">
       <Helmet>
@@ -500,8 +529,10 @@ function Home() {
 
       {/* CATEGORY ICONS */}
       {/*{visibleCategories.length > 0 && (*/}
-      {safeCategories.length > 0 && categorySections.length > 0 && (
-        <section className="categories-section">
+      {/*{safeCategories.length > 0 && categorySections.length > 0 && (*/}
+      {showCategories && safeCategories.length > 0 && categorySections.length > 0 && (
+        //<section className="categories-section">
+        <section className="categories-section" ref={categoryRef}>
           <div className="container">
             <h2 className="section-title">
               <Sparkles className="title-icon" size={36} />
@@ -598,56 +629,61 @@ function Home() {
 
           </div>
         </section>
-      )}
+      )
+      }
 
       {/* NEW ARRIVALS */}
-      {newArrivals.length > 0 && (
-        <section className="new-arrivals-section">
-          <div className="container">
-            <div className="section-header">
-              <h2 className="section-title">
-                <span className="new-release-glow">{t('home.new_arrivals')}</span>
-                <span className="ml-3 text-2xl">{t('home.just_in')}</span>
-              </h2>
-              <Link to="/books?filter=new" className="view-all-btn">
-                {t('view_all')} →
-              </Link>
-            </div>
+      {
+        newArrivals.length > 0 && (
+          <section className="new-arrivals-section">
+            <div className="container">
+              <div className="section-header">
+                <h2 className="section-title">
+                  <span className="new-release-glow">{t('home.new_arrivals')}</span>
+                  <span className="ml-3 text-2xl">{t('home.just_in')}</span>
+                </h2>
+                <Link to="/books?filter=new" className="view-all-btn">
+                  {t('view_all')} →
+                </Link>
+              </div>
 
-            <BooksSlider
-              books={newArrivals}
-              variant="default"
-              className="home-swiper"
-            />
-          </div>
-        </section>
-      )}
+              <BooksSlider
+                books={newArrivals}
+                variant="default"
+                className="home-swiper"
+              />
+            </div>
+          </section>
+        )
+      }
 
       {/* CATEGORY SECTIONS */}
-      {categorySections.map(section => (
-        <section key={section.category.id} className="category-books-section">
-          <div className="container">
-            <div className="section-header">
-              <h2 className="section-title">
-                {i18n.resolvedLanguage === 'de'
-                  ? (section.category.name_de || section.category.name_en)
-                  : section.category.name_en}
-              </h2>
-              <Link to={`/books?category=${section.category.id}`} className="view-all-btn">
-                {t('view_all')} →
-              </Link>
+      {
+        categorySections.map(section => (
+          <section key={section.category.id} className="category-books-section">
+            <div className="container">
+              <div className="section-header">
+                <h2 className="section-title">
+                  {i18n.resolvedLanguage === 'de'
+                    ? (section.category.name_de || section.category.name_en)
+                    : section.category.name_en}
+                </h2>
+                <Link to={`/books?category=${section.category.id}`} className="view-all-btn">
+                  {t('view_all')} →
+                </Link>
+              </div>
+
+              <BooksSlider
+                books={section.books}
+                variant="default"
+                className="home-swiper"
+              />
             </div>
+          </section>
+        ))
+      }
 
-            <BooksSlider
-              books={section.books}
-              variant="default"
-              className="home-swiper"
-            />
-          </div>
-        </section>
-      ))}
-
-    </div>
+    </div >
   );
 }
 
