@@ -21,6 +21,9 @@ const fs = require('fs');
 const axios = require('axios');   // ← ADD THIS LINE
 const cookieParser = require('cookie-parser');
 
+const cron = require('node-cron');
+const Anthropic = require('@anthropic-ai/sdk');
+
 const dpdRoutes = require('./routes/dpd');
 //('✅ LOADING dpd routes from:', require.resolve('./routes/dpd'));
 
@@ -1847,7 +1850,99 @@ const computeWorkId = (titleEn, titleDe, author) => {
   //   is_book_of_week: checkbox — "Book of the Week"
   // =========================================================
 
-  require('./services/bookOfWeekCron');
+  // ── BOOK OF THE WEEK CRON ─────────────────────────────
+  // Paste this block in server.js replacing:
+  //   require('./services/bookOfWeekCron');
+  //
+  // Place it AFTER your DB connection is set up and
+  // BEFORE app.listen — it already has access to `db`.
+  // Run: npm install node-cron @anthropic-ai/sdk
+  // Add to .env: ANTHROPIC_API_KEY=sk-ant-...
+  // ──────────────────────────────────────────────────────
+
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+  async function pickBookOfWeek() {
+    console.log('[BookOfWeek] Starting weekly pick…');
+    try {
+      const [candidates] = await db.query(`
+        SELECT b.id, b.title_en, b.title_de, b.publish_date,
+               a.name AS author_name
+        FROM books b
+        LEFT JOIN authors a ON b.author_id = a.id
+        WHERE b.stock > 0
+          AND b.image IS NOT NULL AND b.image != ''
+        ORDER BY b.publish_date DESC
+        LIMIT 60
+      `);
+
+      if (!candidates.length) {
+        console.log('[BookOfWeek] No candidates, skipping.');
+        return;
+      }
+
+      const bookList = candidates
+        .map((b, i) =>
+          `${i + 1}. ID=${b.id} | "${b.title_en || b.title_de}" by ${b.author_name || 'Unknown'} | Published: ${b.publish_date?.toISOString?.()?.slice(0, 10) || 'Unknown'}`
+        )
+        .join('\n');
+
+      const message = await anthropic.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 100,
+        messages: [{
+          role: 'user',
+          content: `You are a book curator for an English-language bookstore in Germany.
+
+From the list below, pick the ONE book that is most likely to be culturally relevant, trending, or noteworthy THIS WEEK globally — considering literary awards, author prominence, seasonal themes, or general public interest.
+
+Respond with ONLY the book ID number. No explanation. Just the number.
+
+Books:
+${bookList}`,
+        }],
+      });
+
+      const responseText = message.content[0]?.text?.trim() || '';
+      const idMatch = responseText.match(/\d+/);
+      if (!idMatch) {
+        console.error('[BookOfWeek] Unexpected Claude response:', responseText);
+        return;
+      }
+
+      const pickedId = parseInt(idMatch[0], 10);
+      const isValid = candidates.some(b => b.id === pickedId);
+      if (!isValid) {
+        console.error(`[BookOfWeek] Claude returned invalid ID ${pickedId}`);
+        return;
+      }
+
+      await db.query('UPDATE books SET is_book_of_week = 0 WHERE is_book_of_week = 1');
+      await db.query('UPDATE books SET is_book_of_week = 1 WHERE id = ?', [pickedId]);
+
+      const picked = candidates.find(b => b.id === pickedId);
+      console.log(`[BookOfWeek] ✅ Picked: "${picked.title_en || picked.title_de}" (ID: ${pickedId})`);
+
+    } catch (err) {
+      console.error('[BookOfWeek] Error:', err.message);
+    }
+  }
+
+  // Run every Monday at 06:00 Berlin time
+  cron.schedule('0 6 * * 1', pickBookOfWeek, { timezone: 'Europe/Berlin' });
+  console.log('[BookOfWeek] Cron scheduled — every Monday 06:00 Berlin time');
+
+  // On startup: if no book is set, pick one immediately
+  db.query('SELECT COUNT(*) as cnt FROM books WHERE is_book_of_week = 1')
+    .then(([[row]]) => {
+      if (row.cnt === 0) {
+        console.log('[BookOfWeek] None set — running initial pick…');
+        pickBookOfWeek();
+      }
+    })
+    .catch(err => console.error('[BookOfWeek] Startup check failed:', err.message));
+
+  // ── END BOOK OF THE WEEK CRON ─────────────────────────
 
 
 

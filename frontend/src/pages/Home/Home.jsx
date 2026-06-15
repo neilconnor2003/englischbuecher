@@ -108,7 +108,7 @@ function StatsBar({ de }) {
     <section className="home-stats-section">
       <div className="container">
         <div className="home-stats-grid">
-          {[0,1,2,3].map(i => (
+          {[0, 1, 2, 3].map(i => (
             <div className="home-stats-item home-stats-item--loading" key={i}>
               <div className="home-stats-num home-stats-skeleton" />
               <div className="home-stats-label home-stats-skeleton home-stats-skeleton--sm" />
@@ -120,10 +120,10 @@ function StatsBar({ de }) {
   );
 
   const items = [
-    { value: stats.books,   suffix: '+',  duration: 1600, label: de ? 'Bücher auf Lager'         : 'Books in stock'       },
-    { value: stats.readers, suffix: '+',  duration: 2000, label: de ? 'Zufriedene Leser'          : 'Happy readers'        },
-    { value: stats.saving,  suffix: '%',  duration: 1200, label: de ? 'Günstiger als Amazon'      : 'Cheaper than Amazon'  },
-    { value: stats.reviews, suffix: 'K+', duration: 2200, label: de ? 'Bewertungen & Rezensionen' : '5-star reviews'       },
+    { value: stats.books, suffix: '+', duration: 1600, label: de ? 'Bücher auf Lager' : 'Books in stock' },
+    { value: stats.readers, suffix: '+', duration: 2000, label: de ? 'Zufriedene Leser' : 'Happy readers' },
+    { value: stats.saving, suffix: '%', duration: 1200, label: de ? 'Günstiger als Amazon' : 'Cheaper than Amazon' },
+    { value: stats.reviews, suffix: 'K+', duration: 2200, label: de ? 'Bewertungen & Rezensionen' : '5-star reviews' },
   ];
 
   return (
@@ -145,17 +145,17 @@ function BookOfTheWeek({ de }) {
   useEffect(() => {
     axios.get('/api/books/book-of-week')
       .then(res => { if (res.data && res.data.id) setBook(res.data); })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
   if (!book) return null;
 
-  const title  = de ? (book.title_de || book.title_en) : (book.title_en || book.title_de);
+  const title = de ? (book.title_de || book.title_en) : (book.title_en || book.title_de);
   const author = book.author_name || book.author || '';
-  const desc   = de ? (book.description_de || book.description_en) : (book.description_en || book.description_de);
-  const price  = parseFloat(book.price || 0).toFixed(2);
-  const orig   = parseFloat(book.original_price || 0);
+  const desc = de ? (book.description_de || book.description_en) : (book.description_en || book.description_de);
+  const price = parseFloat(book.price || 0).toFixed(2);
+  const orig = parseFloat(book.original_price || 0);
   const saving = orig > 0 ? Math.round(((orig - book.price) / orig) * 100) : 0;
-  const to     = generateBookUrl(book);
+  const to = generateBookUrl(book);
 
   return (
     <section className="botw-section">
@@ -285,7 +285,7 @@ function AuthorSpotlight({ de }) {
           setAuthorBooks(books.filter(b => b.image).slice(0, 5));
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   if (!author) return null;
@@ -358,7 +358,7 @@ function Home() {
 
   const safeCategories = visibleCategories.filter(
     cat => cat && typeof cat === 'object' &&
-           (typeof cat.id === 'number' || typeof cat.id === 'string')
+      (typeof cat.id === 'number' || typeof cat.id === 'string')
   );
 
   const dedupeBySeries = (books = []) => {
@@ -516,7 +516,7 @@ function Home() {
       </section>
 
       {/* ── TRUST STRIP ───────────────────────────────── */}
-      <section className="trust-strip">
+      {/*<section className="trust-strip">
         <div className="trust-strip__wrapper">
           <div className="trust-strip__track">
             <span>🚚 {de ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</span>
@@ -535,6 +535,41 @@ function Home() {
             <span>💰 {de ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</span>
             <span>↩ {de ? '14 Tage Rückgabe' : '14-day returns'}</span>
             <span>🔒 {de ? 'Sicher bezahlen' : 'Secure checkout'}</span>
+          </div>
+        </div>
+      </section>*/}
+      {/* ── TRUST STRIP ───────────────────────────────────── */}
+      <section className="trust-strip">
+        <div className="trust-strip__inner">
+          <div className="trust-strip__item">
+            <span className="trust-strip__icon">🚚</span>
+            <span className="trust-strip__bold">Free Shipping</span>
+            <span className="trust-strip__light">{de ? 'ab 30€' : 'over €30'}</span>
+          </div>
+          <div className="trust-strip__sep" />
+          <div className="trust-strip__item">
+            <span className="trust-strip__bold">India</span>
+            <span className="trust-strip__light">Direct Import</span>
+          </div>
+          <div className="trust-strip__sep" />
+          <div className="trust-strip__item">
+            <span className="trust-strip__bold">500+</span>
+            <span className="trust-strip__light">English Titles</span>
+          </div>
+          <div className="trust-strip__sep" />
+          <div className="trust-strip__item">
+            <span className="trust-strip__bold">60%</span>
+            <span className="trust-strip__light">{de ? 'Durchschn. Ersparnis' : 'Average Savings'}</span>
+          </div>
+          <div className="trust-strip__sep" />
+          <div className="trust-strip__item">
+            <span className="trust-strip__bold">2,400+</span>
+            <span className="trust-strip__light">{de ? 'Zufriedene Leser' : 'Happy Readers'}</span>
+          </div>
+          <div className="trust-strip__sep" />
+          <div className="trust-strip__item">
+            <span className="trust-strip__bold">14</span>
+            <span className="trust-strip__light">{de ? 'Tage Rückgabe' : 'Day Returns'}</span>
           </div>
         </div>
       </section>
@@ -623,8 +658,8 @@ function Home() {
               {safeCategories.map(cat => {
                 const section = Array.isArray(categorySections)
                   ? categorySections.find(s => s && s.category &&
-                      (typeof s.category.id === 'number' || typeof s.category.id === 'string') &&
-                      s.category.id == cat.id)
+                    (typeof s.category.id === 'number' || typeof s.category.id === 'string') &&
+                    s.category.id == cat.id)
                   : null;
                 if (!section || !section.books || !Array.isArray(section.books)) return null;
                 let books = section.books.filter(b => b && typeof b === 'object' && typeof b.image === 'string' && b.image.trim() !== '');

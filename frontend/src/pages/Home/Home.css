@@ -1259,3 +1259,64 @@
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* ── TRUST STRIP ────────────────────────────────────────── */
+.trust-strip {
+  background: #12082a;
+  border-top: 1px solid rgba(147, 51, 234, 0.2);
+  border-bottom: 1px solid rgba(147, 51, 234, 0.2);
+  padding: 0 32px;
+}
+
+.trust-strip__inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  gap: 0;
+}
+.trust-strip__inner::-webkit-scrollbar { display: none; }
+
+.trust-strip__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 0 24px;
+}
+
+.trust-strip__sep {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+}
+
+.trust-strip__icon {
+  font-size: 1rem;
+}
+
+.trust-strip__bold {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.trust-strip__light {
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.01em;
+}
+
+@media (max-width: 768px) {
+  .trust-strip { padding: 0 16px; }
+  .trust-strip__item { padding: 0 14px; }
+  .trust-strip__bold { font-size: 0.9rem; }
+}
