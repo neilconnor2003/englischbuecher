@@ -348,22 +348,23 @@
 
 /* ── TRUST STRIP ────────────────────────────────────────── */
 .trust-strip {
-  padding: 0;
-  background: var(--fog-purple);
-  border-top: 1px solid var(--border-light);
-  border-bottom: 1px solid var(--border-light);
+  background: #12082a;
+  border-top: 1px solid rgba(147, 51, 234, 0.2);
+  border-bottom: 1px solid rgba(147, 51, 234, 0.2);
   overflow: hidden;
+  padding: 0;
 }
 
 .trust-strip__wrapper {
   overflow: hidden;
   width: 100%;
-  padding: 12px 0;
+  padding: 14px 0;
 }
 
 .trust-strip__track {
   display: flex;
-  gap: 14px;
+  /*gap: 14px;*/
+  gap: 0;
   width: max-content;
   animation: trust-scroll 32s linear infinite;
   will-change: transform;
@@ -378,17 +379,42 @@
 .trust-strip__track span {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  background: var(--white);
-  padding: 8px 16px;
-  border-radius: var(--radius-full);
+  /*gap: 7px;*/
+  gap: 8px;
+  /*background: var(--white);*/
+  background: transparent;
+  /*padding: 8px 16px;*/
+  padding: 0 28px;
+  /*border-radius: var(--radius-full);*/
+  border-radius: 0;
   border: 1px solid var(--border);
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--ink);
   white-space: nowrap;
   flex-shrink: 0;
-  box-shadow: var(--shadow-sm);
+  /*box-shadow: var(--shadow-sm);*/
+  box-shadow: none;
+
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: none;
+  border-bottom: none;
+  border-left: none;
+}
+
+/* ── TRUST STRIP ────────────────────────────────────────── */
+.trust-strip__track span strong {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.trust-strip__track span em {
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
+  font-style: normal;
 }
 
 /* ── WAYS TO SHOP ───────────────────────────────────────── */
@@ -1258,65 +1284,4 @@
 @keyframes statsSkelShimmer {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
-}
-
-/* ── TRUST STRIP ────────────────────────────────────────── */
-.trust-strip {
-  background: #12082a;
-  border-top: 1px solid rgba(147, 51, 234, 0.2);
-  border-bottom: 1px solid rgba(147, 51, 234, 0.2);
-  padding: 0 32px;
-}
-
-.trust-strip__inner {
-  max-width: 1280px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 56px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  gap: 0;
-}
-.trust-strip__inner::-webkit-scrollbar { display: none; }
-
-.trust-strip__item {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
-  flex-shrink: 0;
-  padding: 0 24px;
-}
-
-.trust-strip__sep {
-  width: 1px;
-  height: 24px;
-  background: rgba(255, 255, 255, 0.12);
-  flex-shrink: 0;
-}
-
-.trust-strip__icon {
-  font-size: 1rem;
-}
-
-.trust-strip__bold {
-  font-size: 1rem;
-  font-weight: 800;
-  color: #ffffff;
-  letter-spacing: -0.02em;
-}
-
-.trust-strip__light {
-  font-size: 0.82rem;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.5);
-  letter-spacing: 0.01em;
-}
-
-@media (max-width: 768px) {
-  .trust-strip { padding: 0 16px; }
-  .trust-strip__item { padding: 0 14px; }
-  .trust-strip__bold { font-size: 0.9rem; }
 }

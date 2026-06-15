@@ -516,7 +516,7 @@ function Home() {
       </section>
 
       {/* ── TRUST STRIP ───────────────────────────────── */}
-      {/*<section className="trust-strip">
+      <section className="trust-strip">
         <div className="trust-strip__wrapper">
           <div className="trust-strip__track">
             <span>🚚 {de ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</span>
@@ -537,9 +537,9 @@ function Home() {
             <span>🔒 {de ? 'Sicher bezahlen' : 'Secure checkout'}</span>
           </div>
         </div>
-      </section>*/}
+      </section>
       {/* ── TRUST STRIP ───────────────────────────────────── */}
-      <section className="trust-strip">
+      {/*<section className="trust-strip">
         <div className="trust-strip__inner">
           <div className="trust-strip__item">
             <span className="trust-strip__icon">🚚</span>
@@ -572,7 +572,7 @@ function Home() {
             <span className="trust-strip__light">{de ? 'Tage Rückgabe' : 'Day Returns'}</span>
           </div>
         </div>
-      </section>
+      </section>*/}
 
       {/* ── BOOK OF THE WEEK ──────────────────────────── */}
       <BookOfTheWeek de={de} />
