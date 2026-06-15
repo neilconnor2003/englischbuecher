@@ -519,22 +519,18 @@ function Home() {
       <section className="trust-strip">
         <div className="trust-strip__wrapper">
           <div className="trust-strip__track">
-            <span>🚚 {de ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</span>
-            <span>💰 {de ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</span>
-            <span>↩ {de ? '14 Tage Rückgabe' : '14-day returns'}</span>
-            <span>🔒 {de ? 'Sicher bezahlen' : 'Secure checkout'}</span>
-            <span>🚚 {de ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</span>
-            <span>💰 {de ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</span>
-            <span>↩ {de ? '14 Tage Rückgabe' : '14-day returns'}</span>
-            <span>🔒 {de ? 'Sicher bezahlen' : 'Secure checkout'}</span>
-            <span>🚚 {de ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</span>
-            <span>💰 {de ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</span>
-            <span>↩ {de ? '14 Tage Rückgabe' : '14-day returns'}</span>
-            <span>🔒 {de ? 'Sicher bezahlen' : 'Secure checkout'}</span>
-            <span>🚚 {de ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</span>
-            <span>💰 {de ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</span>
-            <span>↩ {de ? '14 Tage Rückgabe' : '14-day returns'}</span>
-            <span>🔒 {de ? 'Sicher bezahlen' : 'Secure checkout'}</span>
+            {[0,1,2].map(i => (
+              <React.Fragment key={i}>
+                <span>🚚 <strong>{de ? 'Kostenloser Versand' : 'Free Shipping'}</strong> <em>{de ? 'ab 30 €' : 'over €30'}</em></span>
+                <span><strong>India</strong> <em>{de ? 'Direktimport' : 'Direct Import'}</em></span>
+                <span><strong>500+</strong> <em>{de ? 'Englische Titel' : 'English Titles'}</em></span>
+                <span><strong>60%</strong> <em>{de ? 'Durchschn. Ersparnis' : 'Average Savings'}</em></span>
+                <span><strong>2,400+</strong> <em>{de ? 'Zufriedene Leser' : 'Happy Readers'}</em></span>
+                <span>↩ <strong>14</strong> <em>{de ? 'Tage Rückgabe' : 'Day Returns'}</em></span>
+                <span>🔒 <strong>{de ? 'Sicher bezahlen' : 'Secure Checkout'}</strong></span>
+                <span>📦 <strong>{de ? 'Schneller Versand' : 'Fast Dispatch'}</strong></span>
+              </React.Fragment>
+            ))}
           </div>
         </div>
       </section>
