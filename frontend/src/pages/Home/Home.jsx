@@ -4,588 +4,398 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Banner from '../../components/Banner/Banner';
 import config from '@config';
-import { Image, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { useGetCategoriesQuery } from '../../admin/features/book/bookApiSlice';
 import axios from 'axios';
-import BooksSlider from '../../components/BooksSlider/BooksSlider'; // NEW
+import BooksSlider from '../../components/BooksSlider/BooksSlider';
 import './Home.css';
 import { Helmet } from 'react-helmet-async';
 import { generateBookUrl } from '../../utils/seoUrl';
 
-
+/* ─── Lazy-section hook (unchanged) ───────────────────── */
 function useLazySection() {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
-
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "300px" } // preload early
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } },
+      { rootMargin: '300px' }
     );
-
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-
+    if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
   }, []);
-
   return [ref, visible];
 }
 
+/* ─── Component ────────────────────────────────────────── */
 function Home() {
   const { t, i18n } = useTranslation();
-  const [popularBooks, setPopularBooks] = useState([]);
+  const de = i18n.resolvedLanguage === 'de';
+
+  const [popularBooks, setPopularBooks]       = useState([]);
+  const [newArrivals, setNewArrivals]         = useState([]);
   const [categorySections, setCategorySections] = useState([]);
-  const { data = { visibleRoots: [] }, isLoading: catLoading } = useGetCategoriesQuery();
+  const [heroBooks, setHeroBooks]             = useState([]);
+  const [heroIndex, setHeroIndex]             = useState(0);
+  const [heroFading, setHeroFading]           = useState(false);
 
-  const [heroBooks, setHeroBooks] = useState([]);
-  const [heroIndex, setHeroIndex] = useState(0);
-
-  const [heroFading, setHeroFading] = useState(false);
   const [categoryRef, showCategories] = useLazySection();
 
-  const visibleCategories = useMemo(() => {
-    return Array.isArray(data.visibleRoots)
+  const { data = { visibleRoots: [] }, isLoading: catLoading } = useGetCategoriesQuery();
+
+  /* Visible categories */
+  const visibleCategories = useMemo(() =>
+    Array.isArray(data.visibleRoots)
       ? [...data.visibleRoots].sort((a, b) => a.id - b.id)
-      : [];
-  }, [data.visibleRoots]);
+      : []
+  , [data.visibleRoots]);
 
   const safeCategories = visibleCategories.filter(
-    cat =>
-      cat &&
-      typeof cat === "object" &&
-      (typeof cat.id === "number" || typeof cat.id === "string")
+    cat => cat && typeof cat === 'object' &&
+           (typeof cat.id === 'number' || typeof cat.id === 'string')
   );
 
+  /* Dedupe series (unchanged) */
   const dedupeBySeries = (books = []) => {
     const map = new Map();
-
     for (const book of books) {
       const hasValidSeries =
-        book.series_name &&
-        book.series_volume !== null &&
-        book.series_volume !== '';
-
-      // ✅ only treat as series IF both exist
+        book.series_name && book.series_volume !== null && book.series_volume !== '';
       const key = hasValidSeries
         ? `series_${book.series_name.trim().toLowerCase()}`
         : `book_${book.id}`;
-
       if (!map.has(key)) {
         map.set(key, book);
       } else {
         const existing = map.get(key);
-
-        // ✅ pick latest by publish_date
-        const existingDate = new Date(existing.publish_date || 0);
-        const currentDate = new Date(book.publish_date || 0);
-
-        if (currentDate > existingDate) {
+        if (new Date(book.publish_date || 0) > new Date(existing.publish_date || 0)) {
           map.set(key, book);
         }
       }
     }
-
     return Array.from(map.values());
   };
 
+  /* Popular books */
   useEffect(() => {
     axios.get('/api/books/popular')
-      .then(res => {
-        const books = Array.isArray(res.data) ? res.data : [];
-        setPopularBooks(books); // already deduped + capped to 20 in backend
-      })
+      .then(res => setPopularBooks(Array.isArray(res.data) ? res.data : []))
       .catch(() => setPopularBooks([]));
   }, []);
 
+  /* Hero rotation setup */
   useEffect(() => {
-    if (!popularBooks || popularBooks.length === 0) {
-      setHeroBooks([]);
-      setHeroIndex(0);
-      return;
-    }
-
-    // hero uses the same final popular pool, just shuffled once
-    const shuffled = [...popularBooks].sort(() => 0.5 - Math.random());
-    setHeroBooks(shuffled);
+    if (!popularBooks.length) { setHeroBooks([]); setHeroIndex(0); return; }
+    setHeroBooks([...popularBooks].sort(() => 0.5 - Math.random()));
     setHeroIndex(0);
   }, [popularBooks]);
 
-  // 2) Auto-rotate with fade
+  /* Hero auto-rotate with fade */
   useEffect(() => {
-    if (!heroBooks || heroBooks.length === 0) return;
-
+    if (!heroBooks.length) return;
     let fadeTimeout = null;
-
     const interval = setInterval(() => {
       setHeroFading(true);
-
-      // After fade-out, advance index and fade back in
       fadeTimeout = setTimeout(() => {
-        setHeroIndex((prev) => (prev + 1) % heroBooks.length);
+        setHeroIndex(prev => (prev + 1) % heroBooks.length);
         setHeroFading(false);
-      }, 260); // matches CSS transition duration below
+      }, 260);
     }, 5000);
-
-    return () => {
-      clearInterval(interval);
-      if (fadeTimeout) clearTimeout(fadeTimeout);
-    };
+    return () => { clearInterval(interval); if (fadeTimeout) clearTimeout(fadeTimeout); };
   }, [heroBooks]);
 
-  const [newArrivals, setNewArrivals] = useState([]);
+  /* New arrivals */
   useEffect(() => {
     axios.get('/api/books')
       .then(res => {
-        const allBooks = Array.isArray(res.data) ? res.data : [];
-        //const filtered = allBooks.filter(b => b.is_new_release === 1).slice(0, 12);
-
-        const filtered = dedupeBySeries(
-          allBooks.filter(b => b.is_new_release === 1)
-        ).slice(0, 12);
-
-        setNewArrivals(filtered);
+        const all = Array.isArray(res.data) ? res.data : [];
+        setNewArrivals(dedupeBySeries(all.filter(b => b.is_new_release === 1)).slice(0, 12));
       })
-      .catch(err => {
-        console.error('Failed to load new arrivals:', err);
-        setNewArrivals([]);
-      });
+      .catch(() => setNewArrivals([]));
   }, []);
 
-
-  // Smooth scroll-reveal animations (IntersectionObserver)
-  useEffect(() => {
-    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-    if (reduceMotion) return; // respect reduced motion preference
-
-    const sections = document.querySelectorAll('.home-page-v2 > section');
-    sections.forEach((s) => s.classList.add('reveal'));
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('reveal--in');
-            observer.unobserve(entry.target); // reveal once (premium feel)
-          }
-        });
-      },
-      { threshold: 0.12, rootMargin: '0px 0px -10% 0px' }
-    );
-
-    sections.forEach((s) => observer.observe(s));
-
-    return () => observer.disconnect();
-  }, []);
-
-  /*useEffect(() => {
-    if (!visibleCategories.length || catLoading) return;
-
-    const fetchBooks = async () => {
-      const sections = [];
-
-      for (const cat of visibleCategories) {
-        try {
-          const res = await axios.get(`/api/home/category-sections/${cat.id}`, {
-            params: { limit: 20 }
-          });
-
-          const books = Array.isArray(res.data) ? res.data : [];
-
-          if (books.length > 0) {
-            sections.push({ category: cat, books });
-          }
-        } catch (err) {
-          console.error('Failed to load books for', cat.name_en, err);
-        }
-      }
-
-      setCategorySections(sections);
-    };
-
-    fetchBooks();
-  }, [visibleCategories, catLoading]);*/
-
-
+  /* Category sections */
   useEffect(() => {
     if (!visibleCategories.length || catLoading) return;
-
     const fetchBooks = async () => {
       try {
         const requests = visibleCategories.map(cat =>
-          axios
-            .get(`/api/home/category-sections/${cat.id}`, {
-              params: { limit: 20 }
-            })
-            .then(res => ({
-              category: cat,
-              books: Array.isArray(res.data) ? res.data : []
-            }))
-            .catch(err => {
-              console.error('Failed to load books for', cat.name_en, err);
-              return null;
-            })
+          axios.get(`/api/home/category-sections/${cat.id}`, { params: { limit: 20 } })
+            .then(res => ({ category: cat, books: Array.isArray(res.data) ? res.data : [] }))
+            .catch(() => null)
         );
-
         const results = await Promise.all(requests);
-
-        const sections = results.filter(
-          item => item && item.books.length > 0
-        );
-
-        setCategorySections(sections);
+        setCategorySections(results.filter(item => item && item.books.length > 0));
       } catch (err) {
         console.error('Category sections fetch failed:', err);
       }
     };
-
     fetchBooks();
-    //}, [visibleCategories, catLoading]);
   }, [catLoading, data.visibleRoots]);
 
+  /* Scroll-reveal animations */
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return;
+    const sections = document.querySelectorAll('.home-page-v2 > section');
+    sections.forEach(s => s.classList.add('reveal'));
+    const observer = new IntersectionObserver(
+      entries => entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('reveal--in');
+          observer.unobserve(entry.target);
+        }
+      }),
+      { threshold: 0.10, rootMargin: '0px 0px -8% 0px' }
+    );
+    sections.forEach(s => observer.observe(s));
+    return () => observer.disconnect();
+  }, []);
 
-  const visibleHeroBooks = Array.from({ length: 4 }, (_, slotIndex) => {
-    if (!heroBooks || heroBooks.length === 0) return null;
-    if (slotIndex >= heroBooks.length) return null;
-
-    const wrappedIndex = (heroIndex + slotIndex) % heroBooks.length;
-    return heroBooks[wrappedIndex];
+  /* Hero book slots */
+  const visibleHeroBooks = Array.from({ length: 4 }, (_, i) => {
+    if (!heroBooks.length || i >= heroBooks.length) return null;
+    return heroBooks[(heroIndex + i) % heroBooks.length];
   });
 
-  if (catLoading) return <div className="loading-home">Loading...</div>;
+  if (catLoading) return <div className="loading-home">Loading…</div>;
 
   return (
     <div className="home-page-v2">
       <Helmet>
         <title>{t('home.meta.title')}</title>
-        <meta
-          name="description"
-          content={t('home.meta.description')}
-        />
+        <meta name="description" content={t('home.meta.description')} />
         <link rel="canonical" href="https://englischbuecher.de/" />
       </Helmet>
 
       <Banner />
 
-      {/* WARBY-STYLE HERO (BOOKSTORE VERSION) */}
+      {/* ── HERO ───────────────────────────────────────── */}
       <section className="wp-hero">
         <div className="container wp-hero__inner">
+
+          {/* Copy */}
           <div className="wp-hero__copy">
-            <p className="wp-hero__kicker">
-              {i18n.resolvedLanguage === 'de' ? 'Englische Bücher in Deutschland' : 'English books in Germany'}
-            </p>
+            <span className="wp-hero__kicker">
+              {de ? 'Englische Bücher in Deutschland' : 'English books in Germany'}
+            </span>
 
             <h2 className="wp-hero__title">
-              {i18n.resolvedLanguage === 'de'
-                ? 'Finde dein nächstes Lieblingsbuch – schnell & stressfrei'
-                : 'Find your next favorite read — fast & effortless'}
+              {de
+                ? 'Finde dein nächstes Lieblingsbuch'
+                : 'Find your next favourite read'}
             </h2>
 
             <p className="wp-hero__subtitle">
-              {i18n.resolvedLanguage === 'de'
-                ? 'Bestseller, Klassiker & Neuheiten. Sicher bezahlen.'
-                : 'Bestsellers, classics & new arrivals. Secure checkout.'}
+              {de
+                ? 'Bestseller, Klassiker & Neuheiten — bis zu 60 % günstiger als im deutschen Buchhandel. Sicher bezahlen, schnell geliefert.'
+                : 'Bestsellers, classics & new arrivals — up to 60% cheaper than German retailers. Secure checkout, fast delivery.'}
             </p>
 
             <div className="wp-hero__actions">
               <Link className="wp-btn wp-btn--primary" to="/books">
-                {i18n.resolvedLanguage === 'de' ? 'Jetzt stöbern' : 'Browse books'}
+                {de ? 'Jetzt stöbern' : 'Browse books'}
               </Link>
-
               <Link className="wp-btn wp-btn--ghost" to="/request-book">
-                {i18n.resolvedLanguage === 'de' ? 'Buch anfragen' : 'Request a book'}
+                {de ? 'Buch anfragen' : 'Request a book'}
               </Link>
             </div>
 
             <div className="wp-trust">
-              <span>✓ {i18n.resolvedLanguage === 'de' ? 'Sichere Zahlung' : 'Secure payment'}</span>
-              <span>✓ {i18n.resolvedLanguage === 'de' ? 'Versand in DE' : 'Shipping in Germany'}</span>
-              {/*<span>✓ {i18n.resolvedLanguage === 'de' ? 'Click & Collect' : 'Click & Collect'}</span>*/}
+              <span>✓ {de ? 'Sichere Zahlung' : 'Secure payment'}</span>
+              <span>✓ {de ? 'Versand in DE' : 'Ships to Germany'}</span>
+              <span>✓ {de ? '14 Tage Rückgabe' : '14-day returns'}</span>
             </div>
           </div>
 
+          {/* Visual card */}
           <div className="wp-hero__visual" aria-hidden="true">
             <div className="wp-hero__card">
-
-              {/*<div className="wp-hero__badge-save">
-                {i18n.resolvedLanguage === 'de' ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}
-              </div>
-
-              <div className="wp-hero__review">
-                ⭐ 4.8 · {i18n.resolvedLanguage === 'de' ? 'Top bewertet' : 'Top rated'}
-              </div>*/}
-
               <div className="wp-hero__chip">
-                {i18n.resolvedLanguage === 'de' ? 'Neu & Beliebt' : 'New & Popular'}
+                {de ? 'Neu & Beliebt' : 'New & Popular'}
               </div>
 
-              <div className={`wp-hero__mockGrid ${heroFading ? 'wp-hero__mockGrid--fade' : ''}`}>
-
-                {heroBooks && heroBooks.length > 0 ? (
-                  visibleHeroBooks.map((book, slotIndex) => {
-                    if (!book) {
-                      return <div key={`placeholder-${slotIndex}`} className="wp-hero__mockCover" />;
-                    }
-
-                    const to = generateBookUrl(book);
-                    const title = book.title_en || book.title_de || book.title || 'Book';
-
-                    return (
-                      <Link
-                        key={`hero-slot-${slotIndex}-${book.id}`}
-                        to={to}
-                        className="wp-hero__bookLink"
-                        aria-label={`View ${title}`}
-                      >
-                        <img
-                          src={book.image ? book.image : 'https://via.placeholder.com/300x400?text=Book'}
-                          alt={title}
-                          className="wp-hero__bookCover"
-                          loading={slotIndex === 0 ? "eager" : "lazy"}
-                        />
-                      </Link>
-                    );
-                  })
-                ) : (
-                  <>
-                    <div className="wp-hero__mockCover" />
-                    <div className="wp-hero__mockCover" />
-                    <div className="wp-hero__mockCover" />
-                    <div className="wp-hero__mockCover" />
-                  </>
-                )}
+              <div className={`wp-hero__mockGrid${heroFading ? ' wp-hero__mockGrid--fade' : ''}`}>
+                {heroBooks.length > 0
+                  ? visibleHeroBooks.map((book, i) => {
+                      if (!book) return <div key={`ph-${i}`} className="wp-hero__mockCover" />;
+                      const to = generateBookUrl(book);
+                      const title = book.title_en || book.title_de || book.title || 'Book';
+                      return (
+                        <Link
+                          key={`hero-${i}-${book.id}`}
+                          to={to}
+                          className="wp-hero__bookLink"
+                          aria-label={`View ${title}`}
+                        >
+                          <img
+                            src={book.image || 'https://via.placeholder.com/300x400?text=Book'}
+                            alt={title}
+                            className="wp-hero__bookCover"
+                            loading={i === 0 ? 'eager' : 'lazy'}
+                          />
+                        </Link>
+                      );
+                    })
+                  : Array.from({ length: 4 }, (_, i) => (
+                      <div key={`ph-${i}`} className="wp-hero__mockCover" />
+                    ))
+                }
               </div>
 
               <div className="wp-hero__info">
-                <p>
-                  {i18n.resolvedLanguage === 'de'
-                    ? 'Beliebte Titel & aktuelle Bestseller'
-                    : 'Popular titles & current bestsellers'}
-                </p>
+                <p>{de ? 'Beliebte Titel & aktuelle Bestseller' : 'Popular titles & current bestsellers'}</p>
                 <p className="wp-hero__info-sub">
-                  {i18n.resolvedLanguage === 'de'
-                    ? 'Schnell verfügbar und regelmäßig aktualisiert'
-                    : 'Updated regularly and ready to order'}
+                  {de ? 'Regelmäßig aktualisiert' : 'Updated regularly'}
                 </p>
               </div>
-
             </div>
           </div>
         </div>
       </section>
 
-      {/*<section className="trust-strip">
-        <div className="container trust-strip__inner">
-          <span className="trust-rotating">
-            {trustMessages[trustIndex]}
-          </span>
-        </div>
-      </section>*/}
-
-      <section className="trust-strip">
+      {/* ── TRUST STRIP ────────────────────────────────── */}
+      <section className="trust-strip" style={{ padding: 0 }}>
         <div className="trust-strip__wrapper">
           <div className="trust-strip__track">
-
-            <span>🚚 {i18n.resolvedLanguage === 'de' ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</span>
-            <span>💰 {i18n.resolvedLanguage === 'de' ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</span>
-            <span>↩ {i18n.resolvedLanguage === 'de' ? '14 Tage Rückgabe' : '14-day returns'}</span>
-            <span>🔒 {i18n.resolvedLanguage === 'de' ? 'Sicher bezahlen' : 'Secure checkout'}</span>
-
-            {/* duplicate for seamless loop */}
-            <span>🚚 {i18n.resolvedLanguage === 'de' ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</span>
-            <span>💰 {i18n.resolvedLanguage === 'de' ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</span>
-            <span>↩ {i18n.resolvedLanguage === 'de' ? '14 Tage Rückgabe' : '14-day returns'}</span>
-            <span>🔒 {i18n.resolvedLanguage === 'de' ? 'Sicher bezahlen' : 'Secure checkout'}</span>
-
-            {/* duplicate for seamless loop */}
-            <span>🚚 {i18n.resolvedLanguage === 'de' ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</span>
-            <span>💰 {i18n.resolvedLanguage === 'de' ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</span>
-            <span>↩ {i18n.resolvedLanguage === 'de' ? '14 Tage Rückgabe' : '14-day returns'}</span>
-            <span>🔒 {i18n.resolvedLanguage === 'de' ? 'Sicher bezahlen' : 'Secure checkout'}</span>
-
-            {/* duplicate for seamless loop */}
-            <span>🚚 {i18n.resolvedLanguage === 'de' ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</span>
-            <span>💰 {i18n.resolvedLanguage === 'de' ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</span>
-            <span>↩ {i18n.resolvedLanguage === 'de' ? '14 Tage Rückgabe' : '14-day returns'}</span>
-            <span>🔒 {i18n.resolvedLanguage === 'de' ? 'Sicher bezahlen' : 'Secure checkout'}</span>
-
+            {[
+              { icon: '🚚', en: 'Free shipping over €30',     de: 'Kostenlose Lieferung ab 30 €' },
+              { icon: '💰', en: 'Up to 60% cheaper',          de: 'Bis zu 60 % günstiger' },
+              { icon: '↩',  en: '14-day returns',             de: '14 Tage Rückgabe' },
+              { icon: '🔒', en: 'Secure checkout',            de: 'Sicher bezahlen' },
+              { icon: '📦', en: 'Fast dispatch',              de: 'Schneller Versand' },
+              { icon: '📚', en: 'Hundreds of English titles', de: 'Hunderte englische Titel' },
+            ].concat([
+              { icon: '🚚', en: 'Free shipping over €30',     de: 'Kostenlose Lieferung ab 30 €' },
+              { icon: '💰', en: 'Up to 60% cheaper',          de: 'Bis zu 60 % günstiger' },
+              { icon: '↩',  en: '14-day returns',             de: '14 Tage Rückgabe' },
+              { icon: '🔒', en: 'Secure checkout',            de: 'Sicher bezahlen' },
+              { icon: '📦', en: 'Fast dispatch',              de: 'Schneller Versand' },
+              { icon: '📚', en: 'Hundreds of English titles', de: 'Hunderte englische Titel' },
+            ]).concat([
+              { icon: '🚚', en: 'Free shipping over €30',     de: 'Kostenlose Lieferung ab 30 €' },
+              { icon: '💰', en: 'Up to 60% cheaper',          de: 'Bis zu 60 % günstiger' },
+              { icon: '↩',  en: '14-day returns',             de: '14 Tage Rückgabe' },
+              { icon: '🔒', en: 'Secure checkout',            de: 'Sicher bezahlen' },
+              { icon: '📦', en: 'Fast dispatch',              de: 'Schneller Versand' },
+              { icon: '📚', en: 'Hundreds of English titles', de: 'Hunderte englische Titel' },
+            ]).map((item, idx) => (
+              <span key={idx}>{item.icon} {de ? item.de : item.en}</span>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* WARBY-STYLE “WAYS TO SHOP” (INSPIRED BY “Ways to try” + quiz entry points) */}
-      <section className="wp-ways">
-        <div className="wp-ways__container">
-          <h3 className="wp-ways__title">
-            {i18n.resolvedLanguage === 'de' ? 'So kannst du bei uns einkaufen' : 'Ways to shop'}
-          </h3>
+      {/* Hidden SEO H1 */}
+      <h1 className="sr-only">{t('home.seo.h1')}</h1>
 
-          <div className="wp-ways__grid">
-            <Link to="/books" className="wp-ways__card">
-              <div className="wp-ways__icon">📚</div>
-              <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Online stöbern' : 'Browse online'}</div>
-              <div className="wp-ways__desc">
-                {i18n.resolvedLanguage === 'de'
-                  ? 'Entdecke Kategorien, Bestseller & Neuheiten.'
-                  : 'Explore categories, bestsellers & new arrivals.'}
-              </div>
-            </Link>
-
-            <Link to="/shipping" className="wp-ways__card">
-              <div className="wp-ways__icon">🚚</div>
-              <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Lieferung' : 'Delivery'}</div>
-              <div className="wp-ways__desc">
-                {i18n.resolvedLanguage === 'de'
-                  ? 'Bequem nach Hause – sicher bezahlen.'
-                  : 'Delivered to your door — secure checkout.'}
-              </div>
-            </Link>
-
-            <Link to="/request-book" className="wp-ways__card wp-ways__card--highlight">
-              <div className="wp-ways__icon">✨</div>
-              <div className="wp-ways__name">{i18n.resolvedLanguage === 'de' ? 'Buch‑Finder' : 'Book finder'}</div>
-              <div className="wp-ways__desc">
-                {i18n.resolvedLanguage === 'de'
-                  ? 'Nichts gefunden? Frag es an — wir erweitern ständig.'
-                  : 'Can’t find it? Request it — we add books regularly.'}
-              </div>
-            </Link>
-
-          </div>
-        </div>
-      </section>
-
-      <h1 className="sr-only">
-        {t('home.seo.h1')}
-      </h1>
-
-      {/* POPULAR BOOKS */}
+      {/* ── POPULAR BOOKS ──────────────────────────────── */}
       {popularBooks.length > 0 && (
         <section className="popular-section">
           <div className="container">
-            {/*<h2 className="section-title">
-              <span className="fire">{t('home.popular')}</span>
-            </h2> */}
-
             <div className="section-header">
-              <h2 className="section-title">
-                {t('home.popular')}
-              </h2>
-
-              <Link to="/books" className="view-all-btn">
-                {t('view_all')} →
-              </Link>
+              <h2 className="section-title">{t('home.popular')}</h2>
+              <Link to="/books" className="view-all-btn">{t('view_all')} →</Link>
             </div>
-
-
-            <BooksSlider
-              books={popularBooks}
-              variant="default"
-              className="home-swiper"
-            />
+            <BooksSlider books={popularBooks} variant="default" className="home-swiper" />
           </div>
         </section>
       )}
 
-      {/* REQUEST BOOK / CATALOG INFO SECTION */}
+      {/* ── WAYS TO SHOP ───────────────────────────────── */}
+      <section className="wp-ways">
+        <div className="wp-ways__container">
+          <h3 className="wp-ways__title">
+            {de ? 'So kannst du bei uns einkaufen' : 'Ways to shop'}
+          </h3>
+          <div className="wp-ways__grid">
+            <Link to="/books" className="wp-ways__card">
+              <span className="wp-ways__icon">📚</span>
+              <div className="wp-ways__name">{de ? 'Online stöbern' : 'Browse online'}</div>
+              <div className="wp-ways__desc">
+                {de
+                  ? 'Entdecke Kategorien, Bestseller & Neuheiten.'
+                  : 'Explore categories, bestsellers & new arrivals.'}
+              </div>
+            </Link>
+            <Link to="/footer/shipping" className="wp-ways__card">
+              <span className="wp-ways__icon">🚚</span>
+              <div className="wp-ways__name">{de ? 'Lieferung' : 'Delivery'}</div>
+              <div className="wp-ways__desc">
+                {de
+                  ? 'Bequem nach Hause – sicher bezahlen.'
+                  : 'Delivered to your door — secure checkout.'}
+              </div>
+            </Link>
+            <Link to="/request-book" className="wp-ways__card wp-ways__card--highlight">
+              <span className="wp-ways__icon">✨</span>
+              <div className="wp-ways__name">{de ? 'Buch‑Finder' : 'Book finder'}</div>
+              <div className="wp-ways__desc">
+                {de
+                  ? 'Nichts gefunden? Frag es an — wir erweitern ständig.'
+                  : "Can't find it? Request it — we add books regularly."}
+              </div>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── REQUEST BOOK CTA ───────────────────────────── */}
       <section className="request-book-section">
         <div className="container">
           <div className="request-book-card">
             <div className="request-book-text">
               <h2>
-                {i18n.resolvedLanguage === 'de'
+                {de
                   ? 'Mehr englische Bücher folgen regelmäßig'
-                  : 'More English books are added regularly'}
+                  : 'More English books added regularly'}
               </h2>
-
               <p>
-                {i18n.resolvedLanguage === 'de'
+                {de
                   ? 'Wir erweitern unser Sortiment kontinuierlich. Falls Sie ein bestimmtes Buch nicht finden, können Sie es ganz einfach bei uns anfragen.'
-                  : 'We continuously expand our catalog. If you can’t find a specific book, you can easily request it from us.'}
-
+                  : "We continuously expand our catalog. If you can't find a specific book, you can easily request it from us."}
               </p>
             </div>
-
-            <Link
-              to="/request-book"
-              className="home-request-book-btn"
-            >
-              {i18n.resolvedLanguage === 'de'
-                ? 'Buch anfragen'
-                : 'Request a Book'}
+            <Link to="/request-book" className="home-request-book-btn">
+              {de ? 'Buch anfragen' : 'Request a book'}
             </Link>
           </div>
         </div>
       </section>
 
-      {/* CATEGORY ICONS */}
-      {/*{visibleCategories.length > 0 && (*/}
+      {/* ── CATEGORY MOOD GRID ─────────────────────────── */}
       {safeCategories.length > 0 && categorySections.length > 0 && (
         <section className="categories-section">
           <div className="container">
-            <h2 className="section-title">
-              <Sparkles className="title-icon" size={36} />
-              {i18n.resolvedLanguage === 'de' ? 'Finde dein nächstes Buch' : 'Find your next book'}
-            </h2>
+            <div className="section-header">
+              <h2 className="section-title">
+                <Sparkles className="title-icon" size={22} />
+                {de ? 'Finde dein nächstes Buch' : 'Find your next book'}
+              </h2>
+              <Link to="/books" className="view-all-btn">
+                {de ? 'Alle Kategorien' : 'All categories'} →
+              </Link>
+            </div>
             <p className="wp-quiz__sub">
-              {i18n.resolvedLanguage === 'de'
+              {de
                 ? 'Wähle eine Stimmung — wir bringen dich direkt zu passenden Titeln.'
                 : 'Pick a mood — jump straight to matching titles.'}
             </p>
+
             <div className="categories-grid">
-
               {safeCategories.map(cat => {
-                /*const section = categorySections.find(
-                  s =>
-                    s &&
-                    s.category &&
-                    typeof s.category.id !== "undefined" &&
-                    s.category.id === cat.id
-                );*/
-
                 const section = Array.isArray(categorySections)
-                  ? categorySections.find(
-                    s =>
-                      s &&
-                      s.category &&
-                      (typeof s.category.id === "number" || typeof s.category.id === "string") &&
-                      s.category.id == cat.id
-                  )
+                  ? categorySections.find(s => s?.category?.id == cat.id)
                   : null;
+                if (!section?.books || !Array.isArray(section.books)) return null;
 
-
-                if (
-                  !section ||
-                  !section.books ||
-                  !Array.isArray(section.books)
-                ) return null;
-
-                // ✅ STEP 1 — sanitize data
                 let books = section.books.filter(
-                  b =>
-                    b &&
-                    typeof b === "object" &&
-                    typeof b.image === "string" &&
-                    b.image.trim() !== ""
+                  b => b && typeof b.image === 'string' && b.image.trim()
                 );
-
-                // ✅ STEP 2 — skip empty
                 if (books.length === 0) return null;
 
-                // ✅ STEP 3 — normalize to 3
-                if (books.length === 1) {
-                  books = [books[0], books[0], books[0]];
-                } else if (books.length === 2) {
-                  books = [books[0], books[1], books[0]];
-                } else {
-                  books = books.slice(0, 3);
-                }
+                if      (books.length === 1) books = [books[0], books[0], books[0]];
+                else if (books.length === 2) books = [books[0], books[1], books[0]];
+                else                         books = books.slice(0, 3);
 
                 return (
                   <Link
@@ -593,7 +403,6 @@ function Home() {
                     to={`/books?category=${String(cat.id)}`}
                     className="category-card"
                   >
-                    {/*Category: {String(cat.id)} */}
                     <div className="category-book-stack">
                       {books.map((book, index) => (
                         <img
@@ -601,74 +410,55 @@ function Home() {
                           src={book.image}
                           loading="lazy"
                           decoding="async"
-                          alt={
-                            typeof book.title_en === "string"
-                              ? book.title_en
-                              : "Book"
-                          }
+                          alt={typeof book.title_en === 'string' ? book.title_en : 'Book'}
                           className={`stack-book stack-book-${index}`}
                         />
                       ))}
                     </div>
                     <span className="category-name">
-                      {i18n.resolvedLanguage === 'de'
-                        ? (cat.name_de || cat.name_en)
-                        : cat.name_en}
+                      {de ? (cat.name_de || cat.name_en) : cat.name_en}
                     </span>
                   </Link>
                 );
-              })
-                .filter(Boolean)
-              }
+              }).filter(Boolean)}
             </div>
-
           </div>
         </section>
       )}
 
-      {/* NEW ARRIVALS */}
+      {/* ── NEW ARRIVALS ───────────────────────────────── */}
       {newArrivals.length > 0 && (
         <section className="new-arrivals-section">
           <div className="container">
             <div className="section-header">
               <h2 className="section-title">
                 <span className="new-release-glow">{t('home.new_arrivals')}</span>
-                <span className="ml-3 text-2xl">{t('home.just_in')}</span>
+                {t('home.just_in') && (
+                  <span style={{ fontSize: '1rem', color: 'var(--ink-muted)', fontWeight: 400 }}>
+                    {' '}— {t('home.just_in')}
+                  </span>
+                )}
               </h2>
-              <Link to="/books?filter=new" className="view-all-btn">
-                {t('view_all')} →
-              </Link>
+              <Link to="/books?filter=new" className="view-all-btn">{t('view_all')} →</Link>
             </div>
-
-            <BooksSlider
-              books={newArrivals}
-              variant="default"
-              className="home-swiper"
-            />
+            <BooksSlider books={newArrivals} variant="default" className="home-swiper" />
           </div>
         </section>
       )}
 
-      {/* CATEGORY SECTIONS */}
+      {/* ── CATEGORY BOOK SECTIONS ─────────────────────── */}
       {categorySections.map(section => (
         <section key={section.category.id} className="category-books-section">
           <div className="container">
             <div className="section-header">
               <h2 className="section-title">
-                {i18n.resolvedLanguage === 'de'
-                  ? (section.category.name_de || section.category.name_en)
-                  : section.category.name_en}
+                {de ? (section.category.name_de || section.category.name_en) : section.category.name_en}
               </h2>
               <Link to={`/books?category=${section.category.id}`} className="view-all-btn">
                 {t('view_all')} →
               </Link>
             </div>
-
-            <BooksSlider
-              books={section.books}
-              variant="default"
-              className="home-swiper"
-            />
+            <BooksSlider books={section.books} variant="default" className="home-swiper" />
           </div>
         </section>
       ))}
