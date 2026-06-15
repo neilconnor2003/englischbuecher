@@ -1719,75 +1719,75 @@ const computeWorkId = (titleEn, titleDe, author) => {
   });
 
   // =========================================================
-// ADD THESE 3 ROUTES TO YOUR server.js (or a new routes file)
-// =========================================================
+  // ADD THESE 3 ROUTES TO YOUR server.js (or a new routes file)
+  // =========================================================
 
 
-// ── 1. GET /api/stats ─────────────────────────────────────
-// Returns live counts from your DB. Cache 1 hour in memory.
-let statsCache = null;
-let statsCacheTime = 0;
+  // ── 1. GET /api/stats ─────────────────────────────────────
+  // Returns live counts from your DB. Cache 1 hour in memory.
+  let statsCache = null;
+  let statsCacheTime = 0;
 
-app.get('/api/stats', async (req, res) => {
-  try {
-    // Serve from cache if fresh (1 hour)
-    if (statsCache && Date.now() - statsCacheTime < 3600000) {
-      return res.json(statsCache);
+  app.get('/api/stats', async (req, res) => {
+    try {
+      // Serve from cache if fresh (1 hour)
+      if (statsCache && Date.now() - statsCacheTime < 3600000) {
+        return res.json(statsCache);
+      }
+
+      const [[booksRow]] = await db.query('SELECT COUNT(*) as cnt FROM books WHERE stock > 0');
+      const [[readersRow]] = await db.query("SELECT COUNT(DISTINCT user_id) as cnt FROM orders WHERE status = 'delivered'");
+      const [[reviewsRow]] = await db.query('SELECT COUNT(*) as cnt FROM book_reviews');
+      // "saving" is a fixed marketing claim — adjust as you like
+      const saving = 60;
+
+      statsCache = {
+        books: booksRow.cnt || 0,
+        readers: readersRow.cnt || 0,
+        saving,
+        reviews: Math.round((reviewsRow.cnt || 0) / 1000) || 1,
+        // reviews shows as "Xk+" so divide by 1000; fallback 1 means "1K+"
+      };
+      statsCacheTime = Date.now();
+
+      res.json(statsCache);
+    } catch (err) {
+      console.error('Stats error:', err);
+      // Return safe defaults so the frontend never breaks
+      res.json({ books: 1200, readers: 3800, saving: 60, reviews: 890 });
     }
-
-    const [[booksRow]]   = await db.query('SELECT COUNT(*) as cnt FROM books WHERE stock > 0');
-    const [[readersRow]] = await db.query("SELECT COUNT(DISTINCT user_id) as cnt FROM orders WHERE status = 'delivered'");
-    const [[reviewsRow]] = await db.query('SELECT COUNT(*) as cnt FROM book_reviews');
-    // "saving" is a fixed marketing claim — adjust as you like
-    const saving = 60;
-
-    statsCache = {
-      books:   booksRow.cnt   || 0,
-      readers: readersRow.cnt || 0,
-      saving,
-      reviews: Math.round((reviewsRow.cnt || 0) / 1000) || 1,
-      // reviews shows as "Xk+" so divide by 1000; fallback 1 means "1K+"
-    };
-    statsCacheTime = Date.now();
-
-    res.json(statsCache);
-  } catch (err) {
-    console.error('Stats error:', err);
-    // Return safe defaults so the frontend never breaks
-    res.json({ books: 1200, readers: 3800, saving: 60, reviews: 890 });
-  }
-});
+  });
 
 
-// ── 2. GET /api/books/book-of-week ────────────────────────
-// Returns whichever book has is_book_of_week = 1.
-// You set this manually in admin (or via the AI cron below).
+  // ── 2. GET /api/books/book-of-week ────────────────────────
+  // Returns whichever book has is_book_of_week = 1.
+  // You set this manually in admin (or via the AI cron below).
 
-app.get('/api/books/book-of-week', async (req, res) => {
-  try {
-    const [rows] = await db.query(`
+  app.get('/api/books/book-of-week', async (req, res) => {
+    try {
+      const [rows] = await db.query(`
       SELECT b.*, a.name AS author_name
       FROM books b
       LEFT JOIN authors a ON b.author_id = a.id
       WHERE b.is_book_of_week = 1
       LIMIT 1
     `);
-    if (!rows.length) return res.json(null);
-    res.json(rows[0]);
-  } catch (err) {
-    console.error('Book of week error:', err);
-    res.json(null);
-  }
-});
+      if (!rows.length) return res.json(null);
+      res.json(rows[0]);
+    } catch (err) {
+      console.error('Book of week error:', err);
+      res.json(null);
+    }
+  });
 
 
-// ── 3. GET /api/authors/featured ──────────────────────────
-// Returns the author with the most orders in the last 30 days.
-// Fully automatic — no admin intervention needed.
+  // ── 3. GET /api/authors/featured ──────────────────────────
+  // Returns the author with the most orders in the last 30 days.
+  // Fully automatic — no admin intervention needed.
 
-app.get('/api/authors/featured', async (req, res) => {
-  try {
-    const [rows] = await db.query(`
+  app.get('/api/authors/featured', async (req, res) => {
+    try {
+      const [rows] = await db.query(`
       SELECT
         a.id,
         a.name,
@@ -1806,10 +1806,10 @@ app.get('/api/authors/featured', async (req, res) => {
       LIMIT 1
     `);
 
-    if (rows.length) return res.json(rows[0]);
+      if (rows.length) return res.json(rows[0]);
 
-    // Fallback: just pick the author with the most books if no orders yet
-    const [fallback] = await db.query(`
+      // Fallback: just pick the author with the most books if no orders yet
+      const [fallback] = await db.query(`
       SELECT a.id, a.name, a.bio, a.bio_de, a.photo, COUNT(b.id) as book_count
       FROM authors a
       JOIN books b ON b.author_id = a.id
@@ -1818,34 +1818,36 @@ app.get('/api/authors/featured', async (req, res) => {
       ORDER BY book_count DESC
       LIMIT 1
     `);
-    res.json(fallback[0] || null);
-  } catch (err) {
-    console.error('Featured author error:', err);
-    res.json(null);
-  }
-});
+      res.json(fallback[0] || null);
+    } catch (err) {
+      console.error('Featured author error:', err);
+      res.json(null);
+    }
+  });
 
 
-// =========================================================
-// ALSO: Add is_book_of_week column to your books table
-// Run this SQL once in your MySQL:
-// =========================================================
-//
-//   ALTER TABLE books
-//   ADD COLUMN is_book_of_week TINYINT(1) NOT NULL DEFAULT 0;
-//
-//   CREATE INDEX idx_book_of_week ON books(is_book_of_week);
-//
-// Then set one book as book of week in your admin panel,
-// or directly in MySQL:
-//   UPDATE books SET is_book_of_week = 0;  -- clear all
-//   UPDATE books SET is_book_of_week = 1 WHERE id = 123;
-//
-// =========================================================
-// OPTIONAL: Add Book of the Week to your admin Books dashboard
-// In your BookModal / admin books table, add a toggle:
-//   is_book_of_week: checkbox — "Book of the Week"
-// =========================================================
+  // =========================================================
+  // ALSO: Add is_book_of_week column to your books table
+  // Run this SQL once in your MySQL:
+  // =========================================================
+  //
+  //   ALTER TABLE books
+  //   ADD COLUMN is_book_of_week TINYINT(1) NOT NULL DEFAULT 0;
+  //
+  //   CREATE INDEX idx_book_of_week ON books(is_book_of_week);
+  //
+  // Then set one book as book of week in your admin panel,
+  // or directly in MySQL:
+  //   UPDATE books SET is_book_of_week = 0;  -- clear all
+  //   UPDATE books SET is_book_of_week = 1 WHERE id = 123;
+  //
+  // =========================================================
+  // OPTIONAL: Add Book of the Week to your admin Books dashboard
+  // In your BookModal / admin books table, add a toggle:
+  //   is_book_of_week: checkbox — "Book of the Week"
+  // =========================================================
+
+  require('./services/bookOfWeekCron');
 
 
 

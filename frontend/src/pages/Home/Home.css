@@ -1233,3 +1233,29 @@
   .author-spot-books { justify-content: center; }
   .author-spot-btn { width: 100%; justify-content: center; }
 }
+
+/* ── Stats skeleton (shown while API loads) ──────────────
+   Append these lines to the bottom of your Home.css
+   ─────────────────────────────────────────────────────── */
+.home-stats-skeleton {
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.15) 25%,
+    rgba(255,255,255,0.28) 50%,
+    rgba(255,255,255,0.15) 75%
+  );
+  background-size: 200% 100%;
+  animation: statsSkelShimmer 1.4s infinite;
+  height: 2.4rem;
+  width: 80px;
+  margin: 0 auto 8px;
+}
+.home-stats-skeleton--sm {
+  height: 0.75rem;
+  width: 110px;
+}
+@keyframes statsSkelShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

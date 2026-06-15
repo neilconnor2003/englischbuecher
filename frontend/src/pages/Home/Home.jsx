@@ -1,5 +1,5 @@
 // frontend/src/pages/Home/Home.jsx
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Banner from '../../components/Banner/Banner';
@@ -28,54 +28,102 @@ function useLazySection() {
   return [ref, visible];
 }
 
-// ─── useCountUp ──────────────────────────────────────────
-function useCountUp(target, duration = 1800) {
-  const [val, setVal] = useState(0);
+// ─── animateCount — pure helper, no hook ─────────────────
+// Runs a count-up animation from 0 → target, calling onUpdate each frame.
+// Returns a cancel function.
+function animateCount(target, duration, onUpdate) {
+  let raf = null;
+  let start = null;
+  const step = (ts) => {
+    if (!start) start = ts;
+    const progress = Math.min((ts - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    onUpdate(Math.round(eased * target));
+    if (progress < 1) raf = requestAnimationFrame(step);
+  };
+  raf = requestAnimationFrame(step);
+  return () => { if (raf) cancelAnimationFrame(raf); };
+}
+
+// ─── StatsBar ────────────────────────────────────────────
+// FIX: We wait until the API responds before starting the animation.
+// Each stat item observes itself with IntersectionObserver AND waits for
+// its real value before animating, so it always counts to the right number.
+
+function StatItem({ value, suffix, label, duration }) {
+  const [display, setDisplay] = useState(0);
   const ref = useRef(null);
-  const started = useRef(false);
+  const cancelRef = useRef(null);
+  const hasAnimated = useRef(false);
+
+  // Whenever real value arrives AND the element is visible, animate to it
+  const tryAnimate = useCallback(() => {
+    if (hasAnimated.current || !value) return;
+    hasAnimated.current = true;
+    if (cancelRef.current) cancelRef.current();
+    cancelRef.current = animateCount(value, duration, setDisplay);
+  }, [value, duration]);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !started.current) {
-          started.current = true;
-          let start = null;
-          const step = (ts) => {
-            if (!start) start = ts;
-            const progress = Math.min((ts - start) / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 3);
-            setVal(Math.round(eased * target));
-            if (progress < 1) requestAnimationFrame(step);
-          };
-          requestAnimationFrame(step);
-        }
-      },
+      ([entry]) => { if (entry.isIntersecting) tryAnimate(); },
       { threshold: 0.3 }
     );
     observer.observe(el);
-    return () => observer.disconnect();
-  }, [target, duration]);
-  return [val, ref];
+    return () => { observer.disconnect(); if (cancelRef.current) cancelRef.current(); };
+  }, [tryAnimate]);
+
+  // Also trigger if value arrives after element is already visible
+  useEffect(() => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const inView = rect.top < window.innerHeight && rect.bottom > 0;
+    if (inView) tryAnimate();
+  }, [tryAnimate]);
+
+  return (
+    <div className="home-stats-item" ref={ref}>
+      <div className="home-stats-num">{display.toLocaleString()}{suffix}</div>
+      <div className="home-stats-label">{label}</div>
+    </div>
+  );
 }
 
-// ─── StatsBar ────────────────────────────────────────────
 function StatsBar({ de }) {
-  const [stats, setStats] = useState({ books: 1200, readers: 3800, saving: 60, reviews: 890 });
+  const [stats, setStats] = useState(null); // null = not yet loaded
+
   useEffect(() => {
-    axios.get('/api/stats').then(res => { if (res.data) setStats(res.data); }).catch(() => {});
+    axios.get('/api/stats')
+      .then(res => { if (res.data) setStats(res.data); })
+      .catch(() => {
+        // Fallback only if API fails
+        setStats({ books: 1200, readers: 3800, saving: 60, reviews: 1 });
+      });
   }, []);
 
-  const [books,   booksRef]   = useCountUp(stats.books,   1600);
-  const [readers, readersRef] = useCountUp(stats.readers, 2000);
-  const [saving,  savingRef]  = useCountUp(stats.saving,  1200);
-  const [reviews, reviewsRef] = useCountUp(stats.reviews, 2200);
+  // Don't render until we have real data (avoids animating to wrong defaults)
+  if (!stats) return (
+    <section className="home-stats-section">
+      <div className="container">
+        <div className="home-stats-grid">
+          {[0,1,2,3].map(i => (
+            <div className="home-stats-item home-stats-item--loading" key={i}>
+              <div className="home-stats-num home-stats-skeleton" />
+              <div className="home-stats-label home-stats-skeleton home-stats-skeleton--sm" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 
   const items = [
-    { ref: booksRef,   val: books,   suffix: '+',  label: de ? 'Bücher auf Lager'         : 'Books in stock'        },
-    { ref: readersRef, val: readers, suffix: '+',  label: de ? 'Zufriedene Leser'          : 'Happy readers'         },
-    { ref: savingRef,  val: saving,  suffix: '%',  label: de ? 'Günstiger als Amazon'      : 'Cheaper than Amazon'   },
-    { ref: reviewsRef, val: reviews, suffix: 'K+', label: de ? 'Bewertungen & Rezensionen' : '5-star reviews'        },
+    { value: stats.books,   suffix: '+',  duration: 1600, label: de ? 'Bücher auf Lager'         : 'Books in stock'       },
+    { value: stats.readers, suffix: '+',  duration: 2000, label: de ? 'Zufriedene Leser'          : 'Happy readers'        },
+    { value: stats.saving,  suffix: '%',  duration: 1200, label: de ? 'Günstiger als Amazon'      : 'Cheaper than Amazon'  },
+    { value: stats.reviews, suffix: 'K+', duration: 2200, label: de ? 'Bewertungen & Rezensionen' : '5-star reviews'       },
   ];
 
   return (
@@ -83,10 +131,7 @@ function StatsBar({ de }) {
       <div className="container">
         <div className="home-stats-grid">
           {items.map((item, i) => (
-            <div className="home-stats-item" key={i} ref={item.ref}>
-              <div className="home-stats-num">{item.val.toLocaleString()}{item.suffix}</div>
-              <div className="home-stats-label">{item.label}</div>
-            </div>
+            <StatItem key={i} {...item} />
           ))}
         </div>
       </div>
@@ -98,7 +143,9 @@ function StatsBar({ de }) {
 function BookOfTheWeek({ de }) {
   const [book, setBook] = useState(null);
   useEffect(() => {
-    axios.get('/api/books/book-of-week').then(res => { if (res.data && res.data.id) setBook(res.data); }).catch(() => {});
+    axios.get('/api/books/book-of-week')
+      .then(res => { if (res.data && res.data.id) setBook(res.data); })
+      .catch(() => {});
   }, []);
   if (!book) return null;
 
@@ -145,25 +192,48 @@ function BookOfTheWeek({ de }) {
 }
 
 // ─── ForYouShelf ─────────────────────────────────────────
+// FIX: "All" tab now shows one book per category (curated sample),
+// not every book from every category merged together.
 function ForYouShelf({ categorySections, de, t }) {
   const [activeTab, setActiveTab] = useState(0);
 
   const tabs = useMemo(() => {
-    const all = { label: de ? 'Alle' : 'All', books: [] };
     const sections = (categorySections || []).filter(s => s?.books?.length > 0);
-    sections.forEach(s => { all.books.push(...s.books); });
-    return [all, ...sections.map(s => ({
+
+    // "All" tab: pick the top 3 books from each category, shuffle, cap at 20
+    // This gives variety across genres rather than dumping everything in
+    const allBooks = [];
+    sections.forEach(s => {
+      const top = s.books.filter(b => b.image).slice(0, 3);
+      allBooks.push(...top);
+    });
+    // Shuffle and dedupe by id
+    const seen = new Set();
+    const shuffled = allBooks
+      .sort(() => 0.5 - Math.random())
+      .filter(b => { if (seen.has(b.id)) return false; seen.add(b.id); return true; })
+      .slice(0, 20);
+
+    const allTab = { label: de ? 'Alle' : 'All', books: shuffled };
+
+    const categoryTabs = sections.map(s => ({
       label: de ? (s.category.name_de || s.category.name_en) : s.category.name_en,
       catId: s.category.id,
-      books: s.books,
-    }))].slice(0, 7);
+      // Each category tab: dedupe and cap at 20
+      books: (() => {
+        const seen2 = new Set();
+        return s.books.filter(b => {
+          if (seen2.has(b.id)) return false;
+          seen2.add(b.id);
+          return true;
+        }).slice(0, 20);
+      })(),
+    }));
+
+    return [allTab, ...categoryTabs].slice(0, 8); // max 8 tabs
   }, [categorySections, de]);
 
-  const displayBooks = useMemo(() => {
-    const pool = tabs[activeTab]?.books || [];
-    const seen = new Set();
-    return pool.filter(b => { if (seen.has(b.id)) return false; seen.add(b.id); return true; }).slice(0, 20);
-  }, [tabs, activeTab]);
+  const displayBooks = tabs[activeTab]?.books || [];
 
   if (!categorySections || categorySections.length === 0) return null;
 
@@ -181,7 +251,11 @@ function ForYouShelf({ categorySections, de, t }) {
         </div>
         <div className="fy-tabs">
           {tabs.map((tab, i) => (
-            <button key={i} className={`fy-tab${activeTab === i ? ' fy-tab--active' : ''}`} onClick={() => setActiveTab(i)}>
+            <button
+              key={i}
+              className={`fy-tab${activeTab === i ? ' fy-tab--active' : ''}`}
+              onClick={() => setActiveTab(i)}
+            >
               {tab.label}
             </button>
           ))}
@@ -407,14 +481,11 @@ function Home() {
 
           <div className="wp-hero__visual" aria-hidden="true">
             <div className="wp-hero__card">
-              {/* NEW: floating savings badge */}
               <div className="wp-hero__savings-float">
                 <div className="wp-hero__savings-num">60%</div>
                 <div className="wp-hero__savings-label">{de ? 'günstiger' : 'cheaper'}</div>
               </div>
-
               <div className="wp-hero__chip">{de ? 'Neu & Beliebt' : 'New & Popular'}</div>
-
               <div className={`wp-hero__mockGrid ${heroFading ? 'wp-hero__mockGrid--fade' : ''}`}>
                 {heroBooks && heroBooks.length > 0 ? (
                   visibleHeroBooks.map((book, slotIndex) => {
@@ -435,7 +506,6 @@ function Home() {
                   <><div className="wp-hero__mockCover" /><div className="wp-hero__mockCover" /><div className="wp-hero__mockCover" /><div className="wp-hero__mockCover" /></>
                 )}
               </div>
-
               <div className="wp-hero__info">
                 <p>{de ? 'Beliebte Titel & aktuelle Bestseller' : 'Popular titles & current bestsellers'}</p>
                 <p className="wp-hero__info-sub">{de ? 'Schnell verfügbar und regelmäßig aktualisiert' : 'Updated regularly and ready to order'}</p>
@@ -445,7 +515,7 @@ function Home() {
         </div>
       </section>
 
-      {/* ── TRUST STRIP (unchanged) ───────────────────── */}
+      {/* ── TRUST STRIP ───────────────────────────────── */}
       <section className="trust-strip">
         <div className="trust-strip__wrapper">
           <div className="trust-strip__track">
@@ -469,10 +539,10 @@ function Home() {
         </div>
       </section>
 
-      {/* ── NEW: BOOK OF THE WEEK ─────────────────────── */}
+      {/* ── BOOK OF THE WEEK ──────────────────────────── */}
       <BookOfTheWeek de={de} />
 
-      {/* ── WAYS TO SHOP (unchanged) ──────────────────── */}
+      {/* ── WAYS TO SHOP ──────────────────────────────── */}
       <section className="wp-ways">
         <div className="wp-ways__container">
           <h3 className="wp-ways__title">{de ? 'So kannst du bei uns einkaufen' : 'Ways to shop'}</h3>
@@ -498,7 +568,7 @@ function Home() {
 
       <h1 className="sr-only">{t('home.seo.h1')}</h1>
 
-      {/* ── POPULAR BOOKS (unchanged) ─────────────────── */}
+      {/* ── POPULAR BOOKS ─────────────────────────────── */}
       {popularBooks.length > 0 && (
         <section className="popular-section">
           <div className="container">
@@ -511,13 +581,13 @@ function Home() {
         </section>
       )}
 
-      {/* ── NEW: FOR YOU SHELF ────────────────────────── */}
+      {/* ── FOR YOU SHELF ─────────────────────────────── */}
       <ForYouShelf categorySections={categorySections} de={de} t={t} />
 
-      {/* ── NEW: ANIMATED STATS BAR ───────────────────── */}
+      {/* ── ANIMATED STATS BAR ────────────────────────── */}
       <StatsBar de={de} />
 
-      {/* ── REQUEST BOOK CTA (unchanged) ─────────────── */}
+      {/* ── REQUEST BOOK CTA ──────────────────────────── */}
       <section className="request-book-section">
         <div className="container">
           <div className="request-book-card">
@@ -538,7 +608,7 @@ function Home() {
         </div>
       </section>
 
-      {/* ── CATEGORY ICONS (unchanged) ────────────────── */}
+      {/* ── CATEGORY ICONS ────────────────────────────── */}
       {safeCategories.length > 0 && categorySections.length > 0 && (
         <section className="categories-section">
           <div className="container">
@@ -580,7 +650,7 @@ function Home() {
         </section>
       )}
 
-      {/* ── NEW ARRIVALS (unchanged) ───────────────────── */}
+      {/* ── NEW ARRIVALS ──────────────────────────────── */}
       {newArrivals.length > 0 && (
         <section className="new-arrivals-section">
           <div className="container">
@@ -596,10 +666,10 @@ function Home() {
         </section>
       )}
 
-      {/* ── NEW: AUTHOR SPOTLIGHT ─────────────────────── */}
+      {/* ── AUTHOR SPOTLIGHT ──────────────────────────── */}
       <AuthorSpotlight de={de} />
 
-      {/* ── CATEGORY SECTIONS (unchanged) ─────────────── */}
+      {/* ── CATEGORY SECTIONS ─────────────────────────── */}
       {categorySections.map(section => (
         <section key={section.category.id} className="category-books-section">
           <div className="container">
