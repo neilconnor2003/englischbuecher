@@ -94,13 +94,16 @@
 
 .section-title {
   font-size: clamp(1.4rem, 2.5vw, 1.9rem);
-  font-weight: 600;
+  /*font-weight: 600;*/
   letter-spacing: -0.025em;
-  color: var(--ink);
+  /*color: var(--ink);*/
   margin: 0 0 28px;
   display: flex;
   align-items: center;
   gap: 10px;
+
+  font-weight: 800;
+  color: #9333ea;
 }
 
 .section-header .section-title {
@@ -185,19 +188,21 @@
 .wp-hero__title {
   font-size: clamp(2rem, 3.8vw, 3.4rem);
   font-weight: 600;
-  letter-spacing: -0.035em;
+  /*letter-spacing: -0.035em;*/
+  letter-spacing: -0.02em;
   line-height: 1.08;
   color: var(--ink);
   margin: 0 0 18px;
 }
 
 .wp-hero__subtitle {
-  font-size: 1.05rem;
+  /*font-size: 1.05rem;*/
   line-height: 1.7;
   color: var(--ink-muted);
   margin: 0 0 28px;
   max-width: 46ch;
   font-weight: 400;
+  font-size: 1.15rem;
 }
 
 .wp-hero__actions {
@@ -400,11 +405,12 @@
 
 .wp-ways__title {
   font-size: clamp(1.3rem, 2.2vw, 1.75rem);
-  font-weight: 600;
+  /*font-weight: 600;*/
   letter-spacing: -0.025em;
   color: var(--ink);
   text-align: center;
   margin: 0 0 28px;
+  font-weight: 900;
 }
 
 .wp-ways__grid {
