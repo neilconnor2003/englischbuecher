@@ -2,12 +2,13 @@
 // frontend/src/components/Book/BookCard.jsx
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { Button, message, Rate } from 'antd';
 import {
   ShoppingCartOutlined,
+  ThunderboltOutlined,
   HeartOutlined,
   HeartFilled,
   CheckOutlined
@@ -35,8 +36,8 @@ const toNumber = (v) => {
  */
 const BookCard = ({ book, variant = 'default', showActions = true, className = '' }) => {
   const { t, i18n } = useTranslation();
-  const de = i18n.resolvedLanguage === 'de';
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   // User from Redux
   const { user } = useContext(AuthContext);
@@ -74,12 +75,16 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
 
   const to = generateBookUrl(book);
 
-  const handleAddToCart = async (e) => {
+  const handleAddToCart = async (e, goToCheckout = false) => {
     e.preventDefault();
     e.stopPropagation();
 
     if (isInCart) {
-      message.info(t('already_in_cart') || 'Dieses Buch ist bereits im Warenkorb');
+      if (goToCheckout) {
+        navigate('/checkout');
+      } else {
+        message.info(t('already_in_cart') || 'Dieses Buch ist bereits im Warenkorb');
+      }
       return;
     }
 
@@ -95,7 +100,11 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
         const res = await axios.get(`${config.API_URL}/api/cart`, { withCredentials: true });
         dispatch(replaceWithServerCart({ items: res.data.items || [] }));
 
-        message.success(`${title} ${t('added_to_cart') || 'zum Warenkorb hinzugefügt'}`);
+        if (goToCheckout) {
+          navigate('/checkout');
+        } else {
+          message.success(`${title} ${t('added_to_cart') || 'zum Warenkorb hinzugefügt'}`);
+        }
       } catch (err) {
         console.error('Add to cart error:', err?.response?.data || err.message);
         if (err?.response?.status === 401) {
@@ -126,7 +135,11 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
         book: clientBookPayload,
       }));
 
-      message.success(`${title} ${t('added_to_cart') || 'zum Warenkorb hinzugefügt'}`);
+      if (goToCheckout) {
+        navigate('/checkout');
+      } else {
+        message.success(`${title} ${t('added_to_cart') || 'zum Warenkorb hinzugefügt'}`);
+      }
     } catch (err) {
       console.error('Guest add to cart failed:', err?.message || err);
       message.error(t('error_adding_to_cart') || 'Fehler beim Hinzufügen');
@@ -178,26 +191,15 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
   // Tag logic: priority is new release > bestseller > nothing
   // (uses existing book fields — no new data needed)
   const tag = book.is_new_release
-    ? { label: de ? 'Neu' : 'New', kind: 'new' }
+    ? { label: t('home.new') || 'New', kind: 'new' }
     : book.is_bestseller
-      ? { label: de ? 'Beliebt' : 'Hot', kind: 'hot' }
+      ? { label: t('home.bestseller') || 'Hot', kind: 'hot' }
       : book.is_book_of_week
-        ? { label: de ? 'Tipp' : 'Pick', kind: 'pick' }
+        ? { label: t('home.pick') || 'Pick', kind: 'pick' }
         : null;
 
   return (
     <article className={rootClass}>
-      {/* Wishlist heart — sibling to Link, not nested inside it,
-          so clicking it never triggers navigation */}
-      <button
-        type="button"
-        className={`book-wish-float${isWishlisted ? ' book-wish-float--on' : ''}`}
-        onClick={handleWishlist}
-        aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-      >
-        {isWishlisted ? <HeartFilled /> : <HeartOutlined />}
-      </button>
-
       <Link to={to} className="book-card-link">
         {/* ── Cover with text overlay ── */}
         <div className="book-cover">
@@ -249,14 +251,14 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
         </div>
       </Link>
 
-      {/* ── Add to cart — sibling to Link too, since it's a button
-          with its own click handler, not a navigation target ── */}
+      {/* ── Action row — sibling to Link, since these are buttons
+          with their own click handlers, not navigation targets ── */}
       {showActions && (
         <div className="book-btns">
           <button
             type="button"
             className="btn-cart"
-            onClick={handleAddToCart}
+            onClick={(e) => handleAddToCart(e, false)}
             disabled={book.stock === 0}
           >
             {book.stock === 0 ? (
@@ -266,6 +268,27 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
             ) : (
               <><ShoppingCartOutlined /> {t('add_to_cart')}</>
             )}
+          </button>
+
+          <button
+            type="button"
+            className="btn-buy-now"
+            onClick={(e) => handleAddToCart(e, true)}
+            disabled={book.stock === 0}
+            aria-label={t('buy_now') || 'Buy now'}
+            title={t('buy_now') || 'Buy now'}
+          >
+            <ThunderboltOutlined />
+          </button>
+
+          <button
+            type="button"
+            className={`btn-wishlist${isWishlisted ? ' btn-wishlist--on' : ''}`}
+            onClick={handleWishlist}
+            aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+            title={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          >
+            {isWishlisted ? <HeartFilled /> : <HeartOutlined />}
           </button>
         </div>
       )}

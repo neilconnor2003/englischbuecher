@@ -1157,9 +1157,18 @@
   gap: 8px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   box-shadow: 0 8px 24px rgba(217, 119, 6, 0.3);
+  cursor: pointer;
+  font-family: inherit;
 }
 
-.botw-btn-primary:hover {
+.botw-btn-primary:disabled {
+  background: #6b7280;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.botw-btn-primary:hover:not(:disabled) {
   transform: translateY(-3px);
   box-shadow: 0 16px 40px rgba(217, 119, 6, 0.4);
 }

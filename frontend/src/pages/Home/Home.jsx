@@ -12,6 +12,10 @@ import './Home.css';
 import { Helmet } from 'react-helmet-async';
 import { generateBookUrl } from '../../utils/seoUrl';
 import { AuthContext } from '../../context/AuthContext';
+import BookCard from '../../components/Book/BookCard';
+import { useDispatch, useSelector } from 'react-redux';
+import { message } from 'antd';
+import { addItem, replaceWithServerCart } from '../../features/cart/cartSlice';
 
 
 // ─── useLazySection (unchanged) ──────────────────────────
@@ -132,11 +136,25 @@ function StatsBar({ de, stats }) {
 // ─── BookOfTheWeek ───────────────────────────────────────
 function BookOfTheWeek({ de }) {
   const [book, setBook] = useState(null);
+  const dispatch = useDispatch();
+  const { user } = useContext(AuthContext);
+  const { t } = useTranslation();
+
   useEffect(() => {
     axios.get('/api/books/book-of-week')
       .then(res => { if (res.data && res.data.id) setBook(res.data); })
       .catch(() => { });
   }, []);
+
+  // Same cart-state check pattern as BookCard
+  const isInCart = useSelector(
+    state =>
+      state.cart?.items?.some(item => {
+        const currentBookId = book?.id || book?.book_id || book?.bookId || book?._id;
+        return item.bookId === currentBookId;
+      }) ?? false
+  );
+
   if (!book) return null;
 
   const title = de ? (book.title_de || book.title_en) : (book.title_en || book.title_de);
@@ -146,6 +164,56 @@ function BookOfTheWeek({ de }) {
   const orig = parseFloat(book.original_price || 0);
   const saving = orig > 0 ? Math.round(((orig - book.price) / orig) * 100) : 0;
   const to = generateBookUrl(book);
+
+  // Same logic as BookCard.handleAddToCart — server cart for logged-in
+  // users, local Redux cart for guests.
+  const handleAddToCart = async (e) => {
+    e.preventDefault();
+    if (isInCart) {
+      message.info(t('already_in_cart') || 'Dieses Buch ist bereits im Warenkorb');
+      return;
+    }
+
+    if (user && user.id) {
+      try {
+        await axios.post(
+          `${config.API_URL}/api/cart/add`,
+          { bookId: book.id, quantity: 1 },
+          { withCredentials: true }
+        );
+        const res = await axios.get(`${config.API_URL}/api/cart`, { withCredentials: true });
+        dispatch(replaceWithServerCart({ items: res.data.items || [] }));
+        message.success(`${title} ${t('added_to_cart') || 'zum Warenkorb hinzugefügt'}`);
+      } catch (err) {
+        if (err?.response?.status === 401) {
+          message.warning(t('login_required') || 'Bitte melde dich an');
+        } else {
+          message.error(t('error_adding_to_cart') || 'Fehler beim Hinzufügen');
+        }
+      }
+      return;
+    }
+
+    try {
+      dispatch(addItem({
+        bookId: book.id,
+        quantity: 1,
+        book: {
+          title_en: book.title_en || title,
+          title_de: book.title_de || null,
+          image: book.image || 'https://via.placeholder.com/300x400?text=Book',
+          slug: book.slug || book.id?.toString(),
+          stock: typeof book.stock === 'number' ? book.stock : Infinity,
+          price: parseFloat(book.price || 0),
+          original_price: orig,
+          sale_price: book.sale_price ?? null,
+        },
+      }));
+      message.success(`${title} ${t('added_to_cart') || 'zum Warenkorb hinzugefügt'}`);
+    } catch (err) {
+      message.error(t('error_adding_to_cart') || 'Fehler beim Hinzufügen');
+    }
+  };
 
   return (
     <section className="botw-section">
@@ -171,7 +239,13 @@ function BookOfTheWeek({ de }) {
               {saving > 0 && <span className="botw-save-chip">{de ? `${saving}% gespart` : `Save ${saving}%`}</span>}
             </div>
             <div className="botw-btns">
-              <Link to={to} className="botw-btn-primary">{de ? '🛒 In den Warenkorb' : '🛒 Add to cart'}</Link>
+              <button type="button" onClick={handleAddToCart} className="botw-btn-primary" disabled={book.stock === 0}>
+                {book.stock === 0
+                  ? (de ? 'Ausverkauft' : 'Out of stock')
+                  : isInCart
+                    ? (de ? '✓ Im Warenkorb' : '✓ In cart')
+                    : (de ? '🛒 In den Warenkorb' : '🛒 Add to cart')}
+              </button>
               <Link to={to} className="botw-btn-ghost">{de ? 'Details ansehen' : 'View details'}</Link>
             </div>
           </div>
