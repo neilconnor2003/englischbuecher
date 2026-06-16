@@ -365,11 +365,6 @@ function WhatReadersSay({ de }) {
 
   if (!reviews.length) return null;
 
-  const getInitials = (name) => {
-    if (!name) return '?';
-    return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-  };
-
   return (
     <section className="readers-say-section">
       <div className="container">
@@ -384,25 +379,22 @@ function WhatReadersSay({ de }) {
         </p>
 
         <div className="testi-grid">
-          {reviews.slice(0, 6).map((r, i) => {
+          {reviews.slice(0, 6).map(r => {
             const title = de ? (r.title_de || r.title_en) : (r.title_en || r.title_de);
             const to = generateBookUrl({ id: r.book_id, slug: r.slug, title_en: r.title_en, title_de: r.title_de });
-            const isFeatured = i === 1; // middle card stands out, mirrors reference layout
             return (
-              <Link
-                to={to}
-                key={r.id}
-                className={`testi-card${isFeatured ? ' testi-card--featured' : ''}`}
-              >
-                <div className="testi-stars">{'★'.repeat(r.rating)}</div>
+              <Link to={to} key={r.id} className="testi-card">
+                <div className="testi-stars">
+                  {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                </div>
                 <p className="testi-text">
                   "{r.review_text.length > 140 ? r.review_text.slice(0, 140) + '…' : r.review_text}"
                 </p>
-                <div className="testi-author">
-                  <div className="testi-avatar">{getInitials(r.reviewer_name)}</div>
-                  <div>
-                    <div className="testi-name">{r.reviewer_name || (de ? 'Anonym' : 'Anonymous')}</div>
-                    <div className="testi-loc">{title}</div>
+                <div className="testi-footer">
+                  {r.image && <img src={r.image} alt={title} className="testi-cover" loading="lazy" />}
+                  <div className="testi-meta">
+                    <span className="testi-name">{r.reviewer_name || (de ? 'Anonym' : 'Anonymous')}</span>
+                    <span className="testi-book">{title}</span>
                   </div>
                 </div>
               </Link>

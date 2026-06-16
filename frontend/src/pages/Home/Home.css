@@ -1517,7 +1517,7 @@
 
 .readers-say-sub {
   font-size: 0.95rem;
-  color: var(--ink-muted, rgba(26, 26, 46, 0.65));
+  color: var(--ink-muted, rgba(26,26,46,0.65));
   text-align: center;
   max-width: 520px;
   margin: 0 auto 36px;
@@ -1535,83 +1535,68 @@
   background: #fff;
   border: 1.5px solid rgba(124, 58, 237, 0.1);
   border-radius: 20px;
-  padding: 24px;
+  padding: 22px;
   text-decoration: none;
   color: inherit;
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
-
 .testi-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 16px 40px rgba(26, 15, 46, 0.1);
   border-color: rgba(196, 181, 253, 0.6);
 }
 
-.testi-card--featured {
-  background: #1a1a2e;
-  border-color: transparent;
-}
-
-.testi-card--featured .testi-text {
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.testi-card--featured .testi-name {
-  color: #fff;
-}
-
-.testi-card--featured .testi-loc {
-  color: #c4b5fd;
-}
-
 .testi-stars {
   color: #fbbf24;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   margin-bottom: 12px;
   letter-spacing: 1px;
 }
 
 .testi-text {
   font-size: 0.88rem;
-  line-height: 1.7;
-  color: rgba(26, 26, 46, 0.72);
+  line-height: 1.65;
+  color: rgba(26, 26, 46, 0.75);
   font-style: italic;
-  margin: 0 0 18px;
+  margin: 0 0 16px;
 }
 
-.testi-author {
+.testi-footer {
   display: flex;
   align-items: center;
   gap: 10px;
+  border-top: 1px solid rgba(124, 58, 237, 0.1);
+  padding-top: 14px;
 }
 
-.testi-avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #7C3AED, #ec4899);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 800;
-  color: #fff;
+.testi-cover {
+  width: 36px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 3px 7px 7px 3px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
   flex-shrink: 0;
 }
 
+.testi-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
 .testi-name {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: #1a1a2e;
 }
 
-.testi-loc {
+.testi-book {
   font-size: 0.76rem;
   color: rgba(26, 26, 46, 0.55);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200px;
 }
 
 @media (max-width: 900px) {
@@ -1619,16 +1604,12 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
-
 @media (max-width: 600px) {
   .testi-grid {
     grid-template-columns: 1fr;
   }
-
-  .testi-card--featured {
-    order: -1;
-  }
 }
+
 
 /* ── STAY IN THE LOOP ──────────────────────────────────── */
 .newsletter-section {
