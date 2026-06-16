@@ -1670,6 +1670,24 @@ const computeWorkId = (titleEn, titleDe, author) => {
   // =========================================================
   // ADD THESE 3 ROUTES TO YOUR server.js (or a new routes file)
   // =========================================================
+  // ── GET /api/newsletter/status ─────────────────────────────
+  // Checks whether an email is currently subscribed.
+  app.get('/api/newsletter/status', async (req, res) => {
+    try {
+      const email = String(req.query.email || '').trim().toLowerCase();
+      if (!email) return res.json({ subscribed: false });
+
+      const [[row]] = await db.query(
+        'SELECT is_active FROM newsletter_subscribers WHERE email = ?',
+        [email]
+      );
+      res.json({ subscribed: !!row?.is_active });
+    } catch (err) {
+      console.error('Newsletter status error:', err);
+      res.json({ subscribed: false });
+    }
+  });
+
   // ── POST /api/newsletter/subscribe ─────────────────────────
   // Adds an email to newsletter_subscribers. Idempotent —
   // re-subscribing an existing (even unsubscribed) email re-activates it.
@@ -1758,7 +1776,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
         FROM reviews r
         JOIN books b ON b.id = r.book_id
         WHERE r.rating >= 4
-          AND CHAR_LENGTH(r.review_text) >= 30
+          AND CHAR_LENGTH(r.review_text) >= 10
         ORDER BY r.created_at DESC
         LIMIT 12
       `);

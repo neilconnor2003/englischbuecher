@@ -1,5 +1,5 @@
 // frontend/src/pages/Home/Home.jsx
-import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Banner from '../../components/Banner/Banner';
@@ -11,6 +11,7 @@ import BooksSlider from '../../components/BooksSlider/BooksSlider';
 import './Home.css';
 import { Helmet } from 'react-helmet-async';
 import { generateBookUrl } from '../../utils/seoUrl';
+import { AuthContext } from '../../context/AuthContext';
 
 
 // ─── useLazySection (unchanged) ──────────────────────────
@@ -402,10 +403,42 @@ function WhatReadersSay({ de }) {
 
 // ─── NewsletterSignup ────────────────────────────────────
 // "Stay in the Loop" — collects an email via /api/newsletter/subscribe.
+// Pre-fills with the logged-in user's email, checks subscription status
+// on load, and stays in the "subscribed" state across refreshes until
+// the person actually unsubscribes.
 function NewsletterSignup({ de }) {
-  const [email, setEmail] = useState('');
-  const [status, setStatus] = useState('idle'); // idle | loading | success | error
+  const { user } = useContext(AuthContext);
+  const userEmail = user?.email || '';
+
+  const [email, setEmail] = useState(userEmail);
+  const [status, setStatus] = useState('idle'); // idle | checking | loading | success | error
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Pre-fill when the logged-in user becomes available
+  useEffect(() => {
+    if (userEmail) setEmail(userEmail);
+  }, [userEmail]);
+
+  // Check subscription status for the relevant email (logged-in user's,
+  // or whatever's currently typed for guests) so a refresh doesn't
+  // reset an already-subscribed person back to the empty form.
+  useEffect(() => {
+    const checkEmail = userEmail || email;
+    if (!checkEmail) return;
+
+    let cancelled = false;
+    setStatus('checking');
+    axios.get('/api/newsletter/status', { params: { email: checkEmail } })
+      .then(res => {
+        if (cancelled) return;
+        setStatus(res.data?.subscribed ? 'success' : 'idle');
+      })
+      .catch(() => { if (!cancelled) setStatus('idle'); });
+
+    return () => { cancelled = true; };
+    // Only re-check when the logged-in user's email becomes known —
+    // guests checking ad-hoc typed emails happens on submit instead.
+  }, [userEmail]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -427,7 +460,6 @@ function NewsletterSignup({ de }) {
         source: 'homepage',
       });
       setStatus('success');
-      setEmail('');
     } catch (err) {
       setStatus('error');
       setErrorMsg(de ? 'Etwas ist schiefgelaufen. Bitte versuche es erneut.' : 'Something went wrong. Please try again.');
@@ -459,9 +491,10 @@ function NewsletterSignup({ de }) {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={de ? 'Deine E-Mail-Adresse' : 'Your email address'}
                 className="newsletter-input"
-                disabled={status === 'loading'}
+                disabled={status === 'loading' || status === 'checking' || !!userEmail}
+                readOnly={!!userEmail}
               />
-              <button type="submit" className="newsletter-btn" disabled={status === 'loading'}>
+              <button type="submit" className="newsletter-btn" disabled={status === 'loading' || status === 'checking'}>
                 {status === 'loading'
                   ? (de ? 'Wird gesendet…' : 'Subscribing…')
                   : (de ? 'Anmelden' : 'Subscribe')}
