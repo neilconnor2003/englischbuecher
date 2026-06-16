@@ -412,7 +412,7 @@
     "total": "Total",
     "pickup_note": "No shipping fees. You can collect the book yourself at any time.",
     "shipping_note": "Exact shipping confirmed at checkout",
-    "free_shipping_threshold": "Free shipping from €30",
+    "free_shipping_threshold": "Free shipping from €50",
     "free_shipping_remaining": "Add {{amount}} more to get free shipping",
     "free_shipping_applied": "You qualify for free shipping"
   },

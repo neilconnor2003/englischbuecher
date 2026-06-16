@@ -59,7 +59,7 @@ const CartPage = () => {
      ------------------------------------------------------------ */
   const didMergeRef = useRef(false);
 
-  const FREE_SHIPPING_THRESHOLD = 30;
+  const FREE_SHIPPING_THRESHOLD = 50;
 
   const ctx = getDeliveryContext() || {};
   //const [shippingMode, setShippingMode] = useState(ctx.shippingMode || 'delivery');

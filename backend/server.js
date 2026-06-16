@@ -1531,60 +1531,6 @@ const computeWorkId = (titleEn, titleDe, author) => {
   });
 
   // === BOOK APIs ===
-
-
-  /*app.get('/api/books/popular', async (req, res) => {
-    try {
-      const [rows] = await db.execute(`
-      SELECT 
-        b.id,
-        b.title_en,
-        b.title_de,
-        b.author,
-        b.price,
-        b.original_price,
-        b.stock,
-        b.image,
-        b.slug,
-        b.isbn13,
-        b.isbn10,
-        b.rating,
-        b.review_count,
-        b.series_name,
-        b.publish_date,
-        COALESCE(agg.total_quantity, 0) AS total_quantity
-      FROM books b
-      LEFT JOIN (
-        SELECT 
-          oi.bookId,
-          SUM(oi.quantity) AS total_quantity
-        FROM orders o
-        JOIN JSON_TABLE(o.order_items, '$[*]'
-          COLUMNS (
-            bookId INT PATH '$.bookId',
-            quantity INT PATH '$.quantity'
-          )
-        ) AS oi
-        GROUP BY oi.bookId
-      ) AS agg
-        ON agg.bookId = b.id
-            
-      ORDER BY 
-        (total_quantity * 10) + 
-        (b.popularity_score * 5) + 
-        TIMESTAMPDIFF(DAY, b.created_at, NOW()) * -0.1
-      DESC
-
-      LIMIT 30;
-    `);
-
-      res.json(rows);
-    } catch (err) {
-      console.error('GET /api/books/popular error:', err);
-      res.status(500).json({ error: 'Database error' });
-    }
-  });*/
-
   app.get('/api/books/popular', async (req, res) => {
     try {
       // Step 1: fetch a larger raw pool first
@@ -1740,7 +1686,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
       const [[booksRow]] = await db.query('SELECT COUNT(*) as cnt FROM books WHERE stock > 0');
       const [[readersRow]] = await db.query("SELECT COUNT(DISTINCT user_id) as cnt FROM orders WHERE status = 'delivered'");
-      const [[reviewsRow]] = await db.query('SELECT COUNT(*) as cnt FROM book_reviews');
+      const [[reviewsRow]] = await db.query('SELECT COUNT(*) as cnt FROM reviews');
       // "saving" is a fixed marketing claim — adjust as you like
       const saving = 60;
 

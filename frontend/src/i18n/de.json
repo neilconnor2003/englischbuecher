@@ -384,7 +384,7 @@
     "total": "Gesamtsumme",
     "pickup_note": "Keine Versandkosten. Sie können das Buch jederzeit selbst abholen.",
     "shipping_note": "Exakte Versandkosten werden im Checkout bestätigt",
-    "free_shipping_threshold": "Kostenloser Versand ab 30 €",
+    "free_shipping_threshold": "Kostenloser Versand ab 50 €",
     "free_shipping_remaining": "Nur noch {{amount}} bis zum kostenlosen Versand",
     "free_shipping_applied": "Du erhältst kostenlosen Versand"
   },

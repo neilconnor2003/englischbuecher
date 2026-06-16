@@ -521,7 +521,7 @@ function Home() {
           <div className="trust-strip__track">
             {[0,1,2].map(i => (
               <React.Fragment key={i}>
-                <span>🚚 <strong>{de ? 'Kostenloser Versand' : 'Free Shipping'}</strong> <em>{de ? 'ab 30 €' : 'over €30'}</em></span>
+                <span>🚚 <strong>{de ? 'Kostenloser Versand' : 'Free Shipping'}</strong> <em>{de ? 'ab 50 €' : 'over €50'}</em></span>
                 <span><strong>India</strong> <em>{de ? 'Direktimport' : 'Direct Import'}</em></span>
                 <span><strong>500+</strong> <em>{de ? 'Englische Titel' : 'English Titles'}</em></span>
                 <span><strong>60%</strong> <em>{de ? 'Durchschn. Ersparnis' : 'Average Savings'}</em></span>
@@ -534,41 +534,6 @@ function Home() {
           </div>
         </div>
       </section>
-      {/* ── TRUST STRIP ───────────────────────────────────── */}
-      {/*<section className="trust-strip">
-        <div className="trust-strip__inner">
-          <div className="trust-strip__item">
-            <span className="trust-strip__icon">🚚</span>
-            <span className="trust-strip__bold">Free Shipping</span>
-            <span className="trust-strip__light">{de ? 'ab 30€' : 'over €30'}</span>
-          </div>
-          <div className="trust-strip__sep" />
-          <div className="trust-strip__item">
-            <span className="trust-strip__bold">India</span>
-            <span className="trust-strip__light">Direct Import</span>
-          </div>
-          <div className="trust-strip__sep" />
-          <div className="trust-strip__item">
-            <span className="trust-strip__bold">500+</span>
-            <span className="trust-strip__light">English Titles</span>
-          </div>
-          <div className="trust-strip__sep" />
-          <div className="trust-strip__item">
-            <span className="trust-strip__bold">60%</span>
-            <span className="trust-strip__light">{de ? 'Durchschn. Ersparnis' : 'Average Savings'}</span>
-          </div>
-          <div className="trust-strip__sep" />
-          <div className="trust-strip__item">
-            <span className="trust-strip__bold">2,400+</span>
-            <span className="trust-strip__light">{de ? 'Zufriedene Leser' : 'Happy Readers'}</span>
-          </div>
-          <div className="trust-strip__sep" />
-          <div className="trust-strip__item">
-            <span className="trust-strip__bold">14</span>
-            <span className="trust-strip__light">{de ? 'Tage Rückgabe' : 'Day Returns'}</span>
-          </div>
-        </div>
-      </section>*/}
 
       {/* ── BOOK OF THE WEEK ──────────────────────────── */}
       <BookOfTheWeek de={de} />
