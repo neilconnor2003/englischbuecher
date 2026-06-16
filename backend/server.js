@@ -1718,7 +1718,8 @@ const computeWorkId = (titleEn, titleDe, author) => {
       const [rows] = await db.query(`
       SELECT b.*, a.name AS author_name
       FROM books b
-      LEFT JOIN authors a ON b.author_id = a.id
+      LEFT JOIN book_authors ba ON ba.book_id = b.id
+      LEFT JOIN authors a ON a.id = ba.author_id
       WHERE b.is_book_of_week = 1
       LIMIT 1
     `);
@@ -1731,7 +1732,98 @@ const computeWorkId = (titleEn, titleDe, author) => {
   });
 
 
-  // ── 3. GET /api/authors/featured ──────────────────────────
+  // ── 4. GET /api/books/for-you ──────────────────────────────
+  // Logged-in users: recommends books from categories they've
+  // ordered, wishlisted, or viewed, weighted by recency.
+  // Anonymous users: falls back to a popularity-based mix.
+
+  app.get('/api/books/for-you', async (req, res) => {
+    try {
+      const isLoggedIn = req.isAuthenticated && req.isAuthenticated() && req.user;
+
+      if (!isLoggedIn) {
+        // Anonymous fallback: just return popular books, frontend already
+        // has category-section data to build its own "All" mix from.
+        return res.json({ personalized: false, books: [] });
+      }
+
+      const userId = req.user.id;
+
+      // Step 1: find categories this user has shown interest in
+      // (ordered, wishlisted, or viewed in the last 90 days), most recent first
+      const [categoryRows] = await db.query(`
+        SELECT category_id, MAX(touched_at) as last_touch, COUNT(*) as weight
+        FROM (
+          SELECT b.category_id, o.created_at as touched_at
+          FROM orders o
+          JOIN JSON_TABLE(o.order_items, '$[*]'
+            COLUMNS (bookId INT PATH '$.bookId')
+          ) AS oi ON 1=1
+          JOIN books b ON b.id = oi.bookId
+          WHERE o.user_id = ?
+
+          UNION ALL
+
+          SELECT b.category_id, w.created_at as touched_at
+          FROM wishlist w
+          JOIN books b ON b.id = w.book_id
+          WHERE w.user_id = ? AND w.deleted_at IS NULL
+
+          UNION ALL
+
+          SELECT b.category_id, v.viewed_at as touched_at
+          FROM book_views v
+          JOIN books b ON b.id = v.book_id
+          WHERE v.user_id = ? AND v.viewed_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
+        ) AS combined
+        WHERE category_id IS NOT NULL
+        GROUP BY category_id
+        ORDER BY weight DESC, last_touch DESC
+        LIMIT 5
+      `, [userId, userId, userId]);
+
+      if (!categoryRows.length) {
+        // New user with no history yet
+        return res.json({ personalized: false, books: [] });
+      }
+
+      const categoryIds = categoryRows.map(r => r.category_id);
+
+      // Step 2: books the user already owns/wishlisted (exclude from results)
+      const [ownedRows] = await db.query(`
+        SELECT DISTINCT b.id
+        FROM books b
+        LEFT JOIN orders o ON o.user_id = ?
+        LEFT JOIN JSON_TABLE(o.order_items, '$[*]'
+          COLUMNS (bookId INT PATH '$.bookId')
+        ) AS oi ON oi.bookId = b.id
+        LEFT JOIN wishlist w ON w.book_id = b.id AND w.user_id = ? AND w.deleted_at IS NULL
+        WHERE oi.bookId IS NOT NULL OR w.book_id IS NOT NULL
+      `, [userId, userId]);
+      const ownedIds = ownedRows.map(r => r.id);
+      const excludeClause = ownedIds.length ? `AND b.id NOT IN (${ownedIds.map(() => '?').join(',')})` : '';
+
+      // Step 3: pull books from those categories, prioritizing in-stock + recent
+      const [books] = await db.query(`
+        SELECT b.*, a.name AS author_name, c.id as cat_id, c.name_en as cat_name_en, c.name_de as cat_name_de
+        FROM books b
+        LEFT JOIN book_authors ba ON ba.book_id = b.id
+        LEFT JOIN authors a ON a.id = ba.author_id
+        LEFT JOIN categories c ON c.id = b.category_id
+        WHERE b.category_id IN (${categoryIds.map(() => '?').join(',')})
+          AND b.stock > 0
+          AND b.image IS NOT NULL AND b.image != ''
+          ${excludeClause}
+        ORDER BY b.popularity_score DESC, b.created_at DESC
+        LIMIT 24
+      `, [...categoryIds, ...ownedIds]);
+
+      res.json({ personalized: true, books, basedOnCategories: categoryRows.length });
+    } catch (err) {
+      console.error('For-you error:', err);
+      res.json({ personalized: false, books: [] });
+    }
+  });
   // Returns the author with the most orders in the last 30 days.
   // Fully automatic — no admin intervention needed.
 
@@ -1744,11 +1836,14 @@ const computeWorkId = (titleEn, titleDe, author) => {
         a.bio,
         a.bio_de,
         a.photo,
-        COUNT(oi.id) AS order_count
+        COUNT(oi.bookId) AS order_count
       FROM authors a
-      JOIN books b       ON b.author_id = a.id
-      JOIN order_items oi ON oi.book_id = b.id
-      JOIN orders o      ON o.id = oi.order_id
+      JOIN book_authors ba ON ba.author_id = a.id
+      JOIN books b         ON b.id = ba.book_id
+      JOIN orders o        ON 1 = 1
+      JOIN JSON_TABLE(o.order_items, '$[*]'
+        COLUMNS (bookId INT PATH '$.bookId')
+      ) AS oi ON oi.bookId = b.id
       WHERE o.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
         AND a.name IS NOT NULL
       GROUP BY a.id
@@ -1762,8 +1857,9 @@ const computeWorkId = (titleEn, titleDe, author) => {
       const [fallback] = await db.query(`
       SELECT a.id, a.name, a.bio, a.bio_de, a.photo, COUNT(b.id) as book_count
       FROM authors a
-      JOIN books b ON b.author_id = a.id
-      WHERE a.name IS NOT NULL AND a.bio IS NOT NULL
+      JOIN book_authors ba ON ba.author_id = a.id
+      JOIN books b ON b.id = ba.book_id
+      WHERE a.name IS NOT NULL
       GROUP BY a.id
       ORDER BY book_count DESC
       LIMIT 1
@@ -3147,6 +3243,105 @@ ${bookList}`,
       res.status(500).json({ error: 'Database error' });
     }
   });
+
+  // ── BATCH: GET /api/home/category-sections-batch ──────────
+  // Returns books for ALL visible root categories in ONE request,
+  // instead of the frontend firing one request per category.
+  // Cache 10 minutes since this data doesn't change every second.
+
+  let categoryBatchCache = null;
+  let categoryBatchCacheTime = 0;
+
+  app.get('/api/home/category-sections-batch', async (req, res) => {
+    try {
+      if (categoryBatchCache && Date.now() - categoryBatchCacheTime < 600000) {
+        return res.json(categoryBatchCache);
+      }
+
+      const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 20);
+
+      const [visibleCats] = await db.query(`
+        SELECT id, name_en, name_de, slug
+        FROM categories
+        WHERE parent_id IS NULL AND is_visible = 1
+        ORDER BY id ASC
+      `);
+
+      if (!visibleCats.length) {
+        categoryBatchCache = [];
+        categoryBatchCacheTime = Date.now();
+        return res.json([]);
+      }
+
+      const origin = `${req.protocol}://${req.get('host')}`;
+      const normalizeImage = (url) => {
+        if (!url) return null;
+        if (url.startsWith('https://')) return url;
+        if (url.startsWith('http://')) return url.replace('http://', 'https://');
+        if (url.startsWith('/')) return `${origin}${url}`;
+        return `${origin}/${url}`;
+      };
+
+      const results = [];
+
+      for (const cat of visibleCats) {
+        const [rows] = await db.execute(`
+          WITH RECURSIVE cat_tree AS (
+            SELECT id FROM categories WHERE id = ?
+            UNION ALL
+            SELECT c.id FROM categories c INNER JOIN cat_tree ct ON c.parent_id = ct.id
+          )
+          SELECT
+            b.id, b.title_en, b.title_de, b.author, b.price, b.original_price,
+            b.stock, b.image, b.slug, b.isbn13, b.isbn10, b.rating, b.review_count,
+            b.series_name, b.series_volume, b.publish_date, b.created_at
+          FROM books b
+          INNER JOIN cat_tree ct ON b.category_id = ct.id
+          ORDER BY b.created_at DESC
+        `, [cat.id]);
+
+        const normalizedRows = rows.map(b => ({ ...b, image: normalizeImage(b.image) }));
+
+        // Same series-dedup logic as the single-category route
+        const seriesMap = new Map();
+        const standaloneBooks = [];
+        for (const book of normalizedRows) {
+          const hasValidSeries = book.series_name && String(book.series_name).trim() !== '' &&
+            book.series_volume !== null && book.series_volume !== undefined &&
+            String(book.series_volume).trim() !== '';
+          if (!hasValidSeries) { standaloneBooks.push(book); continue; }
+          const seriesKey = String(book.series_name).trim().toLowerCase();
+          if (!seriesMap.has(seriesKey)) { seriesMap.set(seriesKey, book); continue; }
+          const existing = seriesMap.get(seriesKey);
+          const existingPublishDate = new Date(existing.publish_date || 0).getTime();
+          const currentPublishDate = new Date(book.publish_date || 0).getTime();
+          if (currentPublishDate > existingPublishDate) { seriesMap.set(seriesKey, book); continue; }
+          if (currentPublishDate === existingPublishDate) {
+            const existingCreatedAt = new Date(existing.created_at || 0).getTime();
+            const currentCreatedAt = new Date(book.created_at || 0).getTime();
+            if (currentCreatedAt > existingCreatedAt) seriesMap.set(seriesKey, book);
+          }
+        }
+
+        const finalBooks = [...standaloneBooks, ...Array.from(seriesMap.values())]
+          .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+          .slice(0, limit);
+
+        if (finalBooks.length > 0) {
+          results.push({ category: cat, books: finalBooks });
+        }
+      }
+
+      categoryBatchCache = results;
+      categoryBatchCacheTime = Date.now();
+      res.json(results);
+    } catch (err) {
+      console.error('GET /api/home/category-sections-batch error:', err);
+      res.status(500).json({ error: 'Database error' });
+    }
+  });
+
+
 
   app.get('/api/home/category-sections/:id', async (req, res) => {
     const id = Number(req.params.id);

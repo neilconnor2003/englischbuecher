@@ -111,7 +111,7 @@ function StatsBar({ de, stats }) {
   const items = [
     { value: stats.books, suffix: '+', duration: 1600, label: de ? 'Bücher auf Lager' : 'Books in stock' },
     { value: stats.readers, suffix: '+', duration: 2000, label: de ? 'Zufriedene Leser' : 'Happy readers' },
-    { value: stats.saving, suffix: '%', duration: 1200, label: de ? 'Günstiger als Amazon' : 'Cheaper than Amazon' },
+    { value: stats.saving, suffix: '%', duration: 1200, label: de ? 'Durchschn. Ersparnis' : 'Average Savings' },
     { value: stats.reviews, suffix: 'K+', duration: 2200, label: de ? 'Bewertungen & Rezensionen' : '5-star reviews' },
   ];
 
@@ -181,34 +181,55 @@ function BookOfTheWeek({ de }) {
 }
 
 // ─── ForYouShelf ─────────────────────────────────────────
-// FIX: "All" tab now shows one book per category (curated sample),
-// not every book from every category merged together.
+// Logged-in users with order/wishlist/view history get a real
+// personalized "All" tab from /api/books/for-you. Everyone else
+// (and the per-category tabs) uses the existing category mix.
 function ForYouShelf({ categorySections, de, t }) {
   const [activeTab, setActiveTab] = useState(0);
+  const [personalized, setPersonalized] = useState(null); // null = not checked yet
+
+  useEffect(() => {
+    axios.get('/api/books/for-you')
+      .then(res => {
+        if (res.data?.personalized && res.data.books?.length > 0) {
+          setPersonalized(res.data.books);
+        } else {
+          setPersonalized(false); // checked, but nothing personalized available
+        }
+      })
+      .catch(() => setPersonalized(false));
+  }, []);
 
   const tabs = useMemo(() => {
     const sections = (categorySections || []).filter(s => s?.books?.length > 0);
 
-    // "All" tab: pick the top 3 books from each category, shuffle, cap at 20
-    // This gives variety across genres rather than dumping everything in
-    const allBooks = [];
-    sections.forEach(s => {
-      const top = s.books.filter(b => b.image).slice(0, 3);
-      allBooks.push(...top);
-    });
-    // Shuffle and dedupe by id
-    const seen = new Set();
-    const shuffled = allBooks
-      .sort(() => 0.5 - Math.random())
-      .filter(b => { if (seen.has(b.id)) return false; seen.add(b.id); return true; })
-      .slice(0, 20);
+    let allBooks;
+    let allLabel;
 
-    const allTab = { label: de ? 'Alle' : 'All', books: shuffled };
+    if (personalized && personalized.length > 0) {
+      // Real personalization available
+      allBooks = personalized.slice(0, 20);
+      allLabel = de ? 'Für dich' : 'For you';
+    } else {
+      // Fallback: curated sample across categories (3 per category, shuffled)
+      const pool = [];
+      sections.forEach(s => {
+        const top = s.books.filter(b => b.image).slice(0, 3);
+        pool.push(...top);
+      });
+      const seen = new Set();
+      allBooks = pool
+        .sort(() => 0.5 - Math.random())
+        .filter(b => { if (seen.has(b.id)) return false; seen.add(b.id); return true; })
+        .slice(0, 20);
+      allLabel = de ? 'Beliebt' : 'Popular mix';
+    }
+
+    const allTab = { label: allLabel, books: allBooks };
 
     const categoryTabs = sections.map(s => ({
       label: de ? (s.category.name_de || s.category.name_en) : s.category.name_en,
       catId: s.category.id,
-      // Each category tab: dedupe and cap at 20
       books: (() => {
         const seen2 = new Set();
         return s.books.filter(b => {
@@ -220,17 +241,21 @@ function ForYouShelf({ categorySections, de, t }) {
     }));
 
     return [allTab, ...categoryTabs].slice(0, 8); // max 8 tabs
-  }, [categorySections, de]);
+  }, [categorySections, de, personalized]);
 
   const displayBooks = tabs[activeTab]?.books || [];
 
+  // Wait until personalization check resolves AND category data is ready
+  if (personalized === null) return null;
   if (!categorySections || categorySections.length === 0) return null;
 
   return (
     <section className="for-you-section">
       <div className="container">
         <div className="section-header">
-          <h2 className="section-title">✨ {de ? 'Für dich ausgewählt' : 'Picked for you'}</h2>
+          <h2 className="section-title">
+            ✨ {personalized ? (de ? 'Für dich ausgewählt' : 'Picked for you') : (de ? 'Entdecke mehr' : 'Discover more')}
+          </h2>
           <Link
             to={tabs[activeTab]?.catId ? `/books?category=${tabs[activeTab].catId}` : '/books'}
             className="view-all-btn"
@@ -424,14 +449,15 @@ function Home() {
     if (!visibleCategories.length || catLoading) return;
     const fetchBooks = async () => {
       try {
-        const requests = visibleCategories.map(cat =>
-          axios.get(`/api/home/category-sections/${cat.id}`, { params: { limit: 20 } })
-            .then(res => ({ category: cat, books: Array.isArray(res.data) ? res.data : [] }))
-            .catch(() => null)
-        );
-        const results = await Promise.all(requests);
-        setCategorySections(results.filter(item => item && item.books.length > 0));
-      } catch (err) { console.error('Category sections fetch failed:', err); }
+        // Single batched call instead of one request per category —
+        // major speed win, especially with many categories.
+        const res = await axios.get('/api/home/category-sections-batch', { params: { limit: 20 } });
+        const results = Array.isArray(res.data) ? res.data : [];
+        setCategorySections(results.filter(item => item && item.books?.length > 0));
+      } catch (err) {
+        console.error('Category sections fetch failed:', err);
+        setCategorySections([]);
+      }
     };
     fetchBooks();
   }, [catLoading, data.visibleRoots]);
@@ -520,7 +546,7 @@ function Home() {
           <div className="trust-strip__track">
             {[0,1,2].map(i => (
               <React.Fragment key={i}>
-                <span>🚚 <strong>{de ? 'Kostenloser Versand' : 'Free Shipping'}</strong> <em>{de ? 'ab 30 €' : 'over €30'}</em></span>
+                <span>🚚 <strong>{de ? 'Kostenloser Versand' : 'Free Shipping'}</strong> <em>{de ? 'ab 50 €' : 'over €50'}</em></span>
                 <span><strong>India</strong> <em>{de ? 'Direktimport' : 'Direct Import'}</em></span>
                 <span><strong>{homeStats ? `${homeStats.books}+` : '…'}</strong> <em>{de ? 'Englische Titel' : 'English Titles'}</em></span>
                 <span><strong>60%</strong> <em>{de ? 'Durchschn. Ersparnis' : 'Average Savings'}</em></span>
@@ -533,41 +559,6 @@ function Home() {
           </div>
         </div>
       </section>
-      {/* ── TRUST STRIP ───────────────────────────────────── */}
-      {/*<section className="trust-strip">
-        <div className="trust-strip__inner">
-          <div className="trust-strip__item">
-            <span className="trust-strip__icon">🚚</span>
-            <span className="trust-strip__bold">Free Shipping</span>
-            <span className="trust-strip__light">{de ? 'ab 30€' : 'over €30'}</span>
-          </div>
-          <div className="trust-strip__sep" />
-          <div className="trust-strip__item">
-            <span className="trust-strip__bold">India</span>
-            <span className="trust-strip__light">Direct Import</span>
-          </div>
-          <div className="trust-strip__sep" />
-          <div className="trust-strip__item">
-            <span className="trust-strip__bold">500+</span>
-            <span className="trust-strip__light">English Titles</span>
-          </div>
-          <div className="trust-strip__sep" />
-          <div className="trust-strip__item">
-            <span className="trust-strip__bold">60%</span>
-            <span className="trust-strip__light">{de ? 'Durchschn. Ersparnis' : 'Average Savings'}</span>
-          </div>
-          <div className="trust-strip__sep" />
-          <div className="trust-strip__item">
-            <span className="trust-strip__bold">2,400+</span>
-            <span className="trust-strip__light">{de ? 'Zufriedene Leser' : 'Happy Readers'}</span>
-          </div>
-          <div className="trust-strip__sep" />
-          <div className="trust-strip__item">
-            <span className="trust-strip__bold">14</span>
-            <span className="trust-strip__light">{de ? 'Tage Rückgabe' : 'Day Returns'}</span>
-          </div>
-        </div>
-      </section>*/}
 
       {/* ── BOOK OF THE WEEK ──────────────────────────── */}
       <BookOfTheWeek de={de} />
