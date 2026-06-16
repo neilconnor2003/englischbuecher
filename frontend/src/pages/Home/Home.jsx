@@ -91,18 +91,7 @@ function StatItem({ value, suffix, label, duration }) {
   );
 }
 
-function StatsBar({ de }) {
-  const [stats, setStats] = useState(null); // null = not yet loaded
-
-  useEffect(() => {
-    axios.get('/api/stats')
-      .then(res => { if (res.data) setStats(res.data); })
-      .catch(() => {
-        // Fallback only if API fails
-        setStats({ books: 1200, readers: 3800, saving: 60, reviews: 1 });
-      });
-  }, []);
-
+function StatsBar({ de, stats }) {
   // Don't render until we have real data (avoids animating to wrong defaults)
   if (!stats) return (
     <section className="home-stats-section">
@@ -346,6 +335,16 @@ function Home() {
   const { data = { visibleRoots: [] }, isLoading: catLoading } = useGetCategoriesQuery();
 
   const [heroBooks, setHeroBooks] = useState([]);
+
+  // Shared stats data — used by both StatsBar and the trust strip
+  const [homeStats, setHomeStats] = useState(null);
+  useEffect(() => {
+    axios.get('/api/stats')
+      .then(res => { if (res.data) setHomeStats(res.data); })
+      .catch(() => {
+        setHomeStats({ books: 1200, readers: 3800, saving: 60, reviews: 1 });
+      });
+  }, []);
   const [heroIndex, setHeroIndex] = useState(0);
   const [heroFading, setHeroFading] = useState(false);
   const [categoryRef, showCategories] = useLazySection();
@@ -521,19 +520,54 @@ function Home() {
           <div className="trust-strip__track">
             {[0,1,2].map(i => (
               <React.Fragment key={i}>
-                <span>🚚 <strong>{de ? 'Kostenloser Versand' : 'Free Shipping'}</strong> <em>{de ? 'ab 50 €' : 'over €50'}</em></span>
+                <span>🚚 <strong>{de ? 'Kostenloser Versand' : 'Free Shipping'}</strong> <em>{de ? 'ab 30 €' : 'over €30'}</em></span>
                 <span><strong>India</strong> <em>{de ? 'Direktimport' : 'Direct Import'}</em></span>
-                <span><strong>500+</strong> <em>{de ? 'Englische Titel' : 'English Titles'}</em></span>
+                <span><strong>{homeStats ? `${homeStats.books}+` : '…'}</strong> <em>{de ? 'Englische Titel' : 'English Titles'}</em></span>
                 <span><strong>60%</strong> <em>{de ? 'Durchschn. Ersparnis' : 'Average Savings'}</em></span>
-                <span><strong>2,400+</strong> <em>{de ? 'Zufriedene Leser' : 'Happy Readers'}</em></span>
-                <span><strong>↩ 14</strong> <em>{de ? 'Tage Rückgabe' : 'Day Returns'}</em></span>
-                <span><strong>🔒 {de ? 'Sicher bezahlen' : 'Secure Checkout'}</strong> <em>{de ? 'mit Stripe' : 'with Stripe'}</em></span>
-                <span><strong>📦 {de ? 'Schneller Versand' : 'Fast Dispatch'}</strong> <em>{de ? 'mit DHL oder DPD' : 'with DHL or DPD'}</em></span>
+                <span><strong>{homeStats ? `${homeStats.readers}+` : '…'}</strong> <em>{de ? 'Zufriedene Leser' : 'Happy Readers'}</em></span>
+                <span>↩ <strong>14</strong> <em>{de ? 'Tage Rückgabe' : 'Day Returns'}</em></span>
+                <span>🔒 <strong>{de ? 'Sicher bezahlen' : 'Secure Checkout'}</strong></span>
+                <span>📦 <strong>{de ? 'Schneller Versand' : 'Fast Dispatch'}</strong></span>
               </React.Fragment>
             ))}
           </div>
         </div>
       </section>
+      {/* ── TRUST STRIP ───────────────────────────────────── */}
+      {/*<section className="trust-strip">
+        <div className="trust-strip__inner">
+          <div className="trust-strip__item">
+            <span className="trust-strip__icon">🚚</span>
+            <span className="trust-strip__bold">Free Shipping</span>
+            <span className="trust-strip__light">{de ? 'ab 30€' : 'over €30'}</span>
+          </div>
+          <div className="trust-strip__sep" />
+          <div className="trust-strip__item">
+            <span className="trust-strip__bold">India</span>
+            <span className="trust-strip__light">Direct Import</span>
+          </div>
+          <div className="trust-strip__sep" />
+          <div className="trust-strip__item">
+            <span className="trust-strip__bold">500+</span>
+            <span className="trust-strip__light">English Titles</span>
+          </div>
+          <div className="trust-strip__sep" />
+          <div className="trust-strip__item">
+            <span className="trust-strip__bold">60%</span>
+            <span className="trust-strip__light">{de ? 'Durchschn. Ersparnis' : 'Average Savings'}</span>
+          </div>
+          <div className="trust-strip__sep" />
+          <div className="trust-strip__item">
+            <span className="trust-strip__bold">2,400+</span>
+            <span className="trust-strip__light">{de ? 'Zufriedene Leser' : 'Happy Readers'}</span>
+          </div>
+          <div className="trust-strip__sep" />
+          <div className="trust-strip__item">
+            <span className="trust-strip__bold">14</span>
+            <span className="trust-strip__light">{de ? 'Tage Rückgabe' : 'Day Returns'}</span>
+          </div>
+        </div>
+      </section>*/}
 
       {/* ── BOOK OF THE WEEK ──────────────────────────── */}
       <BookOfTheWeek de={de} />
@@ -581,7 +615,7 @@ function Home() {
       <ForYouShelf categorySections={categorySections} de={de} t={t} />
 
       {/* ── ANIMATED STATS BAR ────────────────────────── */}
-      <StatsBar de={de} />
+      <StatsBar de={de} stats={homeStats} />
 
       {/* ── REQUEST BOOK CTA ──────────────────────────── */}
       <section className="request-book-section">

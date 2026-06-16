@@ -1670,12 +1670,13 @@ const computeWorkId = (titleEn, titleDe, author) => {
   // =========================================================
   // ADD THESE 3 ROUTES TO YOUR server.js (or a new routes file)
   // =========================================================
-
-
   // ── 1. GET /api/stats ─────────────────────────────────────
   // Returns live counts from your DB. Cache 1 hour in memory.
   let statsCache = null;
   let statsCacheTime = 0;
+
+  // Rounds DOWN to the nearest multiple of 10 (e.g. 84 -> 80, 129 -> 120)
+  const roundDownTo10 = (n) => Math.floor(n / 10) * 10;
 
   app.get('/api/stats', async (req, res) => {
     try {
@@ -1691,8 +1692,8 @@ const computeWorkId = (titleEn, titleDe, author) => {
       const saving = 60;
 
       statsCache = {
-        books: booksRow.cnt || 0,
-        readers: readersRow.cnt || 0,
+        books: roundDownTo10(booksRow.cnt || 0),
+        readers: roundDownTo10(readersRow.cnt || 0),
         saving,
         reviews: Math.round((reviewsRow.cnt || 0) / 1000) || 1,
         // reviews shows as "Xk+" so divide by 1000; fallback 1 means "1K+"
