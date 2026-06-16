@@ -403,7 +403,8 @@
   /*font-size: 1.1rem;*/
   font-size: 28px;
   font-weight: 900;
-  color: #ffffff;
+  /*color: #ffffff;*/
+  color: #c4b5fd;
   letter-spacing: -0.01em;
   line-height: 1;
 }
