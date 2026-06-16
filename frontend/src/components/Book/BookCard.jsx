@@ -25,6 +25,8 @@ const toNumber = (v) => {
   return Number.isFinite(n) ? n : 0;
 };
 
+const de = i18n.resolvedLanguage === 'de';
+
 /**
  * Centralized BookCard component
  * Props:
