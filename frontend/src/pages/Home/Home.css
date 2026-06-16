@@ -398,17 +398,21 @@
 }
 
 .trust-strip__track span strong {
-  font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, sans-serif;
-  font-size: 1.1rem;
-  font-weight: 700;
+  /*font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, sans-serif;*/
+  font-family: 'Playfair Display', Georgia, serif;
+  /*font-size: 1.1rem;*/
+  font-size: 28px;
+  font-weight: 900;
   color: #ffffff;
   letter-spacing: -0.01em;
   line-height: 1;
 }
 
 .trust-strip__track span em {
-  font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, sans-serif;
-  font-size: 0.82rem;
+  /*font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, sans-serif;*/
+  font-family: 'Playfair Display', Georgia, serif;
+  /*font-size: 0.82rem;*/
+  font-size: 13px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.55);
   font-style: normal;
