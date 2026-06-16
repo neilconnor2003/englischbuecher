@@ -359,7 +359,7 @@
 .trust-strip__wrapper {
   overflow: hidden;
   width: 100%;
-  padding: 16px 0;
+  padding: 13px 0;
 }
 
 .trust-strip__track {
@@ -381,8 +381,8 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 0 32px;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0 28px;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
   border-top: none;
   border-bottom: none;
   border-left: none;
@@ -391,25 +391,28 @@
   background: transparent;
   border-radius: 0;
   box-shadow: none;
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.5);
-  height: 28px;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.55);
+  height: 24px;
+  font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, sans-serif;
 }
 
 .trust-strip__track span strong {
-  font-size: 1.05rem;
-  font-weight: 800;
+  font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
   color: #ffffff;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   line-height: 1;
 }
 
 .trust-strip__track span em {
-  font-size: 0.8rem;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.45);
+  font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
   font-style: normal;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
 }
 
 /* ── WAYS TO SHOP ───────────────────────────────────────── */
