@@ -242,11 +242,6 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
             {originalPrice > price && (
               <span className="book-was">{formatCurrency(originalPrice, i18n)}</span>
             )}
-            {discountPercent > 0 && (
-              <span className="book-save">
-                {de_save_label(discountPercent, i18n)}
-              </span>
-            )}
           </div>
         </div>
       </Link>
@@ -279,6 +274,7 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
             title={t('buy_now') || 'Buy now'}
           >
             <ThunderboltOutlined />
+            <span className="btn-buy-now-label">{t('buy_now') || 'Buy'}</span>
           </button>
 
           <button
@@ -295,10 +291,5 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
     </article>
   );
 };
-
-// Small helper kept local to avoid importing extra deps just for one label
-function de_save_label(percent, i18n) {
-  return i18n.resolvedLanguage === 'de' ? `-${percent}%` : `Save ${percent}%`;
-}
 
 export default BookCard;
