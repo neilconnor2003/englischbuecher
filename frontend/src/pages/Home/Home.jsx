@@ -526,9 +526,9 @@ function Home() {
                 <span><strong>500+</strong> <em>{de ? 'Englische Titel' : 'English Titles'}</em></span>
                 <span><strong>60%</strong> <em>{de ? 'Durchschn. Ersparnis' : 'Average Savings'}</em></span>
                 <span><strong>2,400+</strong> <em>{de ? 'Zufriedene Leser' : 'Happy Readers'}</em></span>
-                <span>↩ <strong>14</strong> <em>{de ? 'Tage Rückgabe' : 'Day Returns'}</em></span>
-                <span>🔒 <strong>{de ? 'Sicher bezahlen' : 'Secure Checkout'}</strong></span>
-                <span>📦 <strong>{de ? 'Schneller Versand' : 'Fast Dispatch'}</strong></span>
+                <span><strong>↩ 14</strong> <em>{de ? 'Tage Rückgabe' : 'Day Returns'}</em></span>
+                <span><strong>🔒 {de ? 'Sicher bezahlen' : 'Secure Checkout'}</strong> <em>{de ? 'mit Stripe' : 'with Stripe'}</em></span>
+                <span><strong>📦 {de ? 'Schneller Versand' : 'Fast Dispatch'}</strong> <em>{de ? 'mit DHL oder DPD' : 'with DHL or DPD'}</em></span>
               </React.Fragment>
             ))}
           </div>
