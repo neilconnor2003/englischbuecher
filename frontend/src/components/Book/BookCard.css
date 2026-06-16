@@ -24,8 +24,10 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  width: 100%;
-  max-width: 260px;
+  /*width: 100%;*/
+  /*max-width: 260px;*/
+  width: 220px;
+  flex-shrink: 0;
   box-shadow: 0 2px 10px rgba(26, 15, 46, 0.06);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
 }
@@ -126,12 +128,14 @@
   top: 10px;
   right: 10px;
   z-index: 2;
-  background: var(--bc-purple);
+  background: linear-gradient(135deg, #ec4899, #db2777);
   color: #fff;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
-  padding: 3px 9px;
+  padding: 5px 11px;
   border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(219, 39, 119, 0.4);
+  transform: rotate(3deg);
 }
 
 /* ── Wishlist floating button ── */

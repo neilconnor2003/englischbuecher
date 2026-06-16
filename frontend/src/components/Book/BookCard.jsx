@@ -177,11 +177,11 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
   // Tag logic: priority is new release > bestseller > nothing
   // (uses existing book fields — no new data needed)
   const tag = book.is_new_release
-    ? { label: t('home.new') || 'New', kind: 'new' }
+    ? { label: de ? 'Neu' : 'New', kind: 'new' }
     : book.is_bestseller
-      ? { label: t('home.bestseller') || 'Hot', kind: 'hot' }
+      ? { label: de ? 'Beliebt' : 'Hot', kind: 'hot' }
       : book.is_book_of_week
-        ? { label: t('home.pick') || 'Pick', kind: 'pick' }
+        ? { label: de ? 'Tipp' : 'Pick', kind: 'pick' }
         : null;
 
   return (
