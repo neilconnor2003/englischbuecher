@@ -1670,6 +1670,30 @@ const computeWorkId = (titleEn, titleDe, author) => {
   // =========================================================
   // ADD THESE 3 ROUTES TO YOUR server.js (or a new routes file)
   // =========================================================
+  // ── GET /api/reviews/recent ────────────────────────────────
+  // Central feed of recent, high-quality reviews across all books.
+  // Used by the homepage "What Readers Say" section.
+
+  app.get('/api/reviews/recent', async (req, res) => {
+    try {
+      const [rows] = await db.query(`
+        SELECT r.id, r.rating, r.review_text, r.reviewer_name, r.created_at,
+               b.id as book_id, b.title_en, b.title_de, b.slug, b.image, b.author
+        FROM reviews r
+        JOIN books b ON b.id = r.book_id
+        WHERE r.rating >= 4
+          AND CHAR_LENGTH(r.review_text) >= 30
+        ORDER BY r.created_at DESC
+        LIMIT 12
+      `);
+      res.json(rows);
+    } catch (err) {
+      console.error('Recent reviews error:', err);
+      res.json([]);
+    }
+  });
+
+
   // ── 1. GET /api/stats ─────────────────────────────────────
   // Returns live counts from your DB. Cache 1 hour in memory.
   let statsCache = null;
@@ -1987,6 +2011,111 @@ ${bookList}`,
 
   // ── END BOOK OF THE WEEK CRON ─────────────────────────
 
+  // ── REVIEW REQUEST EMAIL CRON ─────────────────────────────
+  // Runs daily at 10:00 Berlin time.
+  // Sends up to 3 review-request emails per book purchased,
+  // spaced out, stopping once a review is submitted.
+  // Add this block in server.js, near your other cron jobs
+  // (it reuses the `cron`, `db`, and `transporter` already in scope).
+
+  const REVIEW_EMAIL_INTERVALS_DAYS = [5, 7, 8]; // gaps between successive emails (5, then +7, then +8)
+
+  async function sendReviewRequestEmails() {
+    console.log('[ReviewRequests] Checking for due emails…');
+    try {
+      const [due] = await db.query(`
+        SELECT rr.id, rr.order_id, rr.user_id, rr.book_id, rr.emails_sent,
+               u.email, u.first_name, u.language,
+               b.title_en, b.title_de, b.slug, b.image
+        FROM review_requests rr
+        JOIN users u ON u.id = rr.user_id
+        JOIN books b ON b.id = rr.book_id
+        WHERE rr.stopped = 0
+          AND rr.review_submitted = 0
+          AND rr.emails_sent < 3
+          AND rr.next_send_at <= NOW()
+      `);
+
+      if (!due.length) {
+        console.log('[ReviewRequests] None due today.');
+        return;
+      }
+
+      for (const row of due) {
+        const isDe = row.language === 'de';
+        const title = isDe ? (row.title_de || row.title_en) : (row.title_en || row.title_de);
+        const reviewUrl = `${process.env.FRONTEND_URL}/books/${row.slug}#reviews`;
+
+        const subject = isDe
+          ? `Wie hat dir "${title}" gefallen?`
+          : `How did you like "${title}"?`;
+
+        const html = isDe ? `
+          <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
+            <h2 style="color:#7C3AED;">Hallo ${row.first_name || ''},</h2>
+            <p>Wir hoffen, dir hat <strong>${title}</strong> gefallen! Hättest du eine Minute Zeit, um eine kurze Bewertung zu hinterlassen? Das hilft anderen Lesern sehr.</p>
+            <a href="${reviewUrl}" style="display:inline-block;background:#7C3AED;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:12px;">Jetzt bewerten</a>
+            <p style="color:#888;font-size:12px;margin-top:24px;">Falls du bereits eine Bewertung abgegeben hast, ignoriere diese E-Mail einfach.</p>
+          </div>
+        ` : `
+          <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
+            <h2 style="color:#7C3AED;">Hi ${row.first_name || ''},</h2>
+            <p>We hope you enjoyed <strong>${title}</strong>! Could you spare a minute to leave a quick review? It really helps other readers.</p>
+            <a href="${reviewUrl}" style="display:inline-block;background:#7C3AED;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:12px;">Leave a review</a>
+            <p style="color:#888;font-size:12px;margin-top:24px;">If you've already left a review, just ignore this email.</p>
+          </div>
+        `;
+
+        try {
+          await transporter.sendMail({
+            from: process.env.SMTP_USER,
+            to: row.email,
+            subject,
+            html,
+          });
+
+          const sentCount = row.emails_sent + 1;
+          const isLast = sentCount >= 3;
+          const nextGapDays = REVIEW_EMAIL_INTERVALS_DAYS[sentCount] || null;
+
+          await db.query(`
+            UPDATE review_requests
+            SET emails_sent = ?,
+                last_sent_at = NOW(),
+                next_send_at = ?,
+                stopped = ?
+            WHERE id = ?
+          `, [
+            sentCount,
+            nextGapDays ? new Date(Date.now() + nextGapDays * 24 * 60 * 60 * 1000) : null,
+            isLast ? 1 : 0,
+            row.id,
+          ]);
+
+          // Log to your existing sent_emails table for visibility in admin
+          await db.query(`
+            INSERT INTO sent_emails (to_email, subject, html, status, type, created_at)
+            VALUES (?, ?, ?, 'sent', 'ReviewRequest', NOW())
+          `, [row.email, subject, html]).catch(() => {});
+
+          console.log(`[ReviewRequests] Sent email ${sentCount}/3 to ${row.email} for book ${row.book_id}`);
+        } catch (sendErr) {
+          console.error(`[ReviewRequests] Failed to send to ${row.email}:`, sendErr.message);
+          // Don't update next_send_at on failure — will retry tomorrow
+        }
+      }
+    } catch (err) {
+      console.error('[ReviewRequests] Cron error:', err.message);
+    }
+  }
+
+  // Run daily at 10:00 Berlin time
+  cron.schedule('0 10 * * *', sendReviewRequestEmails, { timezone: 'Europe/Berlin' });
+  console.log('[ReviewRequests] Cron scheduled — daily at 10:00 Berlin time');
+
+  // ── END REVIEW REQUEST EMAIL CRON ─────────────────────────
+
+
 
 
   app.get('/api/series/:slug', async (req, res) => {
@@ -2081,6 +2210,7 @@ ${bookList}`,
       const {
         q,
         author,
+        author_id,   // NEW: filter by author_id via book_authors join
         category,
         publisher,
         format,      // comma-separated from CheckboxGroup
@@ -2111,6 +2241,11 @@ ${bookList}`,
       }
 
       if (author) { where.push(`b.author = ?`); params.push(author); }
+
+      if (author_id) {
+        where.push(`b.id IN (SELECT book_id FROM book_authors WHERE author_id = ?)`);
+        params.push(Number(author_id));
+      }
       //if (category) { where.push(`b.category_id = ?`); params.push(Number(category)); }
 
       if (category) {
@@ -2394,13 +2529,28 @@ ${bookList}`,
 
   app.get('/api/books', async (req, res) => {
     try {
+      const { author_id, limit } = req.query;
+
+      const where = [];
+      const params = [];
+
+      if (author_id) {
+        where.push(`b.id IN (SELECT book_id FROM book_authors WHERE author_id = ?)`);
+        params.push(Number(author_id));
+      }
+
+      const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+      const limitSql = limit ? `LIMIT ${Math.min(Math.max(Number(limit) || 50, 1), 100)}` : '';
+
       const [rows] = await db.execute(`
         SELECT b.*, c.name_en AS categoryName,
         b.isbn13, b.isbn10
         FROM books b
         LEFT JOIN categories c ON b.category_id = c.id
+        ${whereSql}
         ORDER BY b.created_at DESC
-      `);
+        ${limitSql}
+      `, params);
       res.json(rows);
     } catch (err) {
       console.error('GET /api/books error:', err);
@@ -3917,6 +4067,15 @@ ${bookList}`,
           review_count = (SELECT COUNT(*) FROM reviews WHERE book_id = b.id)
       WHERE b.id = ?
     `, [bookId]);
+
+      // Stop any pending review-request emails for this user+book
+      if (userId) {
+        await db.execute(`
+          UPDATE review_requests
+          SET review_submitted = 1, stopped = 1
+          WHERE user_id = ? AND book_id = ?
+        `, [userId, bookId]).catch(() => {});
+      }
 
       res.json({ success: true, message: 'Review submitted!' });
     } catch (err) {
