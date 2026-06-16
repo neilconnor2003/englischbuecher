@@ -1714,24 +1714,81 @@ const computeWorkId = (titleEn, titleDe, author) => {
           language = VALUES(language)
       `, [email, language, source, token]);
 
+      // Fetch the token actually stored (a re-subscribe keeps the original token,
+      // so the JS variable above may not match what's in the DB).
+      const [[subRow]] = await db.query(
+        'SELECT unsubscribe_token FROM newsletter_subscribers WHERE email = ?',
+        [email]
+      );
+      const realToken = subRow?.unsubscribe_token || token;
+      const unsubscribeUrl = `${process.env.API_URL}/api/newsletter/unsubscribe?token=${realToken}`;
+
       // Send a welcome email — best effort, don't fail the request if this errors
       try {
         const isDe = language === 'de';
+        const sourceLabel = source === 'homepage'
+          ? (isDe ? 'unserer Startseite' : 'our homepage')
+          : (isDe ? `"${source}"` : `"${source}"`);
+
+        const subject = isDe
+          ? 'Willkommen beim englischbücher.de Newsletter! 📚'
+          : 'Welcome to the englischbücher.de newsletter! 📚';
+
+        const html = isDe ? `
+          <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
+            <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
+              <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
+              <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">Willkommen an Bord! 🎉</h1>
+            </div>
+            <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
+              <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 16px;">
+                Danke, dass du dich über ${sourceLabel} angemeldet hast! Du bekommst ab jetzt:
+              </p>
+              <ul style="color:#1a1a2e;font-size:14px;line-height:1.8;padding-left:20px;margin:0 0 24px;">
+                <li>📖 Benachrichtigungen über neue englische Bücher</li>
+                <li>💰 Exklusive Rabatte und Angebote</li>
+                <li>✨ Empfehlungen und Autoren-Spotlights</li>
+              </ul>
+              <div style="text-align:center;margin:28px 0;">
+                <a href="${process.env.FRONTEND_URL}/books" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Bücher entdecken</a>
+              </div>
+              <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
+                Du erhältst diese E-Mail, weil du dich für unseren Newsletter angemeldet hast.<br>
+                <a href="${unsubscribeUrl}" style="color:#9ca3af;text-decoration:underline;">Abmelden</a>
+              </p>
+            </div>
+          </div>
+        ` : `
+          <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
+            <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
+              <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
+              <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">Welcome aboard! 🎉</h1>
+            </div>
+            <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
+              <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 16px;">
+                Thanks for signing up via ${sourceLabel}! From now on you'll get:
+              </p>
+              <ul style="color:#1a1a2e;font-size:14px;line-height:1.8;padding-left:20px;margin:0 0 24px;">
+                <li>📖 Heads-up on new English book arrivals</li>
+                <li>💰 Exclusive discounts and deals</li>
+                <li>✨ Recommendations and author spotlights</li>
+              </ul>
+              <div style="text-align:center;margin:28px 0;">
+                <a href="${process.env.FRONTEND_URL}/books" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Browse books</a>
+              </div>
+              <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
+                You're receiving this email because you signed up for our newsletter.<br>
+                <a href="${unsubscribeUrl}" style="color:#9ca3af;text-decoration:underline;">Unsubscribe</a>
+              </p>
+            </div>
+          </div>
+        `;
+
         await transporter.sendMail({
           from: process.env.SMTP_USER,
           to: email,
-          subject: isDe ? 'Willkommen beim englischbücher.de Newsletter!' : 'Welcome to the englischbücher.de newsletter!',
-          html: isDe ? `
-            <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
-              <h2 style="color:#7C3AED;">Willkommen!</h2>
-              <p>Danke, dass du dich angemeldet hast. Du erhältst ab jetzt Neuigkeiten zu neuen Büchern, Angeboten und mehr.</p>
-            </div>
-          ` : `
-            <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
-              <h2 style="color:#7C3AED;">Welcome aboard!</h2>
-              <p>Thanks for signing up. You'll now hear about new arrivals, deals, and more.</p>
-            </div>
-          `,
+          subject,
+          html,
         });
       } catch (mailErr) {
         console.error('Newsletter welcome email failed:', mailErr.message);
@@ -1746,20 +1803,38 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
   // ── GET /api/newsletter/unsubscribe ────────────────────────
   app.get('/api/newsletter/unsubscribe', async (req, res) => {
+    const renderPage = (message) => `
+      <!DOCTYPE html>
+      <html>
+        <head><meta charset="utf-8"><title>englischbücher.de</title></head>
+        <body style="font-family:-apple-system,'Segoe UI',sans-serif;background:#F6F3FF;margin:0;padding:60px 20px;text-align:center;">
+          <div style="max-width:420px;margin:0 auto;background:#fff;border-radius:16px;padding:40px 32px;box-shadow:0 8px 28px rgba(0,0,0,0.08);">
+            <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#7C3AED;text-transform:uppercase;margin-bottom:16px;">englischbücher.de</div>
+            <p style="color:#1a1a2e;font-size:15px;line-height:1.6;">${message}</p>
+            <a href="${process.env.FRONTEND_URL}" style="display:inline-block;margin-top:16px;color:#7C3AED;font-weight:600;text-decoration:none;font-size:14px;">← Back to the homepage</a>
+          </div>
+        </body>
+      </html>
+    `;
+
     try {
       const token = String(req.query.token || '');
-      if (!token) return res.status(400).send('Invalid link');
+      if (!token) return res.status(400).send(renderPage('This unsubscribe link is invalid.'));
 
-      await db.execute(`
+      const [result] = await db.execute(`
         UPDATE newsletter_subscribers
         SET is_active = 0, unsubscribed_at = NOW()
         WHERE unsubscribe_token = ?
       `, [token]);
 
-      res.send('You have been unsubscribed.');
+      if (result.affectedRows === 0) {
+        return res.send(renderPage("This link has already been used, or doesn't exist."));
+      }
+
+      res.send(renderPage("You've been unsubscribed. We're sorry to see you go — you can always sign up again from our homepage."));
     } catch (err) {
       console.error('Unsubscribe error:', err);
-      res.status(500).send('Something went wrong');
+      res.status(500).send(renderPage('Something went wrong. Please try again later.'));
     }
   });
 
@@ -2190,7 +2265,7 @@ ${bookList}`,
           await db.query(`
             INSERT INTO sent_emails (to_email, subject, html, status, type, created_at)
             VALUES (?, ?, ?, 'sent', 'ReviewRequest', NOW())
-          `, [row.email, subject, html]).catch(() => {});
+          `, [row.email, subject, html]).catch(() => { });
 
           console.log(`[ReviewRequests] Sent email ${sentCount}/3 to ${row.email} for book ${row.book_id}`);
         } catch (sendErr) {
@@ -4168,7 +4243,7 @@ ${bookList}`,
           UPDATE review_requests
           SET review_submitted = 1, stopped = 1
           WHERE user_id = ? AND book_id = ?
-        `, [userId, bookId]).catch(() => {});
+        `, [userId, bookId]).catch(() => { });
       }
 
       res.json({ success: true, message: 'Review submitted!' });
