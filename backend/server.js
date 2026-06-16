@@ -1670,6 +1670,82 @@ const computeWorkId = (titleEn, titleDe, author) => {
   // =========================================================
   // ADD THESE 3 ROUTES TO YOUR server.js (or a new routes file)
   // =========================================================
+  // ── POST /api/newsletter/subscribe ─────────────────────────
+  // Adds an email to newsletter_subscribers. Idempotent —
+  // re-subscribing an existing (even unsubscribed) email re-activates it.
+
+  app.post('/api/newsletter/subscribe', async (req, res) => {
+    try {
+      const email = String(req.body?.email || '').trim().toLowerCase();
+      const language = req.body?.language === 'en' ? 'en' : 'de';
+      const source = String(req.body?.source || 'homepage').slice(0, 50);
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: 'Invalid email address' });
+      }
+
+      const token = crypto.randomBytes(24).toString('hex');
+
+      await db.execute(`
+        INSERT INTO newsletter_subscribers (email, language, source, is_active, unsubscribe_token, created_at)
+        VALUES (?, ?, ?, 1, ?, NOW())
+        ON DUPLICATE KEY UPDATE
+          is_active = 1,
+          unsubscribed_at = NULL,
+          language = VALUES(language)
+      `, [email, language, source, token]);
+
+      // Send a welcome email — best effort, don't fail the request if this errors
+      try {
+        const isDe = language === 'de';
+        await transporter.sendMail({
+          from: process.env.SMTP_USER,
+          to: email,
+          subject: isDe ? 'Willkommen beim englischbücher.de Newsletter!' : 'Welcome to the englischbücher.de newsletter!',
+          html: isDe ? `
+            <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
+              <h2 style="color:#7C3AED;">Willkommen!</h2>
+              <p>Danke, dass du dich angemeldet hast. Du erhältst ab jetzt Neuigkeiten zu neuen Büchern, Angeboten und mehr.</p>
+            </div>
+          ` : `
+            <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
+              <h2 style="color:#7C3AED;">Welcome aboard!</h2>
+              <p>Thanks for signing up. You'll now hear about new arrivals, deals, and more.</p>
+            </div>
+          `,
+        });
+      } catch (mailErr) {
+        console.error('Newsletter welcome email failed:', mailErr.message);
+      }
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Newsletter subscribe error:', err);
+      res.status(500).json({ error: 'Subscription failed' });
+    }
+  });
+
+  // ── GET /api/newsletter/unsubscribe ────────────────────────
+  app.get('/api/newsletter/unsubscribe', async (req, res) => {
+    try {
+      const token = String(req.query.token || '');
+      if (!token) return res.status(400).send('Invalid link');
+
+      await db.execute(`
+        UPDATE newsletter_subscribers
+        SET is_active = 0, unsubscribed_at = NOW()
+        WHERE unsubscribe_token = ?
+      `, [token]);
+
+      res.send('You have been unsubscribed.');
+    } catch (err) {
+      console.error('Unsubscribe error:', err);
+      res.status(500).send('Something went wrong');
+    }
+  });
+
+
   // ── GET /api/reviews/recent ────────────────────────────────
   // Central feed of recent, high-quality reviews across all books.
   // Used by the homepage "What Readers Say" section.

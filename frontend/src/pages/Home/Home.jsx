@@ -339,10 +339,136 @@ function AuthorSpotlight({ de }) {
                 ))}
               </div>
             )}
-            <Link to={`/books?author_id=${author.id}`} className="author-spot-btn">
+            <Link to={`/books?author=${encodeURIComponent(author.name)}`} className="author-spot-btn">
               {de ? `Alle Bücher von ${author.name} →` : `View all books by ${author.name} →`}
             </Link>
           </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── WhatReadersSay ──────────────────────────────────────
+// Pulls recent, high-quality reviews across all books from
+// /api/reviews/recent — the central reviews table, regardless
+// of which book's page the review was originally left on.
+function WhatReadersSay({ de }) {
+  const [reviews, setReviews] = useState([]);
+
+  useEffect(() => {
+    axios.get('/api/reviews/recent')
+      .then(res => { if (Array.isArray(res.data)) setReviews(res.data); })
+      .catch(() => {});
+  }, []);
+
+  if (!reviews.length) return null;
+
+  return (
+    <section className="readers-say-section">
+      <div className="container">
+        <div className="section-header">
+          <h2 className="section-title">
+            💬 {de ? 'Das sagen unsere Leser' : 'What Readers Say'}
+          </h2>
+        </div>
+        <div className="readers-say-grid">
+          {reviews.slice(0, 6).map(r => {
+            const title = de ? (r.title_de || r.title_en) : (r.title_en || r.title_de);
+            const to = generateBookUrl({ id: r.book_id, slug: r.slug, title_en: r.title_en, title_de: r.title_de });
+            return (
+              <Link to={to} key={r.id} className="reader-card">
+                <div className="reader-card-stars">
+                  {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                </div>
+                <p className="reader-card-text">
+                  "{r.review_text.length > 140 ? r.review_text.slice(0, 140) + '…' : r.review_text}"
+                </p>
+                <div className="reader-card-footer">
+                  {r.image && <img src={r.image} alt={title} className="reader-card-cover" loading="lazy" />}
+                  <div className="reader-card-meta">
+                    <span className="reader-card-name">{r.reviewer_name || (de ? 'Anonym' : 'Anonymous')}</span>
+                    <span className="reader-card-book">{title}</span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── NewsletterSignup ────────────────────────────────────
+// "Stay in the Loop" — collects an email via /api/newsletter/subscribe.
+function NewsletterSignup({ de }) {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState('idle'); // idle | loading | success | error
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (status === 'loading') return;
+
+    const trimmed = email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmed)) {
+      setStatus('error');
+      setErrorMsg(de ? 'Bitte gib eine gültige E-Mail-Adresse ein.' : 'Please enter a valid email address.');
+      return;
+    }
+
+    setStatus('loading');
+    try {
+      await axios.post('/api/newsletter/subscribe', {
+        email: trimmed,
+        language: de ? 'de' : 'en',
+        source: 'homepage',
+      });
+      setStatus('success');
+      setEmail('');
+    } catch (err) {
+      setStatus('error');
+      setErrorMsg(de ? 'Etwas ist schiefgelaufen. Bitte versuche es erneut.' : 'Something went wrong. Please try again.');
+    }
+  };
+
+  return (
+    <section className="newsletter-section">
+      <div className="container">
+        <div className="newsletter-card">
+          <div className="newsletter-text">
+            <h2>{de ? 'Bleib auf dem Laufenden' : 'Stay in the Loop'}</h2>
+            <p>
+              {de
+                ? 'Erhalte Neuigkeiten zu neuen Büchern, exklusiven Angeboten und mehr — direkt in dein Postfach.'
+                : 'Get updates on new arrivals, exclusive deals, and more — straight to your inbox.'}
+            </p>
+          </div>
+
+          {status === 'success' ? (
+            <div className="newsletter-success">
+              ✓ {de ? 'Danke! Du bist jetzt angemeldet.' : "Thanks! You're subscribed."}
+            </div>
+          ) : (
+            <form className="newsletter-form" onSubmit={handleSubmit}>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={de ? 'Deine E-Mail-Adresse' : 'Your email address'}
+                className="newsletter-input"
+                disabled={status === 'loading'}
+              />
+              <button type="submit" className="newsletter-btn" disabled={status === 'loading'}>
+                {status === 'loading'
+                  ? (de ? 'Wird gesendet…' : 'Subscribing…')
+                  : (de ? 'Anmelden' : 'Subscribe')}
+              </button>
+            </form>
+          )}
+          {status === 'error' && <p className="newsletter-error">{errorMsg}</p>}
         </div>
       </div>
     </section>
@@ -704,6 +830,12 @@ function Home() {
           </div>
         </section>
       ))}
+
+      {/* ── WHAT READERS SAY ───────────────────────────── */}
+      <WhatReadersSay de={de} />
+
+      {/* ── STAY IN THE LOOP ──────────────────────────── */}
+      <NewsletterSignup de={de} />
 
     </div>
   );
