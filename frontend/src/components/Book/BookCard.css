@@ -146,8 +146,8 @@
 }
 
 @keyframes disc-pulse {
-  0%, 100% { transform: rotate(-8deg) scale(1); }
-  50%      { transform: rotate(-8deg) scale(1.06); }
+  0%, 100% { transform: rotate(45deg) scale(1); }
+  50%      { transform: rotate(45deg) scale(1.06); }
 }
 
 @media (prefers-reduced-motion: reduce) {
