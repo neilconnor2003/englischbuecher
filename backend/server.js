@@ -21,6 +21,9 @@ const fs = require('fs');
 const axios = require('axios');   // ← ADD THIS LINE
 const cookieParser = require('cookie-parser');
 
+const cron = require('node-cron');
+const Anthropic = require('@anthropic-ai/sdk');
+
 const dpdRoutes = require('./routes/dpd');
 //('✅ LOADING dpd routes from:', require.resolve('./routes/dpd'));
 
@@ -1528,60 +1531,6 @@ const computeWorkId = (titleEn, titleDe, author) => {
   });
 
   // === BOOK APIs ===
-
-
-  /*app.get('/api/books/popular', async (req, res) => {
-    try {
-      const [rows] = await db.execute(`
-      SELECT 
-        b.id,
-        b.title_en,
-        b.title_de,
-        b.author,
-        b.price,
-        b.original_price,
-        b.stock,
-        b.image,
-        b.slug,
-        b.isbn13,
-        b.isbn10,
-        b.rating,
-        b.review_count,
-        b.series_name,
-        b.publish_date,
-        COALESCE(agg.total_quantity, 0) AS total_quantity
-      FROM books b
-      LEFT JOIN (
-        SELECT 
-          oi.bookId,
-          SUM(oi.quantity) AS total_quantity
-        FROM orders o
-        JOIN JSON_TABLE(o.order_items, '$[*]'
-          COLUMNS (
-            bookId INT PATH '$.bookId',
-            quantity INT PATH '$.quantity'
-          )
-        ) AS oi
-        GROUP BY oi.bookId
-      ) AS agg
-        ON agg.bookId = b.id
-            
-      ORDER BY 
-        (total_quantity * 10) + 
-        (b.popularity_score * 5) + 
-        TIMESTAMPDIFF(DAY, b.created_at, NOW()) * -0.1
-      DESC
-
-      LIMIT 30;
-    `);
-
-      res.json(rows);
-    } catch (err) {
-      console.error('GET /api/books/popular error:', err);
-      res.status(500).json({ error: 'Database error' });
-    }
-  });*/
-
   app.get('/api/books/popular', async (req, res) => {
     try {
       // Step 1: fetch a larger raw pool first
@@ -1721,12 +1670,293 @@ const computeWorkId = (titleEn, titleDe, author) => {
   // =========================================================
   // ADD THESE 3 ROUTES TO YOUR server.js (or a new routes file)
   // =========================================================
+  // ── GET /api/admin/newsletter/log ──────────────────────────
+  // Admin-only: view the full subscribe/unsubscribe history.
+  // Optional ?email=x filters to one person's full timeline.
+  app.get('/api/admin/newsletter/log', async (req, res) => {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    try {
+      const email = req.query.email ? String(req.query.email).trim().toLowerCase() : null;
+      const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 1000);
+
+      const [rows] = email
+        ? await db.query(
+            'SELECT * FROM newsletter_subscription_log WHERE email = ? ORDER BY created_at DESC LIMIT ?',
+            [email, limit]
+          )
+        : await db.query(
+            'SELECT * FROM newsletter_subscription_log ORDER BY created_at DESC LIMIT ?',
+            [limit]
+          );
+
+      res.json(rows);
+    } catch (err) {
+      console.error('Newsletter log fetch error:', err);
+      res.status(500).json({ error: 'Failed to fetch log' });
+    }
+  });
+
+  // ── GET /api/newsletter/status ─────────────────────────────
+  // Checks whether an email is currently subscribed.
+  app.get('/api/newsletter/status', async (req, res) => {
+    try {
+      const email = String(req.query.email || '').trim().toLowerCase();
+      if (!email) return res.json({ subscribed: false });
+
+      const [[row]] = await db.query(
+        'SELECT is_active FROM newsletter_subscribers WHERE email = ?',
+        [email]
+      );
+      res.json({ subscribed: !!row?.is_active });
+    } catch (err) {
+      console.error('Newsletter status error:', err);
+      res.json({ subscribed: false });
+    }
+  });
+
+  // ── POST /api/newsletter/subscribe ─────────────────────────
+  // Adds an email to newsletter_subscribers. Idempotent —
+  // re-subscribing an existing (even unsubscribed) email re-activates it.
+
+  app.post('/api/newsletter/subscribe', async (req, res) => {
+    try {
+      const email = String(req.body?.email || '').trim().toLowerCase();
+      const language = req.body?.language === 'en' ? 'en' : 'de';
+      const source = String(req.body?.source || 'homepage').slice(0, 50);
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: 'Invalid email address' });
+      }
+
+      const token = crypto.randomBytes(24).toString('hex');
+
+      // Check existing state BEFORE the upsert, so we know whether this is
+      // a brand-new subscriber or someone re-opting-in after unsubscribing —
+      // needed to log the correct action type below.
+      const [[existing]] = await db.query(
+        'SELECT is_active FROM newsletter_subscribers WHERE email = ?',
+        [email]
+      );
+      const logAction = !existing
+        ? 'subscribed'
+        : existing.is_active
+          ? 'subscribed' // already active, re-submitted — still log as a subscribe event
+          : 'resubscribed';
+
+      await db.execute(`
+        INSERT INTO newsletter_subscribers (email, language, source, is_active, unsubscribe_token, created_at)
+        VALUES (?, ?, ?, 1, ?, NOW())
+        ON DUPLICATE KEY UPDATE
+          is_active = 1,
+          unsubscribed_at = NULL,
+          language = VALUES(language)
+      `, [email, language, source, token]);
+
+      // Permanent audit log entry — never updated or deleted, just appended to.
+      await db.execute(`
+        INSERT INTO newsletter_subscription_log (email, action, language, source, ip_address, created_at)
+        VALUES (?, ?, ?, ?, ?, NOW())
+      `, [email, logAction, language, source, req.ip || null]).catch(err => {
+        console.error('Newsletter log insert failed (non-fatal):', err.message);
+      });
+
+      // Fetch the token actually stored (a re-subscribe keeps the original token,
+      // so the JS variable above may not match what's in the DB).
+      const [[subRow]] = await db.query(
+        'SELECT unsubscribe_token FROM newsletter_subscribers WHERE email = ?',
+        [email]
+      );
+      const realToken = subRow?.unsubscribe_token || token;
+      // Built from the incoming request rather than an env var, so this
+      // works correctly on both dev and prod with zero configuration —
+      // same pattern already used elsewhere in this file for image URLs.
+      const apiOrigin = `${req.protocol}://${req.get('host')}`;
+      const unsubscribeUrl = `${apiOrigin}/api/newsletter/unsubscribe?token=${realToken}`;
+
+      // Send a welcome email — best effort, don't fail the request if this errors
+      let subject = '';
+      let html = '';
+      try {
+        const isDe = language === 'de';
+        const sourceLabel = source === 'homepage'
+          ? (isDe ? 'unserer Startseite' : 'our homepage')
+          : (isDe ? `"${source}"` : `"${source}"`);
+
+        subject = isDe
+          ? 'Willkommen beim englischbücher.de Newsletter! 📚'
+          : 'Welcome to the englischbücher.de newsletter! 📚';
+
+        html = isDe ? `
+          <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
+            <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
+              <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
+              <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">Willkommen an Bord! 🎉</h1>
+            </div>
+            <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
+              <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 16px;">
+                Danke, dass du dich über ${sourceLabel} angemeldet hast! Du bekommst ab jetzt:
+              </p>
+              <ul style="color:#1a1a2e;font-size:14px;line-height:1.8;padding-left:20px;margin:0 0 24px;">
+                <li>📖 Benachrichtigungen über neue englische Bücher</li>
+                <li>💰 Exklusive Rabatte und Angebote</li>
+                <li>✨ Empfehlungen und Autoren-Spotlights</li>
+              </ul>
+              <div style="text-align:center;margin:28px 0;">
+                <a href="${process.env.FRONTEND_URL}/books" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Bücher entdecken</a>
+              </div>
+              <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
+                Du erhältst diese E-Mail, weil du dich für unseren Newsletter angemeldet hast.<br>
+                <a href="${unsubscribeUrl}" style="color:#9ca3af;text-decoration:underline;">Abbestellen</a>
+              </p>
+            </div>
+          </div>
+        ` : `
+          <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
+            <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
+              <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
+              <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">Welcome aboard! 🎉</h1>
+            </div>
+            <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
+              <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 16px;">
+                Thanks for signing up via ${sourceLabel}! From now on you'll get:
+              </p>
+              <ul style="color:#1a1a2e;font-size:14px;line-height:1.8;padding-left:20px;margin:0 0 24px;">
+                <li>📖 Heads-up on new English book arrivals</li>
+                <li>💰 Exclusive discounts and deals</li>
+                <li>✨ Recommendations and author spotlights</li>
+              </ul>
+              <div style="text-align:center;margin:28px 0;">
+                <a href="${process.env.FRONTEND_URL}/books" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Browse books</a>
+              </div>
+              <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
+                You're receiving this email because you signed up for our newsletter.<br>
+                <a href="${unsubscribeUrl}" style="color:#9ca3af;text-decoration:underline;">Unsubscribe</a>
+              </p>
+            </div>
+          </div>
+        `;
+
+        await transporter.sendMail({
+          from: process.env.SMTP_USER,
+          to: email,
+          subject,
+          html,
+        });
+
+        // Log to sent_emails so admins can see this in the existing
+        // email logs view, same pattern as review-request emails.
+        await db.query(`
+          INSERT INTO sent_emails (to_email, subject, html, status, type, created_at)
+          VALUES (?, ?, ?, 'sent', 'Newsletter', NOW())
+        `, [email, subject, html]).catch(() => {});
+      } catch (mailErr) {
+        console.error('Newsletter welcome email failed:', mailErr.message);
+
+        // Log the failure too, so admins can see bounces/errors, not just successes
+        await db.query(`
+          INSERT INTO sent_emails (to_email, subject, html, status, error, type, created_at)
+          VALUES (?, ?, ?, 'failed', ?, 'Newsletter', NOW())
+        `, [email, subject, html, mailErr.message]).catch(() => {});
+      }
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Newsletter subscribe error:', err);
+      res.status(500).json({ error: 'Subscription failed' });
+    }
+  });
+
+  // ── GET /api/newsletter/unsubscribe ────────────────────────
+  app.get('/api/newsletter/unsubscribe', async (req, res) => {
+    const renderPage = (message) => `
+      <!DOCTYPE html>
+      <html>
+        <head><meta charset="utf-8"><title>englischbücher.de</title></head>
+        <body style="font-family:-apple-system,'Segoe UI',sans-serif;background:#F6F3FF;margin:0;padding:60px 20px;text-align:center;">
+          <div style="max-width:420px;margin:0 auto;background:#fff;border-radius:16px;padding:40px 32px;box-shadow:0 8px 28px rgba(0,0,0,0.08);">
+            <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#7C3AED;text-transform:uppercase;margin-bottom:16px;">englischbücher.de</div>
+            <p style="color:#1a1a2e;font-size:15px;line-height:1.6;">${message}</p>
+            <a href="${process.env.FRONTEND_URL}" style="display:inline-block;margin-top:16px;color:#7C3AED;font-weight:600;text-decoration:none;font-size:14px;">← Back to the homepage</a>
+          </div>
+        </body>
+      </html>
+    `;
+
+    try {
+      const token = String(req.query.token || '');
+      if (!token) return res.status(400).send(renderPage('This unsubscribe link is invalid.'));
+
+      // Fetch first so we have the email + language to log, and so we can
+      // tell a fresh unsubscribe apart from a stale/already-used link.
+      const [[row]] = await db.query(
+        'SELECT email, language, is_active FROM newsletter_subscribers WHERE unsubscribe_token = ?',
+        [token]
+      );
+
+      if (!row) {
+        return res.send(renderPage("This link has already been used, or doesn't exist."));
+      }
+
+      if (!row.is_active) {
+        // Already unsubscribed previously — don't log a duplicate event
+        return res.send(renderPage("You've already been unsubscribed."));
+      }
+
+      await db.execute(`
+        UPDATE newsletter_subscribers
+        SET is_active = 0, unsubscribed_at = NOW()
+        WHERE unsubscribe_token = ?
+      `, [token]);
+
+      await db.execute(`
+        INSERT INTO newsletter_subscription_log (email, action, language, source, ip_address, created_at)
+        VALUES (?, 'unsubscribed', ?, 'unsubscribe_link', ?, NOW())
+      `, [row.email, row.language, req.ip || null]).catch(err => {
+        console.error('Newsletter log insert failed (non-fatal):', err.message);
+      });
+
+      res.send(renderPage("You've been unsubscribed. We're sorry to see you go — you can always sign up again from our homepage."));
+    } catch (err) {
+      console.error('Unsubscribe error:', err);
+      res.status(500).send(renderPage('Something went wrong. Please try again later.'));
+    }
+  });
+
+
+  // ── GET /api/reviews/recent ────────────────────────────────
+  // Central feed of recent, high-quality reviews across all books.
+  // Used by the homepage "What Readers Say" section.
+
+  app.get('/api/reviews/recent', async (req, res) => {
+    try {
+      const [rows] = await db.query(`
+        SELECT r.id, r.rating, r.review_text, r.reviewer_name, r.created_at,
+               b.id as book_id, b.title_en, b.title_de, b.slug, b.image, b.author
+        FROM reviews r
+        JOIN books b ON b.id = r.book_id
+        WHERE r.rating >= 4
+          AND CHAR_LENGTH(r.review_text) >= 10
+        ORDER BY r.created_at DESC
+        LIMIT 12
+      `);
+      res.json(rows);
+    } catch (err) {
+      console.error('Recent reviews error:', err);
+      res.json([]);
+    }
+  });
 
 
   // ── 1. GET /api/stats ─────────────────────────────────────
   // Returns live counts from your DB. Cache 1 hour in memory.
   let statsCache = null;
   let statsCacheTime = 0;
+
+  // Rounds DOWN to the nearest multiple of 10 (e.g. 84 -> 80, 129 -> 120)
+  const roundDownTo10 = (n) => Math.floor(n / 10) * 10;
 
   app.get('/api/stats', async (req, res) => {
     try {
@@ -1737,13 +1967,13 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
       const [[booksRow]] = await db.query('SELECT COUNT(*) as cnt FROM books WHERE stock > 0');
       const [[readersRow]] = await db.query("SELECT COUNT(DISTINCT user_id) as cnt FROM orders WHERE status = 'delivered'");
-      const [[reviewsRow]] = await db.query('SELECT COUNT(*) as cnt FROM book_reviews');
+      const [[reviewsRow]] = await db.query('SELECT COUNT(*) as cnt FROM reviews');
       // "saving" is a fixed marketing claim — adjust as you like
       const saving = 60;
 
       statsCache = {
-        books: booksRow.cnt || 0,
-        readers: readersRow.cnt || 0,
+        books: roundDownTo10(booksRow.cnt || 0),
+        readers: roundDownTo10(readersRow.cnt || 0),
         saving,
         reviews: Math.round((reviewsRow.cnt || 0) / 1000) || 1,
         // reviews shows as "Xk+" so divide by 1000; fallback 1 means "1K+"
@@ -1768,7 +1998,8 @@ const computeWorkId = (titleEn, titleDe, author) => {
       const [rows] = await db.query(`
       SELECT b.*, a.name AS author_name
       FROM books b
-      LEFT JOIN authors a ON b.author_id = a.id
+      LEFT JOIN book_authors ba ON ba.book_id = b.id
+      LEFT JOIN authors a ON a.id = ba.author_id
       WHERE b.is_book_of_week = 1
       LIMIT 1
     `);
@@ -1781,7 +2012,98 @@ const computeWorkId = (titleEn, titleDe, author) => {
   });
 
 
-  // ── 3. GET /api/authors/featured ──────────────────────────
+  // ── 4. GET /api/books/for-you ──────────────────────────────
+  // Logged-in users: recommends books from categories they've
+  // ordered, wishlisted, or viewed, weighted by recency.
+  // Anonymous users: falls back to a popularity-based mix.
+
+  app.get('/api/books/for-you', async (req, res) => {
+    try {
+      const isLoggedIn = req.isAuthenticated && req.isAuthenticated() && req.user;
+
+      if (!isLoggedIn) {
+        // Anonymous fallback: just return popular books, frontend already
+        // has category-section data to build its own "All" mix from.
+        return res.json({ personalized: false, books: [] });
+      }
+
+      const userId = req.user.id;
+
+      // Step 1: find categories this user has shown interest in
+      // (ordered, wishlisted, or viewed in the last 90 days), most recent first
+      const [categoryRows] = await db.query(`
+        SELECT category_id, MAX(touched_at) as last_touch, COUNT(*) as weight
+        FROM (
+          SELECT b.category_id, o.created_at as touched_at
+          FROM orders o
+          JOIN JSON_TABLE(o.order_items, '$[*]'
+            COLUMNS (bookId INT PATH '$.bookId')
+          ) AS oi ON 1=1
+          JOIN books b ON b.id = oi.bookId
+          WHERE o.user_id = ?
+
+          UNION ALL
+
+          SELECT b.category_id, w.created_at as touched_at
+          FROM wishlist w
+          JOIN books b ON b.id = w.book_id
+          WHERE w.user_id = ? AND w.deleted_at IS NULL
+
+          UNION ALL
+
+          SELECT b.category_id, v.viewed_at as touched_at
+          FROM book_views v
+          JOIN books b ON b.id = v.book_id
+          WHERE v.user_id = ? AND v.viewed_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
+        ) AS combined
+        WHERE category_id IS NOT NULL
+        GROUP BY category_id
+        ORDER BY weight DESC, last_touch DESC
+        LIMIT 5
+      `, [userId, userId, userId]);
+
+      if (!categoryRows.length) {
+        // New user with no history yet
+        return res.json({ personalized: false, books: [] });
+      }
+
+      const categoryIds = categoryRows.map(r => r.category_id);
+
+      // Step 2: books the user already owns/wishlisted (exclude from results)
+      const [ownedRows] = await db.query(`
+        SELECT DISTINCT b.id
+        FROM books b
+        LEFT JOIN orders o ON o.user_id = ?
+        LEFT JOIN JSON_TABLE(o.order_items, '$[*]'
+          COLUMNS (bookId INT PATH '$.bookId')
+        ) AS oi ON oi.bookId = b.id
+        LEFT JOIN wishlist w ON w.book_id = b.id AND w.user_id = ? AND w.deleted_at IS NULL
+        WHERE oi.bookId IS NOT NULL OR w.book_id IS NOT NULL
+      `, [userId, userId]);
+      const ownedIds = ownedRows.map(r => r.id);
+      const excludeClause = ownedIds.length ? `AND b.id NOT IN (${ownedIds.map(() => '?').join(',')})` : '';
+
+      // Step 3: pull books from those categories, prioritizing in-stock + recent
+      const [books] = await db.query(`
+        SELECT b.*, a.name AS author_name, c.id as cat_id, c.name_en as cat_name_en, c.name_de as cat_name_de
+        FROM books b
+        LEFT JOIN book_authors ba ON ba.book_id = b.id
+        LEFT JOIN authors a ON a.id = ba.author_id
+        LEFT JOIN categories c ON c.id = b.category_id
+        WHERE b.category_id IN (${categoryIds.map(() => '?').join(',')})
+          AND b.stock > 0
+          AND b.image IS NOT NULL AND b.image != ''
+          ${excludeClause}
+        ORDER BY b.popularity_score DESC, b.created_at DESC
+        LIMIT 24
+      `, [...categoryIds, ...ownedIds]);
+
+      res.json({ personalized: true, books, basedOnCategories: categoryRows.length });
+    } catch (err) {
+      console.error('For-you error:', err);
+      res.json({ personalized: false, books: [] });
+    }
+  });
   // Returns the author with the most orders in the last 30 days.
   // Fully automatic — no admin intervention needed.
 
@@ -1794,11 +2116,14 @@ const computeWorkId = (titleEn, titleDe, author) => {
         a.bio,
         a.bio_de,
         a.photo,
-        COUNT(oi.id) AS order_count
+        COUNT(oi.bookId) AS order_count
       FROM authors a
-      JOIN books b       ON b.author_id = a.id
-      JOIN order_items oi ON oi.book_id = b.id
-      JOIN orders o      ON o.id = oi.order_id
+      JOIN book_authors ba ON ba.author_id = a.id
+      JOIN books b         ON b.id = ba.book_id
+      JOIN orders o        ON 1 = 1
+      JOIN JSON_TABLE(o.order_items, '$[*]'
+        COLUMNS (bookId INT PATH '$.bookId')
+      ) AS oi ON oi.bookId = b.id
       WHERE o.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
         AND a.name IS NOT NULL
       GROUP BY a.id
@@ -1812,8 +2137,9 @@ const computeWorkId = (titleEn, titleDe, author) => {
       const [fallback] = await db.query(`
       SELECT a.id, a.name, a.bio, a.bio_de, a.photo, COUNT(b.id) as book_count
       FROM authors a
-      JOIN books b ON b.author_id = a.id
-      WHERE a.name IS NOT NULL AND a.bio IS NOT NULL
+      JOIN book_authors ba ON ba.author_id = a.id
+      JOIN books b ON b.id = ba.book_id
+      WHERE a.name IS NOT NULL
       GROUP BY a.id
       ORDER BY book_count DESC
       LIMIT 1
@@ -1847,7 +2173,257 @@ const computeWorkId = (titleEn, titleDe, author) => {
   //   is_book_of_week: checkbox — "Book of the Week"
   // =========================================================
 
-  require('./services/bookOfWeekCron');
+  // ── BOOK OF THE WEEK CRON ─────────────────────────────
+  // Paste this block in server.js replacing:
+  //   require('./services/bookOfWeekCron');
+  //
+  // Place it AFTER your DB connection is set up and
+  // BEFORE app.listen — it already has access to `db`.
+  // Run: npm install node-cron @anthropic-ai/sdk
+  // Add to .env: ANTHROPIC_API_KEY=sk-ant-...
+  // ──────────────────────────────────────────────────────
+
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+  async function pickBookOfWeek() {
+    console.log('[BookOfWeek] Starting weekly pick…');
+    try {
+      const [candidates] = await db.query(`
+        SELECT b.id, b.title_en, b.title_de, b.publish_date,
+               a.name AS author_name
+        FROM books b
+        LEFT JOIN authors a ON b.author_id = a.id
+        WHERE b.stock > 0
+          AND b.image IS NOT NULL AND b.image != ''
+        ORDER BY b.publish_date DESC
+        LIMIT 60
+      `);
+
+      if (!candidates.length) {
+        console.log('[BookOfWeek] No candidates, skipping.');
+        return;
+      }
+
+      const bookList = candidates
+        .map((b, i) =>
+          `${i + 1}. ID=${b.id} | "${b.title_en || b.title_de}" by ${b.author_name || 'Unknown'} | Published: ${b.publish_date?.toISOString?.()?.slice(0, 10) || 'Unknown'}`
+        )
+        .join('\n');
+
+      const message = await anthropic.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 100,
+        messages: [{
+          role: 'user',
+          content: `You are a book curator for an English-language bookstore in Germany.
+
+From the list below, pick the ONE book that is most likely to be culturally relevant, trending, or noteworthy THIS WEEK globally — considering literary awards, author prominence, seasonal themes, or general public interest.
+
+Respond with ONLY the book ID number. No explanation. Just the number.
+
+Books:
+${bookList}`,
+        }],
+      });
+
+      const responseText = message.content[0]?.text?.trim() || '';
+      const idMatch = responseText.match(/\d+/);
+      if (!idMatch) {
+        console.error('[BookOfWeek] Unexpected Claude response:', responseText);
+        return;
+      }
+
+      const pickedId = parseInt(idMatch[0], 10);
+      const isValid = candidates.some(b => b.id === pickedId);
+      if (!isValid) {
+        console.error(`[BookOfWeek] Claude returned invalid ID ${pickedId}`);
+        return;
+      }
+
+      await db.query('UPDATE books SET is_book_of_week = 0 WHERE is_book_of_week = 1');
+      await db.query('UPDATE books SET is_book_of_week = 1 WHERE id = ?', [pickedId]);
+
+      const picked = candidates.find(b => b.id === pickedId);
+      console.log(`[BookOfWeek] ✅ Picked: "${picked.title_en || picked.title_de}" (ID: ${pickedId})`);
+
+    } catch (err) {
+      console.error('[BookOfWeek] Error:', err.message);
+    }
+  }
+
+  // Run every Monday at 06:00 Berlin time
+  cron.schedule('0 6 * * 1', pickBookOfWeek, { timezone: 'Europe/Berlin' });
+  console.log('[BookOfWeek] Cron scheduled — every Monday 06:00 Berlin time');
+
+  // On startup: if no book is set, pick one immediately
+  db.query('SELECT COUNT(*) as cnt FROM books WHERE is_book_of_week = 1')
+    .then(([[row]]) => {
+      if (row.cnt === 0) {
+        console.log('[BookOfWeek] None set — running initial pick…');
+        pickBookOfWeek();
+      }
+    })
+    .catch(err => console.error('[BookOfWeek] Startup check failed:', err.message));
+
+  // ── END BOOK OF THE WEEK CRON ─────────────────────────
+
+  // ── REVIEW REQUEST EMAIL CRON ─────────────────────────────
+  // Runs daily at 10:00 Berlin time.
+  // Sends up to 3 review-request emails per book purchased,
+  // spaced out, stopping once a review is submitted.
+  // Add this block in server.js, near your other cron jobs
+  // (it reuses the `cron`, `db`, and `transporter` already in scope).
+
+  // Email #1 is sent immediately when the order is marked delivered
+  // (handled in orderRoutes.js, not here). This cron sends #2, #3, #4.
+  // Gaps from delivery: day 5 (email #2), day 12 (email #3, +7), day 20 (email #4, +8).
+  // Mirrors frontend/src/utils/seoUrl.js's generateBookUrl exactly, so links
+  // built here in cron emails always match the real route the app serves.
+  // Real route shape: /book/{slug}-{isbn}-{id}  (singular "book", not "books")
+  function buildBookUrl(book) {
+    if (!book) return '/';
+    const slug = book.slug || '';
+    const isbn = book.isbn13 || book.isbn10 || '';
+    const idPart = book.id ? `-${book.id}` : '';
+    return `/book/${slug}${isbn ? '-' + isbn : ''}${idPart}`;
+  }
+
+  const REVIEW_EMAIL_INTERVALS_DAYS = [7, 8]; // gap from email #2->#3, and #3->#4
+
+  async function sendReviewRequestEmails() {
+    console.log('[ReviewRequests] Checking for due emails…');
+    try {
+      const [due] = await db.query(`
+        SELECT rr.id, rr.order_id, rr.user_id, rr.book_id, rr.emails_sent,
+               u.email, u.first_name, u.language,
+               b.title_en, b.title_de, b.slug, b.image, b.isbn13, b.isbn10
+        FROM review_requests rr
+        JOIN users u ON u.id = rr.user_id
+        JOIN books b ON b.id = rr.book_id
+        WHERE rr.stopped = 0
+          AND rr.review_submitted = 0
+          AND rr.emails_sent < 4
+          AND rr.next_send_at <= NOW()
+      `);
+
+      if (!due.length) {
+        console.log('[ReviewRequests] None due today.');
+        return;
+      }
+
+      for (const row of due) {
+        const isDe = row.language === 'de';
+        const title = isDe ? (row.title_de || row.title_en) : (row.title_en || row.title_de);
+        const reviewUrl = `${process.env.FRONTEND_URL}${buildBookUrl({ id: row.book_id, slug: row.slug, isbn13: row.isbn13, isbn10: row.isbn10 })}#reviews`;
+        const coverImg = row.image || '';
+
+        const subject = isDe
+          ? `Wie hat dir "${title}" gefallen?`
+          : `How did you like "${title}"?`;
+
+        const html = isDe ? `
+          <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
+            <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
+              <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
+              <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">Wie war deine Lektüre? 📖</h1>
+            </div>
+            <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
+              <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 20px;">
+                Hallo ${row.first_name || ''}, wir hoffen, dir hat dieses Buch gefallen!
+              </p>
+              <div style="text-align:center;margin:0 0 24px;">
+                ${coverImg ? `<img src="${coverImg}" alt="${title}" style="width:100px;height:auto;border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,0.15);margin-bottom:14px;">` : ''}
+                <div style="font-size:16px;font-weight:700;color:#1a1a2e;">${title}</div>
+              </div>
+              <p style="color:#1a1a2e;font-size:14px;line-height:1.6;margin:0 0 24px;text-align:center;">
+                Hättest du eine Minute Zeit, um eine kurze Bewertung zu hinterlassen? Das hilft anderen Lesern bei ihrer Auswahl sehr.
+              </p>
+              <div style="text-align:center;margin:0 0 8px;">
+                <a href="${reviewUrl}" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Jetzt bewerten</a>
+              </div>
+              <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
+                Falls du bereits eine Bewertung abgegeben hast, ignoriere diese E-Mail einfach.
+              </p>
+            </div>
+          </div>
+        ` : `
+          <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
+            <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
+              <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
+              <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">How was your read? 📖</h1>
+            </div>
+            <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
+              <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 20px;">
+                Hi ${row.first_name || ''}, we hope you enjoyed this one!
+              </p>
+              <div style="text-align:center;margin:0 0 24px;">
+                ${coverImg ? `<img src="${coverImg}" alt="${title}" style="width:100px;height:auto;border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,0.15);margin-bottom:14px;">` : ''}
+                <div style="font-size:16px;font-weight:700;color:#1a1a2e;">${title}</div>
+              </div>
+              <p style="color:#1a1a2e;font-size:14px;line-height:1.6;margin:0 0 24px;text-align:center;">
+                Could you spare a minute to leave a quick review? It really helps other readers choose their next book.
+              </p>
+              <div style="text-align:center;margin:0 0 8px;">
+                <a href="${reviewUrl}" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Leave a review</a>
+              </div>
+              <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
+                If you've already left a review, just ignore this email.
+              </p>
+            </div>
+          </div>
+        `;
+
+        try {
+          await transporter.sendMail({
+            from: process.env.SMTP_USER,
+            to: row.email,
+            subject,
+            html,
+          });
+
+          const sentCount = row.emails_sent + 1;
+          const isLast = sentCount >= 4;
+          // sentCount is 2 after sending email #2 -> need gap to #3 (index 0)
+          // sentCount is 3 after sending email #3 -> need gap to #4 (index 1)
+          const nextGapDays = REVIEW_EMAIL_INTERVALS_DAYS[sentCount - 2] || null;
+
+          await db.query(`
+            UPDATE review_requests
+            SET emails_sent = ?,
+                last_sent_at = NOW(),
+                next_send_at = ?,
+                stopped = ?
+            WHERE id = ?
+          `, [
+            sentCount,
+            nextGapDays ? new Date(Date.now() + nextGapDays * 24 * 60 * 60 * 1000) : null,
+            isLast ? 1 : 0,
+            row.id,
+          ]);
+
+          // Log to your existing sent_emails table for visibility in admin
+          await db.query(`
+            INSERT INTO sent_emails (to_email, subject, html, status, type, created_at)
+            VALUES (?, ?, ?, 'sent', 'ReviewRequest', NOW())
+          `, [row.email, subject, html]).catch(() => {});
+
+          console.log(`[ReviewRequests] Sent email ${sentCount}/4 to ${row.email} for book ${row.book_id}`);
+        } catch (sendErr) {
+          console.error(`[ReviewRequests] Failed to send to ${row.email}:`, sendErr.message);
+          // Don't update next_send_at on failure — will retry tomorrow
+        }
+      }
+    } catch (err) {
+      console.error('[ReviewRequests] Cron error:', err.message);
+    }
+  }
+
+  // Run daily at 10:00 Berlin time
+  cron.schedule('0 10 * * *', sendReviewRequestEmails, { timezone: 'Europe/Berlin' });
+  console.log('[ReviewRequests] Cron scheduled — daily at 10:00 Berlin time');
+
+  // ── END REVIEW REQUEST EMAIL CRON ─────────────────────────
+
 
 
 
@@ -1943,6 +2519,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
       const {
         q,
         author,
+        author_id,   // NEW: filter by author_id via book_authors join
         category,
         publisher,
         format,      // comma-separated from CheckboxGroup
@@ -1973,6 +2550,11 @@ const computeWorkId = (titleEn, titleDe, author) => {
       }
 
       if (author) { where.push(`b.author = ?`); params.push(author); }
+
+      if (author_id) {
+        where.push(`b.id IN (SELECT book_id FROM book_authors WHERE author_id = ?)`);
+        params.push(Number(author_id));
+      }
       //if (category) { where.push(`b.category_id = ?`); params.push(Number(category)); }
 
       if (category) {
@@ -2256,13 +2838,28 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
   app.get('/api/books', async (req, res) => {
     try {
+      const { author_id, limit } = req.query;
+
+      const where = [];
+      const params = [];
+
+      if (author_id) {
+        where.push(`b.id IN (SELECT book_id FROM book_authors WHERE author_id = ?)`);
+        params.push(Number(author_id));
+      }
+
+      const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+      const limitSql = limit ? `LIMIT ${Math.min(Math.max(Number(limit) || 50, 1), 100)}` : '';
+
       const [rows] = await db.execute(`
         SELECT b.*, c.name_en AS categoryName,
         b.isbn13, b.isbn10
         FROM books b
         LEFT JOIN categories c ON b.category_id = c.id
+        ${whereSql}
         ORDER BY b.created_at DESC
-      `);
+        ${limitSql}
+      `, params);
       res.json(rows);
     } catch (err) {
       console.error('GET /api/books error:', err);
@@ -3106,6 +3703,105 @@ const computeWorkId = (titleEn, titleDe, author) => {
     }
   });
 
+  // ── BATCH: GET /api/home/category-sections-batch ──────────
+  // Returns books for ALL visible root categories in ONE request,
+  // instead of the frontend firing one request per category.
+  // Cache 10 minutes since this data doesn't change every second.
+
+  let categoryBatchCache = null;
+  let categoryBatchCacheTime = 0;
+
+  app.get('/api/home/category-sections-batch', async (req, res) => {
+    try {
+      if (categoryBatchCache && Date.now() - categoryBatchCacheTime < 600000) {
+        return res.json(categoryBatchCache);
+      }
+
+      const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 20);
+
+      const [visibleCats] = await db.query(`
+        SELECT id, name_en, name_de, slug
+        FROM categories
+        WHERE parent_id IS NULL AND is_visible = 1
+        ORDER BY id ASC
+      `);
+
+      if (!visibleCats.length) {
+        categoryBatchCache = [];
+        categoryBatchCacheTime = Date.now();
+        return res.json([]);
+      }
+
+      const origin = `${req.protocol}://${req.get('host')}`;
+      const normalizeImage = (url) => {
+        if (!url) return null;
+        if (url.startsWith('https://')) return url;
+        if (url.startsWith('http://')) return url.replace('http://', 'https://');
+        if (url.startsWith('/')) return `${origin}${url}`;
+        return `${origin}/${url}`;
+      };
+
+      const results = [];
+
+      for (const cat of visibleCats) {
+        const [rows] = await db.execute(`
+          WITH RECURSIVE cat_tree AS (
+            SELECT id FROM categories WHERE id = ?
+            UNION ALL
+            SELECT c.id FROM categories c INNER JOIN cat_tree ct ON c.parent_id = ct.id
+          )
+          SELECT
+            b.id, b.title_en, b.title_de, b.author, b.price, b.original_price,
+            b.stock, b.image, b.slug, b.isbn13, b.isbn10, b.rating, b.review_count,
+            b.series_name, b.series_volume, b.publish_date, b.created_at
+          FROM books b
+          INNER JOIN cat_tree ct ON b.category_id = ct.id
+          ORDER BY b.created_at DESC
+        `, [cat.id]);
+
+        const normalizedRows = rows.map(b => ({ ...b, image: normalizeImage(b.image) }));
+
+        // Same series-dedup logic as the single-category route
+        const seriesMap = new Map();
+        const standaloneBooks = [];
+        for (const book of normalizedRows) {
+          const hasValidSeries = book.series_name && String(book.series_name).trim() !== '' &&
+            book.series_volume !== null && book.series_volume !== undefined &&
+            String(book.series_volume).trim() !== '';
+          if (!hasValidSeries) { standaloneBooks.push(book); continue; }
+          const seriesKey = String(book.series_name).trim().toLowerCase();
+          if (!seriesMap.has(seriesKey)) { seriesMap.set(seriesKey, book); continue; }
+          const existing = seriesMap.get(seriesKey);
+          const existingPublishDate = new Date(existing.publish_date || 0).getTime();
+          const currentPublishDate = new Date(book.publish_date || 0).getTime();
+          if (currentPublishDate > existingPublishDate) { seriesMap.set(seriesKey, book); continue; }
+          if (currentPublishDate === existingPublishDate) {
+            const existingCreatedAt = new Date(existing.created_at || 0).getTime();
+            const currentCreatedAt = new Date(book.created_at || 0).getTime();
+            if (currentCreatedAt > existingCreatedAt) seriesMap.set(seriesKey, book);
+          }
+        }
+
+        const finalBooks = [...standaloneBooks, ...Array.from(seriesMap.values())]
+          .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+          .slice(0, limit);
+
+        if (finalBooks.length > 0) {
+          results.push({ category: cat, books: finalBooks });
+        }
+      }
+
+      categoryBatchCache = results;
+      categoryBatchCacheTime = Date.now();
+      res.json(results);
+    } catch (err) {
+      console.error('GET /api/home/category-sections-batch error:', err);
+      res.status(500).json({ error: 'Database error' });
+    }
+  });
+
+
+
   app.get('/api/home/category-sections/:id', async (req, res) => {
     const id = Number(req.params.id);
     const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 20);
@@ -3680,6 +4376,15 @@ const computeWorkId = (titleEn, titleDe, author) => {
           review_count = (SELECT COUNT(*) FROM reviews WHERE book_id = b.id)
       WHERE b.id = ?
     `, [bookId]);
+
+      // Stop any pending review-request emails for this user+book
+      if (userId) {
+        await db.execute(`
+          UPDATE review_requests
+          SET review_submitted = 1, stopped = 1
+          WHERE user_id = ? AND book_id = ?
+        `, [userId, bookId]).catch(() => {});
+      }
 
       res.json({ success: true, message: 'Review submitted!' });
     } catch (err) {
@@ -4321,7 +5026,7 @@ WHERE ci.user_id = ?
   // === ORDER ROUTES ===
   //console.log('✅ Mounting orders routes from:', require.resolve('./routes/orderRoutes'));
 
-  const ordersRouter = require('./routes/orderRoutes')(db);
+  const ordersRouter = require('./routes/orderRoutes')(db, transporter);
   app.use('/api/orders', ordersRouter);
 
   // ✅ DEBUG: list actual registered routes under /api/orders

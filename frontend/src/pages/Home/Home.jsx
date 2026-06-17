@@ -1,5 +1,5 @@
 // frontend/src/pages/Home/Home.jsx
-import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Banner from '../../components/Banner/Banner';
@@ -11,6 +11,11 @@ import BooksSlider from '../../components/BooksSlider/BooksSlider';
 import './Home.css';
 import { Helmet } from 'react-helmet-async';
 import { generateBookUrl } from '../../utils/seoUrl';
+import { AuthContext } from '../../context/AuthContext';
+import BookCard from '../../components/Book/BookCard';
+import { useDispatch, useSelector } from 'react-redux';
+import { message } from 'antd';
+import { addItem, replaceWithServerCart } from '../../features/cart/cartSlice';
 
 
 // ─── useLazySection (unchanged) ──────────────────────────
@@ -91,24 +96,13 @@ function StatItem({ value, suffix, label, duration }) {
   );
 }
 
-function StatsBar({ de }) {
-  const [stats, setStats] = useState(null); // null = not yet loaded
-
-  useEffect(() => {
-    axios.get('/api/stats')
-      .then(res => { if (res.data) setStats(res.data); })
-      .catch(() => {
-        // Fallback only if API fails
-        setStats({ books: 1200, readers: 3800, saving: 60, reviews: 1 });
-      });
-  }, []);
-
+function StatsBar({ de, stats }) {
   // Don't render until we have real data (avoids animating to wrong defaults)
   if (!stats) return (
     <section className="home-stats-section">
       <div className="container">
         <div className="home-stats-grid">
-          {[0,1,2,3].map(i => (
+          {[0, 1, 2, 3].map(i => (
             <div className="home-stats-item home-stats-item--loading" key={i}>
               <div className="home-stats-num home-stats-skeleton" />
               <div className="home-stats-label home-stats-skeleton home-stats-skeleton--sm" />
@@ -120,10 +114,10 @@ function StatsBar({ de }) {
   );
 
   const items = [
-    { value: stats.books,   suffix: '+',  duration: 1600, label: de ? 'Bücher auf Lager'         : 'Books in stock'       },
-    { value: stats.readers, suffix: '+',  duration: 2000, label: de ? 'Zufriedene Leser'          : 'Happy readers'        },
-    { value: stats.saving,  suffix: '%',  duration: 1200, label: de ? 'Günstiger als Amazon'      : 'Cheaper than Amazon'  },
-    { value: stats.reviews, suffix: 'K+', duration: 2200, label: de ? 'Bewertungen & Rezensionen' : '5-star reviews'       },
+    { value: stats.books, suffix: '+', duration: 1600, label: de ? 'Bücher auf Lager' : 'Books in stock' },
+    { value: stats.readers, suffix: '+', duration: 2000, label: de ? 'Zufriedene Leser' : 'Happy readers' },
+    { value: stats.saving, suffix: '%', duration: 1200, label: de ? 'Durchschn. Ersparnis' : 'Average Savings' },
+    { value: stats.reviews, suffix: 'K+', duration: 2200, label: de ? 'Bewertungen & Rezensionen' : '5-star reviews' },
   ];
 
   return (
@@ -142,20 +136,84 @@ function StatsBar({ de }) {
 // ─── BookOfTheWeek ───────────────────────────────────────
 function BookOfTheWeek({ de }) {
   const [book, setBook] = useState(null);
+  const dispatch = useDispatch();
+  const { user } = useContext(AuthContext);
+  const { t } = useTranslation();
+
   useEffect(() => {
     axios.get('/api/books/book-of-week')
       .then(res => { if (res.data && res.data.id) setBook(res.data); })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
+
+  // Same cart-state check pattern as BookCard
+  const isInCart = useSelector(
+    state =>
+      state.cart?.items?.some(item => {
+        const currentBookId = book?.id || book?.book_id || book?.bookId || book?._id;
+        return item.bookId === currentBookId;
+      }) ?? false
+  );
+
   if (!book) return null;
 
-  const title  = de ? (book.title_de || book.title_en) : (book.title_en || book.title_de);
+  const title = de ? (book.title_de || book.title_en) : (book.title_en || book.title_de);
   const author = book.author_name || book.author || '';
-  const desc   = de ? (book.description_de || book.description_en) : (book.description_en || book.description_de);
-  const price  = parseFloat(book.price || 0).toFixed(2);
-  const orig   = parseFloat(book.original_price || 0);
+  const desc = de ? (book.description_de || book.description_en) : (book.description_en || book.description_de);
+  const price = parseFloat(book.price || 0).toFixed(2);
+  const orig = parseFloat(book.original_price || 0);
   const saving = orig > 0 ? Math.round(((orig - book.price) / orig) * 100) : 0;
-  const to     = generateBookUrl(book);
+  const to = generateBookUrl(book);
+
+  // Same logic as BookCard.handleAddToCart — server cart for logged-in
+  // users, local Redux cart for guests.
+  const handleAddToCart = async (e) => {
+    e.preventDefault();
+    if (isInCart) {
+      message.info(t('already_in_cart') || 'Dieses Buch ist bereits im Warenkorb');
+      return;
+    }
+
+    if (user && user.id) {
+      try {
+        await axios.post(
+          `${config.API_URL}/api/cart/add`,
+          { bookId: book.id, quantity: 1 },
+          { withCredentials: true }
+        );
+        const res = await axios.get(`${config.API_URL}/api/cart`, { withCredentials: true });
+        dispatch(replaceWithServerCart({ items: res.data.items || [] }));
+        message.success(`${title} ${t('added_to_cart') || 'zum Warenkorb hinzugefügt'}`);
+      } catch (err) {
+        if (err?.response?.status === 401) {
+          message.warning(t('login_required') || 'Bitte melde dich an');
+        } else {
+          message.error(t('error_adding_to_cart') || 'Fehler beim Hinzufügen');
+        }
+      }
+      return;
+    }
+
+    try {
+      dispatch(addItem({
+        bookId: book.id,
+        quantity: 1,
+        book: {
+          title_en: book.title_en || title,
+          title_de: book.title_de || null,
+          image: book.image || 'https://via.placeholder.com/300x400?text=Book',
+          slug: book.slug || book.id?.toString(),
+          stock: typeof book.stock === 'number' ? book.stock : Infinity,
+          price: parseFloat(book.price || 0),
+          original_price: orig,
+          sale_price: book.sale_price ?? null,
+        },
+      }));
+      message.success(`${title} ${t('added_to_cart') || 'zum Warenkorb hinzugefügt'}`);
+    } catch (err) {
+      message.error(t('error_adding_to_cart') || 'Fehler beim Hinzufügen');
+    }
+  };
 
   return (
     <section className="botw-section">
@@ -181,7 +239,13 @@ function BookOfTheWeek({ de }) {
               {saving > 0 && <span className="botw-save-chip">{de ? `${saving}% gespart` : `Save ${saving}%`}</span>}
             </div>
             <div className="botw-btns">
-              <Link to={to} className="botw-btn-primary">{de ? '🛒 In den Warenkorb' : '🛒 Add to cart'}</Link>
+              <button type="button" onClick={handleAddToCart} className="botw-btn-primary" disabled={book.stock === 0}>
+                {book.stock === 0
+                  ? (de ? 'Ausverkauft' : 'Out of stock')
+                  : isInCart
+                    ? (de ? '✓ Im Warenkorb' : '✓ In cart')
+                    : (de ? '🛒 In den Warenkorb' : '🛒 Add to cart')}
+              </button>
               <Link to={to} className="botw-btn-ghost">{de ? 'Details ansehen' : 'View details'}</Link>
             </div>
           </div>
@@ -192,34 +256,55 @@ function BookOfTheWeek({ de }) {
 }
 
 // ─── ForYouShelf ─────────────────────────────────────────
-// FIX: "All" tab now shows one book per category (curated sample),
-// not every book from every category merged together.
+// Logged-in users with order/wishlist/view history get a real
+// personalized "All" tab from /api/books/for-you. Everyone else
+// (and the per-category tabs) uses the existing category mix.
 function ForYouShelf({ categorySections, de, t }) {
   const [activeTab, setActiveTab] = useState(0);
+  const [personalized, setPersonalized] = useState(null); // null = not checked yet
+
+  useEffect(() => {
+    axios.get('/api/books/for-you')
+      .then(res => {
+        if (res.data?.personalized && res.data.books?.length > 0) {
+          setPersonalized(res.data.books);
+        } else {
+          setPersonalized(false); // checked, but nothing personalized available
+        }
+      })
+      .catch(() => setPersonalized(false));
+  }, []);
 
   const tabs = useMemo(() => {
     const sections = (categorySections || []).filter(s => s?.books?.length > 0);
 
-    // "All" tab: pick the top 3 books from each category, shuffle, cap at 20
-    // This gives variety across genres rather than dumping everything in
-    const allBooks = [];
-    sections.forEach(s => {
-      const top = s.books.filter(b => b.image).slice(0, 3);
-      allBooks.push(...top);
-    });
-    // Shuffle and dedupe by id
-    const seen = new Set();
-    const shuffled = allBooks
-      .sort(() => 0.5 - Math.random())
-      .filter(b => { if (seen.has(b.id)) return false; seen.add(b.id); return true; })
-      .slice(0, 20);
+    let allBooks;
+    let allLabel;
 
-    const allTab = { label: de ? 'Alle' : 'All', books: shuffled };
+    if (personalized && personalized.length > 0) {
+      // Real personalization available
+      allBooks = personalized.slice(0, 20);
+      allLabel = de ? 'Für dich' : 'For you';
+    } else {
+      // Fallback: curated sample across categories (3 per category, shuffled)
+      const pool = [];
+      sections.forEach(s => {
+        const top = s.books.filter(b => b.image).slice(0, 3);
+        pool.push(...top);
+      });
+      const seen = new Set();
+      allBooks = pool
+        .sort(() => 0.5 - Math.random())
+        .filter(b => { if (seen.has(b.id)) return false; seen.add(b.id); return true; })
+        .slice(0, 20);
+      allLabel = de ? 'Beliebt' : 'Popular mix';
+    }
+
+    const allTab = { label: allLabel, books: allBooks };
 
     const categoryTabs = sections.map(s => ({
       label: de ? (s.category.name_de || s.category.name_en) : s.category.name_en,
       catId: s.category.id,
-      // Each category tab: dedupe and cap at 20
       books: (() => {
         const seen2 = new Set();
         return s.books.filter(b => {
@@ -231,17 +316,21 @@ function ForYouShelf({ categorySections, de, t }) {
     }));
 
     return [allTab, ...categoryTabs].slice(0, 8); // max 8 tabs
-  }, [categorySections, de]);
+  }, [categorySections, de, personalized]);
 
   const displayBooks = tabs[activeTab]?.books || [];
 
+  // Wait until personalization check resolves AND category data is ready
+  if (personalized === null) return null;
   if (!categorySections || categorySections.length === 0) return null;
 
   return (
     <section className="for-you-section">
       <div className="container">
         <div className="section-header">
-          <h2 className="section-title">✨ {de ? 'Für dich ausgewählt' : 'Picked for you'}</h2>
+          <h2 className="section-title">
+            ✨ {personalized ? (de ? 'Für dich ausgewählt' : 'Picked for you') : (de ? 'Entdecke mehr' : 'Discover more')}
+          </h2>
           <Link
             to={tabs[activeTab]?.catId ? `/books?category=${tabs[activeTab].catId}` : '/books'}
             className="view-all-btn"
@@ -285,7 +374,7 @@ function AuthorSpotlight({ de }) {
           setAuthorBooks(books.filter(b => b.image).slice(0, 5));
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   if (!author) return null;
@@ -325,10 +414,173 @@ function AuthorSpotlight({ de }) {
                 ))}
               </div>
             )}
-            <Link to={`/books?author_id=${author.id}`} className="author-spot-btn">
+            <Link to={`/books?author=${encodeURIComponent(author.name)}`} className="author-spot-btn">
               {de ? `Alle Bücher von ${author.name} →` : `View all books by ${author.name} →`}
             </Link>
           </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── WhatReadersSay ──────────────────────────────────────
+// Pulls recent, high-quality reviews across all books from
+// /api/reviews/recent — the central reviews table, regardless
+// of which book's page the review was originally left on.
+function WhatReadersSay({ de }) {
+  const [reviews, setReviews] = useState([]);
+
+  useEffect(() => {
+    axios.get('/api/reviews/recent')
+      .then(res => { if (Array.isArray(res.data)) setReviews(res.data); })
+      .catch(() => {});
+  }, []);
+
+  if (!reviews.length) return null;
+
+  return (
+    <section className="readers-say-section">
+      <div className="container">
+        <div className="readers-say-kicker">✦ {de ? 'Das sagen unsere Leser' : 'What our readers say'}</div>
+        <h2 className="readers-say-heading">
+          {de ? 'Geliebt von Lesern in ganz Deutschland' : 'Loved by readers across Germany'}
+        </h2>
+        <p className="readers-say-sub">
+          {de
+            ? 'Schließe dich tausenden zufriedenen Lesern an, die ihre englischen Bücher zu fairen Preisen bekommen.'
+            : 'Join thousands of happy readers who get their English books at honest prices.'}
+        </p>
+
+        <div className="testi-grid">
+          {reviews.slice(0, 6).map(r => {
+            const title = de ? (r.title_de || r.title_en) : (r.title_en || r.title_de);
+            const to = generateBookUrl({ id: r.book_id, slug: r.slug, title_en: r.title_en, title_de: r.title_de });
+            return (
+              <Link to={to} key={r.id} className="testi-card">
+                <div className="testi-stars">
+                  {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                </div>
+                <p className="testi-text">
+                  "{r.review_text.length > 140 ? r.review_text.slice(0, 140) + '…' : r.review_text}"
+                </p>
+                <div className="testi-footer">
+                  {r.image && <img src={r.image} alt={title} className="testi-cover" loading="lazy" />}
+                  <div className="testi-meta">
+                    <span className="testi-name">{r.reviewer_name || (de ? 'Anonym' : 'Anonymous')}</span>
+                    <span className="testi-book">{title}</span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── NewsletterSignup ────────────────────────────────────
+// "Stay in the Loop" — collects an email via /api/newsletter/subscribe.
+// Pre-fills with the logged-in user's email, checks subscription status
+// on load, and stays in the "subscribed" state across refreshes until
+// the person actually unsubscribes.
+function NewsletterSignup({ de }) {
+  const { user } = useContext(AuthContext);
+  const userEmail = user?.email || '';
+
+  const [email, setEmail] = useState(userEmail);
+  const [status, setStatus] = useState('idle'); // idle | checking | loading | success | error
+  const [errorMsg, setErrorMsg] = useState('');
+
+  // Pre-fill when the logged-in user becomes available
+  useEffect(() => {
+    if (userEmail) setEmail(userEmail);
+  }, [userEmail]);
+
+  // Check subscription status for the relevant email (logged-in user's,
+  // or whatever's currently typed for guests) so a refresh doesn't
+  // reset an already-subscribed person back to the empty form.
+  useEffect(() => {
+    const checkEmail = userEmail || email;
+    if (!checkEmail) return;
+
+    let cancelled = false;
+    setStatus('checking');
+    axios.get('/api/newsletter/status', { params: { email: checkEmail } })
+      .then(res => {
+        if (cancelled) return;
+        setStatus(res.data?.subscribed ? 'success' : 'idle');
+      })
+      .catch(() => { if (!cancelled) setStatus('idle'); });
+
+    return () => { cancelled = true; };
+    // Only re-check when the logged-in user's email becomes known —
+    // guests checking ad-hoc typed emails happens on submit instead.
+  }, [userEmail]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (status === 'loading') return;
+
+    const trimmed = email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmed)) {
+      setStatus('error');
+      setErrorMsg(de ? 'Bitte gib eine gültige E-Mail-Adresse ein.' : 'Please enter a valid email address.');
+      return;
+    }
+
+    setStatus('loading');
+    try {
+      await axios.post('/api/newsletter/subscribe', {
+        email: trimmed,
+        language: de ? 'de' : 'en',
+        source: 'homepage',
+      });
+      setStatus('success');
+    } catch (err) {
+      setStatus('error');
+      setErrorMsg(de ? 'Etwas ist schiefgelaufen. Bitte versuche es erneut.' : 'Something went wrong. Please try again.');
+    }
+  };
+
+  return (
+    <section className="newsletter-section">
+      <div className="container">
+        <div className="newsletter-card">
+          <div className="newsletter-text">
+            <h2>{de ? 'Bleib auf dem Laufenden' : 'Stay in the Loop'}</h2>
+            <p>
+              {de
+                ? 'Erhalte Neuigkeiten zu neuen Büchern, exklusiven Angeboten und mehr — direkt in dein Postfach.'
+                : 'Get updates on new arrivals, exclusive deals, and more — straight to your inbox.'}
+            </p>
+          </div>
+
+          {status === 'success' ? (
+            <div className="newsletter-success">
+              ✓ {de ? 'Danke! Du bist jetzt angemeldet.' : "Thanks! You're subscribed."}
+            </div>
+          ) : (
+            <form className="newsletter-form" onSubmit={handleSubmit}>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={de ? 'Deine E-Mail-Adresse' : 'Your email address'}
+                className="newsletter-input"
+                disabled={status === 'loading' || status === 'checking' || !!userEmail}
+                readOnly={!!userEmail}
+              />
+              <button type="submit" className="newsletter-btn" disabled={status === 'loading' || status === 'checking'}>
+                {status === 'loading'
+                  ? (de ? 'Wird gesendet…' : 'Subscribing…')
+                  : (de ? 'Anmelden' : 'Subscribe')}
+              </button>
+            </form>
+          )}
+          {status === 'error' && <p className="newsletter-error">{errorMsg}</p>}
         </div>
       </div>
     </section>
@@ -346,6 +598,16 @@ function Home() {
   const { data = { visibleRoots: [] }, isLoading: catLoading } = useGetCategoriesQuery();
 
   const [heroBooks, setHeroBooks] = useState([]);
+
+  // Shared stats data — used by both StatsBar and the trust strip
+  const [homeStats, setHomeStats] = useState(null);
+  useEffect(() => {
+    axios.get('/api/stats')
+      .then(res => { if (res.data) setHomeStats(res.data); })
+      .catch(() => {
+        setHomeStats({ books: 1200, readers: 3800, saving: 60, reviews: 1 });
+      });
+  }, []);
   const [heroIndex, setHeroIndex] = useState(0);
   const [heroFading, setHeroFading] = useState(false);
   const [categoryRef, showCategories] = useLazySection();
@@ -358,7 +620,7 @@ function Home() {
 
   const safeCategories = visibleCategories.filter(
     cat => cat && typeof cat === 'object' &&
-           (typeof cat.id === 'number' || typeof cat.id === 'string')
+      (typeof cat.id === 'number' || typeof cat.id === 'string')
   );
 
   const dedupeBySeries = (books = []) => {
@@ -425,14 +687,15 @@ function Home() {
     if (!visibleCategories.length || catLoading) return;
     const fetchBooks = async () => {
       try {
-        const requests = visibleCategories.map(cat =>
-          axios.get(`/api/home/category-sections/${cat.id}`, { params: { limit: 20 } })
-            .then(res => ({ category: cat, books: Array.isArray(res.data) ? res.data : [] }))
-            .catch(() => null)
-        );
-        const results = await Promise.all(requests);
-        setCategorySections(results.filter(item => item && item.books.length > 0));
-      } catch (err) { console.error('Category sections fetch failed:', err); }
+        // Single batched call instead of one request per category —
+        // major speed win, especially with many categories.
+        const res = await axios.get('/api/home/category-sections-batch', { params: { limit: 20 } });
+        const results = Array.isArray(res.data) ? res.data : [];
+        setCategorySections(results.filter(item => item && item.books?.length > 0));
+      } catch (err) {
+        console.error('Category sections fetch failed:', err);
+        setCategorySections([]);
+      }
     };
     fetchBooks();
   }, [catLoading, data.visibleRoots]);
@@ -519,22 +782,18 @@ function Home() {
       <section className="trust-strip">
         <div className="trust-strip__wrapper">
           <div className="trust-strip__track">
-            <span>🚚 {de ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</span>
-            <span>💰 {de ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</span>
-            <span>↩ {de ? '14 Tage Rückgabe' : '14-day returns'}</span>
-            <span>🔒 {de ? 'Sicher bezahlen' : 'Secure checkout'}</span>
-            <span>🚚 {de ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</span>
-            <span>💰 {de ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</span>
-            <span>↩ {de ? '14 Tage Rückgabe' : '14-day returns'}</span>
-            <span>🔒 {de ? 'Sicher bezahlen' : 'Secure checkout'}</span>
-            <span>🚚 {de ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</span>
-            <span>💰 {de ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</span>
-            <span>↩ {de ? '14 Tage Rückgabe' : '14-day returns'}</span>
-            <span>🔒 {de ? 'Sicher bezahlen' : 'Secure checkout'}</span>
-            <span>🚚 {de ? 'Kostenlose Lieferung ab 30€' : 'Free shipping over €30'}</span>
-            <span>💰 {de ? 'Bis zu 60% günstiger' : 'Up to 60% cheaper'}</span>
-            <span>↩ {de ? '14 Tage Rückgabe' : '14-day returns'}</span>
-            <span>🔒 {de ? 'Sicher bezahlen' : 'Secure checkout'}</span>
+            {[0,1,2].map(i => (
+              <React.Fragment key={i}>
+                <span><strong>🚚 {de ? 'Kostenloser Versand' : 'Free Shipping'}</strong> <em>{de ? 'ab 50 €' : 'over €50'}</em></span>
+                <span><strong>India</strong> <em>{de ? 'Direktimport' : 'Direct Import'}</em></span>
+                <span><strong>{homeStats ? `${homeStats.books}+` : '…'}</strong> <em>{de ? 'Englische Titel' : 'English Titles'}</em></span>
+                <span><strong>60%</strong> <em>{de ? 'Durchschn. Ersparnis' : 'Average Savings'}</em></span>
+                <span><strong>{homeStats ? `${homeStats.readers}+` : '…'}</strong> <em>{de ? 'Zufriedene Leser' : 'Happy Readers'}</em></span>
+                <span><strong>↩ 14</strong> <em>{de ? 'Tage Rückgabe' : 'Day Returns'}</em></span>
+                <span><strong>🔒 {de ? 'Sicher bezahlen' : 'Secure Checkout'}</strong></span>
+                <span><strong>📦 {de ? 'Schneller Versand' : 'Fast Dispatch'}</strong></span>
+              </React.Fragment>
+            ))}
           </div>
         </div>
       </section>
@@ -585,7 +844,7 @@ function Home() {
       <ForYouShelf categorySections={categorySections} de={de} t={t} />
 
       {/* ── ANIMATED STATS BAR ────────────────────────── */}
-      <StatsBar de={de} />
+      <StatsBar de={de} stats={homeStats} />
 
       {/* ── REQUEST BOOK CTA ──────────────────────────── */}
       <section className="request-book-section">
@@ -623,8 +882,8 @@ function Home() {
               {safeCategories.map(cat => {
                 const section = Array.isArray(categorySections)
                   ? categorySections.find(s => s && s.category &&
-                      (typeof s.category.id === 'number' || typeof s.category.id === 'string') &&
-                      s.category.id == cat.id)
+                    (typeof s.category.id === 'number' || typeof s.category.id === 'string') &&
+                    s.category.id == cat.id)
                   : null;
                 if (!section || !section.books || !Array.isArray(section.books)) return null;
                 let books = section.books.filter(b => b && typeof b === 'object' && typeof b.image === 'string' && b.image.trim() !== '');
@@ -683,6 +942,12 @@ function Home() {
           </div>
         </section>
       ))}
+
+      {/* ── WHAT READERS SAY ───────────────────────────── */}
+      <WhatReadersSay de={de} />
+
+      {/* ── STAY IN THE LOOP ──────────────────────────── */}
+      <NewsletterSignup de={de} />
 
     </div>
   );

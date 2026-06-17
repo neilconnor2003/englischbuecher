@@ -2,12 +2,13 @@
 // frontend/src/components/Book/BookCard.jsx
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { Button, message, Rate } from 'antd';
 import {
   ShoppingCartOutlined,
+  ThunderboltOutlined,
   HeartOutlined,
   HeartFilled,
   CheckOutlined
@@ -29,16 +30,17 @@ const toNumber = (v) => {
  * Centralized BookCard component
  * Props:
  * - book: required book object
- * - variant: 'default' | 'compact' | * - variant: 'default' | 'compact' | 'large'
+ * - variant: 'default' | 'compact' | 'large'
  * - showActions: boolean (default true)
  * - className: optional outer class
  */
 const BookCard = ({ book, variant = 'default', showActions = true, className = '' }) => {
   const { t, i18n } = useTranslation();
+  const de = i18n.resolvedLanguage === 'de';
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   // User from Redux
-  //const user = useSelector(state => state.auth?.user || state.auth);
   const { user } = useContext(AuthContext);
 
   // Robust title selection for mixed payloads
@@ -74,37 +76,16 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
 
   const to = generateBookUrl(book);
 
-  /*const handleAddToCart = async (e) => {
+  const handleAddToCart = async (e, goToCheckout = false) => {
     e.preventDefault();
     e.stopPropagation();
 
     if (isInCart) {
-      message.info(t('already_in_cart') || 'Dieses Buch ist bereits im Warenkorb');
-      return;
-    }
-
-    try {
-      await axios.post(
-        `${config.API_URL}/api/cart/add`,
-        { bookId: book.id },
-        { withCredentials: true }
-      );
-      const res = await axios.get(`${config.API_URL}/api/cart`, { withCredentials: true });
-      dispatch(mergeServerCart({ items: res.data.items || [] }));
-      message.success(`${title} ${t('added_to_cart')}`);
-    } catch (err) {
-      console.error('Add to cart error:', err.response?.data || err.message);
-      message.error(t('error_adding_to_cart') || 'Fehler beim Hinzufügen');
-    }
-  };*/
-
-
-  const handleAddToCart = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (isInCart) {
-      message.info(t('already_in_cart') || 'Dieses Buch ist bereits im Warenkorb');
+      if (goToCheckout) {
+        navigate('/checkout');
+      } else {
+        message.info(t('already_in_cart') || 'Dieses Buch ist bereits im Warenkorb');
+      }
       return;
     }
 
@@ -118,12 +99,14 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
         );
 
         const res = await axios.get(`${config.API_URL}/api/cart`, { withCredentials: true });
-        //dispatch(mergeServerCart({ items: res.data.items || [] }));
         dispatch(replaceWithServerCart({ items: res.data.items || [] }));
 
-        message.success(`${title} ${t('added_to_cart') || 'zum Warenkorb hinzugefügt'}`);
+        if (goToCheckout) {
+          navigate('/checkout');
+        } else {
+          message.success(`${title} ${t('added_to_cart') || 'zum Warenkorb hinzugefügt'}`);
+        }
       } catch (err) {
-        const msg = err?.response?.data?.error || err?.message || 'Unauthorized';
         console.error('Add to cart error:', err?.response?.data || err.message);
         if (err?.response?.status === 401) {
           message.warning(t('login_required') || 'Bitte melde dich an');
@@ -136,14 +119,13 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
 
     // Guest → local cart (Redux + localStorage)
     try {
-      // Build minimal book payload for the client cart
       const clientBookPayload = {
         title_en: book.title_en || title,
         title_de: book.title_de || null,
         image: book.image || 'https://via.placeholder.com/300x400?text=Book',
         slug: book.slug || book.id?.toString(),
         stock: typeof book.stock === 'number' ? book.stock : Infinity,
-        price,                 // numeric price
+        price,
         original_price: originalPrice,
         sale_price: book.sale_price ?? null,
       };
@@ -154,27 +136,23 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
         book: clientBookPayload,
       }));
 
-      /*dispatch({
-        type: 'cart/forceRecalc'
-      });*/
-
-      message.success(`${title} ${t('added_to_cart') || 'zum Warenkorb hinzugefügt'}`);
+      if (goToCheckout) {
+        navigate('/checkout');
+      } else {
+        message.success(`${title} ${t('added_to_cart') || 'zum Warenkorb hinzugefügt'}`);
+      }
     } catch (err) {
       console.error('Guest add to cart failed:', err?.message || err);
       message.error(t('error_adding_to_cart') || 'Fehler beim Hinzufügen');
     }
   };
 
-
-
-  // BookCard.jsx → replace handleWishlist with this
   const handleWishlist = async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
     try {
       const result = await dispatch(toggleWishlist(book.id)).unwrap();
-      // refresh local list
       dispatch(fetchWishlist());
       message.success(
         result.added
@@ -192,7 +170,6 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
   };
 
   const rootClass = `book-card book-card--${variant} ${className}`.trim();
-
 
   const formatOneDecimal = (value, i18n) => {
     const locale = i18n.resolvedLanguage === 'de' ? 'de-DE' : 'en-US';
@@ -212,79 +189,106 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
     }).format(Number(value) || 0);
   };
 
+  // Tag logic: priority is new release > bestseller > nothing
+  // (uses existing book fields — no new data needed)
+  const tag = book.is_new_release
+    ? { label: de ? 'Neu' : 'New', kind: 'new' }
+    : book.is_bestseller
+      ? { label: de ? 'Beliebt' : 'Hot', kind: 'hot' }
+      : book.is_book_of_week
+        ? { label: de ? 'Tipp' : 'Pick', kind: 'pick' }
+        : null;
+
   return (
     <article className={rootClass}>
-      {/* Wishlist heart (top-right) */}
-      <Button
-        type="text"
-        shape="circle"
-        size="large"
-        icon={isWishlisted ? <HeartFilled style={{ color: '#e91e63' }} /> : <HeartOutlined />}
-        onClick={handleWishlist}
-        className="wishlist-heart-btn"
-      />
-
-      {/* Visual/top area */}
       <Link to={to} className="book-card-link">
-        <img
-          src={book.image || 'https://via.placeholder.com/300x400?text=Book'}
-          alt={title}
-          loading="lazy"
-        />
-
-        {/* Title */}
-        <h3>{title}</h3>
-
-        {/* Author */}
-        <p className="author">{book.author || 'Unknown Author'}</p>
-
-        {/* Rating summary (one line; no top ribbon) */}
-
-        <div className="rating-summary">
-          <Rate
-            disabled
-            allowHalf
-            value={toNumber(book.rating)}
-            className="rating-stars-inline"
+        {/* ── Cover with text overlay ── */}
+        <div className="book-cover">
+          <img
+            src={book.image || 'https://via.placeholder.com/300x400?text=Book'}
+            alt={title}
+            loading="lazy"
+            className="book-cover-img"
           />
-          <span className="rating-info">
-            {formatOneDecimal(toNumber(book.rating), i18n)}
-            {book.review_count > 0 ? ` (${book.review_count})` : ''}
-          </span>
-        </div>
 
-
-        {/* Price block */}
-        <div className="price-block">
-          {originalPrice > price && (<span className="original-price">{formatCurrency(originalPrice, i18n)}</span>)}
-          <span className="current-price">{formatCurrency(price, i18n)}</span>
+          {tag && <span className={`book-tag book-tag--${tag.kind}`}>{tag.label}</span>}
 
           {discountPercent > 0 && (
-            <span className="discount-badge">-{discountPercent}%</span>
+            <span className="book-disc">
+              <span className="book-disc-num">-{discountPercent}%</span>
+            </span>
           )}
+
+          <div className="book-cover-content">
+            <h3 className="book-title-ov">{title}</h3>
+            <p className="book-author-ov">{book.author || 'Unknown Author'}</p>
+          </div>
+        </div>
+
+        {/* ── Body ── */}
+        <div className="book-body">
+          <div className="book-stars-row">
+            <Rate
+              disabled
+              allowHalf
+              value={toNumber(book.rating)}
+              className="book-stars"
+            />
+            <span className="book-rating">
+              {formatOneDecimal(toNumber(book.rating), i18n)}
+              {book.review_count > 0 ? ` (${book.review_count})` : ''}
+            </span>
+          </div>
+
+          <div className="book-price-row">
+            <span className="book-price">{formatCurrency(price, i18n)}</span>
+            {originalPrice > price && (
+              <span className="book-was">{formatCurrency(originalPrice, i18n)}</span>
+            )}
+          </div>
         </div>
       </Link>
 
-      {/* Actions */}
+      {/* ── Action row — sibling to Link, since these are buttons
+          with their own click handlers, not navigation targets ── */}
       {showActions && (
-        <div className="book-actions">
-          <Button
-            type="primary"
-            icon={isInCart ? <CheckOutlined /> : <ShoppingCartOutlined />}
-            onClick={handleAddToCart}
-            block
+        <div className="book-btns">
+          <button
+            type="button"
+            className="btn-cart"
+            onClick={(e) => handleAddToCart(e, false)}
             disabled={book.stock === 0}
           >
-            {book.stock === 0
-              ? t('out_of_stock')
-              : isInCart
-                ? (t('already_in_cart') || 'In Cart')
-                : t('add_to_cart')}
-          </Button>
+            {book.stock === 0 ? (
+              t('out_of_stock')
+            ) : isInCart ? (
+              <><CheckOutlined /> {t('already_in_cart') || 'In Cart'}</>
+            ) : (
+              <><ShoppingCartOutlined /> {t('add_to_cart')}</>
+            )}
+          </button>
 
-          <Link to={to} className="details-link">
-            {t('home.details') || 'Details'}
-          </Link>
+          <button
+            type="button"
+            className="btn-buy-now"
+            onClick={(e) => handleAddToCart(e, true)}
+            disabled={book.stock === 0}
+            aria-label={t('buy_now') || 'Buy now'}
+            title={t('buy_now') || 'Buy now'}
+          >
+            <ThunderboltOutlined />
+            <span className="btn-buy-now-label">{t('buy_now') || 'Buy'}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`btn-wishlist${isWishlisted ? ' btn-wishlist--on' : ''}`}
+            onClick={handleWishlist}
+            aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+            title={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          >
+            {isWishlisted ? <HeartFilled /> : <HeartOutlined />}
+          </button>
         </div>
       )}
     </article>

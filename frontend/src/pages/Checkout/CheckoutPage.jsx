@@ -49,7 +49,7 @@ const CheckoutPage = ({ clientSecret }) => {
 
   const COUNTRY = "DE";
   const API_BASE = `${config.API_URL}/api`;
-  const FREE_SHIPPING_THRESHOLD = 30;
+  const FREE_SHIPPING_THRESHOLD = 50;
 
 
   const [discountCode, setDiscountCode] = useState("");
@@ -269,7 +269,7 @@ const CheckoutPage = ({ clientSecret }) => {
     if (!postalCode || !city) return;
     if (!totalWeightGrams) return;
 
-    const FREE_SHIPPING_THRESHOLD = 30;
+    const FREE_SHIPPING_THRESHOLD = 50;
     /*if (totalPrice >= FREE_SHIPPING_THRESHOLD) {
       setShippingAmount(0);
       return;

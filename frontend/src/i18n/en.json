@@ -393,7 +393,7 @@
     "no_other_editions": "No other editions in this format.",
     "about_author": "About the Author",
     "no_author_bio": "No biography available.",
-    "already_in_cart": "Already in Cart",
+    "already_in_cart": "In Cart",
     "adding": "Adding..."
   },
   "author": {
@@ -412,7 +412,7 @@
     "total": "Total",
     "pickup_note": "No shipping fees. You can collect the book yourself at any time.",
     "shipping_note": "Exact shipping confirmed at checkout",
-    "free_shipping_threshold": "Free shipping from €30",
+    "free_shipping_threshold": "Free shipping from €50",
     "free_shipping_remaining": "Add {{amount}} more to get free shipping",
     "free_shipping_applied": "You qualify for free shipping"
   },
@@ -444,7 +444,7 @@
   "wishlist_error": "Could not update wishlist",
   "my_wishlist": "My Wishlist",
   "wishlist_empty": "The Wishlist is empty",
-  "already_in_cart": "Already in Cart",
+  "already_in_cart": "In Cart",
   "home.new_arrivals": "New Arrivals",
   "home.just_in": "Just In",
   "customer_reviews": "Customer Reviews",
