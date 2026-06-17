@@ -1670,6 +1670,34 @@ const computeWorkId = (titleEn, titleDe, author) => {
   // =========================================================
   // ADD THESE 3 ROUTES TO YOUR server.js (or a new routes file)
   // =========================================================
+  // ── GET /api/admin/newsletter/log ──────────────────────────
+  // Admin-only: view the full subscribe/unsubscribe history.
+  // Optional ?email=x filters to one person's full timeline.
+  app.get('/api/admin/newsletter/log', async (req, res) => {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    try {
+      const email = req.query.email ? String(req.query.email).trim().toLowerCase() : null;
+      const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 1000);
+
+      const [rows] = email
+        ? await db.query(
+            'SELECT * FROM newsletter_subscription_log WHERE email = ? ORDER BY created_at DESC LIMIT ?',
+            [email, limit]
+          )
+        : await db.query(
+            'SELECT * FROM newsletter_subscription_log ORDER BY created_at DESC LIMIT ?',
+            [limit]
+          );
+
+      res.json(rows);
+    } catch (err) {
+      console.error('Newsletter log fetch error:', err);
+      res.status(500).json({ error: 'Failed to fetch log' });
+    }
+  });
+
   // ── GET /api/newsletter/status ─────────────────────────────
   // Checks whether an email is currently subscribed.
   app.get('/api/newsletter/status', async (req, res) => {
@@ -1705,6 +1733,19 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
       const token = crypto.randomBytes(24).toString('hex');
 
+      // Check existing state BEFORE the upsert, so we know whether this is
+      // a brand-new subscriber or someone re-opting-in after unsubscribing —
+      // needed to log the correct action type below.
+      const [[existing]] = await db.query(
+        'SELECT is_active FROM newsletter_subscribers WHERE email = ?',
+        [email]
+      );
+      const logAction = !existing
+        ? 'subscribed'
+        : existing.is_active
+          ? 'subscribed' // already active, re-submitted — still log as a subscribe event
+          : 'resubscribed';
+
       await db.execute(`
         INSERT INTO newsletter_subscribers (email, language, source, is_active, unsubscribe_token, created_at)
         VALUES (?, ?, ?, 1, ?, NOW())
@@ -1714,6 +1755,14 @@ const computeWorkId = (titleEn, titleDe, author) => {
           language = VALUES(language)
       `, [email, language, source, token]);
 
+      // Permanent audit log entry — never updated or deleted, just appended to.
+      await db.execute(`
+        INSERT INTO newsletter_subscription_log (email, action, language, source, ip_address, created_at)
+        VALUES (?, ?, ?, ?, ?, NOW())
+      `, [email, logAction, language, source, req.ip || null]).catch(err => {
+        console.error('Newsletter log insert failed (non-fatal):', err.message);
+      });
+
       // Fetch the token actually stored (a re-subscribe keeps the original token,
       // so the JS variable above may not match what's in the DB).
       const [[subRow]] = await db.query(
@@ -1721,20 +1770,26 @@ const computeWorkId = (titleEn, titleDe, author) => {
         [email]
       );
       const realToken = subRow?.unsubscribe_token || token;
-      const unsubscribeUrl = `${process.env.API_URL}/api/newsletter/unsubscribe?token=${realToken}`;
+      // Built from the incoming request rather than an env var, so this
+      // works correctly on both dev and prod with zero configuration —
+      // same pattern already used elsewhere in this file for image URLs.
+      const apiOrigin = `${req.protocol}://${req.get('host')}`;
+      const unsubscribeUrl = `${apiOrigin}/api/newsletter/unsubscribe?token=${realToken}`;
 
       // Send a welcome email — best effort, don't fail the request if this errors
+      let subject = '';
+      let html = '';
       try {
         const isDe = language === 'de';
         const sourceLabel = source === 'homepage'
           ? (isDe ? 'unserer Startseite' : 'our homepage')
           : (isDe ? `"${source}"` : `"${source}"`);
 
-        const subject = isDe
+        subject = isDe
           ? 'Willkommen beim englischbücher.de Newsletter! 📚'
           : 'Welcome to the englischbücher.de newsletter! 📚';
 
-        const html = isDe ? `
+        html = isDe ? `
           <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
             <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
               <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
@@ -1754,7 +1809,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
               </div>
               <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
                 Du erhältst diese E-Mail, weil du dich für unseren Newsletter angemeldet hast.<br>
-                <a href="${unsubscribeUrl}" style="color:#9ca3af;text-decoration:underline;">Abmelden</a>
+                <a href="${unsubscribeUrl}" style="color:#9ca3af;text-decoration:underline;">Abbestellen</a>
               </p>
             </div>
           </div>
@@ -1790,8 +1845,21 @@ const computeWorkId = (titleEn, titleDe, author) => {
           subject,
           html,
         });
+
+        // Log to sent_emails so admins can see this in the existing
+        // email logs view, same pattern as review-request emails.
+        await db.query(`
+          INSERT INTO sent_emails (to_email, subject, html, status, type, created_at)
+          VALUES (?, ?, ?, 'sent', 'Newsletter', NOW())
+        `, [email, subject, html]).catch(() => {});
       } catch (mailErr) {
         console.error('Newsletter welcome email failed:', mailErr.message);
+
+        // Log the failure too, so admins can see bounces/errors, not just successes
+        await db.query(`
+          INSERT INTO sent_emails (to_email, subject, html, status, error, type, created_at)
+          VALUES (?, ?, ?, 'failed', ?, 'Newsletter', NOW())
+        `, [email, subject, html, mailErr.message]).catch(() => {});
       }
 
       res.json({ success: true });
@@ -1821,15 +1889,34 @@ const computeWorkId = (titleEn, titleDe, author) => {
       const token = String(req.query.token || '');
       if (!token) return res.status(400).send(renderPage('This unsubscribe link is invalid.'));
 
-      const [result] = await db.execute(`
+      // Fetch first so we have the email + language to log, and so we can
+      // tell a fresh unsubscribe apart from a stale/already-used link.
+      const [[row]] = await db.query(
+        'SELECT email, language, is_active FROM newsletter_subscribers WHERE unsubscribe_token = ?',
+        [token]
+      );
+
+      if (!row) {
+        return res.send(renderPage("This link has already been used, or doesn't exist."));
+      }
+
+      if (!row.is_active) {
+        // Already unsubscribed previously — don't log a duplicate event
+        return res.send(renderPage("You've already been unsubscribed."));
+      }
+
+      await db.execute(`
         UPDATE newsletter_subscribers
         SET is_active = 0, unsubscribed_at = NOW()
         WHERE unsubscribe_token = ?
       `, [token]);
 
-      if (result.affectedRows === 0) {
-        return res.send(renderPage("This link has already been used, or doesn't exist."));
-      }
+      await db.execute(`
+        INSERT INTO newsletter_subscription_log (email, action, language, source, ip_address, created_at)
+        VALUES (?, 'unsubscribed', ?, 'unsubscribe_link', ?, NOW())
+      `, [row.email, row.language, req.ip || null]).catch(err => {
+        console.error('Newsletter log insert failed (non-fatal):', err.message);
+      });
 
       res.send(renderPage("You've been unsubscribed. We're sorry to see you go — you can always sign up again from our homepage."));
     } catch (err) {
@@ -2187,7 +2274,21 @@ ${bookList}`,
   // Add this block in server.js, near your other cron jobs
   // (it reuses the `cron`, `db`, and `transporter` already in scope).
 
-  const REVIEW_EMAIL_INTERVALS_DAYS = [5, 7, 8]; // gaps between successive emails (5, then +7, then +8)
+  // Email #1 is sent immediately when the order is marked delivered
+  // (handled in orderRoutes.js, not here). This cron sends #2, #3, #4.
+  // Gaps from delivery: day 5 (email #2), day 12 (email #3, +7), day 20 (email #4, +8).
+  // Mirrors frontend/src/utils/seoUrl.js's generateBookUrl exactly, so links
+  // built here in cron emails always match the real route the app serves.
+  // Real route shape: /book/{slug}-{isbn}-{id}  (singular "book", not "books")
+  function buildBookUrl(book) {
+    if (!book) return '/';
+    const slug = book.slug || '';
+    const isbn = book.isbn13 || book.isbn10 || '';
+    const idPart = book.id ? `-${book.id}` : '';
+    return `/book/${slug}${isbn ? '-' + isbn : ''}${idPart}`;
+  }
+
+  const REVIEW_EMAIL_INTERVALS_DAYS = [7, 8]; // gap from email #2->#3, and #3->#4
 
   async function sendReviewRequestEmails() {
     console.log('[ReviewRequests] Checking for due emails…');
@@ -2195,13 +2296,13 @@ ${bookList}`,
       const [due] = await db.query(`
         SELECT rr.id, rr.order_id, rr.user_id, rr.book_id, rr.emails_sent,
                u.email, u.first_name, u.language,
-               b.title_en, b.title_de, b.slug, b.image
+               b.title_en, b.title_de, b.slug, b.image, b.isbn13, b.isbn10
         FROM review_requests rr
         JOIN users u ON u.id = rr.user_id
         JOIN books b ON b.id = rr.book_id
         WHERE rr.stopped = 0
           AND rr.review_submitted = 0
-          AND rr.emails_sent < 3
+          AND rr.emails_sent < 4
           AND rr.next_send_at <= NOW()
       `);
 
@@ -2213,25 +2314,62 @@ ${bookList}`,
       for (const row of due) {
         const isDe = row.language === 'de';
         const title = isDe ? (row.title_de || row.title_en) : (row.title_en || row.title_de);
-        const reviewUrl = `${process.env.FRONTEND_URL}/books/${row.slug}#reviews`;
+        const reviewUrl = `${process.env.FRONTEND_URL}${buildBookUrl({ id: row.book_id, slug: row.slug, isbn13: row.isbn13, isbn10: row.isbn10 })}#reviews`;
+        const coverImg = row.image || '';
 
         const subject = isDe
           ? `Wie hat dir "${title}" gefallen?`
           : `How did you like "${title}"?`;
 
         const html = isDe ? `
-          <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
-            <h2 style="color:#7C3AED;">Hallo ${row.first_name || ''},</h2>
-            <p>Wir hoffen, dir hat <strong>${title}</strong> gefallen! Hättest du eine Minute Zeit, um eine kurze Bewertung zu hinterlassen? Das hilft anderen Lesern sehr.</p>
-            <a href="${reviewUrl}" style="display:inline-block;background:#7C3AED;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:12px;">Jetzt bewerten</a>
-            <p style="color:#888;font-size:12px;margin-top:24px;">Falls du bereits eine Bewertung abgegeben hast, ignoriere diese E-Mail einfach.</p>
+          <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
+            <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
+              <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
+              <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">Wie war deine Lektüre? 📖</h1>
+            </div>
+            <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
+              <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 20px;">
+                Hallo ${row.first_name || ''}, wir hoffen, dir hat dieses Buch gefallen!
+              </p>
+              <div style="text-align:center;margin:0 0 24px;">
+                ${coverImg ? `<img src="${coverImg}" alt="${title}" style="width:100px;height:auto;border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,0.15);margin-bottom:14px;">` : ''}
+                <div style="font-size:16px;font-weight:700;color:#1a1a2e;">${title}</div>
+              </div>
+              <p style="color:#1a1a2e;font-size:14px;line-height:1.6;margin:0 0 24px;text-align:center;">
+                Hättest du eine Minute Zeit, um eine kurze Bewertung zu hinterlassen? Das hilft anderen Lesern bei ihrer Auswahl sehr.
+              </p>
+              <div style="text-align:center;margin:0 0 8px;">
+                <a href="${reviewUrl}" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Jetzt bewerten</a>
+              </div>
+              <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
+                Falls du bereits eine Bewertung abgegeben hast, ignoriere diese E-Mail einfach.
+              </p>
+            </div>
           </div>
         ` : `
-          <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
-            <h2 style="color:#7C3AED;">Hi ${row.first_name || ''},</h2>
-            <p>We hope you enjoyed <strong>${title}</strong>! Could you spare a minute to leave a quick review? It really helps other readers.</p>
-            <a href="${reviewUrl}" style="display:inline-block;background:#7C3AED;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:12px;">Leave a review</a>
-            <p style="color:#888;font-size:12px;margin-top:24px;">If you've already left a review, just ignore this email.</p>
+          <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
+            <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
+              <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
+              <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">How was your read? 📖</h1>
+            </div>
+            <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
+              <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 20px;">
+                Hi ${row.first_name || ''}, we hope you enjoyed this one!
+              </p>
+              <div style="text-align:center;margin:0 0 24px;">
+                ${coverImg ? `<img src="${coverImg}" alt="${title}" style="width:100px;height:auto;border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,0.15);margin-bottom:14px;">` : ''}
+                <div style="font-size:16px;font-weight:700;color:#1a1a2e;">${title}</div>
+              </div>
+              <p style="color:#1a1a2e;font-size:14px;line-height:1.6;margin:0 0 24px;text-align:center;">
+                Could you spare a minute to leave a quick review? It really helps other readers choose their next book.
+              </p>
+              <div style="text-align:center;margin:0 0 8px;">
+                <a href="${reviewUrl}" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Leave a review</a>
+              </div>
+              <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
+                If you've already left a review, just ignore this email.
+              </p>
+            </div>
           </div>
         `;
 
@@ -2244,8 +2382,10 @@ ${bookList}`,
           });
 
           const sentCount = row.emails_sent + 1;
-          const isLast = sentCount >= 3;
-          const nextGapDays = REVIEW_EMAIL_INTERVALS_DAYS[sentCount] || null;
+          const isLast = sentCount >= 4;
+          // sentCount is 2 after sending email #2 -> need gap to #3 (index 0)
+          // sentCount is 3 after sending email #3 -> need gap to #4 (index 1)
+          const nextGapDays = REVIEW_EMAIL_INTERVALS_DAYS[sentCount - 2] || null;
 
           await db.query(`
             UPDATE review_requests
@@ -2265,9 +2405,9 @@ ${bookList}`,
           await db.query(`
             INSERT INTO sent_emails (to_email, subject, html, status, type, created_at)
             VALUES (?, ?, ?, 'sent', 'ReviewRequest', NOW())
-          `, [row.email, subject, html]).catch(() => { });
+          `, [row.email, subject, html]).catch(() => {});
 
-          console.log(`[ReviewRequests] Sent email ${sentCount}/3 to ${row.email} for book ${row.book_id}`);
+          console.log(`[ReviewRequests] Sent email ${sentCount}/4 to ${row.email} for book ${row.book_id}`);
         } catch (sendErr) {
           console.error(`[ReviewRequests] Failed to send to ${row.email}:`, sendErr.message);
           // Don't update next_send_at on failure — will retry tomorrow
@@ -4243,7 +4383,7 @@ ${bookList}`,
           UPDATE review_requests
           SET review_submitted = 1, stopped = 1
           WHERE user_id = ? AND book_id = ?
-        `, [userId, bookId]).catch(() => { });
+        `, [userId, bookId]).catch(() => {});
       }
 
       res.json({ success: true, message: 'Review submitted!' });
@@ -4886,7 +5026,7 @@ WHERE ci.user_id = ?
   // === ORDER ROUTES ===
   //console.log('✅ Mounting orders routes from:', require.resolve('./routes/orderRoutes'));
 
-  const ordersRouter = require('./routes/orderRoutes')(db);
+  const ordersRouter = require('./routes/orderRoutes')(db, transporter);
   app.use('/api/orders', ordersRouter);
 
   // ✅ DEBUG: list actual registered routes under /api/orders

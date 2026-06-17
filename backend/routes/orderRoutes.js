@@ -1,4 +1,3 @@
-
 // backend/routes/orderRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -13,11 +12,208 @@ const requireAuth = (req, res, next) => {
   return res.status(401).json({ error: 'Unauthorized' });
 };
 
+// Mirrors frontend/src/utils/seoUrl.js's generateBookUrl exactly, so links
+// built here in emails always match the real route the app actually serves.
+// Real route shape: /book/{slug}-{isbn}-{id}  (singular "book", not "books")
+function buildBookUrl(book) {
+  if (!book) return '/';
+  const slug = book.slug || '';
+  const isbn = book.isbn13 || book.isbn10 || '';
+  const idPart = book.id ? `-${book.id}` : '';
+  return `/book/${slug}${isbn ? '-' + isbn : ''}${idPart}`;
+}
 
-module.exports = (db) => {
+
+module.exports = (db, transporter) => {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
   //console.log('✅ LOADING orderRoutes from:', __filename);
+
+  // Schedules review-request tracking rows the first time an order
+  // becomes 'delivered', and sends the FIRST review-request email
+  // immediately (inline, not via cron). The daily cron in server.js
+  // (sendReviewRequestEmails) picks up emails #2, #3, #4 on the
+  // day-5 / day-12 / day-20 schedule from here.
+  async function scheduleReviewRequests(orderId) {
+    try {
+      const [[order]] = await db.execute(
+        'SELECT id, user_id, order_items, status FROM orders WHERE id = ?',
+        [orderId]
+      );
+      if (!order || order.status !== 'delivered' || !order.user_id) return;
+
+      const [[user]] = await db.execute(
+        'SELECT email, first_name, language FROM users WHERE id = ?',
+        [order.user_id]
+      );
+      if (!user || !user.email) return;
+
+      const items = typeof order.order_items === 'string'
+        ? JSON.parse(order.order_items)
+        : (order.order_items || []);
+
+      const deliveredAt = new Date();
+      // After the immediate first email, the next one is day 5 —
+      // cron then handles day 12 and day 20 from there.
+      const secondSend = new Date(deliveredAt.getTime() + 5 * 24 * 60 * 60 * 1000);
+
+      for (const item of items) {
+        const bookId = Number(item.bookId);
+        if (!bookId) continue;
+
+        // Skip entirely if this user has already reviewed THIS BOOK before,
+        // under any order — no point asking again just because they bought
+        // it a second time (e.g. as a gift, or a replacement copy).
+        const [[alreadyReviewed]] = await db.execute(
+          'SELECT 1 FROM reviews WHERE user_id = ? AND book_id = ? LIMIT 1',
+          [order.user_id, bookId]
+        );
+        if (alreadyReviewed) continue;
+
+        // INSERT IGNORE — uq_order_book unique key prevents duplicate scheduling
+        // if this route runs more than once for the same order.
+        const [insertResult] = await db.execute(`
+          INSERT IGNORE INTO review_requests
+            (order_id, user_id, book_id, delivered_at, emails_sent, next_send_at)
+          VALUES (?, ?, ?, ?, 0, ?)
+        `, [orderId, order.user_id, bookId, deliveredAt, secondSend]);
+
+        // Only send the immediate email if this row was newly created —
+        // affectedRows is 0 when INSERT IGNORE skips a duplicate, which
+        // means this book's request was already scheduled before (e.g.
+        // the admin saved the order twice), so don't re-send.
+        if (insertResult.affectedRows === 0) continue;
+
+        const [[book]] = await db.execute(
+          'SELECT id, title_en, title_de, slug, image, isbn13, isbn10 FROM books WHERE id = ?',
+          [bookId]
+        );
+        if (!book) continue;
+
+        await sendReviewRequestEmailNow({
+          db,
+          transporter,
+          toEmail: user.email,
+          firstName: user.first_name,
+          language: user.language,
+          book,
+          orderId,
+          bookId,
+          userId: order.user_id,
+        });
+      }
+    } catch (err) {
+      console.error('scheduleReviewRequests error:', err);
+      // Never throw — this must not block the order update response
+    }
+  }
+
+  // Sends ONE review-request email right now (used for the immediate
+  // first email only — the cron in server.js handles emails #2-4).
+  // Logs to sent_emails and updates the review_requests row's counters,
+  // exactly like the cron does, so both paths stay consistent.
+  async function sendReviewRequestEmailNow({ db, transporter, toEmail, firstName, language, book, orderId, bookId, userId }) {
+    const isDe = language === 'de';
+    const title = isDe ? (book.title_de || book.title_en) : (book.title_en || book.title_de);
+    const reviewUrl = `${process.env.FRONTEND_URL}${buildBookUrl(book)}#reviews`;
+    const coverImg = book.image || '';
+
+    const subject = isDe
+      ? `Wie hat dir "${title}" gefallen?`
+      : `How did you like "${title}"?`;
+
+    const html = isDe ? `
+      <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
+        <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
+          <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
+          <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">Wie war deine Lektüre? 📖</h1>
+        </div>
+        <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
+          <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 20px;">
+            Hallo ${firstName || ''}, dein Buch wurde zugestellt! Wir hoffen, es gefällt dir.
+          </p>
+          <div style="text-align:center;margin:0 0 24px;">
+            ${coverImg ? `<img src="${coverImg}" alt="${title}" style="width:100px;height:auto;border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,0.15);margin-bottom:14px;">` : ''}
+            <div style="font-size:16px;font-weight:700;color:#1a1a2e;">${title}</div>
+          </div>
+          <p style="color:#1a1a2e;font-size:14px;line-height:1.6;margin:0 0 24px;text-align:center;">
+            Hättest du eine Minute Zeit, um eine kurze Bewertung zu hinterlassen? Das hilft anderen Lesern bei ihrer Auswahl sehr.
+          </p>
+          <div style="text-align:center;margin:0 0 8px;">
+            <a href="${reviewUrl}" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Jetzt bewerten</a>
+          </div>
+          <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
+            Falls du bereits eine Bewertung abgegeben hast, ignoriere diese E-Mail einfach.
+          </p>
+        </div>
+      </div>
+    ` : `
+      <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
+        <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
+          <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
+          <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">How was your read? 📖</h1>
+        </div>
+        <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
+          <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 20px;">
+            Hi ${firstName || ''}, your book has been delivered! We hope you're enjoying it.
+          </p>
+          <div style="text-align:center;margin:0 0 24px;">
+            ${coverImg ? `<img src="${coverImg}" alt="${title}" style="width:100px;height:auto;border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,0.15);margin-bottom:14px;">` : ''}
+            <div style="font-size:16px;font-weight:700;color:#1a1a2e;">${title}</div>
+          </div>
+          <p style="color:#1a1a2e;font-size:14px;line-height:1.6;margin:0 0 24px;text-align:center;">
+            Could you spare a minute to leave a quick review once you've had a chance to read it? It really helps other readers choose their next book.
+          </p>
+          <div style="text-align:center;margin:0 0 8px;">
+            <a href="${reviewUrl}" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Leave a review</a>
+          </div>
+          <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
+            If you've already left a review, just ignore this email.
+          </p>
+        </div>
+      </div>
+    `;
+
+    try {
+      await transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to: toEmail,
+        subject,
+        html,
+      });
+
+      // day 5 is when email #2 should go out — overwrite the placeholder
+      // next_send_at that was set at insert time with the real value here
+      // too, just to be explicit (they're already equal, this just keeps
+      // the logic colocated and obvious).
+      const nextSend = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+
+      await db.execute(`
+        UPDATE review_requests
+        SET emails_sent = 1,
+            last_sent_at = NOW(),
+            next_send_at = ?
+        WHERE order_id = ? AND book_id = ?
+      `, [nextSend, orderId, bookId]);
+
+      await db.execute(`
+        INSERT INTO sent_emails (to_email, subject, html, status, type, created_at)
+        VALUES (?, ?, ?, 'sent', 'ReviewRequest', NOW())
+      `, [toEmail, subject, html]).catch(() => {});
+
+      console.log(`[ReviewRequests] Sent immediate email 1/4 to ${toEmail} for book ${bookId}`);
+    } catch (err) {
+      console.error(`[ReviewRequests] Immediate send failed for ${toEmail}:`, err.message);
+
+      await db.execute(`
+        INSERT INTO sent_emails (to_email, subject, html, status, error, type, created_at)
+        VALUES (?, ?, ?, 'failed', ?, 'ReviewRequest', NOW())
+      `, [toEmail, subject, html, err.message]).catch(() => {});
+      // Don't throw — next_send_at stays at its inserted value (day 5),
+      // so if this immediate send fails, the cron will catch it up later
+      // rather than the customer never hearing from us at all.
+    }
+  }
 
   // === CREATE PAYMENT INTENT — GERMANY ONLY ===
 
@@ -871,6 +1067,12 @@ module.exports = (db) => {
           orderId,
         ]
       );
+
+      // Schedule review-request emails the first time this order is marked delivered.
+      // Safe to call even if already scheduled — INSERT IGNORE prevents duplicates.
+      if (status === 'delivered') {
+        await scheduleReviewRequests(orderId);
+      }
 
       return res.json({ success: true });
     } catch (err) {
