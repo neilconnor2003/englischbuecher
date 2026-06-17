@@ -213,7 +213,9 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
           {tag && <span className={`book-tag book-tag--${tag.kind}`}>{tag.label}</span>}
 
           {discountPercent > 0 && (
-            <span className="book-disc">-{discountPercent}%</span>
+            <span className="book-disc">
+              <span className="book-disc-num">-{discountPercent}%</span>
+            </span>
           )}
 
           <div className="book-cover-content">
