@@ -222,7 +222,11 @@ function Books() {
         }
       } finally {
         setLoading(false);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Scroll-to-top no longer happens automatically here — on mobile
+        // it fired on every single filter tweak, yanking the user away
+        // from the panel they were adjusting. Desktop never needed this
+        // scroll anyway since the sidebar doesn't cover the results.
+        // Mobile now scrolls only when the user taps "Show results".
       }
     };
 
@@ -374,8 +378,8 @@ function Books() {
       <div className="container">
         <h1 className="page-title">
           {q ? `${t('search_results_for')} "${q}"` : t('all_books')}
-          <span className="results-count">({total} {t('results')})</span>
         </h1>
+        <p className="results-count">({total} {t('results')})</p>
 
         <div className="listing-grid">
 
@@ -612,9 +616,12 @@ function Books() {
               <button
                 type="button"
                 className="show-results-btn"
-                onClick={() => setShowFilters(false)}
+                onClick={() => {
+                  setShowFilters(false);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
               >
-                {t('show_results') || 'Show results'} ({total})
+                {(i18n.resolvedLanguage === 'de' ? 'Ergebnisse anzeigen' : 'Show results')} ({total})
               </button>
             )}
           </aside>

@@ -40,21 +40,28 @@
 }
 
 .page-title {
-  font-size: clamp(1.6rem, 3vw, 2.2rem);
-  font-weight: 600;
-  letter-spacing: -0.025em;
+  font-size: clamp(1.8rem, 3.2vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
   color: var(--bl-ink);
   text-align: center;
-  margin: 0 0 8px;
+  margin: 0 0 10px;
 }
 
 .results-count {
-  font-size: 0.95rem;
-  font-weight: 400;
-  color: var(--bl-ink-muted);
-  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--bl-purple-dark);
+  background: var(--bl-purple-ghost);
+  border: 1px solid rgba(124, 58, 237, 0.18);
+  padding: 5px 16px;
+  border-radius: 999px;
   text-align: center;
-  margin-bottom: 28px;
+  margin: 0 0 28px;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* ── LAYOUT GRID — sidebar LEFT, results RIGHT ─────────── */
@@ -377,44 +384,50 @@
 }
 
 .filters-sidebar .ant-slider-handle {
-  width: 18px;
-  height: 18px;
+  width: 18px !important;
+  height: 18px !important;
   margin-top: -2px;
 }
 
 .filters-sidebar .ant-slider-handle::before {
-  width: 18px;
-  height: 18px;
-  inset-block-start: 0;
-  inset-inline-start: 0;
+  width: 18px !important;
+  height: 18px !important;
+  inset-block-start: 0 !important;
+  inset-inline-start: 0 !important;
 }
 
 .filters-sidebar .ant-slider-handle::after {
-  width: 18px;
-  height: 18px;
-  box-shadow: 0 0 0 2px var(--bl-purple);
-  background: #ffffff;
-  inset-block-start: 0;
-  inset-inline-start: 0;
+  width: 18px !important;
+  height: 18px !important;
+  box-shadow: 0 0 0 2px var(--bl-purple) !important;
+  background: #ffffff !important;
+  inset-block-start: 0 !important;
+  inset-inline-start: 0 !important;
 }
 
+/* AntD shrinks the handle (and tints it blue) on hover, focus, active,
+   and dragging by default — that's the small/blue handle that stuck
+   around after clicking. Pin size and color across every state so
+   none of AntD's built-in variations can take over. */
 .filters-sidebar .ant-slider-handle:hover::after,
-.filters-sidebar .ant-slider-handle:focus::after {
-  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.25);
-}
-
-/* AntD shrinks the handle on click/drag by default (its built-in
-   "pressed" state) — that's the shrink-and-shift you were seeing.
-   Pin both pseudo-elements back to full size during active/drag. */
-.filters-sidebar .ant-slider-handle:active::before,
+.filters-sidebar .ant-slider-handle:focus::after,
 .filters-sidebar .ant-slider-handle:active::after,
-.filters-sidebar .ant-slider-handle-dragging::before,
 .filters-sidebar .ant-slider-handle-dragging::after {
   width: 18px !important;
   height: 18px !important;
   inset-block-start: 0 !important;
   inset-inline-start: 0 !important;
+  background: #ffffff !important;
   box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.3) !important;
+}
+.filters-sidebar .ant-slider-handle:hover::before,
+.filters-sidebar .ant-slider-handle:focus::before,
+.filters-sidebar .ant-slider-handle:active::before,
+.filters-sidebar .ant-slider-handle-dragging::before {
+  width: 18px !important;
+  height: 18px !important;
+  inset-block-start: 0 !important;
+  inset-inline-start: 0 !important;
 }
 
 .filters-sidebar .ant-select-dropdown {
