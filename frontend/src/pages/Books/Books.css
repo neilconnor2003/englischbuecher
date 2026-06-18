@@ -40,28 +40,33 @@
 }
 
 .page-title {
-  font-size: clamp(1.8rem, 3.2vw, 2.4rem);
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--bl-ink);
-  text-align: center;
-  margin: 0 0 10px;
+  color: #9333ea;
+  text-align: left;
+  margin: 0 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.page-title-icon {
+  font-size: 0.85em;
+  opacity: 0.85;
 }
 
 .results-count {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--bl-purple-dark);
   background: var(--bl-purple-ghost);
   border: 1px solid rgba(124, 58, 237, 0.18);
-  padding: 5px 16px;
+  padding: 5px 14px;
   border-radius: 999px;
-  text-align: center;
-  margin: 0 0 28px;
-  width: fit-content;
-  margin-left: auto;
-  margin-right: auto;
+  white-space: nowrap;
 }
 
 /* ── LAYOUT GRID — sidebar LEFT, results RIGHT ─────────── */
@@ -504,19 +509,49 @@
 .sort-bar {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   background: #ffffff;
-  border: 1px solid var(--bl-border);
-  padding: 14px 18px;
+  border: 1.5px solid rgba(124, 58, 237, 0.15);
+  padding: 12px 18px;
   border-radius: var(--bl-radius-md);
-  box-shadow: var(--bl-shadow-sm);
-  font-size: 0.88rem;
-  color: var(--bl-ink-muted);
+  box-shadow: 0 2px 10px rgba(124, 58, 237, 0.06);
+}
+
+.sort-bar-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--bl-purple-dark);
+  white-space: nowrap;
+}
+
+.sort-bar-label::before {
+  content: '⇕';
+  font-size: 0.95rem;
+  color: var(--bl-purple);
+}
+
+.sort-bar .ant-select {
+  flex: 1;
+  max-width: 260px;
 }
 
 .sort-bar .ant-select-selector {
-  border-radius: var(--bl-radius-sm) !important;
-  border-color: var(--bl-border) !important;
+  border-radius: 999px !important;
+  border-color: rgba(124, 58, 237, 0.2) !important;
+  font-weight: 600 !important;
+  color: var(--bl-ink) !important;
+}
+
+.sort-bar .ant-select-selector:hover {
+  border-color: var(--bl-purple) !important;
+}
+
+.sort-bar .ant-select-focused .ant-select-selector {
+  border-color: var(--bl-purple) !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12) !important;
 }
 
 .search-bar-listing {

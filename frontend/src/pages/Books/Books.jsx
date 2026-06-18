@@ -377,9 +377,10 @@ function Books() {
     <div className="books-listing-page">
       <div className="container">
         <h1 className="page-title">
+          <span className="page-title-icon">📚</span>
           {q ? `${t('search_results_for')} "${q}"` : t('all_books')}
+          <span className="results-count">{total} {t('results')}</span>
         </h1>
-        <p className="results-count">({total} {t('results')})</p>
 
         <div className="listing-grid">
 
@@ -630,7 +631,7 @@ function Books() {
           <div className="listing-main">
             {/* Sort */}
             <div className="sort-bar">
-              <span>{t('sort_by')}:</span>
+              <span className="sort-bar-label">{t('sort_by')}</span>
               <Select
                 value={sort}
                 options={sortOptions}
