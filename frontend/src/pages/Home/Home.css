@@ -1,3 +1,6 @@
+/* ── Fraunces — display font for all headings site-wide ── */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,700&display=swap');
+
 /* =========================================================
    Home.css — EnglischBücher Modern Redesign
    Clean SaaS aesthetic · Apple-inspired · Purple accent
@@ -95,16 +98,14 @@
 }
 
 .section-title {
-  font-size: clamp(1.4rem, 2.5vw, 1.9rem);
-  /*font-weight: 600;*/
-  letter-spacing: -0.025em;
-  /*color: var(--ink);*/
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+  font-weight: 900;
+  letter-spacing: -0.01em;
   margin: 0 0 28px;
   display: flex;
   align-items: center;
   gap: 10px;
-
-  font-weight: 800;
   color: #9333ea;
 }
 
@@ -189,11 +190,11 @@
 }
 
 .wp-hero__title {
-  font-size: clamp(2rem, 3.8vw, 3.4rem);
-  font-weight: 600;
-  /*letter-spacing: -0.035em;*/
-  letter-spacing: -0.02em;
-  line-height: 1.08;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(2.2rem, 4vw, 3.8rem);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
   color: var(--ink);
   margin: 0 0 18px;
 }
@@ -426,21 +427,16 @@
 }
 
 .trust-strip__track span strong {
-  /*font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, sans-serif;*/
-  font-family: 'Playfair Display', Georgia, serif;
-  /*font-size: 1.1rem;*/
+  font-family: 'Fraunces', Georgia, serif;
   font-size: 28px;
   font-weight: 900;
-  /*color: #ffffff;*/
   color: #c4b5fd;
   letter-spacing: -0.01em;
   line-height: 1;
 }
 
 .trust-strip__track span em {
-  /*font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, sans-serif;*/
-  font-family: 'Playfair Display', Georgia, serif;
-  /*font-size: 0.82rem;*/
+  font-family: 'Fraunces', Georgia, serif;
   font-size: 13px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.55);
@@ -461,9 +457,9 @@
 }
 
 .wp-ways__title {
-  font-size: clamp(1.3rem, 2.2vw, 1.75rem);
-  /*font-weight: 600;*/
-  letter-spacing: -0.025em;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  letter-spacing: -0.01em;
   color: var(--ink);
   text-align: center;
   margin: 0 0 28px;
@@ -1071,11 +1067,13 @@
 }
 
 .botw-title {
-  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(1.9rem, 3.2vw, 3rem);
   font-weight: 900;
+  font-style: italic;
   color: #fff;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  letter-spacing: -0.01em;
+  line-height: 1.08;
   margin-bottom: 6px;
 }
 
@@ -1249,10 +1247,11 @@
 }
 
 .home-stats-num {
-  font-size: clamp(2rem, 3.5vw, 2.8rem);
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(2.2rem, 3.8vw, 3.2rem);
   font-weight: 900;
   color: #fff;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.01em;
   line-height: 1;
   margin-bottom: 8px;
 }
@@ -1390,10 +1389,12 @@
 }
 
 .author-spot-name {
-  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(1.5rem, 2.6vw, 2.2rem);
   font-weight: 900;
+  font-style: italic;
   color: #1f1633;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   margin-bottom: 12px;
 }
 
@@ -1524,9 +1525,11 @@
 }
 
 .readers-say-heading {
-  font-size: clamp(1.5rem, 2.6vw, 2.1rem);
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(1.6rem, 2.8vw, 2.4rem);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.01em;
   color: var(--ink, #1a1a2e);
   text-align: center;
   margin: 0 0 10px;
@@ -1672,11 +1675,13 @@
 }
 
 .newsletter-text h2 {
-  font-size: clamp(1.4rem, 2.4vw, 2rem);
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(1.6rem, 2.6vw, 2.2rem);
   font-weight: 900;
+  font-style: italic;
   color: #fff;
   margin: 0 0 10px;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 .newsletter-text p {
