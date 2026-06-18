@@ -700,7 +700,7 @@
 }
 
 .request-book-card {
-  background: var(--purple);
+  background: linear-gradient(135deg, #2e1065 0%, #5B21B6 55%, #7C3AED 100%);
   border-radius: var(--radius-xl);
   padding: 52px 56px;
   display: flex;
@@ -711,28 +711,29 @@
   overflow: hidden;
 }
 
-/* Subtle geometric accent */
+/* Large blurred circle — top right depth layer */
 .request-book-card::before {
   content: '';
   position: absolute;
-  top: -60px;
-  right: -60px;
-  width: 240px;
-  height: 240px;
+  top: -80px;
+  right: -80px;
+  width: 300px;
+  height: 300px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(196, 181, 253, 0.12);
   pointer-events: none;
 }
 
+/* Second blurred circle — bottom left */
 .request-book-card::after {
   content: '';
   position: absolute;
-  bottom: -80px;
-  left: 30%;
-  width: 320px;
-  height: 320px;
+  bottom: -100px;
+  left: 25%;
+  width: 360px;
+  height: 360px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(244, 114, 182, 0.08);
   pointer-events: none;
 }
 
@@ -740,14 +741,43 @@
   max-width: 600px;
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.request-book-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #c4b5fd;
+  margin: 0;
+}
+
+.request-book-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c4b5fd;
+  flex-shrink: 0;
 }
 
 .request-book-text h2 {
-  font-size: clamp(1.4rem, 2.4vw, 2rem);
-  font-weight: 600;
-  letter-spacing: -0.025em;
-  color: var(--white);
-  margin: 0 0 14px;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(1.6rem, 2.6vw, 2.4rem);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  color: #ffffff;
+  margin: 0;
 }
 
 .request-book-text p {
@@ -755,33 +785,74 @@
   line-height: 1.65;
   color: rgba(255, 255, 255, 0.82);
   margin: 0;
+  max-width: 480px;
+}
+
+/* Decorative book spines — purely CSS, no extra markup needed */
+.request-book-decoration {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.request-book-spine {
+  width: 22px;
+  border-radius: 4px 4px 2px 2px;
+  position: relative;
+}
+.request-book-spine::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 4px;
+  right: 4px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 1px;
+}
+
+.request-book-spine--a { height: 90px;  background: #c4b5fd; }
+.request-book-spine--b { height: 110px; background: #fbbf24; }
+.request-book-spine--c { height: 80px;  background: #f472b6; }
+.request-book-spine--d { height: 105px; background: #a5f3fc; }
+.request-book-spine--e { height: 70px;  background: #c4b5fd; opacity: 0.6; }
+
+.request-book-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
 }
 
 .home-request-book-btn {
-  position: relative;
-  z-index: 1;
-  background: var(--white);
-  color: var(--purple);
-  padding: 14px 30px;
+  background: #ffffff;
+  color: #5B21B6;
+  padding: 16px 34px;
   border-radius: var(--radius-full);
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
-  flex-shrink: 0;
   transition: transform var(--transition), box-shadow var(--transition);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .home-request-book-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  transform: translateY(-3px);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.26);
 }
 
 .home-request-book-btn:active {
   transform: scale(0.98);
 }
-
 /* ── FOCUS & TAP ────────────────────────────────────────── */
 .home-page-v2 a,
 .home-page-v2 button {
@@ -887,8 +958,29 @@
     border-radius: var(--radius-lg);
   }
 
+  .request-book-text {
+    align-items: center;
+  }
+
+  .request-book-eyebrow {
+    justify-content: center;
+  }
+
+  .request-book-text p {
+    max-width: 100%;
+  }
+
   .request-book-text h2 {
-    font-size: 1.35rem;
+    font-size: 1.5rem;
+  }
+
+  .request-book-decoration {
+    display: none;
+  }
+
+  .request-book-right {
+    width: 100%;
+    gap: 0;
   }
 
   .home-request-book-btn {

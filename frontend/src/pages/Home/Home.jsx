@@ -851,6 +851,9 @@ function Home() {
         <div className="container">
           <div className="request-book-card">
             <div className="request-book-text">
+              <p className="request-book-eyebrow">
+                {de ? 'Unser Sortiment wächst' : 'Growing collection'}
+              </p>
               <h2>
                 {de ? 'Mehr englische Bücher folgen regelmäßig' : 'More English books are added regularly'}
               </h2>
@@ -860,9 +863,18 @@ function Home() {
                   : "We continuously expand our catalog. If you can't find a specific book, you can easily request it from us."}
               </p>
             </div>
-            <Link to="/request-book" className="home-request-book-btn">
-              {de ? 'Buch anfragen' : 'Request a Book'}
-            </Link>
+            <div className="request-book-right">
+              <div className="request-book-decoration">
+                <div className="request-book-spine request-book-spine--a" />
+                <div className="request-book-spine request-book-spine--b" />
+                <div className="request-book-spine request-book-spine--c" />
+                <div className="request-book-spine request-book-spine--d" />
+                <div className="request-book-spine request-book-spine--e" />
+              </div>
+              <Link to="/request-book" className="home-request-book-btn">
+                {de ? 'Buch anfragen' : 'Request a Book'}
+              </Link>
+            </div>
           </div>
         </div>
       </section>
