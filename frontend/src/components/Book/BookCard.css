@@ -405,10 +405,17 @@
     font-size: 16px;
     padding: 9px 10px;
   }
-  /* Icon-only on mobile — full text plus Buy Now and Wishlist don't
-     fit comfortably on narrow screens, especially in German where
-     "In den Warenkorb" is much longer than "Add to Cart". */
+  /* Icon-only on mobile by default — text doesn't fit on the listing page.
+     Homepage sliders (.home-swiper) are full-width cards with more room,
+     so restore the text there. */
   .btn-cart-text {
     display: none;
+  }
+  .home-swiper .btn-cart-text {
+    display: inline;
+  }
+  .home-swiper .btn-cart {
+    font-size: 11.5px;
+    padding: 9px 8px;
   }
 }

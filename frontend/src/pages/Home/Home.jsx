@@ -916,7 +916,7 @@ function Home() {
             <div className="section-header">
               <h2 className="section-title">
                 <span className="new-release-glow">{t('home.new_arrivals')}</span>
-                <span className="ml-3 text-2xl">{t('home.just_in')}</span>
+                <span className="section-title-sub">{t('home.just_in')}</span>
               </h2>
               <Link to="/books?filter=new" className="view-all-btn">{t('view_all')} →</Link>
             </div>
