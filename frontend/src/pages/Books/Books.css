@@ -70,49 +70,86 @@
   background: #ffffff;
   border: 1px solid var(--bl-border);
   border-radius: var(--bl-radius-lg);
-  padding: 22px;
-  box-shadow: var(--bl-shadow-sm);
+  padding: 0 0 22px;
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.07);
   height: fit-content;
   position: sticky;
   top: 16px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
   grid-column: 1;
+  overflow: hidden;
 }
 
 .filters-sidebar h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.05rem;
+  font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--bl-ink);
-  margin: 0 0 4px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--bl-border);
+  color: #ffffff;
+  margin: 0;
+  padding: 18px 22px;
+  background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filters-sidebar h3::before {
+  content: '✦';
+  font-size: 0.9rem;
+  color: #c4b5fd;
 }
 
 .filter-group {
-  background: var(--bl-fog);
+  background: #ffffff;
   border: 1px solid var(--bl-border);
   border-radius: var(--bl-radius-md);
   padding: 14px 16px;
+  margin: 0 18px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.filter-group:hover {
+  border-color: rgba(124, 58, 237, 0.28);
+  box-shadow: 0 2px 10px rgba(124, 58, 237, 0.08);
 }
 
 .filter-group h4 {
-  font-size: 0.82rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--bl-ink-muted);
+  color: var(--bl-purple-dark);
   margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Small colored dot before each filter label, purely decorative,
+   gives each group a bit more visual identity than plain text */
+.filter-group h4::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--bl-purple);
+  flex-shrink: 0;
 }
 
 .price-values {
   text-align: center;
   margin-top: 10px;
-  color: var(--bl-purple);
-  font-weight: 600;
-  font-size: 0.9rem;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  background: linear-gradient(135deg, #7C3AED, #9333ea);
+  padding: 6px 14px;
+  border-radius: 999px;
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* ── AntD control restyling inside sidebar ─────────────── */
@@ -207,10 +244,23 @@
 }
 
 .filters-sidebar button.ant-btn-link {
-  margin-top: 4px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: #ef4444;
+  margin: 4px 18px 0;
+  width: calc(100% - 36px);
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.01em;
+  color: #e11d48;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: var(--bl-radius-sm);
+  padding: 9px 12px;
+  height: auto;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.filters-sidebar button.ant-btn-link:hover {
+  background: #ffe4e6;
+  border-color: #fda4af;
+  color: #e11d48 !important;
 }
 
 /* ── MAIN LISTING AREA — sits to the RIGHT of sidebar ──── */
