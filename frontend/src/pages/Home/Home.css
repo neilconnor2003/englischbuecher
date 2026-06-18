@@ -1331,7 +1331,6 @@
   overflow: hidden;
 }
 
-/* Subtle ambient blob behind the cards */
 .home-stats-section::before {
   content: '';
   position: absolute;
@@ -1356,8 +1355,8 @@
 }
 
 .home-stats-section .container {
-  padding-top: 52px;
-  padding-bottom: 52px;
+  padding-top: 72px;
+  padding-bottom: 72px;
   position: relative;
   z-index: 1;
 }
@@ -1365,48 +1364,57 @@
 .home-stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: 20px;
 }
 
-/* Frosted glass card per stat */
+/* Frosted glass card — accent colour strip at top varies per card */
 .home-stats-item {
   text-align: center;
-  padding: 28px 20px 24px;
+  padding: 36px 24px 32px;
   position: relative;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  transition: transform 0.25s ease, background 0.25s ease;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-top: 3px solid rgba(255, 255, 255, 0.4);
+  border-radius: 18px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 0.25s ease, background 0.25s ease, border-top-color 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 
+/* Each card gets its own accent colour on the top border */
+.home-stats-item:nth-child(1) { border-top-color: #c4b5fd; }
+.home-stats-item:nth-child(2) { border-top-color: #fbbf24; }
+.home-stats-item:nth-child(3) { border-top-color: #f472b6; }
+.home-stats-item:nth-child(4) { border-top-color: #6ee7b7; }
+
 .home-stats-item:hover {
-  transform: translateY(-4px);
-  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-6px);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .home-stats-icon {
-  font-size: 2rem;
+  font-size: 2.4rem;
   line-height: 1;
-  margin-bottom: 12px;
   display: block;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.25));
 }
 
 .home-stats-num {
   font-family: 'Fraunces', Georgia, serif;
-  font-size: clamp(2.4rem, 4vw, 3.4rem);
+  font-size: clamp(2.6rem, 4.2vw, 3.6rem);
   font-weight: 900;
   color: #fff;
   letter-spacing: -0.01em;
   line-height: 1;
-  margin-bottom: 10px;
 }
 
 .home-stats-label {
-  font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.88);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1416,13 +1424,18 @@
 @media (max-width: 768px) {
   .home-stats-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 14px;
   }
   .home-stats-item {
-    padding: 22px 16px 18px;
+    padding: 28px 18px 24px;
+    gap: 8px;
   }
   .home-stats-icon {
-    font-size: 1.6rem;
+    font-size: 2rem;
+  }
+  .home-stats-section .container {
+    padding-top: 52px;
+    padding-bottom: 52px;
   }
 }
 
