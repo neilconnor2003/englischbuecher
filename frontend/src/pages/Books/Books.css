@@ -152,6 +152,157 @@
   box-sizing: border-box;
 }
 
+/* ── Active filter chips ─────────────────────────────────── */
+.active-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 18px;
+}
+
+.active-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bl-purple-ghost);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  color: var(--bl-purple-dark);
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.active-chip:hover {
+  background: #ede9fe;
+  border-color: rgba(124, 58, 237, 0.4);
+}
+.active-chip-x {
+  font-size: 0.7rem;
+  opacity: 0.65;
+}
+
+/* ── Collapsible filter section header ──────────────────── */
+.filter-group-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.filter-group-toggle h4 {
+  margin: 0;
+}
+
+.fg-chevron {
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--bl-purple);
+  border-bottom: 2px solid var(--bl-purple);
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  margin-right: 2px;
+}
+.fg-chevron.open {
+  transform: rotate(225deg);
+}
+
+.filter-group-body {
+  margin-top: 12px;
+  animation: fg-expand 0.18s ease;
+}
+@keyframes fg-expand {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Cap the format checkbox list so a long list doesn't make the
+   sidebar enormous — scrolls internally instead */
+.format-checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* ── Star-rating buttons (replaces plain radio group) ────── */
+.rating-star-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rating-star-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: var(--bl-fog);
+  border: 1.5px solid var(--bl-border);
+  border-radius: var(--bl-radius-sm);
+  padding: 9px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.rating-star-btn:hover {
+  border-color: rgba(124, 58, 237, 0.35);
+}
+.rating-star-btn.active {
+  background: linear-gradient(135deg, #7C3AED, #9333ea);
+  border-color: transparent;
+}
+
+.rating-star-icons {
+  font-size: 0.95rem;
+  color: #fbbf24;
+  letter-spacing: 1px;
+}
+.rating-star-btn.active .rating-star-icons {
+  color: #fde68a;
+}
+
+.rating-star-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--bl-ink-muted);
+}
+.rating-star-btn.active .rating-star-label {
+  color: #ffffff;
+}
+
+/* ── Stock toggle row ────────────────────────────────────── */
+.filter-group--toggle {
+  background: var(--bl-fog);
+}
+
+.stock-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stock-toggle-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--bl-ink);
+}
+
+.stock-toggle-row .ant-switch-checked {
+  background: var(--bl-purple);
+}
+
 /* ── AntD control restyling inside sidebar ─────────────── */
 .filters-sidebar .ant-select,
 .filters-sidebar .ant-input,

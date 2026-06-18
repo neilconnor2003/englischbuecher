@@ -7,7 +7,7 @@ import { Search } from 'lucide-react';
 import BookCard from '../../components/Book/BookCard';
 import config from '../../config';
 import { useTranslation } from 'react-i18next';
-import { Button, Input, Select, Slider, Radio, Checkbox, message } from 'antd';
+import { Button, Input, Select, Slider, Checkbox, message, Switch } from 'antd';
 import './Books.css';
 
 const CheckboxGroup = Checkbox.Group;
@@ -28,6 +28,26 @@ function Books() {
     editions: [],
     categories: []
   });
+
+  // When arriving via ?author_id=X (e.g. from the homepage Author Spotlight),
+  // resolve the ID to a display name so the dropdown can show it correctly —
+  // filtering itself still happens by the reliable ID, not this name.
+  const [resolvedAuthorName, setResolvedAuthorName] = useState('');
+
+  // Which filter sections are expanded. Author/Category/Price stay open
+  // by default since they're used most; the rest start collapsed to
+  // keep the sidebar from feeling overwhelming at a glance.
+  const [openSections, setOpenSections] = useState({
+    author: true,
+    category: true,
+    price: true,
+    publisher: false,
+    format: false,
+    edition: false,
+    rating: false,
+  });
+  const toggleSection = (key) =>
+    setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
 
   // ===== Helpers to read/write URL params =====
   const getParam = (name, def = '') => (searchParams.get(name) ?? def);
@@ -67,6 +87,7 @@ function Books() {
   // ===== Derived values from URL (single source of truth) =====
   const q = getParam('q', '').trim();
   const author = getParam('author', '');
+  const authorId = getParam('author_id', ''); // precise ID, used when arriving from Author Spotlight
   const category = getParam('category', '');
   const publisher = getParam('publisher', '');
   const formatList = getArrayParam('format');     // array of strings
@@ -140,6 +161,26 @@ function Books() {
       });
     return () => { cancelled = true; };
   }, []);
+
+  // ===== Resolve author_id -> display name (when arriving via the
+  // homepage Author Spotlight link). Used only to show the right name
+  // in the dropdown — actual filtering happens by ID, not this name. =====
+  useEffect(() => {
+    if (!authorId) {
+      setResolvedAuthorName('');
+      return;
+    }
+    let cancelled = false;
+    axios
+      .get(`${config.API_URL}/api/authors/${authorId}`)
+      .then(res => {
+        if (!cancelled && res.data?.name) setResolvedAuthorName(res.data.name);
+      })
+      .catch(() => {
+        if (!cancelled) setResolvedAuthorName('');
+      });
+    return () => { cancelled = true; };
+  }, [authorId]);
 
   // ===== Fetch books when URL params change =====
 
@@ -241,7 +282,7 @@ function Books() {
   const activeFilterCount = useMemo(() => {
     let c = 0;
     if (q) c++;
-    if (author) c++;
+    if (author || authorId) c++;
     if (category) c++;
     if (publisher) c++;
     if (edition) c++;
@@ -251,7 +292,78 @@ function Books() {
     if (minPriceStr) c++;
     if (maxPriceStr) c++;
     return c;
-  }, [q, author, category, publisher, edition, formatList, stock, rating, minPriceStr, maxPriceStr]);
+  }, [q, author, authorId, category, publisher, edition, formatList, stock, rating, minPriceStr, maxPriceStr]);
+
+  // Active filter chips — human-readable labels + a remove handler each,
+  // shown as a row of pills under the sidebar header.
+  const activeChips = useMemo(() => {
+    const chips = [];
+    if (author || authorId) {
+      chips.push({
+        key: 'author',
+        label: `${t('filter_author')}: ${authorId ? resolvedAuthorName : author}`,
+        onRemove: () => updateParams({ author: null, author_id: null }),
+      });
+    }
+    if (category) {
+      const cat = categoryOptions.find(c => c.value === category);
+      chips.push({
+        key: 'category',
+        label: `${t('filter_category')}: ${cat?.label || category}`,
+        onRemove: () => updateParams({ category: null }),
+      });
+    }
+    if (publisher) {
+      chips.push({
+        key: 'publisher',
+        label: `${t('filter_publisher')}: ${publisher}`,
+        onRemove: () => updateParams({ publisher: null }),
+      });
+    }
+    if (edition) {
+      chips.push({
+        key: 'edition',
+        label: `${t('filter_edition')}: ${edition}`,
+        onRemove: () => updateParams({ edition: null }),
+      });
+    }
+    if (formatList.length) {
+      formatList.forEach(f => {
+        chips.push({
+          key: `format-${f}`,
+          label: f,
+          onRemove: () => updateParams({
+            format: formatList.filter(x => x !== f).join(',') || null,
+          }),
+        });
+      });
+    }
+    if (stock) {
+      chips.push({
+        key: 'stock',
+        label: t('in_stock_only'),
+        onRemove: () => updateParams({ stock: null }),
+      });
+    }
+    if (rating) {
+      chips.push({
+        key: 'rating',
+        label: `${rating}+ ${t('stars')}`,
+        onRemove: () => updateParams({ rating: null }),
+      });
+    }
+    if (minPriceStr || maxPriceStr) {
+      chips.push({
+        key: 'price',
+        label: `€${minPrice} – €${maxPrice}`,
+        onRemove: () => {
+          updateParams({ min_price: null, max_price: null });
+          setTempPrice([0, 200]);
+        },
+      });
+    }
+    return chips;
+  }, [author, authorId, resolvedAuthorName, category, categoryOptions, publisher, edition, formatList, stock, rating, minPriceStr, maxPriceStr, minPrice, maxPrice, t]);
 
 
 
@@ -286,144 +398,207 @@ function Books() {
             className={`filters-sidebar ${isMobile ? (showFilters ? 'open' : 'collapsed') : ''}`}
           >
             <h3>{t('filters')}</h3>
+
+            {activeChips.length > 0 && (
+              <div className="active-chips-row">
+                {activeChips.map(chip => (
+                  <button
+                    key={chip.key}
+                    type="button"
+                    className="active-chip"
+                    onClick={chip.onRemove}
+                  >
+                    {chip.label} <span className="active-chip-x">✕</span>
+                  </button>
+                ))}
+              </div>
+            )}
             {/* Author */}
             <div className="filter-group">
-              <h4>{t('filter_author')}</h4>
-              <Select
-                value={author || undefined}
-                options={authorOptions}
-                allowClear
-                showSearch
-                placeholder={t('all_authors')}
-                style={{ width: '100%' }}
-                popupMatchSelectWidth={false}
-                //getPopupContainer={(trigger) => trigger.parentNode}
-                getPopupContainer={() => document.body}
-                optionFilterProp="label"
-                onChange={(val) => updateParams({ author: val || null })}
-              />
+              <button type="button" className="filter-group-toggle" onClick={() => toggleSection('author')}>
+                <h4>{t('filter_author')}</h4>
+                <span className={`fg-chevron ${openSections.author ? 'open' : ''}`} />
+              </button>
+              {openSections.author && (
+                <div className="filter-group-body">
+                  <Select
+                    value={authorId ? (resolvedAuthorName || undefined) : (author || undefined)}
+                    options={authorOptions}
+                    allowClear
+                    showSearch
+                    placeholder={t('all_authors')}
+                    style={{ width: '100%' }}
+                    popupMatchSelectWidth={false}
+                    getPopupContainer={() => document.body}
+                    optionFilterProp="label"
+                    onChange={(val) => {
+                      updateParams({ author: val || null, author_id: null });
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Category */}
             <div className="filter-group">
-              <h4>{t('filter_category')}</h4>
-              <Select
-                value={category || undefined}
-                options={categoryOptions}
-                allowClear
-                placeholder={t('all_categories')}
-                style={{ width: '100%' }}
-                popupMatchSelectWidth={false}
-                //getPopupContainer={(trigger) => trigger.parentNode}
-                getPopupContainer={() => document.body}
-                optionFilterProp="label"
-                onChange={(val) => updateParams({ category: val || null })}
-              />
-            </div>
-
-            {/* Publisher */}
-            <div className="filter-group">
-              <h4>{t('filter_publisher')}</h4>
-              <Select
-                value={publisher || undefined}
-                options={publisherOptions}
-                allowClear
-                showSearch
-                placeholder={t('all_publishers')}
-                style={{ width: '100%' }}
-                popupMatchSelectWidth={false}
-                //getPopupContainer={(trigger) => trigger.parentNode}
-                getPopupContainer={() => document.body}
-                optionFilterProp="label"
-                onChange={(val) => updateParams({ publisher: val || null })}
-              />
-            </div>
-
-            {/* Format */}
-            <div className="filter-group">
-              <h4>{t('filter_format')}</h4>
-              <CheckboxGroup
-                value={formatList}
-                onChange={(list) => updateParams({ format: list.length ? list.join(',') : null })}
-              >
-                {filterOptions.formats.map(f => (
-                  <div key={f}><Checkbox value={f}>{f}</Checkbox></div>
-                ))}
-              </CheckboxGroup>
-            </div>
-
-            {/* Edition */}
-            <div className="filter-group">
-              <h4>{t('filter_edition')}</h4>
-              <Select
-                value={edition || undefined}
-                options={editionOptions}
-                allowClear
-                showSearch
-                placeholder={t('all_editions')}
-                style={{ width: '100%' }}
-                popupMatchSelectWidth={false}
-                //getPopupContainer={(trigger) => trigger.parentNode}
-                getPopupContainer={() => document.body}
-                optionFilterProp="label"
-                onChange={(val) => updateParams({ edition: val || null })}
-              />
+              <button type="button" className="filter-group-toggle" onClick={() => toggleSection('category')}>
+                <h4>{t('filter_category')}</h4>
+                <span className={`fg-chevron ${openSections.category ? 'open' : ''}`} />
+              </button>
+              {openSections.category && (
+                <div className="filter-group-body">
+                  <Select
+                    value={category || undefined}
+                    options={categoryOptions}
+                    allowClear
+                    placeholder={t('all_categories')}
+                    style={{ width: '100%' }}
+                    popupMatchSelectWidth={false}
+                    getPopupContainer={() => document.body}
+                    optionFilterProp="label"
+                    onChange={(val) => updateParams({ category: val || null })}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Price */}
             <div className="filter-group">
-              <h4>{t('filter_price')}</h4>
-              <Slider
-                range
-                //value={priceRange}
-                value={tempPrice}
-                max={200}
-                //tooltip={{ open: true }}
-                tooltip={{ open: !isMobile || showFilters,
-                  formatter: (val) => <span className="slider-tip">{val}</span>,   // <— add this
-                 }}
-                onChange={(val) => {
-                  // live preview without writing URL (to keep fetch debounce calm)
-                  // reflect immediately by updating URL onAfterChange:
-                  setTempPrice(val);
-                }}
-                onAfterChange={(val) => {
-                  const [min, max] = val;
-                  //const updates = {};
-                  //updates.min_price = min > 0 ? String(min) : null;
-                  //updates.max_price = max < 200 ? String(max) : null;
-                  //updateParams(updates);
-                  updateParams({
-                    min_price: min > 0 ? String(min) : null,
-                    max_price: max < 200 ? String(max) : null,
-                  });
-                }}
-              />
-              {/*<div className="price-values">€{priceRange[0]} – €{priceRange[1]}</div>*/}
-              <div className="price-values">€{tempPrice[0]} – €{tempPrice[1]}</div>
+              <button type="button" className="filter-group-toggle" onClick={() => toggleSection('price')}>
+                <h4>{t('filter_price')}</h4>
+                <span className={`fg-chevron ${openSections.price ? 'open' : ''}`} />
+              </button>
+              {openSections.price && (
+                <div className="filter-group-body">
+                  <Slider
+                    range
+                    value={tempPrice}
+                    max={200}
+                    tooltip={{ open: !isMobile || showFilters,
+                      formatter: (val) => <span className="slider-tip">{val}</span>,
+                     }}
+                    onChange={(val) => {
+                      setTempPrice(val);
+                    }}
+                    onAfterChange={(val) => {
+                      const [min, max] = val;
+                      updateParams({
+                        min_price: min > 0 ? String(min) : null,
+                        max_price: max < 200 ? String(max) : null,
+                      });
+                    }}
+                  />
+                  <div className="price-values">€{tempPrice[0]} – €{tempPrice[1]}</div>
+                </div>
+              )}
             </div>
 
-            {/* In Stock */}
+            {/* Publisher */}
             <div className="filter-group">
-              <Checkbox
-                checked={stock}
-                onChange={(e) => updateParams({ stock: e.target.checked ? '1' : null })}
-              >
-                {t('in_stock_only')}
-              </Checkbox>
+              <button type="button" className="filter-group-toggle" onClick={() => toggleSection('publisher')}>
+                <h4>{t('filter_publisher')}</h4>
+                <span className={`fg-chevron ${openSections.publisher ? 'open' : ''}`} />
+              </button>
+              {openSections.publisher && (
+                <div className="filter-group-body">
+                  <Select
+                    value={publisher || undefined}
+                    options={publisherOptions}
+                    allowClear
+                    showSearch
+                    placeholder={t('all_publishers')}
+                    style={{ width: '100%' }}
+                    popupMatchSelectWidth={false}
+                    getPopupContainer={() => document.body}
+                    optionFilterProp="label"
+                    onChange={(val) => updateParams({ publisher: val || null })}
+                  />
+                </div>
+              )}
             </div>
 
-            {/* Minimum Rating */}
+            {/* Format */}
             <div className="filter-group">
-              <h4>{t('filter_min_rating')}</h4>
-              <Radio.Group
-                value={rating}
-                onChange={(e) => updateParams({ rating: e.target.value ? String(e.target.value) : null })}
-              >
-                <Radio value={0}>{t('any_rating')}</Radio>
-                <Radio value={4}>4+ {t('stars')}</Radio>
-                <Radio value={3}>3+ {t('stars')}</Radio>
-              </Radio.Group>
+              <button type="button" className="filter-group-toggle" onClick={() => toggleSection('format')}>
+                <h4>{t('filter_format')}</h4>
+                <span className={`fg-chevron ${openSections.format ? 'open' : ''}`} />
+              </button>
+              {openSections.format && (
+                <div className="filter-group-body">
+                  <CheckboxGroup
+                    className="format-checkbox-list"
+                    value={formatList}
+                    onChange={(list) => updateParams({ format: list.length ? list.join(',') : null })}
+                  >
+                    {filterOptions.formats.map(f => (
+                      <div key={f}><Checkbox value={f}>{f}</Checkbox></div>
+                    ))}
+                  </CheckboxGroup>
+                </div>
+              )}
+            </div>
+
+            {/* Edition */}
+            <div className="filter-group">
+              <button type="button" className="filter-group-toggle" onClick={() => toggleSection('edition')}>
+                <h4>{t('filter_edition')}</h4>
+                <span className={`fg-chevron ${openSections.edition ? 'open' : ''}`} />
+              </button>
+              {openSections.edition && (
+                <div className="filter-group-body">
+                  <Select
+                    value={edition || undefined}
+                    options={editionOptions}
+                    allowClear
+                    showSearch
+                    placeholder={t('all_editions')}
+                    style={{ width: '100%' }}
+                    popupMatchSelectWidth={false}
+                    getPopupContainer={() => document.body}
+                    optionFilterProp="label"
+                    onChange={(val) => updateParams({ edition: val || null })}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Minimum Rating — star buttons instead of plain radios */}
+            <div className="filter-group">
+              <button type="button" className="filter-group-toggle" onClick={() => toggleSection('rating')}>
+                <h4>{t('filter_min_rating')}</h4>
+                <span className={`fg-chevron ${openSections.rating ? 'open' : ''}`} />
+              </button>
+              {openSections.rating && (
+                <div className="filter-group-body">
+                  <div className="rating-star-row">
+                    {[4, 3].map(r => (
+                      <button
+                        key={r}
+                        type="button"
+                        className={`rating-star-btn ${rating === r ? 'active' : ''}`}
+                        onClick={() => updateParams({ rating: rating === r ? null : String(r) })}
+                      >
+                        <span className="rating-star-icons">
+                          {'★'.repeat(r)}{'☆'.repeat(5 - r)}
+                        </span>
+                        <span className="rating-star-label">{r}+ {t('stars')}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* In Stock — toggle switch, own labeled row matching the
+                rest of the sidebar instead of a bare unlabeled checkbox */}
+            <div className="filter-group filter-group--toggle">
+              <div className="stock-toggle-row">
+                <span className="stock-toggle-label">{t('in_stock_only')}</span>
+                <Switch
+                  checked={stock}
+                  onChange={(checked) => updateParams({ stock: checked ? '1' : null })}
+                />
+              </div>
             </div>
 
             {/* Clear all */}
