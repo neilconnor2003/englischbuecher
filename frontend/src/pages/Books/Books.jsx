@@ -379,8 +379,8 @@ function Books() {
         <h1 className="page-title">
           <span className="page-title-icon">📚</span>
           {q ? `${t('search_results_for')} "${q}"` : t('all_books')}
-          <span className="results-count">{total} {t('results')}</span>
         </h1>
+        <p className="results-count">{total} {t('results')}</p>
 
         <div className="listing-grid">
 
