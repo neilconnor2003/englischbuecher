@@ -402,7 +402,13 @@
     font-size: 0.88rem;
   }
   .btn-cart {
-    font-size: 11.5px;
+    font-size: 16px;
     padding: 9px 10px;
+  }
+  /* Icon-only on mobile — full text plus Buy Now and Wishlist don't
+     fit comfortably on narrow screens, especially in German where
+     "In den Warenkorb" is much longer than "Add to Cart". */
+  .btn-cart-text {
+    display: none;
   }
 }
