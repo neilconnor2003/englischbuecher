@@ -9,7 +9,7 @@
    
    Scroll behaviour:
    .header           → transparent (over hero)
-   .header.is-scrolled → frosted glass (on scroll)
+   Always frosted glass (transparent removed)
    ========================================================= */
 
 /* ── TOKENS ─────────────────────────────────────────────── */
@@ -22,25 +22,15 @@
 }
 
 /* ── HEADER SHELL ─────────────────────────────────────────── */
+/* Always frosted glass — transparent over hero caused visibility
+   issues with varied content behind the header. */
 .header {
   position: sticky;
   top: 0;
   z-index: 1000;
   width: 100%;
   overflow-x: clip;
-
-  /* Transparent by default — over the hero */
-  background: transparent;
-  box-shadow: none;
-  transition:
-    background var(--hdr-transition),
-    box-shadow var(--hdr-transition),
-    backdrop-filter var(--hdr-transition);
-}
-
-/* Frosted glass state — triggers once user scrolls past hero */
-.header.is-scrolled {
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 2px 20px rgba(124, 58, 237, 0.1),
@@ -95,11 +85,6 @@
 }
 
 /* On transparent header the search should have stronger white bg */
-.header:not(.is-scrolled) .search-bar .ant-select-selector,
-.header:not(.is-scrolled) .search-bar input {
-  background: rgba(255, 255, 255, 0.9) !important;
-  border-color: rgba(255, 255, 255, 0.6) !important;
-}
 
 .search-bar .ant-select-selector:hover,
 .search-bar input:hover {
@@ -178,9 +163,6 @@
   color: #5B21B6;
   white-space: nowrap;
 }
-.header:not(.is-scrolled) .welcome-text {
-  color: rgba(255, 255, 255, 0.92);
-}
 
 /* Request a book button */
 .request-book-btn {
@@ -198,11 +180,6 @@
 .request-book-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4);
-}
-.header:not(.is-scrolled) .request-book-btn {
-  background: rgba(255, 255, 255, 0.95);
-  color: var(--hdr-purple);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Auth buttons (before login) */
@@ -222,13 +199,6 @@
   background: var(--hdr-purple);
   color: #fff;
 }
-.header:not(.is-scrolled) .auth-button {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.7);
-}
-.header:not(.is-scrolled) .auth-button:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
 
 /* Cart / wishlist links */
 .cart-link,
@@ -246,10 +216,6 @@
   white-space: nowrap;
 }
 .cart-link:hover { transform: scale(1.08); }
-.header:not(.is-scrolled) .cart-link,
-.header:not(.is-scrolled) .wishlist-link {
-  color: rgba(255, 255, 255, 0.92);
-}
 
 .cart-count {
   position: absolute;
@@ -281,10 +247,39 @@
   cursor: pointer;
   transition: border-color 0.2s ease;
 }
-.header:not(.is-scrolled) .profile-avatar {
-  border-color: rgba(255, 255, 255, 0.8) !important;
-  background: rgba(255, 255, 255, 0.2) !important;
-  color: #fff !important;
+
+/* Category dropdown trigger button */
+.category-dropdown {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.category-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(124, 58, 237, 0.25);
+  background: rgba(124, 58, 237, 0.06);
+  color: var(--hdr-purple);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  white-space: nowrap;
+}
+.category-toggle:hover {
+  background: rgba(124, 58, 237, 0.12);
+  border-color: rgba(124, 58, 237, 0.4);
+}
+.category-toggle .chevron {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease;
+}
+.category-toggle .chevron.open {
+  transform: rotate(180deg);
 }
 
 /* Language switcher */
@@ -328,11 +323,6 @@
 }
 .header-icon-btn:hover {
   background: rgba(255, 255, 255, 0.95);
-}
-.header:not(.is-scrolled) .header-icon-btn {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.4);
-  color: #fff;
 }
 
 /* AntD icon sizes in header */
@@ -421,17 +411,7 @@
   .mobile-only { display: inline-flex !important; }
 
   /* Override transparent treatment for mobile */
-  .header:not(.is-scrolled) .header-icon-btn {
-    background: rgba(255, 255, 255, 0.75);
-    border-color: rgba(124, 58, 237, 0.3);
-    color: var(--hdr-purple);
-  }
-  .header:not(.is-scrolled) .cart-link,
-  .header:not(.is-scrolled) .wishlist-link {
-    color: var(--hdr-purple);
-  }
-  .header:not(.is-scrolled) .welcome-text { color: #5B21B6; }
-
+      
   /* FAB visible on mobile */
   .request-book-fab { display: inline-flex; }
 
