@@ -219,6 +219,7 @@
 
 .btn-cart {
   flex: 1;
+  min-width: 0;
   background: var(--bc-ink);
   color: #fff;
   border: none;
@@ -231,6 +232,9 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition: background 0.2s ease, transform 0.15s ease;
 }
 .btn-cart:hover:not(:disabled) {
