@@ -474,9 +474,7 @@ function Books() {
                     range
                     value={tempPrice}
                     max={200}
-                    tooltip={{ open: !isMobile || showFilters,
-                      formatter: (val) => <span className="slider-tip">{val}</span>,
-                     }}
+                    tooltip={{ open: false }}
                     onChange={(val) => {
                       setTempPrice(val);
                     }}
