@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useGetHeroBannersQuery } from '../../admin/features/hero/heroBannerApiSlice';
-import { useGetFeaturedBooksQuery } from '../../admin/features/book/bookApiSlice'; // ← THIS LINE
+import { useGetFeaturedBooksQuery } from '../../admin/features/book/bookApiSlice';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import './Banner.css';
 
@@ -14,8 +14,6 @@ const Banner = () => {
   const { data: banners = [], isLoading: bannersLoading } = useGetHeroBannersQuery();
   const activeBanners = banners.filter(b => b.is_active);
 
-  // Featured Books — THIS IS THE NEW PART
-  //const { data: featuredBooks = [], isLoading: booksLoading } = useGetFeaturedBooksQuery();
   const {
     data: featuredBooks = [],
     isLoading: booksLoading,
@@ -42,68 +40,46 @@ const Banner = () => {
   const current = activeBanners[currentIndex];
 
   return (
-    <div className="hero-banner relative w-full h-96 md:h-[80vh] lg:h-[75vh] max-h-screen overflow-hidden bg-black">
-      {/* HERO BACKGROUND SLIDES */}
-      <div className="absolute inset-0">
+    <div className="hero-banner">
+      {/* HERO BACKGROUND SLIDES — real admin-uploaded photos.
+          Each banner's own image already has a deep purple wash on the
+          left (per the source images), so the overlay here is light —
+          just enough to guarantee text contrast, not a wholesale wash. */}
+      <div className="hero-banner__slides">
         {activeBanners.map((banner, i) => (
           <div
             key={banner.id}
-            className={`absolute inset-0 transition-opacity duration-1000 ${i === currentIndex ? 'opacity-100' : 'opacity-0'}`}
-          >
-            <div
-              className="w-full h-full bg-cover bg-center"
-              style={{
-                //backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, transparent 100%), url(${banner.image_url})`,
-                backgroundImage: `url(${banner.image_url})`,
-              }}
-            />
-          </div>
+            className={`hero-banner__slide ${i === currentIndex ? 'is-active' : ''}`}
+            style={{ backgroundImage: `url(${banner.image_url})` }}
+          />
         ))}
       </div>
+      <div className="hero-banner__scrim" aria-hidden="true" />
 
-      {/* CONTENT GRID */}
-      <div className="relative container mx-auto px-6 h-full flex items-center z-10">
-        <div className="w-full max-w-7xl mx-auto">
-          {/*<div className="text-white pl-0 md:pl-12 lg:pl-32 xl:pl-48"> THIS LINE DOES THE MAGIC */}
-          <div className="pl-4 md:pl-16 lg:pl-32 max-w-2xl">
-            {/*<div className="max-w-4xl">
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight drop-shadow-2xl">
-                {i18n.language === 'de' ? current.title_de || current.title_en : current.title_en}
-              </h1>
+      <div className="hero-banner__inner">
+        <div className="hero-banner-content" key={current.id}>
+          <p className="hero-banner__eyebrow">
+            <span className="hero-banner__eyebrow-dot" />
+            {i18n.language === 'de' ? 'Englische Bücher in Deutschland' : 'English books in Germany'}
+          </p>
 
-            <div className="banner-content">
-              <h1>
-                {i18n.language === 'de' ? current.title_de ?? current.title_en : current.title_en}
-              </h1>
+          <h1>{i18n.language === 'de' ? current.title_de ?? current.title_en : current.title_en}</h1>
 
-              <p className="text-xl md:text-3xl mb-10 opacity-95 max-w-2xl drop-shadow-lg">
-                {i18n.language === 'de' ? current.subtitle_de || current.subtitle_en : current.subtitle_en}
-              </p>
-              <Link
-                to={current.button_link || '/books'}
-                className="inline-block px-12 py-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-2xl font-bold rounded-full hover:shadow-2xl transform hover:scale-105 transition shadow-2xl"
-              >
-                {i18n.language === 'de'
-                  ? current.button_text_de || 'Jetzt entdecken'
-                  : current.button_text_en || 'Shop Now'}
-              </Link>
-            </div>*/}
+          <p className="hero-banner__subtitle">
+            {i18n.language === 'de'
+              ? current.subtitle_de ?? current.subtitle_en
+              : current.subtitle_en}
+          </p>
 
-            <div className="hero-banner-content">
-              <h1>{i18n.language === 'de' ? current.title_de ?? current.title_en : current.title_en}</h1>
-
-              <p>
-                {i18n.language === 'de'
-                  ? current.subtitle_de ?? current.subtitle_en
-                  : current.subtitle_en}
-              </p>
-
-              <Link className="hero-banner-button">
-                {i18n.language === 'de'
-                  ? current.button_text_de ?? 'Jetzt entdecken'
-                  : current.button_text_en ?? 'Shop Now'}
-              </Link>
-            </div>
+          <div className="hero-banner__actions">
+            <Link to={current.button_link || '/books'} className="hero-banner-button">
+              {i18n.language === 'de'
+                ? current.button_text_de ?? 'Jetzt entdecken'
+                : current.button_text_en ?? 'Shop Now'}
+            </Link>
+            <Link to="/books" className="hero-banner-button hero-banner-button--ghost">
+              {i18n.language === 'de' ? 'Alle Bücher' : 'Browse all'}
+            </Link>
           </div>
         </div>
       </div>
@@ -111,12 +87,22 @@ const Banner = () => {
       {/* ARROWS & DOTS */}
       {activeBanners.length > 1 && (
         <>
-          <button onClick={goToPrevious} className="hero-arrow hero-arrow--prev absolute left-8 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur p-4 rounded-full transition z-20">
-            <ChevronLeft className="w-10 h-10" />
+          <button onClick={goToPrevious} className="hero-arrow hero-arrow--prev" aria-label="Previous">
+            <ChevronLeft className="w-7 h-7" />
           </button>
-          <button onClick={goToNext} className="hero-arrow hero-arrow--next absolute right-8 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur p-4 rounded-full transition z-20">
-            <ChevronRight className="w-10 h-10" />
+          <button onClick={goToNext} className="hero-arrow hero-arrow--next" aria-label="Next">
+            <ChevronRight className="w-7 h-7" />
           </button>
+          <div className="hero-banner__dots">
+            {activeBanners.map((b, i) => (
+              <button
+                key={b.id}
+                className={`hero-banner__dot ${i === currentIndex ? 'is-active' : ''}`}
+                onClick={() => setCurrentIndex(i)}
+                aria-label={`Slide ${i + 1}`}
+              />
+            ))}
+          </div>
         </>
       )}
     </div>

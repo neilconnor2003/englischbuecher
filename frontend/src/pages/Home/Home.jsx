@@ -55,7 +55,7 @@ function animateCount(target, duration, onUpdate) {
 // Each stat item observes itself with IntersectionObserver AND waits for
 // its real value before animating, so it always counts to the right number.
 
-function StatItem({ value, suffix, label, duration }) {
+function StatItem({ value, suffix, label, duration, icon }) {
   const [display, setDisplay] = useState(0);
   const ref = useRef(null);
   const cancelRef = useRef(null);
@@ -90,6 +90,7 @@ function StatItem({ value, suffix, label, duration }) {
 
   return (
     <div className="home-stats-item" ref={ref}>
+      <div className="home-stats-icon">{icon}</div>
       <div className="home-stats-num">{display.toLocaleString()}{suffix}</div>
       <div className="home-stats-label">{label}</div>
     </div>
@@ -114,10 +115,10 @@ function StatsBar({ de, stats }) {
   );
 
   const items = [
-    { value: stats.books, suffix: '+', duration: 1600, label: de ? 'Bücher auf Lager' : 'Books in stock' },
-    { value: stats.readers, suffix: '+', duration: 2000, label: de ? 'Zufriedene Leser' : 'Happy readers' },
-    { value: stats.saving, suffix: '%', duration: 1200, label: de ? 'Durchschn. Ersparnis' : 'Average Savings' },
-    { value: stats.reviews, suffix: 'K+', duration: 2200, label: de ? 'Bewertungen & Rezensionen' : '5-star reviews' },
+    { value: stats.books,   suffix: '+',  duration: 1600, label: de ? 'Bücher auf Lager'          : 'Books in stock',    icon: '📚' },
+    { value: stats.readers, suffix: '+',  duration: 2000, label: de ? 'Zufriedene Leser'           : 'Happy readers',     icon: '😊' },
+    { value: stats.saving,  suffix: '%',  duration: 1200, label: de ? 'Durchschn. Ersparnis'       : 'Average savings',   icon: '💰' },
+    { value: stats.reviews, suffix: 'K+', duration: 2200, label: de ? 'Bewertungen & Rezensionen'  : '5-star reviews',    icon: '⭐' },
   ];
 
   return (
@@ -851,6 +852,9 @@ function Home() {
         <div className="container">
           <div className="request-book-card">
             <div className="request-book-text">
+              <p className="request-book-eyebrow">
+                {de ? 'Unser Sortiment wächst' : 'Growing collection'}
+              </p>
               <h2>
                 {de ? 'Mehr englische Bücher folgen regelmäßig' : 'More English books are added regularly'}
               </h2>
@@ -860,9 +864,18 @@ function Home() {
                   : "We continuously expand our catalog. If you can't find a specific book, you can easily request it from us."}
               </p>
             </div>
-            <Link to="/request-book" className="home-request-book-btn">
-              {de ? 'Buch anfragen' : 'Request a Book'}
-            </Link>
+            <div className="request-book-right">
+              <div className="request-book-decoration">
+                <div className="request-book-spine request-book-spine--a" />
+                <div className="request-book-spine request-book-spine--b" />
+                <div className="request-book-spine request-book-spine--c" />
+                <div className="request-book-spine request-book-spine--d" />
+                <div className="request-book-spine request-book-spine--e" />
+              </div>
+              <Link to="/request-book" className="home-request-book-btn">
+                {de ? 'Buch anfragen' : 'Request a Book'}
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -916,7 +929,7 @@ function Home() {
             <div className="section-header">
               <h2 className="section-title">
                 <span className="new-release-glow">{t('home.new_arrivals')}</span>
-                <span className="ml-3 text-2xl">{t('home.just_in')}</span>
+                <span className="section-title-sub">{t('home.just_in')}</span>
               </h2>
               <Link to="/books?filter=new" className="view-all-btn">{t('view_all')} →</Link>
             </div>

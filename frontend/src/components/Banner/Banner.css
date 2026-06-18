@@ -1,145 +1,269 @@
+/* =========================================================
+   Hero banner — full-height, real photo backgrounds with a
+   deep purple wash baked into the images themselves. The
+   scrim here is deliberately light: these photos are already
+   dark/saturated on the left where the text sits, unlike the
+   previous washed-out stock photos that needed heavy overlay.
+   ========================================================= */
+
 .hero-banner {
   position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 560px;
+  max-height: 900px;
+  overflow: hidden;
+  background: #2e1065; /* shows briefly while the first image loads */
 }
 
-/* LIGHT overlay */
-.hero-banner::before {
-  content: "";
+.hero-banner__slides {
   position: absolute;
   inset: 0;
-
-  background: linear-gradient(to right,
-      rgba(255, 255, 255, 0.88) 0%,
-      rgba(255, 255, 255, 0.65) 35%,
-      rgba(255, 255, 255, 0.2) 60%,
-      transparent 100%);
-
-  z-index: 1;
+  z-index: 0;
 }
 
-.hero-banner::after {
-  content: "";
+.hero-banner__slide {
   position: absolute;
   inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 1.1s ease;
+}
+.hero-banner__slide.is-active {
+  opacity: 1;
+}
 
-  background: linear-gradient(to bottom,
-      rgba(255, 255, 255, 0.0),
-      rgba(255, 255, 255, 0.15));
-
+/* Light scrim — just enough to guarantee text contrast on top of
+   the image's own dark-left/light-right gradient, not a heavy wash. */
+.hero-banner__scrim {
+  position: absolute;
+  inset: 0;
   z-index: 1;
+  background: linear-gradient(
+    to right,
+    rgba(20, 6, 50, 0.38) 0%,
+    rgba(20, 6, 50, 0.18) 45%,
+    transparent 70%
+  );
+}
+
+.hero-banner__inner {
+  position: relative;
+  z-index: 2;
+  max-width: 1320px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
 }
 
 /* CONTENT */
 .hero-banner-content {
-  position: relative;
-  z-index: 2;
-
   display: flex;
   flex-direction: column;
-  justify-content: center;
-
-  height: 300px;
-  /* ✅ TEXT BLOCK HEIGHT */
-  max-width: 600px;
-
-  gap: 16px;
+  align-items: flex-start;
+  gap: 22px;
+  max-width: 620px;
+  animation: hero-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* HEADLINE */
-.hero-banner h1 {
-  font-size: 4rem;
-  font-weight: 800;
-  line-height: 1.05;
-  /*color: #2d1b4e;*/
-  color: #9333ea;
-  /* softer, slightly purple */
-}
-
-/* SUBTITLE */
-.hero-banner p {
-  font-size: 1.5rem;
-  /*color: #4b3b73;*/
-  color: #9333ea;
-}
-
-/* BUTTON */
-
-.hero-banner-button {
-  margin-top: 14px;
-
-  display: inline-block;
-  width: fit-content;
-
-  padding: 18px 36px;
-  font-size: 1.2rem;
+.hero-banner__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  font-size: 0.85rem;
   font-weight: 700;
-
-  color: white;
-
-  border-radius: 999px;
-
-  /* ✅ STRONGER GRADIENT */
-  background: linear-gradient(135deg,
-      #7c3aed,
-      #9333ea
-      /*#a21caf*/
-    );
-
-  /* ✅ ADD CLEAR SEPARATION */
-  border: 2px solid rgba(0, 0, 0, 0.9);
-
-  /* ✅ STRONG SHADOW */
-  box-shadow:
-    0 12px 30px rgba(147, 51, 234, 0.4),
-    0 4px 10px rgba(0, 0, 0, 0.1);
-
-  transition: all 0.25s ease;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #E9D5FF;
+  margin: 0;
 }
 
+.hero-banner__eyebrow-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #E9D5FF;
+}
 
-.hero-banner-button:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    0 16px 40px rgba(147, 51, 234, 0.5),
-    0 6px 12px rgba(0, 0, 0, 0.15);
-  /*0 0 0 3px rgba(147,51,234,0.2);*/
+/* Bold editorial headline — large serif for personality, matching
+   the confident oversized-type energy of the reference site, while
+   keeping it in the site's existing display-face family. */
+.hero-banner h1 {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(3rem, 6.2vw, 5.6rem);
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+  margin: 0;
+  text-shadow: 0 4px 28px rgba(0, 0, 0, 0.35);
+}
+
+.hero-banner__subtitle {
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  font-size: 1.2rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.92);
+  margin: 0;
+  max-width: 480px;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+}
+
+.hero-banner__actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+/* BUTTONS */
+.hero-banner-button {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 17px 36px;
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 999px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.hero-banner-button:not(.hero-banner-button--ghost) {
+  color: #5B21B6;
+  background: #ffffff;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.25);
+}
+.hero-banner-button:not(.hero-banner-button--ghost):hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 42px rgba(0, 0, 0, 0.3);
+}
+
+.hero-banner-button--ghost {
+  color: #ffffff;
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+}
+.hero-banner-button--ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+@keyframes hero-rise {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-banner-content {
+    animation: none;
+  }
+  .hero-banner__slide {
+    transition: none;
+  }
+}
+
+/* ARROWS */
+.hero-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.hero-arrow:hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+.hero-arrow--prev { left: 28px; }
+.hero-arrow--next { right: 28px; }
+
+/* DOTS */
+.hero-banner__dots {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  gap: 9px;
+}
+.hero-banner__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s ease, width 0.2s ease;
+}
+.hero-banner__dot.is-active {
+  background: #ffffff;
+  width: 26px;
+  border-radius: 5px;
 }
 
 /* ==========================================
-   MOBILE DESIGN
+   MOBILE
    ========================================== */
-
-@media (max-width: 768px) {
-
-  .hero-arrow {
-    top: auto !important;
-    /* remove vertical center */
-    bottom: 20px !important;
-    /* push to bottom */
-    transform: none !important;
-
-    padding: 10px !important;
-    opacity: 0.85;
-
-    backdrop-filter: blur(6px);
-    background: rgba(255, 255, 255, 0.3);
-
+@media (max-width: 900px) {
+  .hero-banner {
+    height: 92vh;
+    min-height: 520px;
   }
-
-  .hero-arrow--prev {
-    left: 16px !important;
+  .hero-banner__scrim {
+    background: linear-gradient(
+      to bottom,
+      rgba(20, 6, 50, 0.25) 0%,
+      rgba(20, 6, 50, 0.55) 70%,
+      rgba(20, 6, 50, 0.7) 100%
+    );
   }
-
-  .hero-arrow--next {
-    right: 16px !important;
+  .hero-banner__inner {
+    align-items: flex-end;
+    padding-bottom: 90px;
   }
+  .hero-banner-content {
+    max-width: 100%;
+  }
+  .hero-banner__subtitle {
+    max-width: 100%;
+  }
+}
 
+@media (max-width: 600px) {
   .hero-banner h1 {
-    font-size: 2rem;
-    /* ✅ BIG FIX */
+    font-size: clamp(2.2rem, 9vw, 3rem);
   }
-
-  .hero-banner p {
-    font-size: 1.2rem;
+  .hero-banner__subtitle {
+    font-size: 1rem;
   }
+  .hero-banner-button {
+    padding: 14px 28px;
+    font-size: 0.95rem;
+  }
+  .hero-arrow {
+    width: 40px;
+    height: 40px;
+  }
+  .hero-arrow--prev { left: 14px; }
+  .hero-arrow--next { right: 14px; }
 }

@@ -11,7 +11,8 @@ import {
   ThunderboltOutlined,
   HeartOutlined,
   HeartFilled,
-  CheckOutlined
+  CheckOutlined,
+  StopOutlined
 } from '@ant-design/icons';
 import { mergeServerCart, addItem, replaceWithServerCart } from '../../features/cart/cartSlice';
 import { toggleWishlist, fetchWishlist } from '../../features/wishlist/wishlistSlice';
@@ -260,11 +261,11 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
             disabled={book.stock === 0}
           >
             {book.stock === 0 ? (
-              t('out_of_stock')
+              <><StopOutlined /> <span className="btn-cart-text">{t('out_of_stock')}</span></>
             ) : isInCart ? (
-              <><CheckOutlined /> {t('already_in_cart') || 'In Cart'}</>
+              <><CheckOutlined /> <span className="btn-cart-text">{t('already_in_cart') || 'In Cart'}</span></>
             ) : (
-              <><ShoppingCartOutlined /> {t('add_to_cart')}</>
+              <><ShoppingCartOutlined /> <span className="btn-cart-text">{t('add_to_cart')}</span></>
             )}
           </button>
 
