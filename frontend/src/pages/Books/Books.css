@@ -67,7 +67,7 @@
 
 /* ── SIDEBAR ────────────────────────────────────────────── */
 .filters-sidebar {
-  background: #ffffff;
+  background: linear-gradient(180deg, var(--bl-purple-ghost) 0%, #ffffff 220px);
   border: 1px solid var(--bl-border);
   border-radius: var(--bl-radius-lg);
   padding: 0 0 22px;
@@ -103,7 +103,7 @@
 
 .filter-group {
   background: #ffffff;
-  border: 1px solid var(--bl-border);
+  border: 1.5px solid rgba(124, 58, 237, 0.18);
   border-radius: var(--bl-radius-md);
   padding: 14px 16px;
   margin: 0 18px;
@@ -382,6 +382,13 @@
   margin-top: -2px;
 }
 
+.filters-sidebar .ant-slider-handle::before {
+  width: 18px;
+  height: 18px;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+}
+
 .filters-sidebar .ant-slider-handle::after {
   width: 18px;
   height: 18px;
@@ -394,6 +401,20 @@
 .filters-sidebar .ant-slider-handle:hover::after,
 .filters-sidebar .ant-slider-handle:focus::after {
   box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.25);
+}
+
+/* AntD shrinks the handle on click/drag by default (its built-in
+   "pressed" state) — that's the shrink-and-shift you were seeing.
+   Pin both pseudo-elements back to full size during active/drag. */
+.filters-sidebar .ant-slider-handle:active::before,
+.filters-sidebar .ant-slider-handle:active::after,
+.filters-sidebar .ant-slider-handle-dragging::before,
+.filters-sidebar .ant-slider-handle-dragging::after {
+  width: 18px !important;
+  height: 18px !important;
+  inset-block-start: 0 !important;
+  inset-inline-start: 0 !important;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.3) !important;
 }
 
 .filters-sidebar .ant-select-dropdown {
@@ -434,6 +455,24 @@
   background: #ffe4e6;
   border-color: #fda4af;
   color: #e11d48 !important;
+}
+
+.show-results-btn {
+  margin: 4px 18px 0;
+  width: calc(100% - 36px);
+  background: linear-gradient(135deg, #7C3AED, #5B21B6);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--bl-radius-sm);
+  padding: 12px 14px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+  transition: transform 0.15s ease;
+}
+.show-results-btn:active {
+  transform: scale(0.98);
 }
 
 /* ── MAIN LISTING AREA — sits to the RIGHT of sidebar ──── */

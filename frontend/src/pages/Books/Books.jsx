@@ -80,7 +80,9 @@ function Books() {
       });
       return params;
     });
-    if (isMobile) setShowFilters(false); // <-- auto-shrink after a change on small screens
+    // Panel no longer auto-closes on every filter change — that punished
+    // mid-adjustment interactions (slider drags, sequential picks).
+    // The user closes it explicitly via the Filters toggle button instead.
   };
 
 
@@ -603,6 +605,18 @@ function Books() {
             <Button type="link" danger onClick={clearFilters} block>
               {t('clear_all_filters')}
             </Button>
+
+            {/* Mobile-only — explicit way to close the panel once done,
+                now that it no longer auto-closes on every change */}
+            {isMobile && showFilters && (
+              <button
+                type="button"
+                className="show-results-btn"
+                onClick={() => setShowFilters(false)}
+              >
+                {t('show_results') || 'Show results'} ({total})
+              </button>
+            )}
           </aside>
 
           {/* MAIN LISTING */}
