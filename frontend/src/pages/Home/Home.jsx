@@ -55,7 +55,7 @@ function animateCount(target, duration, onUpdate) {
 // Each stat item observes itself with IntersectionObserver AND waits for
 // its real value before animating, so it always counts to the right number.
 
-function StatItem({ value, suffix, label, duration }) {
+function StatItem({ value, suffix, label, duration, icon }) {
   const [display, setDisplay] = useState(0);
   const ref = useRef(null);
   const cancelRef = useRef(null);
@@ -90,6 +90,7 @@ function StatItem({ value, suffix, label, duration }) {
 
   return (
     <div className="home-stats-item" ref={ref}>
+      <div className="home-stats-icon">{icon}</div>
       <div className="home-stats-num">{display.toLocaleString()}{suffix}</div>
       <div className="home-stats-label">{label}</div>
     </div>
@@ -114,10 +115,10 @@ function StatsBar({ de, stats }) {
   );
 
   const items = [
-    { value: stats.books, suffix: '+', duration: 1600, label: de ? 'Bücher auf Lager' : 'Books in stock' },
-    { value: stats.readers, suffix: '+', duration: 2000, label: de ? 'Zufriedene Leser' : 'Happy readers' },
-    { value: stats.saving, suffix: '%', duration: 1200, label: de ? 'Durchschn. Ersparnis' : 'Average Savings' },
-    { value: stats.reviews, suffix: 'K+', duration: 2200, label: de ? 'Bewertungen & Rezensionen' : '5-star reviews' },
+    { value: stats.books,   suffix: '+',  duration: 1600, label: de ? 'Bücher auf Lager'          : 'Books in stock',    icon: '📚' },
+    { value: stats.readers, suffix: '+',  duration: 2000, label: de ? 'Zufriedene Leser'           : 'Happy readers',     icon: '😊' },
+    { value: stats.saving,  suffix: '%',  duration: 1200, label: de ? 'Durchschn. Ersparnis'       : 'Average savings',   icon: '💰' },
+    { value: stats.reviews, suffix: 'K+', duration: 2200, label: de ? 'Bewertungen & Rezensionen'  : '5-star reviews',    icon: '⭐' },
   ];
 
   return (
