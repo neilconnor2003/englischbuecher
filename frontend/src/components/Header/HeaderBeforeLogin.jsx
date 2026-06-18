@@ -24,6 +24,14 @@ function HeaderBeforeLogin() {
 
   // ✅ Mobile drawer state (☰ categories)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  React.useEffect(() => {
+    const onScroll = () => setIsScrolled(window.scrollY > 60);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const debounceRef = useRef(null);
   const cancelRef = useRef(null);
@@ -99,7 +107,7 @@ function HeaderBeforeLogin() {
   };
 
   return (
-    <header className="header">
+    <header className={`header${isScrolled ? ' is-scrolled' : ''}`}>
       <div className="header-container">
 
         {/* ✅ MOBILE ONLY: ☰ menu trigger */}

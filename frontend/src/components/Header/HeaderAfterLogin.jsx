@@ -42,6 +42,15 @@ function HeaderAfterLogin() {
   const debounceRef = useRef(null);
   const cancelRef = useRef(null);
 
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  React.useEffect(() => {
+    const onScroll = () => setIsScrolled(window.scrollY > 60);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   const [isMobile, setIsMobile] = useState(false);
 
   React.useEffect(() => {
@@ -164,7 +173,7 @@ function HeaderAfterLogin() {
   };
 
   return (
-    <header className="header">
+    <header className={`header${isScrolled ? ' is-scrolled' : ''}`}>
       <div className="header-container">
 
         {/* ✅ MOBILE ONLY: ☰ menu trigger (hidden on desktop by CSS .mobile-only) */}
