@@ -1,3 +1,6 @@
+/* ── Fraunces — display font matching homepage style ── */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,700&display=swap');
+
 /* =========================================================
    Books.css — Listing page layout
    This is the LISTING PAGE file — sidebar, grid, sort bar.
@@ -40,9 +43,10 @@
 }
 
 .page-title {
-  font-size: clamp(1.7rem, 3vw, 2.3rem);
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+  font-weight: 900;
+  letter-spacing: -0.01em;
   color: #9333ea;
   text-align: center;
   margin: 0 0 10px;
@@ -99,8 +103,10 @@
 }
 
 .filters-sidebar h3 {
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 900;
+  font-style: italic;
   letter-spacing: -0.01em;
   color: #ffffff;
   margin: 0;
@@ -486,9 +492,11 @@
   color: #ffffff;
   border: none;
   border-radius: var(--bl-radius-sm);
-  padding: 12px 14px;
-  font-weight: 700;
-  font-size: 0.88rem;
+  padding: 13px 14px;
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 900;
+  font-style: italic;
+  font-size: 1rem;
   cursor: pointer;
   box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
   transition: transform 0.15s ease;
@@ -525,8 +533,10 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1rem;
+  font-weight: 900;
+  font-style: italic;
   color: var(--bl-purple-dark);
   white-space: nowrap;
 }
