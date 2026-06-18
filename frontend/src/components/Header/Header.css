@@ -30,18 +30,16 @@
   z-index: 1000;
   width: 100%;
   overflow-x: clip;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(230, 217, 255, 0.88);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 2px 20px rgba(124, 58, 237, 0.1),
-              0 1px 0 rgba(124, 58, 237, 0.08);
+  box-shadow: 0 2px 20px rgba(124, 58, 237, 0.12),
+              0 1px 0 rgba(124, 58, 237, 0.1);
 }
 
 /* ── HEADER CONTAINER ──────────────────────────────────────── */
 .header-container {
-  max-width: 1440px;
   width: 100%;
-  margin: 0 auto;
   padding: 0 24px;
   height: var(--hdr-height-desk);
   display: flex;
@@ -130,7 +128,7 @@
 .auth-links {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
   min-width: 0;
 }
@@ -211,7 +209,7 @@
   font-weight: 700;
   text-decoration: none;
   position: relative;
-  padding: 6px 4px;
+  padding: 4px 2px;
   transition: transform 0.2s ease;
   white-space: nowrap;
 }
@@ -365,7 +363,7 @@
   /* Always show frosted on mobile — the hero is rarely full-height
      and the transparent state would look wrong on other pages */
   .header {
-    background: rgba(255, 255, 255, 0.92) !important;
+    background: rgba(230, 217, 255, 0.94) !important;
     backdrop-filter: blur(16px) !important;
     -webkit-backdrop-filter: blur(16px) !important;
     box-shadow: 0 2px 12px rgba(124, 58, 237, 0.1) !important;
@@ -413,7 +411,7 @@
   /* Override transparent treatment for mobile */
       
   /* FAB visible on mobile */
-  .request-book-fab { display: inline-flex; }
+  .request-book-fab { display: flex; }
 
   /* Disable hover scale on touch */
   .cart-link:hover { transform: none; }
@@ -446,5 +444,5 @@
     flex-basis: 600px;
     max-width: 640px;
   }
-  .auth-links { gap: 12px; }
+  .auth-links { gap: 8px; }
 }
