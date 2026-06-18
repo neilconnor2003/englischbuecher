@@ -67,6 +67,13 @@
   min-width: 200px;
   max-width: 560px;
   position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-bar .ant-select {
+  margin: 0 !important;
+  vertical-align: middle;
 }
 
 /* Only the outer AntD selector gets the visible pill styling.

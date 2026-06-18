@@ -234,7 +234,7 @@ function HeaderAfterLogin() {
           <Link to="/request-book" className="request-book-btn">{t('request.button')}</Link>
 
           {/* Desktop wishlist/cart + avatar (hide on mobile using desktop-only) */}
-          <Link to="/wishlist" className="desktop-only cart-link" style={{ marginRight: 16 }}>
+          <Link to="/wishlist" className="desktop-only cart-link">
             <div className="wishlist-link">
               <HeartOutlined style={{ color: '#e91e63' }} />
               <span>{t('header_wishlist')} ({wishlistCount})</span>
