@@ -93,7 +93,7 @@
    the confident oversized-type energy of the reference site, while
    keeping it in the site's existing display-face family. */
 .hero-banner h1 {
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'Cormorant Garamond', Georgia, serif;
   font-size: clamp(3rem, 6.2vw, 5.6rem);
   font-weight: 700;
   font-style: italic;
