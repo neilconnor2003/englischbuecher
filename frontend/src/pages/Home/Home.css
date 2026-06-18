@@ -488,40 +488,46 @@
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 24px 22px;
+  padding: 28px 24px;
   text-decoration: none;
   color: var(--ink);
   transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .wp-ways__card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
-  border-color: rgba(124, 58, 237, 0.25);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 48px rgba(124, 58, 237, 0.13);
+  border-color: rgba(124, 58, 237, 0.3);
 }
 
 .wp-ways__card--highlight {
   background: var(--purple-ghost);
-  border-color: rgba(124, 58, 237, 0.20);
+  border-color: rgba(124, 58, 237, 0.22);
 }
 
 .wp-ways__icon {
-  font-size: 1.5rem;
-  margin-bottom: 12px;
+  font-size: 2.2rem;
   display: block;
+  line-height: 1;
 }
 
 .wp-ways__name {
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(1.25rem, 1.8vw, 1.55rem);
+  font-weight: 900;
+  font-style: italic;
   color: var(--ink);
-  margin-bottom: 7px;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
 }
 
 .wp-ways__desc {
-  font-size: 0.84rem;
+  font-size: 0.9rem;
   color: var(--ink-muted);
-  line-height: 1.55;
+  line-height: 1.6;
   font-weight: 400;
 }
 
