@@ -123,17 +123,17 @@
 .footer-payment {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 /* Each payment icon sits in its own small white pill — cleaner and
    more deliberate than a flat grayscale-then-color-on-hover treatment,
    and ensures the icons stay legible against the dark gradient. */
 .footer-payment img {
-  height: 20px;
-  padding: 7px 12px;
+  height: 26px;
+  padding: 11px 18px;
   background: rgba(255, 255, 255, 0.92);
-  border-radius: 8px;
+  border-radius: 10px;
   transition: transform 0.2s ease, background 0.2s ease;
 }
 
