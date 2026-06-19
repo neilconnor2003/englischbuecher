@@ -319,13 +319,17 @@
 }
 
 /* Language switcher */
-.language-switcher .ant-select-arrow {
-  font-size: 11px !important;
-}
-.language-switcher .ant-select-selector {
-  border: none !important;
+/* Language switcher — component uses class "custom-language-select",
+   not "language-switcher". Its own LanguageSwitcher.css sets a white
+   background with !important, so this override needs the same
+   specificity (class + class) to actually win the cascade. */
+.custom-language-select.ant-select .ant-select-selector,
+.custom-language-select .ant-select-selector {
   background: transparent !important;
-  box-shadow: none !important;
+  border: 1.5px solid rgba(124, 58, 237, 0.3) !important;
+}
+.custom-language-select:hover .ant-select-selector {
+  border-color: var(--hdr-purple) !important;
 }
 
 /* AntD dropdown safety */
