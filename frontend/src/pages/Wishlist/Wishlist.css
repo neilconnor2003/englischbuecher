@@ -1,77 +1,141 @@
+/* =========================================================
+   Wishlist.css — matches the site's purple/Fraunces brand.
+   Card grid and mobile card-matching rules are preserved
+   exactly as before; only the page shell, heading, and
+   empty state are redesigned here.
+   ========================================================= */
+
 .wishlist-page {
-  padding: 40px 0;
-  background: #f8f9fa;
+  padding: 48px 0 64px;
+  background: linear-gradient(160deg, #f6f3ff 0%, #ffffff 55%);
   min-height: 80vh;
 }
 
-.wishlist-page h1 {
-  font-size: 2rem;
-  font-weight: bold;
+.wishlist-title {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  font-weight: 900;
+  font-style: italic;
   text-align: center;
-  margin-bottom: 24px;
-  color: #9333ea !important;
-  /* Deep purple for consistency */
+  margin: 0 0 8px;
+  color: #9333ea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
-/*.wishlist-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 24px;
-}*/
+.wishlist-title-icon {
+  color: #db2777;
+  font-size: 0.85em;
+}
 
+.wishlist-count {
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #7a7490;
+  margin: 0 0 32px;
+}
+
+/* ── GRID — unchanged from before, matches Books listing page ── */
 .wishlist-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 260px); /* match Books page */
-  gap: 32px; /* same gap as Books */
-  justify-content: start; /* aligns left like Books page */
+  grid-template-columns: repeat(auto-fill, 260px);
+  gap: 32px;
+  justify-content: start;
 }
 
-
+/* ── EMPTY STATE — redesigned to invite browsing instead of a
+   dead end ── */
 .empty-wishlist {
+  max-width: 420px;
+  margin: 0 auto;
   text-align: center;
-  font-size: 1.5rem;
-  color: #666;
-  padding: 100px 20px;
+  padding: 60px 32px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(124, 58, 237, 0.1);
+  border-radius: 20px;
 }
 
+.empty-wishlist__icon {
+  font-size: 3rem;
+  color: #db2777;
+  opacity: 0.5;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
+.empty-wishlist__title {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-style: italic;
+  color: #1f1633;
+  margin: 0 0 10px;
+}
+
+.empty-wishlist__desc {
+  font-size: 0.92rem;
+  color: #7a7490;
+  line-height: 1.55;
+  margin: 0 0 28px;
+}
+
+.empty-wishlist__cta {
+  display: inline-flex;
+  align-items: center;
+  padding: 13px 30px;
+  background: linear-gradient(135deg, #7c3aed, #9333ea);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.92rem;
+  border-radius: 999px;
+  text-decoration: none;
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.28);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.empty-wishlist__cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(124, 58, 237, 0.38);
+}
 
 /* =====================================================
-   MOBILE: make wishlist cards consistent with Home
+   MOBILE: card grid + page shell
    ===================================================== */
 @media (max-width: 768px) {
   .wishlist-grid {
-    /*grid-template-columns: repeat(2, 1fr);*/
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
-    /* force 2 columns */
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 32px;
-    /* tighter like Home */
     justify-content: start;
   }
 
   .wishlist-page {
-    padding: 20px 0;
-    /* reduce vertical padding */
+    padding: 32px 0 40px;
   }
 
-  .wishlist-page h1 {
+  .wishlist-title {
     font-size: 1.6rem;
-    margin-bottom: 16px;
+    margin-bottom: 6px;
+  }
+
+  .empty-wishlist {
+    padding: 44px 24px;
   }
 }
 
-
 /* ============================
-   MOBILE — make Wishlist cards match BookDetails
+   MOBILE — wishlist cards match BookDetails
+   (unchanged from before)
    ============================ */
 @media (max-width: 768px) {
 
-  /* Let each card expand naturally; consistent with BookDetails mobile */
   .wishlist-page .book-card {
     height: auto !important;
   }
 
-  /* Title spacing & readable clamp, just like BookDetails mobile */
   .wishlist-page .book-card h3 {
     margin: 12px 12px 6px !important;
     font-size: 1rem !important;
@@ -81,13 +145,11 @@
     max-height: none !important;
   }
 
-  /* Image height tuned for small screens (same as BookDetails mobile) */
   .wishlist-page .book-card--default img {
     height: 220px !important;
     object-fit: cover;
   }
 
-  /* Keep rating, price, and actions spacing identical to BookDetails */
   .wishlist-page .rating-summary {
     margin: 8px 12px 10px !important;
   }
@@ -102,4 +164,3 @@
     gap: 8px !important;
   }
 }
-
