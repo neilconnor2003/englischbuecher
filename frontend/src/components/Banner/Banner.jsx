@@ -77,9 +77,9 @@ const Banner = () => {
                 ? current.button_text_de ?? 'Jetzt entdecken'
                 : current.button_text_en ?? 'Shop Now'}
             </Link>
-            <Link to="/books" className="hero-banner-button hero-banner-button--ghost">
+            {/*<Link to="/books" className="hero-banner-button hero-banner-button--ghost">
               {i18n.language === 'de' ? 'Alle Bücher' : 'Browse all'}
-            </Link>
+            </Link>*/}
           </div>
         </div>
       </div>
