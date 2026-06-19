@@ -62,41 +62,22 @@
 }
 
 /* ── SEARCH BAR ────────────────────────────────────────────── */
+/* .search-bar is the flex item inside .header-container (which has
+   align-items: center). The AntD AutoComplete renders as a single
+   .ant-select div with NO extra wrapper, confirmed via DevTools —
+   so .search-bar can just BE a flex container itself, centering its
+   one real child directly. No absolute-positioning trick needed. */
 .search-bar {
   flex: 1 1 400px;
   min-width: 200px;
   max-width: 560px;
   position: relative;
-  height: 42px;
-}
-
-/* Desktop only: force true vertical centering via absolute positioning
-   rather than relying on flex align-items, which can be thrown off by
-   AntD's internal line-height/padding regardless of resets applied to
-   its child elements. This guarantees the search bar's visual center
-   matches its siblings (logo, category button) exactly. */
-@media (min-width: 769px) {
-  .search-bar .ant-select {
-    position: absolute !important;
-    top: 50% !important;
-    left: 0;
-    right: 0;
-    transform: translateY(-50%) !important;
-    margin: 0 !important;
-  }
+  display: flex;
+  align-items: center;
 }
 
 .search-bar .ant-select {
-  padding: 0 !important;
-  line-height: normal !important;
-}
-
-/* Only the outer AntD selector gets the visible pill styling.
-   The inner <input> must stay transparent/borderless, otherwise
-   AntD's nested wrapper structure (.ant-select > .ant-select-selector
-   > input) renders as multiple stacked boxes. */
-.search-bar .ant-select {
-  width: 100% !important;
+  width: 100%;
 }
 
 .search-bar .ant-select-selector {
@@ -107,8 +88,7 @@
   background: rgba(255, 255, 255, 0.75) !important;
   backdrop-filter: blur(4px);
   display: flex !important;
-  align-items: center;
-  line-height: normal !important;
+  align-items: center !important;
   transition: border-color 0.2s ease, background 0.2s ease;
 }
 
@@ -119,8 +99,6 @@
   height: 100% !important;
   font-size: 14px;
 }
-
-/* On transparent header the search should have stronger white bg */
 
 .search-bar .ant-select-selector:hover {
   border-color: var(--hdr-purple) !important;
@@ -326,10 +304,11 @@
 .custom-language-select.ant-select .ant-select-selector,
 .custom-language-select .ant-select-selector {
   background: transparent !important;
-  border: 1.5px solid rgba(124, 58, 237, 0.3) !important;
+  border: 2px solid rgba(124, 58, 237, 0.55) !important;
 }
 .custom-language-select:hover .ant-select-selector {
   border-color: var(--hdr-purple) !important;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.12) !important;
 }
 
 /* AntD dropdown safety */
