@@ -28,6 +28,7 @@ import MyOrdersPage from './pages/MyOrders/MyOrdersPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import ResendVerification from './pages/Auth/ResendVerification';
 import Wishlist from './pages/Wishlist/Wishlist';
+import AuthComplete from './pages/AuthComplete/AuthComplete';
 
 // Footer pages
 import Imprint from './pages/FooterPages/imprint';
@@ -89,6 +90,7 @@ const AppContent = () => {
         <Route path="/request-book" element={<RequestBookPage />} />
         <Route path="/author/:slug" element={<AuthorDetails />} />
         <Route path="/series/:series_slug" element={<Series />} />
+        <Route path="/auth/complete" element={<AuthComplete />} />
 
         <Route
           path="/admin/*"

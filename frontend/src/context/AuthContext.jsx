@@ -99,6 +99,31 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Used only by the iOS/Safari redirect-fallback login path. Exchanges
+  // a short-lived one-time token (received via the /auth/complete URL)
+  // for a real session, via a same-origin-initiated POST — this is the
+  // request Safari's ITP will actually trust to set/store the session
+  // cookie, unlike a cookie merely attached to a cross-site redirect.
+  const exchangeLoginToken = async (token) => {
+    try {
+      await axios.post(
+        `${config.API_URL}/api/auth/exchange-token`,
+        { login_token: token },
+        { withCredentials: true }
+      );
+      // Re-run the normal auth check now that the session cookie is set —
+      // this populates user state, merges the cart, etc., exactly the
+      // same way a normal page load does.
+      await checkAuth();
+      return true;
+    } catch (err) {
+      console.warn('Login token exchange failed:', err.response?.data || err.message);
+      setUser(null);
+      setLoading(false);
+      return false;
+    }
+  };
+
   const logout = async () => {
     try {
       await axios.get(`${config.API_URL}/api/logout`, { withCredentials: true });
@@ -128,7 +153,8 @@ export const AuthProvider = ({ children }) => {
       logout,
       loading,
       checkAuth,
-      updateUser
+      updateUser,
+      exchangeLoginToken
     }}>
       {children}
     </AuthContext.Provider>
