@@ -12,7 +12,7 @@ function Footer() {
       <div className="footer-main">
         <div className="footer-brand">
           <Link to="/">
-            <img src="/assets/logo.png" alt="Bookstore" className="logo-img" />
+            <img src="/assets/logo-white.png" alt="EnglischBücher" className="logo-img" />
           </Link>
           <p>{t('footer.tagline')}</p>
         </div>
