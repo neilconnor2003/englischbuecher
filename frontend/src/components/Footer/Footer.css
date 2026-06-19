@@ -130,8 +130,8 @@
    more deliberate than a flat grayscale-then-color-on-hover treatment,
    and ensures the icons stay legible against the dark gradient. */
 .footer-payment img {
-  height: 26px;
-  padding: 11px 18px;
+  height: 36px;
+  padding: 6px 14px;
   background: rgba(255, 255, 255, 0.92);
   border-radius: 10px;
   transition: transform 0.2s ease, background 0.2s ease;
