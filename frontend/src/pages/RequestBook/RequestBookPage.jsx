@@ -140,15 +140,66 @@ export default function RequestBookPage() {
   return (
     <div className="request-book-page">
       <div className="request-container">
-        <h1 className="request-title">{t('request.page_title')}</h1>
+        <div className="request-layout">
 
-        <p className="request-subtitle">
-          {i18n.resolvedLanguage === 'de'
-            ? 'Finde dein Buch nicht? Frag es einfach an – wir helfen dir schnell.'
-            : 'Didn’t find your book? Just request it — we’ll help you quickly.'}
-        </p>
+          {/* ── LEFT: reassurance panel — what happens after you submit ── */}
+          <div className="request-intro">
+            <p className="request-intro__eyebrow">
+              <span className="request-intro__eyebrow-dot" />
+              {i18n.resolvedLanguage === 'de' ? 'Buch anfragen' : 'Request a book'}
+            </p>
+            <h1 className="request-title">{t('request.page_title')}</h1>
+            <p className="request-subtitle">
+              {i18n.resolvedLanguage === 'de'
+                ? 'Finde dein Buch nicht? Frag es einfach an – wir helfen dir schnell.'
+                : 'Didn’t find your book? Just request it — we’ll help you quickly.'}
+            </p>
 
-        <div className="request-box">
+            <ol className="request-steps">
+              <li className="request-step">
+                <span className="request-step__num">1</span>
+                <div>
+                  <div className="request-step__title">
+                    {i18n.resolvedLanguage === 'de' ? 'Details teilen' : 'Share the details'}
+                  </div>
+                  <div className="request-step__desc">
+                    {i18n.resolvedLanguage === 'de'
+                      ? 'Titel, ISBN oder einfach so viel du weißt.'
+                      : 'Title, ISBN, or just whatever you know.'}
+                  </div>
+                </div>
+              </li>
+              <li className="request-step">
+                <span className="request-step__num">2</span>
+                <div>
+                  <div className="request-step__title">
+                    {i18n.resolvedLanguage === 'de' ? 'Wir suchen' : 'We source it'}
+                  </div>
+                  <div className="request-step__desc">
+                    {i18n.resolvedLanguage === 'de'
+                      ? 'Unser Team prüft Verfügbarkeit und Preis.'
+                      : 'Our team checks availability and pricing.'}
+                  </div>
+                </div>
+              </li>
+              <li className="request-step">
+                <span className="request-step__num">3</span>
+                <div>
+                  <div className="request-step__title">
+                    {i18n.resolvedLanguage === 'de' ? 'Du erfährst es zuerst' : "You'll hear back"}
+                  </div>
+                  <div className="request-step__desc">
+                    {i18n.resolvedLanguage === 'de'
+                      ? 'Per E-Mail, sobald dein Buch bereit ist.'
+                      : "By email, as soon as your book's ready."}
+                  </div>
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          {/* ── RIGHT: the form ── */}
+          <div className="request-box">
           <Form form={form} layout="vertical" onFinish={onSubmit} className="request-form">
             {!user && (
               <>
@@ -197,7 +248,7 @@ export default function RequestBookPage() {
                   suffix={loadingSuggestions ? <Spin size="small" /> : null}
                 />
 
-                <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>
+                <div className="request-search-hint">
                   {i18n.resolvedLanguage === 'de'
                     ? 'Tippe mindestens 2 Buchstaben für Vorschläge'
                     : 'Type at least 2 characters for suggestions'}
@@ -229,6 +280,7 @@ export default function RequestBookPage() {
               </Button>
             </div>
           </Form>
+          </div>
         </div>
       </div>
     </div>
