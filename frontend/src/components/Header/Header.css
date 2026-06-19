@@ -74,12 +74,15 @@
   position: relative;
   display: flex;
   align-items: center;
+  height: 42px; /* explicit backup in case the child's height doesn't propagate */
 }
 
 .search-bar .ant-select {
   width: 100%;
+  height: 42px !important;
 }
 
+.search-bar .ant-select.ant-select-single .ant-select-selector,
 .search-bar .ant-select-selector {
   width: 100% !important;
   height: 42px !important;
@@ -90,6 +93,21 @@
   display: flex !important;
   align-items: center !important;
   transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+/* AntD's "middle" size select renders a fixed-height inner wrapper
+   for the selection content (.ant-select-selection-search /
+   .ant-select-selection-item) that defaults to 32px (AntD's standard
+   control height) regardless of the outer selector's height — this
+   is what was capping the visible box at 32px instead of 42px. */
+.search-bar .ant-select-selection-search,
+.search-bar .ant-select-selection-search-input,
+.search-bar .ant-select-selection-item,
+.search-bar .ant-select-selection-placeholder {
+  height: 42px !important;
+  line-height: 42px !important;
+  display: flex !important;
+  align-items: center !important;
 }
 
 .search-bar input {
