@@ -69,11 +69,15 @@
   position: relative;
   display: flex;
   align-items: center;
+  height: 42px;
 }
 
 .search-bar .ant-select {
   margin: 0 !important;
+  padding: 0 !important;
+  line-height: normal !important;
   vertical-align: middle;
+  align-self: center;
 }
 
 /* Only the outer AntD selector gets the visible pill styling.
@@ -93,6 +97,7 @@
   backdrop-filter: blur(4px);
   display: flex !important;
   align-items: center;
+  line-height: normal !important;
   transition: border-color 0.2s ease, background 0.2s ease;
 }
 
@@ -393,7 +398,7 @@
 
   .header-container {
     height: auto;
-    padding: 10px 14px;
+    padding: 10px 14px 14px;
     flex-wrap: wrap;
     gap: 10px;
     row-gap: 8px;
