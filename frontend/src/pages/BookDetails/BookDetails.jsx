@@ -1,4 +1,3 @@
-
 // frontend/src/pages/BookDetails/BookDetails.jsx
 import React, { useEffect, useState, useContext } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
@@ -26,13 +25,11 @@ import BooksSlider from '../../components/BooksSlider/BooksSlider';
 import { setDeliveryContext, getDeliveryContext } from '../../utils/deliveryContext';
 import DPDEstimator from '../../components/Shipping/DPDEstimator';
 
-// Swiper imports (same as Home.jsx)
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination /*, Autoplay*/ } from 'swiper/modules';
+import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-//import ShippingEstimator from '../../components/Shipping/ShippingEstimator';
 import ShippoEstimator from '../../components/Shipping/ShippoEstimator';
 
 function BookDetails() {
@@ -51,21 +48,16 @@ function BookDetails() {
   const [shippingMode, setShippingMode] = useState('delivery');
   const initialCtx = getDeliveryContext() || {};
 
-  //const [shippingMode, setShippingMode] = useState(initialCtx.shippingMode || 'delivery');
-  //const [postalCode, setPostalCode] = useState(initialCtx.postalCode || '');
-  //const [city, setCity] = useState(initialCtx.city || '');
   const [mainImage, setMainImage] = useState('');
   const [recommendations, setRecommendations] = useState({ sameAuthor: [], alsoBought: [], similar: [], series: [] });
-  const [authorRecs, setAuthorRecs] = useState([]); // { author, books }[]
+  const [authorRecs, setAuthorRecs] = useState([]);
   const [recLoading, setRecLoading] = useState(true);
   const [reviewStats, setReviewStats] = useState({ total: 0, average: 0 });
 
-  // Editions (siblings) + format grouping
   const [editions, setEditions] = useState([]);
   const [formatsMap, setFormatsMap] = useState({});
   const [selectedFormat, setSelectedFormat] = useState('');
 
-  // --- Initials Avatar helpers (BookDetails only) ---
   const colorFromString = (s = '') => {
     let hash = 0;
     for (let i = 0; i < s.length; i++) hash = s.charCodeAt(i) + ((hash << 5) - hash);
@@ -83,11 +75,7 @@ function BookDetails() {
   const InitialsAvatar = ({ name, size = 90, className = '' }) => {
     const initials = initialsFromName(name);
     const bg = colorFromString(name);
-    const style = {
-      width: size,
-      height: size,
-      background: bg,
-    };
+    const style = { width: size, height: size, background: bg };
     return (
       <div
         className={`initials-avatar flex items-center justify-center text-white font-bold rounded-[12px] ${className}`}
@@ -102,85 +90,48 @@ function BookDetails() {
     );
   };
 
-
   const formatPrice = (value, i18n) => {
     const locale = i18n.resolvedLanguage === 'de' ? 'de-DE' : 'en-US';
-
     return new Intl.NumberFormat(locale, {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      style: 'currency', currency: 'EUR',
+      minimumFractionDigits: 2, maximumFractionDigits: 2,
     }).format(Number(value) || 0);
   };
 
   const formatRating = (value, i18n) => {
     const locale = i18n.resolvedLanguage === 'de' ? 'de-DE' : 'en-US';
     return new Intl.NumberFormat(locale, {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
+      minimumFractionDigits: 1, maximumFractionDigits: 1,
     }).format(Number(value) || 0);
   };
 
   const [author, setAuthor] = useState(null);
 
   const toSlug = (s = '') =>
-    String(s)
-      .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-
-  {/*useEffect(() => {
-    setDeliveryContext({
-      shippingMode,
-      postalCode,
-      city,
-    });
-  }, [shippingMode, postalCode, city]);*/}
+    String(s).normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
   useEffect(() => {
-    // BookDetails only controls delivery vs pickup.
-    // Postal code/city are controlled by Cart/Checkout/Shippo modal.
     setDeliveryContext({ shippingMode });
   }, [shippingMode]);
 
-  // --- Resolve the canonical book ID from id/isbn/slug ---
   useEffect(() => {
     const controller = new AbortController();
     const resolveBook = async () => {
-      if (idFromUrl) {
-        setBookId(idFromUrl);
-        setLoading(false);
-        return;
-      }
+      if (idFromUrl) { setBookId(idFromUrl); setLoading(false); return; }
       if (isbn) {
         try {
           const { data } = await axios.get(`${config.API_URL}/api/books/by-isbn/${isbn}`, { signal: controller.signal });
-          setBookId(data.id);
-          setLoading(false);
-          return;
-        } catch {
-          /* fall through */
-        }
+          setBookId(data.id); setLoading(false); return;
+        } catch { }
       }
       if (slug && slug !== 'undefined') {
-        if (/^\d+$/.test(slug)) {
-          setBookId(slug);
-          setLoading(false);
-          return;
-        }
-        const cleanSlug = String(slug)
-          .replace(/-\d{10,13}(-\d+)?$/, '')
-          .replace(/^-+|-+$/g, '');
+        if (/^\d+$/.test(slug)) { setBookId(slug); setLoading(false); return; }
+        const cleanSlug = String(slug).replace(/-\d{10,13}(-\d+)?$/, '').replace(/^-+|-+$/g, '');
         try {
           const { data } = await axios.get(`${config.API_URL}/api/books/by-slug/${cleanSlug}`, { signal: controller.signal });
-          setBookId(data.id);
-          setLoading(false);
-          return;
-        } catch {
-          /* fall through */
-        }
+          setBookId(data.id); setLoading(false); return;
+        } catch { }
       }
       setLoading(false);
     };
@@ -188,92 +139,52 @@ function BookDetails() {
     return () => controller.abort();
   }, [isbn, slug, idFromUrl]);
 
-  // --- When bookId changes, reset image & cancel old fetches ---
-  useEffect(() => {
-    setMainImage('');
-  }, [bookId]);
-
+  useEffect(() => { setMainImage(''); }, [bookId]);
 
   useEffect(() => {
     if (!bookId) return;
-
-    // fire-and-forget
-    axios.post(
-      `${config.API_URL}/api/books/${bookId}/view`,
-      {},
-      { withCredentials: true }
-    ).catch(() => { });
+    axios.post(`${config.API_URL}/api/books/${bookId}/view`, {}, { withCredentials: true }).catch(() => { });
   }, [bookId]);
 
-
-  // Persist the user's last choice (delivery vs pickup)
-  /*useEffect(() => {
-    try { localStorage.setItem('engb_shipping_pref', shippingMode); } catch { }
-  }, [shippingMode]);*/
-
-  // --- Load book + recommendations for the resolved bookId ---
   useEffect(() => {
     if (!bookId) return;
     const controller = new AbortController();
 
-    axios
-      .get(`${config.API_URL}/api/books/${bookId}`, { withCredentials: true, signal: controller.signal })
+    axios.get(`${config.API_URL}/api/books/${bookId}`, { withCredentials: true, signal: controller.signal })
       .then(res => {
         if (controller.signal.aborted) return;
         setBook(res.data);
         setMainImage(res.data.image || '');
         setLoading(false);
       })
-      .catch(() => {
-        if (!controller.signal.aborted) {
-          setBook(null);
-          setLoading(false);
-        }
-      });
+      .catch(() => { if (!controller.signal.aborted) { setBook(null); setLoading(false); } });
 
-    axios
-      .get(`${config.API_URL}/api/books/${bookId}/recommendations`, { signal: controller.signal })
-      .then(res => {
-        if (controller.signal.aborted) return;
-        setRecommendations(res.data);
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) {
-          setRecommendations({ sameAuthor: [], alsoBought: [], similar: [], series: [] });
-        }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) {
-          setRecLoading(false);
-        }
-      });
+    axios.get(`${config.API_URL}/api/books/${bookId}/recommendations`, { signal: controller.signal })
+      .then(res => { if (!controller.signal.aborted) setRecommendations(res.data); })
+      .catch(() => { if (!controller.signal.aborted) setRecommendations({ sameAuthor: [], alsoBought: [], similar: [], series: [] }); })
+      .finally(() => { if (!controller.signal.aborted) setRecLoading(false); });
 
     return () => controller.abort();
   }, [bookId, navigate, location.pathname]);
 
-  // --- Review stats ---
   useEffect(() => {
     if (!bookId) return;
     const controller = new AbortController();
-    axios
-      .get(`${config.API_URL}/api/books/${bookId}/reviews/stats`, { signal: controller.signal })
+    axios.get(`${config.API_URL}/api/books/${bookId}/reviews/stats`, { signal: controller.signal })
       .then(res => setReviewStats(res.data))
       .catch(() => setReviewStats({ total: 0, average: 0 }));
     return () => controller.abort();
   }, [bookId]);
 
-  // --- Load sibling editions
   useEffect(() => {
     if (!book || !book.id) return;
     let cancelled = false;
-    axios
-      .get(`${config.API_URL}/api/books/${book.id}/editions`)
+    axios.get(`${config.API_URL}/api/books/${book.id}/editions`)
       .then(res => { if (!cancelled) setEditions(res.data || []); })
       .catch(() => { if (!cancelled) setEditions([]); });
     return () => { cancelled = true; };
   }, [book?.id]);
 
-  // --- Build formats map + default selected format
   useEffect(() => {
     if (!book) return;
     const all = [book, ...editions];
@@ -284,74 +195,35 @@ function BookDetails() {
       return acc;
     }, {});
     setFormatsMap(map);
-
-    // Default the selected format to the current book's format (fallback: first key)
-    if (book.format && map[book.format]) {
-      setSelectedFormat(book.format);
-    } else {
-      const first = Object.keys(map)[0] || '';
-      setSelectedFormat(first);
-    }
+    if (book.format && map[book.format]) setSelectedFormat(book.format);
+    else setSelectedFormat(Object.keys(map)[0] || '');
   }, [book, editions]);
 
-  /*
-    useEffect(() => {
-      if (!book?.author_id) return;
-  
-      axios
-        .get(`${config.API_URL}/api/authors/${book.author_id}`)
-        .then(res => {
-          const data = res.data;
-          setAuthor({
-            ...data,
-            photo: data.photo?.startsWith('http')
-              ? data.photo
-              : `${config.API_URL}${data.photo}`
-          });
-        })
-        .catch(() => setAuthor(null));
-    }, [book?.author_id]);
-  */
-
   useEffect(() => {
-    if (!book?.authors || book.authors.length === 0) {
-      setAuthor(null);
-      return;
-    }
-    // store the full authors array
+    if (!book?.authors || book.authors.length === 0) { setAuthor(null); return; }
     setAuthor(book.authors);
   }, [book]);
-
 
   useEffect(() => {
     if (!book?.authors?.length) { setAuthorRecs([]); return; }
     let cancelled = false;
-
     (async () => {
       const results = await Promise.all(
         book.authors.map(async (a) => {
           try {
-            const { data } = await axios.get(
-              `${config.API_URL}/api/authors/${a.id}/books?limit=12&exclude=${book.id}`
-            );
+            const { data } = await axios.get(`${config.API_URL}/api/authors/${a.id}/books?limit=12&exclude=${book.id}`);
             return { author: a, books: Array.isArray(data) ? data : [] };
-          } catch {
-            return { author: a, books: [] };
-          }
+          } catch { return { author: a, books: [] }; }
         })
       );
       if (!cancelled) setAuthorRecs(results);
     })();
-
     return () => { cancelled = true; };
   }, [book]);
 
-
-  // Filter editions for selected format, exclude current book
   const editionsForSelected = (formatsMap[selectedFormat] || []).filter(b => b.id !== book?.id);
   const isCurrentFormatSelected = (book?.format || '') === selectedFormat;
 
-  // --- Cart helpers
   const isInCart = useSelector(
     state => state.cart?.items?.some(item => item.bookId === book?.id) ?? false
   );
@@ -363,16 +235,12 @@ function BookDetails() {
       if (!isInCart) {
         await axios.post(`${config.API_URL}/api/cart/add`, { bookId: book.id }, { withCredentials: true });
         const res = await axios.get(`${config.API_URL}/api/cart`, { withCredentials: true });
-        //dispatch(mergeServerCart({ items: res.data.items || [] }));
         dispatch(replaceWithServerCart({ items: res.data.items || [] }));
       }
-      //if (goToCheckout) setTimeout(() => navigate('/checkout'), 500);
-
       if (goToCheckout) {
         setDeliveryContext({ shippingMode, forceQuote: true });
         setTimeout(() => navigate('/checkout'), 500);
       }
-
     } catch (err) {
       if (err.response?.status === 401) message.warning(t('please_login'));
     } finally {
@@ -419,18 +287,13 @@ function BookDetails() {
     const shareData = { title, text: `Check out "${title}" by ${book.author}`, url: window.location.href };
     try {
       if (navigator.share && navigator.canShare(shareData)) await navigator.share(shareData);
-      else {
-        await navigator.clipboard.writeText(window.location.href);
-        message.success(t('link_copied'));
-      }
-    } catch {
-      message.success(t('link_copied'));
-    }
+      else { await navigator.clipboard.writeText(window.location.href); message.success(t('link_copied')); }
+    } catch { message.success(t('link_copied')); }
   };
 
   const renderBooksSlider = (books, swiperClassName) => (
     <Swiper
-      modules={[Navigation, Pagination /*, Autoplay*/]}
+      modules={[Navigation, Pagination]}
       spaceBetween={30}
       slidesPerView={2}
       navigation={true}
@@ -465,7 +328,6 @@ function BookDetails() {
           name="description"
           content={isDE ? (book.meta_description_de || description.substring(0, 155)) : (book.meta_description_en || description.substring(0, 155))}
         />
-        {/* Use the normalized absolute image from backend directly to avoid double prefixing */}
         <meta property="og:image" content={book.image || ''} />
         <link rel="canonical" href={`${window.location.origin}${generateBookUrl(book)}`} />
       </Helmet>
@@ -477,7 +339,6 @@ function BookDetails() {
           </button>
 
           <div className="book-grid">
-            {/* IMAGE SECTION */}
             <div className="image-section">
               <div className="main-image-wrapper">
                 <img src={mainImage || '/book-placeholder.png'} alt={title} className="main-image" />
@@ -498,7 +359,6 @@ function BookDetails() {
               )}
             </div>
 
-            {/* INFO SECTION */}
             <div className="info-section">
               <h1 className="title">{title}</h1>
 
@@ -510,10 +370,7 @@ function BookDetails() {
                 by{" "}
                 {book.authors?.map((a, index) => (
                   <span key={a.id}>
-                    <span
-                      className="author-name cursor-pointer"
-                      onClick={() => navigate(`/author/${a.slug}`)}
-                    >
+                    <span className="author-name cursor-pointer" onClick={() => navigate(`/author/${a.slug}`)}>
                       {a.name}
                     </span>
                     {index < book.authors.length - 1 ? ", " : ""}
@@ -521,7 +378,6 @@ function BookDetails() {
                 ))}
               </p>
 
-              {/* Ratings summary */}
               <div className="ratings-summary-amazon mb-6">
                 <div className="flex items-center gap-3 flex-wrap">
                   <Rate disabled allowHalf value={reviewStats.average || 0} className="text-lg" />
@@ -531,13 +387,11 @@ function BookDetails() {
                   <span className="text-gray-600">
                     {t('review_count', { count: reviewStats.total || 0 })}
                   </span>
-
                   {typeof book.views === 'number' && (
                     <span className="text-gray-500 text-sm">
                       · 👁 {book.views.toLocaleString()} {t('views') || 'views'}
                     </span>
                   )}
-
                   {reviewStats.total > 0 && (
                     <Button
                       type="link"
@@ -556,24 +410,16 @@ function BookDetails() {
                 )}
               </div>
 
-              {/* BUY BOX */}
               <div className="buy-box">
                 <div className="price-row">
-
-                  <span className="price">
-                    {formatPrice(book.price, i18n)}
-                  </span>
-
+                  <span className="price">{formatPrice(book.price, i18n)}</span>
                   {book.original_price && Number(book.original_price) > Number(book.price) && (
                     <div className="savings-row">
                       <span className="list-price">
                         {t('book_details.list_price')}: {formatPrice(book.original_price, i18n)}
                       </span>
                       <span className="save-badge">
-                        {t('book_details.save')} {formatPrice(
-                          Number(book.original_price) - Number(book.price),
-                          i18n
-                        )}
+                        {t('book_details.save')} {formatPrice(Number(book.original_price) - Number(book.price), i18n)}
                       </span>
                     </div>
                   )}
@@ -590,73 +436,15 @@ function BookDetails() {
                   )}
                 </div>
 
-
-                {/* Live shipping estimate (Germany-only, Shippo: DPD/Deutsche Post) */}
-                {/*<div style={{ marginTop: 12 }}>
-                  <ShippoEstimator
-                    items={[{ weight_grams: book.weight_grams || 500, quantity: 1 }]}
-                    t={t}
-                    i18n={i18n}
-                  />
-                </div>*/}
-
-                {/* Shipping choice: Delivery vs. Click & Collect */}
-                {/*<div className="shipping-choice">
-
-                  {shippingMode === 'delivery' && (
-                    <div className="delivery-fields">
-                      <div className="delivery-grid">
-                        <div className="delivery-field">
-                          <label className="delivery-label">{t('postal_code') || 'Postal code'}</label>
-                          <input
-                            className="delivery-input"
-                            value={postalCode}
-                            onChange={(e) => setPostalCode(e.target.value)}
-                            placeholder="55411"
-                          />
-                        </div>
-
-                        <div className="delivery-field">
-                          <label className="delivery-label">{t('city') || 'City'}</label>
-                          <input
-                            className="delivery-input"
-                            value={city}
-                            onChange={(e) => setCity(e.target.value)}
-                            placeholder="Bingen"
-                          />
-                        </div>
-                      </div>
-
-                      {!postalCode?.trim() && (
-                        <div className="delivery-hint">
-                          {t('enter_postcode_for_shipping') || 'Enter postal code to see delivery cost.'}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <Radio.Group
-                    value={shippingMode}
-                    onChange={(e) => setShippingMode(e.target.value)}
-                  >
-                    <Radio value="delivery">{t('delivery_ship_to_postcode') || 'Deliver to postcode'}</Radio>
-                    <Radio value="pickup">{t('click_collect') || 'Click & Collect (pickup in Ingelheim)'}</Radio>
-                  </Radio.Group>
-                </div>*/}
-
                 <div className="shipping-choice">
                   <div className="ship-radio selected">
                     <span>{t('delivery_ship_to_postcode') || 'Delivery (DPD)'}</span>
                   </div>
                 </div>
 
-                {/*{shippingMode === 'delivery' ? (
+                {shippingMode === 'delivery' ? (
                   <div style={{ marginTop: 12 }}>
-                    <ShippoEstimator
-                      items={[{ weight_grams: Number(book.weight_grams) || 500, quantity: 1 }]}
-                      t={t}
-                      i18n={i18n}
-                    />
+                    <DPDEstimator weightGrams={Number(book.weight_grams) || 500} />
                   </div>
                 ) : (
                   <div className="pickup-card" role="region" aria-label="Click & Collect">
@@ -665,59 +453,13 @@ function BookDetails() {
                       <div className="pickup-meta">
                         <div className="pickup-title">{t('pickup_title') || 'Click & Collect — Free'}</div>
                         <div className="pickup-addr">
-                          {t('pickup_hint') || 'Pickup in Ingelheim. Exact address and time window will be shared after purchase.'}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="pickup-free">{t('free') || '0,00 €'}</div>
-                  </div>
-                )}*/}
-
-                {shippingMode === 'delivery' ? (
-                  <div style={{ marginTop: 12 }}>
-                    <DPDEstimator
-                      weightGrams={Number(book.weight_grams) || 500}
-                    />
-                  </div>
-                ) : (
-                  <div className="pickup-card" role="region" aria-label="Click & Collect">
-                    <div className="pickup-row">
-                      <MapPin size={18} />
-                      <div className="pickup-meta">
-                        <div className="pickup-title">
-                          {t('pickup_title') || 'Click & Collect — Free'}
-                        </div>
-                        <div className="pickup-addr">
-                          {t('pickup_hint') ||
-                            'Pickup in Bingen. Exact address and time window will be shared after purchase.'}
+                          {t('pickup_hint') || 'Pickup in Bingen. Exact address and time window will be shared after purchase.'}
                         </div>
                       </div>
                     </div>
                     <div className="pickup-free">{t('free') || '0,00 €'}</div>
                   </div>
                 )}
-
-                {/*<div className="buy-buttons">
-                  {user ? (
-                    <>
-                      <button onClick={() => handleCartAction(true)} disabled={adding || book.stock === 0} className={`buy-now-btn ${adding ? 'adding' : ''}`}>
-                        {adding ? t('processing') : t('buy_now')}
-                      </button>
-                      <button onClick={() => handleCartAction(false)} disabled={adding || book.stock === 0 || isInCart} className={`add-to-cart secondary ${isInCart ? 'already-in-cart' : ''}`}>
-                        {isInCart ? t('book_details.already_in_cart') : adding ? t('book_details.adding') : t('add_to_cart')}
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button onClick={() => handleCartAction(true)} disabled={adding || book.stock === 0} className="buy-now-btn">
-                        {adding ? t('processing') : t('buy_now')}
-                      </button>
-                      <button onClick={() => handleCartAction(false)} disabled={adding || book.stock === 0 || isInCart} className={`add-to-cart ${isInCart ? 'already-in-cart' : ''}`}>
-                        {isInCart ? t('book_details.already_in_cart') : adding ? t('book_details.adding') : t('add_to_cart')}
-                      </button>
-                    </>
-                  )}
-                </div>*/}
 
                 <div className="buy-buttons">
                   {user ? (
@@ -727,25 +469,14 @@ function BookDetails() {
                         disabled={adding || isOutOfStock}
                         className={`buy-now-btn ${adding ? 'adding' : ''} ${isOutOfStock ? 'disabled' : ''}`}
                       >
-                        {isOutOfStock
-                          ? t('out_of_stock')
-                          : adding
-                            ? t('processing')
-                            : t('buy_now')}
+                        {isOutOfStock ? t('out_of_stock') : adding ? t('processing') : t('buy_now')}
                       </button>
-
                       <button
                         onClick={() => handleCartAction(false)}
                         disabled={adding || isOutOfStock || isInCart}
                         className={`add-to-cart secondary ${isInCart ? 'already-in-cart' : ''} ${isOutOfStock ? 'disabled' : ''}`}
                       >
-                        {isOutOfStock
-                          ? t('out_of_stock')
-                          : isInCart
-                            ? t('book_details.already_in_cart')
-                            : adding
-                              ? t('book_details.adding')
-                              : t('add_to_cart')}
+                        {isOutOfStock ? t('out_of_stock') : isInCart ? t('book_details.already_in_cart') : adding ? t('book_details.adding') : t('add_to_cart')}
                       </button>
                     </>
                   ) : (
@@ -755,25 +486,14 @@ function BookDetails() {
                         disabled={adding || isOutOfStock}
                         className={`buy-now-btn ${isOutOfStock ? 'disabled' : ''}`}
                       >
-                        {isOutOfStock
-                          ? t('out_of_stock')
-                          : adding
-                            ? t('processing')
-                            : t('buy_now')}
+                        {isOutOfStock ? t('out_of_stock') : adding ? t('processing') : t('buy_now')}
                       </button>
-
                       <button
                         onClick={() => handleCartAction(false)}
                         disabled={adding || isOutOfStock || isInCart}
                         className={`add-to-cart ${isInCart ? 'already-in-cart' : ''} ${isOutOfStock ? 'disabled' : ''}`}
                       >
-                        {isOutOfStock
-                          ? t('out_of_stock')
-                          : isInCart
-                            ? t('book_details.already_in_cart')
-                            : adding
-                              ? t('book_details.adding')
-                              : t('add_to_cart')}
+                        {isOutOfStock ? t('out_of_stock') : isInCart ? t('book_details.already_in_cart') : adding ? t('book_details.adding') : t('add_to_cart')}
                       </button>
                     </>
                   )}
@@ -787,13 +507,9 @@ function BookDetails() {
                 </div>
               </div>
 
-              {/* ===== Formats Tiles + Editions (filtered) ===== */}
               {book.work_id && (
                 <div className="formats-block">
-                  <h3 className="formats-title">
-                    {t('book_details.formats_and_editions')}
-                  </h3>
-                  {/* Format tiles */}
+                  <h3 className="formats-title">{t('book_details.formats_and_editions')}</h3>
                   <div className="format-tiles">
                     {Object.keys(formatsMap).map(fmt => {
                       const count = formatsMap[fmt]?.length || 0;
@@ -813,7 +529,6 @@ function BookDetails() {
                     })}
                   </div>
 
-                  {/* Current edition if current format selected */}
                   {isCurrentFormatSelected && (
                     <div className="edition-chip current">
                       <img src={book.image || '/book-placeholder.png'} alt={title} />
@@ -828,16 +543,10 @@ function BookDetails() {
                     </div>
                   )}
 
-                  {/* Sibling editions for selected format */}
                   <div className="edition-list">
                     {editionsForSelected.length === 0 && (
-
-                      <div className="edition-empty">
-                        {t('book_details.no_other_editions')}
-                      </div>
-
+                      <div className="edition-empty">{t('book_details.no_other_editions')}</div>
                     )}
-
                     {editionsForSelected.map(ed => (
                       <button
                         key={ed.id}
@@ -861,7 +570,6 @@ function BookDetails() {
                 </div>
               )}
 
-              {/* DETAILS TABLE */}
               <div className="details-table">
                 <div className="row"><Award size={18} /> <span>Reading Age</span><span>{book.reading_age || '—'}</span></div>
                 <div className="row"><BookOpen size={18} /> <span>{t('book_details.pages')}</span><span>{book.pages || '—'}</span></div>
@@ -874,38 +582,26 @@ function BookDetails() {
                 <div className="row"><Ruler size={18} /> <span>Dimensions</span><span>{book.dimensions || '—'}</span></div>
                 <div className="row"><Book size={18} /> <span>Format</span><span>{book.format || 'Paperback'}</span></div>
                 {book.edition && <div className="row"><Award size={18} /> <span>Edition</span><span>{book.edition}</span></div>}
-                {/*{book.series_name && <div className="row"><Layers size={18} /> <span>Series</span><span>{book.series_name} {book.series_volume}</span></div>}*/}
 
                 {book.series_name && (
                   <div className="row">
                     <Layers />
                     <span>Series</span>
                     <span>
-                      <Link to={`/series/${book.series_name
-                        .toLowerCase()
-                        .replace(/[^a-z0-9]+/g, '-')
-                        .replace(/(^-|-$)/g, '')
-                        }`}
+                      <Link
+                        to={`/series/${book.series_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`}
                         style={{ color: '#9333ea', fontWeight: '600' }}
-                        state={{
-                          currentBookId: book.id,
-                          currentSeriesVolume: book.series_volume,
-                          fromBookTitle: title
-                        }}
+                        state={{ currentBookId: book.id, currentSeriesVolume: book.series_volume, fromBookTitle: title }}
                         className="series-link"
-
                       >
                         {book.series_name}
                       </Link>{" "}
-                      {/*{book.series_volume}*/}
                     </span>
                   </div>
                 )}
-
               </div>
             </div>
 
-            {/* DESCRIPTION */}
             <div className="description-section">
               <h2>{t('about_this_book')}</h2>
               {description ? (
@@ -916,68 +612,29 @@ function BookDetails() {
             </div>
           </div>
 
-          {/* RECOMMENDATIONS + REVIEWS */}
           <div className="recommendations-container">
             {recLoading ? (
               <div className="rec-loading">{t('loading_recommendations') || 'Loading...'}</div>
             ) : (
               <>
-
-                {/*{authorRecs.map(({ author: a, books }) =>
-                  books.length > 0 && (
-                    <section className="recommendations-section" key={a.id}>
-                      <div className="container">
-                        <h2>{t('more_from_author', { author: a.name })}</h2>
-                        <BooksSlider title="" books={books} className="home-swiper" />
-                      </div>
-                    </section>
-                  )
-                )}*/}
-
-
-                {/* To exclude the current book */}
                 {authorRecs.map(({ author: a, books }) => {
                   const filteredBooks = books.filter(b => b.id !== book.id);
-
                   if (filteredBooks.length === 0) return null;
-
                   return (
                     <section className="recommendations-section" key={a.id}>
                       <div className="container">
                         <h2>{t('more_from_author', { author: a.name })}</h2>
-                        <BooksSlider
-                          title=""
-                          books={filteredBooks}
-                          className="home-swiper"
-                        />
+                        <BooksSlider title="" books={filteredBooks} className="home-swiper" />
                       </div>
                     </section>
                   );
                 })}
 
-                {/*{recommendations.sameAuthor.length > 0 && (
-                  <section className="recommendations-section">
-                    <div className="container">
-                      <h2>{t('more_from_author', { author: book.author })}</h2>
-                      <BooksSlider
-                        title=""
-                        books={recommendations.sameAuthor}
-                        className="home-swiper"
-                      />
-                    </div>
-                  </section>
-                )}*/}
                 {recommendations.alsoBought.length > 0 && (
                   <section className="recommendations-section">
                     <div className="container">
                       <h2>{t('customers_also_bought')}</h2>
-
-                      <BooksSlider
-                        title=""
-                        books={recommendations.alsoBought}
-                        className="home-swiper"
-                      />
-
+                      <BooksSlider title="" books={recommendations.alsoBought} className="home-swiper" />
                     </div>
                   </section>
                 )}
@@ -985,30 +642,18 @@ function BookDetails() {
                   <section className="recommendations-section">
                     <div className="container">
                       <h2>{t('similar_books')}</h2>
-
-                      <BooksSlider
-                        title=""
-                        books={recommendations.similar}
-                        className="home-swiper"
-                      />
-
+                      <BooksSlider title="" books={recommendations.similar} className="home-swiper" />
                     </div>
                   </section>
                 )}
-
                 {book?.series_name && recommendations.series?.length > 0 && (
                   <section className="recommendations-section">
                     <div className="container">
                       <h2>{t('more_in_series', { series: book.series_name })}</h2>
-                      <BooksSlider
-                        title=""
-                        books={recommendations.series.filter(b => b.id !== book.id)}
-                        className="home-swiper"
-                      />
+                      <BooksSlider title="" books={recommendations.series.filter(b => b.id !== book.id)} className="home-swiper" />
                     </div>
                   </section>
                 )}
-
               </>
             )}
 
@@ -1018,43 +663,28 @@ function BookDetails() {
               </div>
             )}
           </div>
-          {/* === About the Author === */}
 
           {author && Array.isArray(author) && author.length > 0 && (
             <div className="author-bio-section">
-              <h3 className="author-bio-title">
-                {t('book_details.about_author')}
-              </h3>
-
+              <h3 className="author-bio-title">{t('book_details.about_author')}</h3>
               {author.map((a) => (
                 <div key={a.id} className="author-bio-content">
-
-                  {/* Avatar + photo */}
                   <div className="author-bio-avatar">
                     <InitialsAvatar name={a.name} size={90} className="w-full h-full" />
-
                     {a.photo && (
                       <img
                         src={a.photo}
                         alt={a.name}
                         className="author-bio-photo-img"
                         loading="lazy"
-                        onError={(e) => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.style.display = 'none';
-                        }}
+                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.style.display = 'none'; }}
                       />
                     )}
                   </div>
-
-                  {/* Bio */}
                   <div className="author-bio-text">
                     <p><strong>{a.name}</strong></p>
                     <p className="text-gray-500">
-                      {isDE
-                        ? (a.bio_de || a.bio || t('book_details.no_author_bio'))
-                        : (a.bio || a.bio_de || t('book_details.no_author_bio'))
-                      }
+                      {isDE ? (a.bio_de || a.bio || t('book_details.no_author_bio')) : (a.bio || a.bio_de || t('book_details.no_author_bio'))}
                     </p>
                   </div>
                 </div>
