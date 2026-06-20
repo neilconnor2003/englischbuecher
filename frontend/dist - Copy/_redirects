@@ -1,0 +1,20 @@
+# /auth/*  https://api-dev.englischbuecher.de/auth/:splat  200
+# /api/*   https://api-dev.englischbuecher.de/api/:splat   200
+
+# /*    /index.html   200
+
+# OAuth proxy rules — scoped to the SPECIFIC backend auth endpoints only,
+# not a wildcard /auth/* match. The old wildcard rule was also catching
+# /auth/complete (a FRONTEND React Router route used for the iOS/Safari
+# login-token exchange), proxying it to the backend where no such route
+# exists, producing {"error":"not_found"} instead of ever reaching React.
+/auth/google           https://api-dev.englischbuecher.de/auth/google           200
+/auth/google/callback  https://api-dev.englischbuecher.de/auth/google/callback  200
+
+# General API proxy — unaffected, still a true wildcard since nothing
+# under /api/* is ever a frontend route.
+/api/*   https://api-dev.englischbuecher.de/api/:splat   200
+
+# SPA fallback — must stay LAST. Any other path (including /auth/complete)
+# falls through to here and is handled by React Router client-side.
+/*       /index.html                                      200

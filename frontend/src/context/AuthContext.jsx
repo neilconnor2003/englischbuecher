@@ -15,6 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
   const cartItems = useSelector(state => state.cart.items || []);
+  
 
   const checkAuth = async () => {
     try {
