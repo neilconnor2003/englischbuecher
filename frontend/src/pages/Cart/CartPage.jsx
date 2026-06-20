@@ -582,7 +582,7 @@ const CartPage = () => {
               <div className="inner-limit">
                 <section className="recommendations-section">
                   <h3 className="rec-section-title with-bars">
-                    {t("from_your_wishlist") || (isDE ? "Aus deiner Wunschliste" : "From your wishlist")}
+                    {isDE ? "Aus deiner Wunschliste" : "From your wishlist"}
                   </h3>
                   {renderRecSlider(wishlistBooks, "cart-recommendations-swiper")}
                 </section>
