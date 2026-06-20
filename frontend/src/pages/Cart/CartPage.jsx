@@ -563,11 +563,32 @@ const CartPage = () => {
           {t("loading") || "Loading..."}
         </div>
       ) : isEmpty ? (
-        <div className="cart-empty">
-          <Empty description={t("cart_empty")} />
-          <Button type="primary" size="large" onClick={() => navigate("/")}>
-            {t("continue_shopping")}
-          </Button>
+        <div className="cart-container">
+          <div className="cart-empty">
+            <Empty description={t("cart_empty")} />
+            <Button type="primary" size="large" onClick={() => navigate("/books")}>
+              {t("continue_shopping")}
+            </Button>
+          </div>
+
+          {/* Give an empty cart something to do, instead of a dead end —
+              reuses the same wishlist data and slider already used for
+              the non-empty cart view below. Note: the cart's own
+              "recommendations" (sameAuthor/alsoBought/similar) are
+              deliberately NOT shown here — they're keyed off current
+              cart contents, so they're always empty when the cart is. */}
+          {!wishlistLoading && wishlistBooks.length > 0 && (
+            <div className="cart-wishlist full-bleed">
+              <div className="inner-limit">
+                <section className="recommendations-section">
+                  <h3 className="rec-section-title with-bars">
+                    {t("from_your_wishlist") || (isDE ? "Aus deiner Wunschliste" : "From your wishlist")}
+                  </h3>
+                  {renderRecSlider(wishlistBooks, "cart-recommendations-swiper")}
+                </section>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="cart-container">
