@@ -3,7 +3,7 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Table, Button, Empty, message, Card, Row, Col, Tag, Divider, Radio } from 'antd';
+import { Table, Button, message, Card, Row, Col, Tag, Divider, Radio } from 'antd';
 import { DeleteOutlined, PlusOutlined, MinusOutlined } from '@ant-design/icons';
 import {
   updateQuantity,
@@ -565,7 +565,15 @@ const CartPage = () => {
       ) : isEmpty ? (
         <div className="cart-container">
           <div className="cart-empty">
-            <Empty description={t("cart_empty")} />
+            <div className="cart-empty__icon">🛒</div>
+            <h2 className="cart-empty__title">
+              {isDE ? "Dein Warenkorb ist leer" : "Your cart is empty"}
+            </h2>
+            <p className="cart-empty__desc">
+              {t("cart_empty") || (isDE
+                ? "Füge Bücher hinzu, um mit dem Einkaufen zu beginnen."
+                : "Add some books to get started.")}
+            </p>
             <Button type="primary" size="large" onClick={() => navigate("/books")}>
               {t("continue_shopping")}
             </Button>
