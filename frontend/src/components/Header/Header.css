@@ -1,67 +1,150 @@
+/* =========================================================
+   Header.css — EnglischBücher
+   Shared by HeaderBeforeLogin and HeaderAfterLogin.
+   
+   Layout:
+   Desktop (>768px): single row — logo | search | nav
+   Mobile (≤768px):  row 1: ☰ | logo | icons
+                     row 2: search (full width)
+   
+   Scroll behaviour:
+   .header           → transparent (over hero)
+   Always frosted glass (transparent removed)
+   ========================================================= */
+
+/* ── TOKENS ─────────────────────────────────────────────── */
+:root {
+  --hdr-purple:       #7C3AED;
+  --hdr-purple-dark:  #5B21B6;
+  --hdr-height-desk:  68px;
+  --hdr-height-mob:   56px;
+  --hdr-transition:   0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── HEADER SHELL ─────────────────────────────────────────── */
+/* Always frosted glass — transparent over hero caused visibility
+   issues with varied content behind the header. */
 .header {
-  background: #E6D9FF;
-  box-shadow: 0 2px 8px rgba(138, 43, 226, 0.2);
   position: sticky;
   top: 0;
   z-index: 1000;
+  width: 100%;
+  overflow-x: clip;
+  background: rgba(230, 217, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 2px 20px rgba(124, 58, 237, 0.12),
+              0 1px 0 rgba(124, 58, 237, 0.1);
 }
 
+/* ── HEADER CONTAINER ──────────────────────────────────────── */
 .header-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 16px;
+  width: 100%;
+  padding: 0 24px;
+  height: var(--hdr-height-desk);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: nowrap;
-  /* desktop: single row */
-  height: 70px;
-  /* desktop height */
+  gap: 16px;
+  min-width: 0;
+}
+
+/* ── LOGO ──────────────────────────────────────────────────── */
+.logo {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
 .logo-img {
-  /*height: clamp(40px, 6vw, 50px);*/
-  height: clamp(40px, 4.5vw, 60px);
+  height: 44px;
   object-fit: contain;
-  background: transparent;
+  display: block;
 }
 
-/* SEARCH BAR — resilient sizing */
+/* ── SEARCH BAR ────────────────────────────────────────────── */
+/* .search-bar is the flex item inside .header-container (which has
+   align-items: center). The AntD AutoComplete renders as a single
+   .ant-select div with NO extra wrapper, confirmed via DevTools —
+   so .search-bar can just BE a flex container itself, centering its
+   one real child directly. No absolute-positioning trick needed. */
 .search-bar {
-  flex: 1 1 480px;    /* grows, can shrink, prefers ~480px */
-  min-width: 260px;   /* hard guard: never smaller */
-  max-width: 600px;   /* a bit wider on desktop if space allows */
-  margin: 0 16px;
+  flex: 1 1 400px;
+  min-width: 200px;
+  max-width: 560px;
   position: relative;
+  display: flex;
+  align-items: center;
+  height: 42px; /* explicit backup in case the child's height doesn't propagate */
 }
 
-.search-bar input,
-.search-bar .ant-select-selector {
+.search-bar .ant-select {
   width: 100%;
-  height: 40px;
-  padding: 0 40px 0 12px;
-  border: 1px solid #B57EDC;
-  border-radius: 8px;
-  font-size: clamp(14px, 2vw, 16px);
-  background: #fff;
-  color: #333;
+  height: 42px !important;
+}
+
+.search-bar .ant-select.ant-select-single .ant-select-selector,
+.search-bar .ant-select-selector {
+  width: 100% !important;
+  height: 42px !important;
+  border-radius: 999px !important;
+  border-color: rgba(124, 58, 237, 0.25) !important;
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(4px);
+  display: flex !important;
+  align-items: center !important;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+/* AntD's "middle" size select renders a fixed-height inner wrapper
+   for the selection content (.ant-select-selection-search /
+   .ant-select-selection-item) that defaults to 32px (AntD's standard
+   control height) regardless of the outer selector's height — this
+   is what was capping the visible box at 32px instead of 42px. */
+.search-bar .ant-select-selection-search,
+.search-bar .ant-select-selection-search-input,
+.search-bar .ant-select-selection-item,
+.search-bar .ant-select-selection-placeholder {
+  height: 42px !important;
+  line-height: 42px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.search-bar input {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  height: 100% !important;
+  font-size: 14px;
+}
+
+.search-bar .ant-select-selector:hover {
+  border-color: var(--hdr-purple) !important;
+}
+
+.search-bar .ant-select-focused .ant-select-selector {
+  border-color: var(--hdr-purple) !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12) !important;
 }
 
 .search-icon {
   position: absolute;
-  right: 12px;
+  right: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #8A2BE2;
-  font-size: 18px;
+  color: var(--hdr-purple);
+  font-size: 17px;
   cursor: pointer;
+  z-index: 1;
 }
 
-/* AntD dropdown: never cause layout overflow; cap width sensibly */
+/* Autocomplete dropdown */
 .ant-select-dropdown {
   max-width: min(90vw, 600px);
   max-height: 70vh;
   overflow: hidden;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.14) !important;
 }
 
 .suggest-item {
@@ -70,508 +153,28 @@
   gap: 6px;
   font-size: 14px;
 }
+.suggest-title  { font-weight: 600; color: #1f2937; }
+.suggest-author { color: #4b5563; }
+.suggest-isbn   { color: #9ca3af; }
 
-.suggest-title {
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.suggest-author {
-  color: #4b5563;
-}
-
-.suggest-isbn {
-  color: #6b7280;
-}
-
+/* ── RIGHT NAV ─────────────────────────────────────────────── */
 .auth-links {
   display: flex;
   align-items: center;
-  gap: 16px;
-  font-size: clamp(12px, 2vw, 14px);
-}
-
-.auth-button,
-.request-book-btn {
-  padding: 6px 12px;
-  background: #fff;
-  color: #8A2BE2;
-  border: 2px solid #8A2BE2;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.auth-button:hover,
-.request-book-btn:hover {
-  background: #8A2BE2;
-  color: #fff;
-  transform: translateY(-1px);
-}
-
-.welcome-text {
-  font-weight: 600;
-  color: #6a1b9a;
-}
-
-.cart-link {
-  position: relative;
-  color: #8A2BE2;
-  font-weight: 600;
-  transition: transform 0.3s ease;
-}
-
-.cart-link:hover {
-  transform: scale(1.1);
-}
-
-.cart-count {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background: #ff4081;
-  color: #fff;
-  font-size: 10px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.profile-avatar {
-  width: clamp(32px, 6vw, 40px);
-  height: clamp(32px, 6vw, 40px);
-  border-radius: 50%;
-  border: 2px solid #8A2BE2;
-  background: #fff;
-  color: #8A2BE2;
-  font-weight: 700;
-  object-fit: cover;
-}
-
-.profile-avatar img {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.profile-dropdown .ant-dropdown-menu {
-  min-width: 200px;
-}
-
-.request-book-fab {
-  position: fixed;
-  right: 16px;
-  bottom: 16px;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #8A2BE2;
-  color: #fff;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  z-index: 999;
-  text-decoration: none;
-}
-
-.header-icon-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  border: 2px solid #8A2BE2;
-  background: #fff;
-  color: #8A2BE2;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-
-.desktop-only {
-  display: inline-flex;
-}
-
-/* HARD GUARANTEE: mobile-only never appears on desktop */
-.mobile-only {
-  display: none !important;
-}
-
-@media (max-width: 768px) {
-  .mobile-only {
-    display: inline-flex !important;
-  }
-}
-
-@media (min-width: 769px) {
-  .mobile-only {
-    display: none !important;
-  }
-}
-
-@media (max-width: 768px) {
-
-  .header-container {
-    flex-wrap: wrap;
-    height: auto;
-    padding: 8px 12px;
-    row-gap: 8px;
-  }
-
-  /* Mobile — safer spacing (Pixel 7 fix) */
-  .auth-links {
-    flex-wrap: wrap !important;
-    gap: 10px !important;
-    justify-content: flex-end;
-  }
-
-  /* Make logo more compact on mobile */
-  .logo {
-    max-width: 140px;
-    flex-shrink: 1;
-  }
-
-  .logo-img {
-    height: 36px;
-  }
-
-  /* Slightly smaller mobile icon buttons */
-  .header-icon-btn {
-    width: 36px;
-    height: 36px;
-    padding: 0;
-  }
-
-  /* Language switcher should not grow */
-  .language-switcher,
-  .language-switcher * {
-    /*max-width: 48px;
-    flex-shrink: 0;*/
-
-    max-width: unset !important;
-    flex-shrink: 1 !important;
-
-  }
-
-  /* Hide desktop-only items */
-  .auth-button,
-  .request-book-btn,
-  .welcome-text,
-  .category-menu {
-    display: none !important;
-  }
-
-  /* Show mobile icons */
-  .mobile-only {
-    display: inline-flex;
-  }
-
-  /* Row 2: search always full width */
-  .search-bar {
-    width: 100%;
-    max-width: 100%;
-    margin: 8px 0 0;
-    order: 99;
-  }
-
-  /* Disable hover transform on touch */
-  .cart-link {
-    transform: none;
-  }
-
-  /* FAB visible */
-  .request-book-fab {
-    display: inline-flex;
-  }
-}
-
-@media (max-width: 768px) {
-  .desktop-only {
-    display: none !important;
-  }
-}
-
-/* Keep icons spaced consistently across Android + iOS */
-.header-container,
-.auth-links {
-  column-gap: 12px;
-}
-
-/* Avoid icon collisions on Android Chrome */
-.header-icon-btn {
-  flex-shrink: 0 !important;
-}
-
-@media (max-height: 500px) and (orientation: landscape) {
-
-  /* Allow wrapping to a second line (prevents horizontal overflow) */
-  .header-container {
-    flex-wrap: wrap !important;
-    height: auto !important;
-    padding: 6px 10px !important;
-    row-gap: 6px !important;
-  }
-
-  /* Prevent large items from forcing overflow */
-  .search-bar {
-    flex: 1 1 100% !important;
-    max-width: 100% !important;
-    margin: 6px 0 0 !important;
-    order: 99;
-    /* moves search bar to next line cleanly */
-  }
-
-  /* Auth links & icons — allow shrinking */
-  .auth-links {
-    flex-wrap: wrap !important;
-    gap: 10px !important;
-    min-width: 0 !important;
-  }
-
-  /* Language switcher can shrink (important for DE locale) */
-  .language-switcher,
-  .language-switcher * {
-    max-width: none !important;
-    flex-shrink: 1 !important;
-  }
-
-  /* Logo shrinks slightly in landscape */
-  .logo-img {
-    height: 32px !important;
-  }
-
-  /* Icon buttons — ensure safe spacing */
-  .header-icon-btn {
-    flex-shrink: 1 !important;
-    margin: 0 4px;
-  }
-
-  /* Ensure nothing forces overflow */
-  .profile-avatar {
-    flex-shrink: 1 !important;
-  }
-}
-
-@media (orientation: landscape) and (max-height: 600px) {
-
-  /* Allow header to break into two rows instead of overflowing */
-  .header-container {
-    flex-wrap: wrap !important;
-    height: auto !important;
-    padding: 6px 12px !important;
-    row-gap: 8px !important;
-  }
-
-  /* Search bar always moves to next row and becomes full width */
-  .search-bar {
-    flex: 1 1 100% !important;
-    max-width: 100% !important;
-    margin-top: 6px !important;
-    order: 99;
-  }
-
-  /* Icon row */
-  .auth-links {
-    flex-wrap: wrap !important;
-    min-width: 0 !important;
-    gap: 10px !important;
-    justify-content: flex-end !important;
-  }
-
-  /* Language selector can shrink naturally */
-  .language-switcher,
-  .language-switcher * {
-    max-width: none !important;
-    flex-shrink: 1 !important;
-  }
-
-  /* Prevent avatar / icons from forcing overflow */
-  .profile-avatar,
-  .header-icon-btn,
-  .cart-link {
-    flex-shrink: 1 !important;
-  }
-
-  /* Logo becomes slightly smaller in landscape */
-  .logo-img {
-    height: 34px !important;
-  }
-}
-
-@media (max-height: 700px) and (orientation: landscape) {
-  .header-container {
-    flex-wrap: wrap !important;
-    height: auto !important;
-    padding: 8px 12px !important;
-    row-gap: 8px !important;
-  }
-
-  .search-bar {
-    flex: 1 1 100% !important;
-    max-width: 100% !important;
-    order: 99;
-    margin-top: 6px !important;
-  }
-
-  .auth-links {
-    flex-wrap: wrap !important;
-    gap: 10px !important;
-    min-width: 0 !important;
-  }
-
-  .language-switcher,
-  .language-switcher * {
-    max-width: none !important;
-    flex-shrink: 1 !important;
-  }
-
-  .logo-img {
-    height: 42px !important;
-    /* slightly bigger on tablets */
-  }
-
-  .header-icon-btn,
-  .profile-avatar,
-  .cart-link {
-    flex-shrink: 1 !important;
-  }
-}
-
-
-.header-container {
-  overflow-x: hidden;
-}
-
-@media (orientation: landscape) and (max-height: 700px) {
-
-  /* Allow header to split into two rows */
-  .header-container {
-    flex-wrap: wrap !important;
-    height: auto !important;
-    padding: 8px 12px !important;
-    row-gap: 10px !important;
-    overflow: hidden !important;
-  }
-
-  /* Move search bar to second row, full width */
-  .search-bar {
-    flex: 1 1 100% !important;
-    max-width: 100% !important;
-    margin-top: 8px !important;
-    order: 99;
-  }
-
-  /* Right-side icons: allow wrapping + shrinking */
-  .auth-links {
-    flex-wrap: wrap !important;
-    gap: 12px !important;
-    justify-content: flex-end !important;
-    min-width: 0 !important;
-  }
-
-  /* Language selector can shrink safely */
-  .language-switcher,
-  .language-switcher * {
-    max-width: none !important;
-    flex-shrink: 1 !important;
-  }
-
-  /* Prevent icons from pushing layout outward */
-  .header-icon-btn,
-  .cart-link,
-  .profile-avatar {
-    flex-shrink: 1 !important;
-  }
-
-  /* Keep logo visible and comfortably sized */
-  .logo-img {
-    height: 42px !important;
-    flex-shrink: 1 !important;
-  }
-}
-
-/* 1) If screen width is below 1100px → allow wrap */
-@media (max-width: 1100px) {
-  .header-container {
-    flex-wrap: wrap !important;
-    height: auto !important;
-    padding: 8px 12px !important;
-    row-gap: 8px !important;
-  }
-
-  .search-bar {
-    flex: 1 1 100%;
-    max-width: 100%;
-    order: 99;        /* pushes search to row 2 when wrapping */
-    margin: 8px 0 0;
-  }
-
-  .auth-links {
-    flex-wrap: wrap !important;
-    gap: 10px !important;
-    min-width: 0 !important;
-    justify-content: flex-end !important;
-  }
-
-  .header-icon-btn,
-  .cart-link,
-  .profile-avatar {
-    flex-shrink: 1 !important;
-  }
-
-  .language-switcher,
-  .language-switcher * {
-    max-width: none !important;
-    flex-shrink: 1 !important;
-  }
-}
-
-/* --- PC horizontal scroll safety (non‑visual) --- */
-.header {
-  overflow-x: clip;
-}
-
-/* contain any 1‑px flex overflow */
-.header-container {
+  gap: 6px;
+  flex-shrink: 0;
   min-width: 0;
+  margin-left: auto;
 }
 
-/* allow the row to shrink */
-.logo,
-.search-bar,
-.auth-links {
-  min-width: 0;
-}
-
-/* let children shrink */
-.search-bar input,
-.search-bar .ant-select-selector {
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/* === Category overlay: never affect header width === */
+/* Category anchor — positioned parent, never stretches header */
 .category-anchor {
   position: relative;
-  /* anchor for absolute children */
-  flex: 0 0 auto;
-  /* do not grow, do not shrink */
-  contain: layout paint;
-  /* isolate layout/paint to prevent overflow side-effects */
+  flex-shrink: 0;
 }
 
-/* If your CategoryMenu renders a container for the expanded panel,
-   give that container the class .category-panel so it overlays. */
-.category-anchor .category-panel {
+.category-panel {
   position: absolute;
-  /* out of normal flow => won't widen header */
   top: 100%;
   left: 0;
   width: max(320px, 40vw);
@@ -580,226 +183,305 @@
   overflow: auto;
   margin-top: 8px;
   z-index: 1200;
-  /* header is z-index: 1000 */
   background: #fff;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, .18);
-  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  border-radius: 12px;
 }
 
-/* Defensive cap for AntD overlays (dropdown/menu/select) */
+/* Welcome text */
+.welcome-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #5B21B6;
+  white-space: nowrap;
+}
+
+/* Request a book button */
+.request-book-btn {
+  padding: 8px 18px;
+  background: var(--hdr-purple);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+.request-book-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4);
+}
+
+/* Auth buttons (before login) */
+.auth-button {
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  background: transparent;
+  color: var(--hdr-purple);
+  border: 1.5px solid var(--hdr-purple);
+}
+.auth-button:hover {
+  background: var(--hdr-purple);
+  color: #fff;
+}
+
+/* Cart / wishlist links */
+.cart-link,
+.wishlist-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--hdr-purple);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  position: relative;
+  padding: 4px 2px;
+  transition: transform 0.2s ease;
+  white-space: nowrap;
+}
+.cart-link:hover { transform: scale(1.08); }
+
+.cart-count {
+  position: absolute;
+  top: -2px;
+  right: -8px;
+  background: #f472b6;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  min-width: 17px;
+  height: 17px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  border: 1.5px solid #fff;
+}
+
+/* Avatar */
+.profile-avatar {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  border: 2px solid var(--hdr-purple) !important;
+  background: #f3f0ff !important;
+  color: var(--hdr-purple) !important;
+  font-weight: 700 !important;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+/* Category dropdown trigger button */
+.category-dropdown {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.category-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(124, 58, 237, 0.25);
+  background: rgba(124, 58, 237, 0.06);
+  color: var(--hdr-purple);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  white-space: nowrap;
+}
+.category-toggle:hover {
+  background: rgba(124, 58, 237, 0.12);
+  border-color: rgba(124, 58, 237, 0.4);
+}
+.category-toggle .chevron {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease;
+}
+.category-toggle .chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Language switcher */
+/* Language switcher — component uses class "custom-language-select",
+   not "language-switcher". Its own LanguageSwitcher.css sets a white
+   background with !important, so this override needs the same
+   specificity (class + class) to actually win the cascade. */
+.custom-language-select.ant-select .ant-select-selector,
+.custom-language-select .ant-select-selector {
+  background: transparent !important;
+  border: 2px solid rgba(124, 58, 237, 0.55) !important;
+}
+.custom-language-select:hover .ant-select-selector {
+  border-color: var(--hdr-purple) !important;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.12) !important;
+}
+
+/* AntD dropdown safety */
 .ant-dropdown,
 .ant-dropdown-menu,
-.ant-menu-submenu-popup,
-.ant-select-dropdown {
+.ant-menu-submenu-popup {
   max-width: min(100vw, 1100px);
-  overflow: hidden;
 }
 
-/* === MEDIUM VIEWPORT (≤1280px) — keep everything visible on iPad Air landscape === */
-@media (max-width: 1280px) {
-  .header-container {
-    flex-wrap: wrap !important;         /* permit 2 rows */
-    height: auto !important;
-    padding: 8px 12px !important;
-    row-gap: 8px !important;
-    overflow: visible !important;        /* prevent clipping of right-side items */
-  }
-
-  /* Put search on row 2 and make it full width */
-  .search-bar {
-    flex: 1 1 100% !important;
-    max-width: 100% !important;
-    order: 99;                           /* moves search to next line */
-    margin-top: 8px !important;
-  }
-
-  /* Allow right-side icons/links to wrap if needed (Wishlist, Cart, Avatar, Lang) */
-  .auth-links {
-    flex-wrap: wrap !important;
-    gap: 10px !important;
-    justify-content: flex-end !important;
-    min-width: 0 !important;
-  }
-
-  /* Ensure Cart + Avatar don't shrink out of view */
-  .cart-link,
-  .profile-avatar,
-  .header-icon-btn {
-    flex: 0 0 auto !important;           /* do not shrink to zero */
-  }
+.profile-dropdown .ant-dropdown-menu {
+  min-width: 200px;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14) !important;
 }
 
-/* === DESKTOP SAFETY (≤1400px) — ensure Cart + Avatar stay visible === */
-@media (max-width: 1400px) {
-  .header-container {
-    flex-wrap: wrap !important;         /* allow 2 rows instead of clipping */
-    height: auto !important;
-    padding: 8px 12px !important;
-    row-gap: 8px !important;
-    overflow: visible !important;       /* don't clip right-edge icons */
-  }
-
-  /* Search moves to row 2 to free space for Wishlist/Cart/Avatar */
-  .search-bar {
-    flex: 1 1 100% !important;
-    max-width: 100% !important;
-    order: 99;
-    margin-top: 8px !important;
-  }
-
-  /* Right-side can wrap if needed and won't be forced off-screen */
-  .auth-links {
-    flex-wrap: wrap !important;
-    gap: 10px !important;
-    min-width: 0 !important;
-    justify-content: flex-end !important;
-  }
-
-  /* Keep key icons visible — do not let them shrink to zero */
-  .cart-link,
-  .profile-avatar,
-  .header-icon-btn {
-    flex: 0 0 auto !important;
-  }
-}
-
-
-/* Narrow the preferred search width slightly on huge screens to reserve space for right icons */
-@media (min-width: 1401px) {
-  .search-bar {
-    flex-basis: 440px;        /* was ~480px preferred; slightly tighter */
-    max-width: 560px;         /* was 600px */
-  }
-}
-
-
-/* Make wishlist & cart icons larger */
-.header .anticon {
-  font-size: 22px;          /* increase icon size */
-  min-width: 22px;
-  height: 22px;
-}
-
-/* Align icons vertically better */
-.auth-links .anticon,
-.cart-link .anticon {
+/* Icon buttons (mobile ☰ and 👤) */
+.header-icon-btn {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(124, 58, 237, 0.3);
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--hdr-purple);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  font-size: 17px;
+  transition: background 0.2s ease;
+}
+.header-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.95);
 }
 
+/* AntD icon sizes in header */
 .header .anticon {
-  font-size: 24px !important;
-}
-
-
-/* Uniform alignment & spacing on large screens */
-@media (min-width: 1400px) {
-  .header-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 32px; /* consistent spacing */
-    height: 80px;  /* taller header helps icon alignment */
-  }
-
-  .search-bar {
-    flex: 1 1 700px;     /* larger search bar */
-    max-width: 700px;    /* allow it to grow slightly */
-    margin: 0 24px;      /* balanced spacing */
-  }
-
-  .auth-links {
-    gap: 20px;           /* slightly wider spacing */
-    align-items: center; /* consistent vertical alignment */
-  }
-
-  .profile-avatar {
-    width: 42px;
-    height: 42px;
-  }
-}
-
-.header-container > * {
-  display: flex;
-  align-items: center;
-}
-
-.wishlist-link,
-.cart-link {
+  font-size: 20px;
   display: inline-flex;
   align-items: center;
-  gap: 6px; /* space between icon and number */
-}
-/* Reduce the size of the dropdown arrow in the language selector */
-.language-switcher .ant-select-arrow {
-  font-size: 12px !important;   /* Default ~14–16px → now smaller */
-  width: 12px !important;
-  height: 12px !important;
 }
 
-/* Optional: tighten its spacing */
-.language-switcher .ant-select-selector {
-  padding-right: 20px !important; /* prevents arrow overlap */
-}
+/* ── VISIBILITY HELPERS ────────────────────────────────────── */
+.desktop-only { display: inline-flex; }
+.mobile-only  { display: none !important; }
 
-.language-switcher .ant-select-selection-item {
-  display: flex;
+/* ── MOBILE FAB ─────────────────────────────────────────────── */
+.request-book-fab {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--hdr-purple), var(--hdr-purple-dark));
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4);
+  display: none;
   align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  z-index: 999;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.request-book-fab:hover {
+  transform: scale(1.08);
+  box-shadow: 0 12px 32px rgba(124, 58, 237, 0.5);
 }
 
-/* Make the header container always full width */
-.header > .container,
-.header-container {
-    max-width: 100% !important;
-    width: 100% !important;
-}
-
-.header {
-    width: 100%;
-}
-
-
-/* === FINAL TRUNCATION FIX (SAFE VERSION) === */
-
-/* 1. Remove width cap completely (root cause of truncation) */
-.header-container {
-  max-width: 100% !important;
-  width: 100% !important;
-  overflow: visible !important;
-  min-width: 0 !important;   /* the real key: allow shrinking */
-}
-
-/* 2. Let items shrink instead of pushing overflow */
-.header-container > * {
-  min-width: 0 !important;
-  flex-shrink: 1 !important;
-}
-
-/* 3. Make the search bar flexible and not impose limits */
-.search-bar {
-  flex: 1 1 auto !important;
-  max-width: none !important;
-}
-
-/* 4. Allow right-side items to shrink (not wrap unless needed) */
-.auth-links {
-  flex: 0 1 auto !important;
-  min-width: 0 !important;
-}
-
-/* NOTE: DO NOT force flex-wrap here */
-/* Wrapping should only occur in your existing media queries */
-
-/* Allow Browse Categories to shrink at 90% zoom */
-.category-anchor {
-  flex-shrink: 1 !important;
-  min-width: 0 !important;
-}
-
-/* ✅ Hide the CategoryMenu button ONLY on mobile */
+/* ── MOBILE (≤768px) ───────────────────────────────────────── */
 @media (max-width: 768px) {
-  .category-dropdown > .category-toggle {
+  /* Always show frosted on mobile — the hero is rarely full-height
+     and the transparent state would look wrong on other pages */
+  .header {
+    background: rgba(230, 217, 255, 0.94) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    box-shadow: 0 2px 12px rgba(124, 58, 237, 0.1) !important;
+  }
+
+  .header-container {
+    height: auto;
+    padding: 10px 14px 14px;
+    flex-wrap: wrap;
+    gap: 10px;
+    row-gap: 8px;
+  }
+
+  /* Row 1: hamburger | logo (flex) | icons */
+  .logo { flex: 1; min-width: 0; }
+  .logo-img { height: 34px; }
+
+  /* Search drops to full-width row 2 */
+  .search-bar {
+    order: 99;
+    flex: 1 1 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin: 0;
+  }
+
+  /* Right nav wraps but stays on row 1 */
+  .auth-links {
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  /* Hide desktop-only items */
+  .desktop-only,
+  .auth-button,
+  .request-book-btn,
+  .welcome-text,
+  .category-menu {
     display: none !important;
   }
+
+  /* Show mobile items */
+  .mobile-only { display: inline-flex !important; }
+
+  /* Override transparent treatment for mobile */
+      
+  /* FAB visible on mobile */
+  .request-book-fab { display: flex; }
+
+  /* Disable hover scale on touch */
+  .cart-link:hover { transform: none; }
+}
+
+/* ── LANDSCAPE MOBILE ──────────────────────────────────────── */
+@media (max-width: 900px) and (orientation: landscape) {
+  .header-container {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 8px 14px;
+    row-gap: 6px;
+  }
+  .search-bar {
+    order: 99;
+    flex: 1 1 100%;
+    max-width: 100%;
+    margin: 0;
+  }
+  .logo-img { height: 32px; }
+}
+
+/* ── LARGE DESKTOP (>1400px) ───────────────────────────────── */
+@media (min-width: 1400px) {
+  .header-container {
+    padding: 0 40px;
+    height: 72px;
+  }
+  .search-bar {
+    flex-basis: 600px;
+    max-width: 640px;
+  }
+  .auth-links { gap: 8px; }
 }

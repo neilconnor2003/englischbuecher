@@ -297,7 +297,7 @@ function CategoryMenu() {
         aria-haspopup="menu"
       >
         {/*{t('categories')}{' '}*/}
-        {isMobile ? null : t('categories')}{' '}
+        {t('categories')}{' '}
         <ChevronDown className={`chevron ${isOpen ? 'open' : ''}`} />
       </button>
 

@@ -99,6 +99,7 @@ function HeaderBeforeLogin() {
   };
 
   return (
+    <>
     <header className="header">
       <div className="header-container">
 
@@ -185,9 +186,6 @@ function HeaderBeforeLogin() {
 
         </nav>
 
-        {/* Mobile FAB (fixed), renders on all pages via header mount */}
-        <Link to="/request-book" className="request-book-fab" aria-label={t('request.button')}>+</Link>
-
         {/* ✅ MOBILE DRAWER: Categories */}
         <Drawer
           title={t('categories') || 'Categories'}
@@ -202,6 +200,14 @@ function HeaderBeforeLogin() {
 
       </div>
     </header>
+
+    {/* Mobile FAB — rendered as a sibling of <header>, not a child.
+        position:fixed was being trapped inside the header because
+        .header has backdrop-filter, which creates a new CSS
+        containing block for any fixed-position descendant. Moving
+        it outside lets it float relative to the real viewport. */}
+    <Link to="/request-book" className="request-book-fab" aria-label={t('request.button')}>+</Link>
+    </>
   );
 }
 

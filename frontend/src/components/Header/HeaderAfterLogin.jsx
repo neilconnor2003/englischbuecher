@@ -164,6 +164,7 @@ function HeaderAfterLogin() {
   };
 
   return (
+    <>
     <header className="header">
       <div className="header-container">
 
@@ -233,7 +234,7 @@ function HeaderAfterLogin() {
           <Link to="/request-book" className="request-book-btn">{t('request.button')}</Link>
 
           {/* Desktop wishlist/cart + avatar (hide on mobile using desktop-only) */}
-          <Link to="/wishlist" className="desktop-only cart-link" style={{ marginRight: 16 }}>
+          <Link to="/wishlist" className="desktop-only cart-link">
             <div className="wishlist-link">
               <HeartOutlined style={{ color: '#e91e63' }} />
               <span>{t('header_wishlist')} ({wishlistCount})</span>
@@ -299,9 +300,6 @@ function HeaderAfterLogin() {
 
         </nav>
 
-        {/* Mobile FAB (unchanged) */}
-        <Link to="/request-book" className="request-book-fab" aria-label={t('request.button')}>+</Link>
-
         {/* ✅ MOBILE Drawer shows categories */}
         <Drawer
           title={t('categories') || 'Categories'}
@@ -316,6 +314,12 @@ function HeaderAfterLogin() {
 
       </div>
     </header>
+
+    {/* Mobile FAB — sibling of <header>, not a child. See note in
+        HeaderBeforeLogin.jsx for why: backdrop-filter on .header
+        traps position:fixed descendants inside it. */}
+    <Link to="/request-book" className="request-book-fab" aria-label={t('request.button')}>+</Link>
+    </>
   );
 }
 

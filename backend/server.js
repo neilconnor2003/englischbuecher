@@ -4560,6 +4560,35 @@ ${bookList}`,
     }
   });
 
+  // ── One-time login token store (iOS/Safari cross-domain fix) ──
+  // Safari's Intelligent Tracking Prevention can silently refuse to
+  // persist a session cookie that arrives via a cross-site redirect
+  // chain (Google → backend callback → frontend), even with
+  // SameSite=None; Secure set correctly — this is especially true in
+  // dev where frontend (netlify.app) and backend (englischbuecher.de)
+  // are on completely unrelated root domains, not just subdomains.
+  // Instead of relying on that cookie surviving the redirect, we hand
+  // the frontend a short-lived one-time token in the redirect URL;
+  // the frontend then exchanges it via a same-origin-initiated POST,
+  // which Safari trusts and will reliably set/store the cookie for.
+  const pendingLoginTokens = new Map(); // token -> { userId, expiresAt }
+
+  const PENDING_TOKEN_TTL_MS = 60 * 1000; // 60 seconds is plenty
+
+  function createPendingLoginToken(userId) {
+    const token = crypto.randomBytes(32).toString('hex');
+    pendingLoginTokens.set(token, { userId, expiresAt: Date.now() + PENDING_TOKEN_TTL_MS });
+    return token;
+  }
+
+  // Sweep expired tokens periodically so the Map doesn't grow forever
+  setInterval(() => {
+    const now = Date.now();
+    for (const [token, data] of pendingLoginTokens.entries()) {
+      if (data.expiresAt < now) pendingLoginTokens.delete(token);
+    }
+  }, 5 * 60 * 1000);
+
   app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
   // GOOGLE LOGIN CALLBACK — FIXED & AUDIT LOGGED
@@ -4591,7 +4620,12 @@ ${bookList}`,
           req
         });
 
-        // Send success message to frontend
+        // One-time token for the redirect fallback path only (iOS/Safari).
+        // The popup path doesn't need this — it never navigates away from
+        // the backend domain, so the session cookie set on this response
+        // is already attached to the opener's subsequent same-window
+        // requests without any cross-site redirect involved.
+        const loginToken = createPendingLoginToken(user.id);
 
         res.send(`
 <!DOCTYPE html>
@@ -4604,9 +4638,11 @@ ${bookList}`,
     <script>
       (function () {
         const FRONTEND = '${process.env.FRONTEND_URL}';
+        const LOGIN_TOKEN = '${loginToken}';
 
         try {
-          // ✅ Popup flow (desktop / android)
+          // ✅ Popup flow (desktop / android) — cookie already works here,
+          // no token needed since we never leave the backend's own origin.
           if (window.opener && !window.opener.closed) {
             window.opener.postMessage(
               { type: 'google-login-success' },
@@ -4617,8 +4653,11 @@ ${bookList}`,
           }
         } catch (e) {}
 
-        // ✅ Redirect flow (iOS Safari)
-        window.location.replace(FRONTEND + '/');
+        // ✅ Redirect flow (iOS Safari) — pass a one-time token instead of
+        // relying on the session cookie surviving this cross-site redirect.
+        // The frontend exchanges it for a real session via its own
+        // same-origin-initiated request, which Safari trusts.
+        window.location.replace(FRONTEND + '/auth/complete?login_token=' + LOGIN_TOKEN);
       })();
     </script>
   </body>
@@ -4631,6 +4670,53 @@ ${bookList}`,
       }
     }
   );
+
+  // ── Exchange a one-time login token for a real session ──
+  // Called by the frontend immediately after landing on /auth/complete
+  // with a login_token in the URL (the iOS/Safari redirect fallback).
+  // This is a same-origin-initiated POST from the frontend's own JS,
+  // which is exactly the kind of request Safari's ITP will reliably
+  // set and store a SameSite=None cookie for — unlike a cookie that
+  // merely arrives attached to a cross-site redirect response.
+  app.post('/api/auth/exchange-token', express.json(), (req, res) => {
+    const { login_token } = req.body || {};
+    if (!login_token) {
+      return res.status(400).json({ error: 'Missing login_token' });
+    }
+
+    const entry = pendingLoginTokens.get(login_token);
+    // One-time use: delete immediately on lookup, valid or not, so a
+    // token can never be replayed even if this request is retried.
+    pendingLoginTokens.delete(login_token);
+
+    if (!entry || entry.expiresAt < Date.now()) {
+      return res.status(400).json({ error: 'Token expired or invalid' });
+    }
+
+    db.execute(
+      'SELECT id, email, first_name, last_name, role, language, photo_url, created_at, email_verified_at FROM users WHERE id = ?',
+      [entry.userId]
+    ).then(([[dbUser]]) => {
+      if (!dbUser) return res.status(401).json({ error: 'User not found' });
+
+      const sessionUser = {
+        ...dbUser,
+        photoURL: dbUser.photo_url || null,
+        displayName: `${dbUser.first_name || ''} ${dbUser.last_name || ''}`.trim()
+      };
+
+      req.login(sessionUser, (err) => {
+        if (err) {
+          console.error('Token exchange login error:', err);
+          return res.status(500).json({ error: 'Login failed' });
+        }
+        res.json({ success: true });
+      });
+    }).catch(err => {
+      console.error('Token exchange DB error:', err);
+      res.status(500).json({ error: 'Server error' });
+    });
+  });
 
   app.get('/api/current-user', (req, res) => {
     if (req.isAuthenticated() && req.user) {
