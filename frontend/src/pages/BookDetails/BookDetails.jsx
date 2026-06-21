@@ -45,6 +45,11 @@ function BookDetails() {
   const [loading, setLoading] = useState(true);
   const [bookId, setBookId] = useState(null);
   const [adding, setAdding] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [notifyEmail, setNotifyEmail] = useState('');
+  const [notifySubscribed, setNotifySubscribed] = useState(false);
+  const [notifySubmitting, setNotifySubmitting] = useState(false);
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [shippingMode, setShippingMode] = useState('delivery');
   const initialCtx = getDeliveryContext() || {};
 
@@ -139,7 +144,7 @@ function BookDetails() {
     return () => controller.abort();
   }, [isbn, slug, idFromUrl]);
 
-  useEffect(() => { setMainImage(''); }, [bookId]);
+  useEffect(() => { setMainImage(''); setQuantity(1); }, [bookId]);
 
   useEffect(() => {
     if (!bookId) return;
@@ -175,6 +180,56 @@ function BookDetails() {
       .catch(() => setReviewStats({ total: 0, average: 0 }));
     return () => controller.abort();
   }, [bookId]);
+
+  // Check whether the current user/guest is already on the restock
+  // notify list for this book, once we know it's out of stock.
+  useEffect(() => {
+    if (!book?.id || book.stock > 0) return;
+    let cancelled = false;
+    const params = user ? {} : (notifyEmail ? { email: notifyEmail } : null);
+    if (!user && !notifyEmail) return; // guest hasn't typed an email yet, nothing to check
+    axios.get(`${config.API_URL}/api/books/${book.id}/notify-me/status`, { params, withCredentials: true })
+      .then(res => { if (!cancelled) setNotifySubscribed(!!res.data?.subscribed); })
+      .catch(() => { if (!cancelled) setNotifySubscribed(false); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [book?.id, book?.stock, user]);
+
+  // Recently viewed: logged-in users pull from the server; guests pull
+  // from localStorage and resolve those IDs into full book objects.
+  useEffect(() => {
+    if (!book?.id) return;
+
+    if (user) {
+      axios.get(`${config.API_URL}/api/users/me/recently-viewed?limit=8`, { withCredentials: true })
+        .then(res => setRecentlyViewed((res.data || []).filter(b => b.id !== book.id)))
+        .catch(() => setRecentlyViewed([]));
+    } else {
+      try {
+        const stored = JSON.parse(localStorage.getItem('engb_recently_viewed') || '[]');
+        const ids = stored.filter(id => id !== book.id).slice(0, 8);
+        if (ids.length) {
+          axios.post(`${config.API_URL}/api/books/by-ids`, { ids })
+            .then(res => setRecentlyViewed(res.data || []))
+            .catch(() => setRecentlyViewed([]));
+        } else {
+          setRecentlyViewed([]);
+        }
+      } catch {
+        setRecentlyViewed([]);
+      }
+    }
+
+    // Record this view in localStorage for guests (logged-in users are
+    // recorded server-side by the existing /view tracking call).
+    if (!user) {
+      try {
+        const stored = JSON.parse(localStorage.getItem('engb_recently_viewed') || '[]');
+        const next = [book.id, ...stored.filter(id => id !== book.id)].slice(0, 20);
+        localStorage.setItem('engb_recently_viewed', JSON.stringify(next));
+      } catch { /* localStorage unavailable, skip silently */ }
+    }
+  }, [book?.id, user]);
 
   useEffect(() => {
     if (!book || !book.id) return;
@@ -233,7 +288,7 @@ function BookDetails() {
     setAdding(true);
     try {
       if (!isInCart) {
-        await axios.post(`${config.API_URL}/api/cart/add`, { bookId: book.id }, { withCredentials: true });
+        await axios.post(`${config.API_URL}/api/cart/add`, { bookId: book.id, quantity }, { withCredentials: true });
         const res = await axios.get(`${config.API_URL}/api/cart`, { withCredentials: true });
         dispatch(replaceWithServerCart({ items: res.data.items || [] }));
       }
@@ -281,6 +336,30 @@ function BookDetails() {
         {isWishlisted ? t('in_wishlist') : t('add_to_wishlist')}
       </button>
     );
+  };
+
+  const handleNotifySubmit = async () => {
+    if (!book) return;
+    const email = user ? user.email : notifyEmail.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      message.warning(isDE ? 'Bitte gültige E-Mail eingeben' : 'Please enter a valid email');
+      return;
+    }
+    setNotifySubmitting(true);
+    try {
+      await axios.post(
+        `${config.API_URL}/api/books/${book.id}/notify-me`,
+        user ? {} : { email },
+        { withCredentials: true }
+      );
+      setNotifySubscribed(true);
+      message.success(isDE ? 'Wir benachrichtigen dich!' : "We'll let you know!");
+    } catch (err) {
+      message.error(err.response?.data?.error || (isDE ? 'Fehler beim Anmelden' : 'Something went wrong'));
+    } finally {
+      setNotifySubmitting(false);
+    }
   };
 
   const handleShare = async () => {
@@ -378,6 +457,15 @@ function BookDetails() {
                 ))}
               </p>
 
+              {typeof book.views === 'number' && book.views >= 20 && (
+                <div className="views-badge">
+                  <span className="views-badge-icon">👁</span>
+                  {isDE
+                    ? `${book.views.toLocaleString('de-DE')} Leser haben dieses Buch angesehen`
+                    : `${book.views.toLocaleString('en-US')} readers have viewed this book`}
+                </div>
+              )}
+
               <div className="ratings-summary-amazon mb-6">
                 <div className="flex items-center gap-3 flex-wrap">
                   <Rate disabled allowHalf value={reviewStats.average || 0} className="text-lg" />
@@ -387,11 +475,6 @@ function BookDetails() {
                   <span className="text-gray-600">
                     {t('review_count', { count: reviewStats.total || 0 })}
                   </span>
-                  {typeof book.views === 'number' && (
-                    <span className="text-gray-500 text-sm">
-                      · 👁 {book.views.toLocaleString()} {t('views') || 'views'}
-                    </span>
-                  )}
                   {reviewStats.total > 0 && (
                     <Button
                       type="link"
@@ -436,6 +519,44 @@ function BookDetails() {
                   )}
                 </div>
 
+                {isOutOfStock && (
+                  <div className="notify-me-box">
+                    {notifySubscribed ? (
+                      <div className="notify-me-confirmed">
+                        <Check size={16} />
+                        {isDE ? 'Wir benachrichtigen dich, sobald es verfügbar ist.' : "We'll email you as soon as it's back."}
+                      </div>
+                    ) : (
+                      <>
+                        <p className="notify-me-label">
+                          {isDE ? 'Ausverkauft? Wir sagen dir Bescheid:' : 'Out of stock? We\u2019ll let you know:'}
+                        </p>
+                        <div className="notify-me-row">
+                          {!user && (
+                            <input
+                              type="email"
+                              className="notify-me-input"
+                              placeholder={isDE ? 'Deine E-Mail' : 'Your email'}
+                              value={notifyEmail}
+                              onChange={(e) => setNotifyEmail(e.target.value)}
+                            />
+                          )}
+                          <button
+                            type="button"
+                            className="notify-me-btn"
+                            onClick={handleNotifySubmit}
+                            disabled={notifySubmitting}
+                          >
+                            {notifySubmitting
+                              ? (isDE ? 'Wird gesendet…' : 'Submitting…')
+                              : (isDE ? 'Benachrichtigen' : 'Notify me')}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
                 <div className="shipping-choice">
                   <div className="ship-radio selected">
                     <span>{t('delivery_ship_to_postcode') || 'Delivery (DPD)'}</span>
@@ -458,6 +579,33 @@ function BookDetails() {
                       </div>
                     </div>
                     <div className="pickup-free">{t('free') || '0,00 €'}</div>
+                  </div>
+                )}
+
+                {!isOutOfStock && (
+                  <div className="qty-selector-row">
+                    <span className="qty-selector-label">{t('quantity') || (isDE ? 'Menge' : 'Quantity')}</span>
+                    <div className="qty-stepper">
+                      <button
+                        type="button"
+                        className="qty-stepper-btn"
+                        onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                        disabled={quantity <= 1}
+                        aria-label="Decrease quantity"
+                      >
+                        −
+                      </button>
+                      <span className="qty-stepper-value">{quantity}</span>
+                      <button
+                        type="button"
+                        className="qty-stepper-btn"
+                        onClick={() => setQuantity(q => Math.min(book.stock, q + 1))}
+                        disabled={quantity >= book.stock}
+                        aria-label="Increase quantity"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -690,6 +838,13 @@ function BookDetails() {
                 </div>
               ))}
             </div>
+          )}
+
+          {recentlyViewed.length > 0 && (
+            <section className="recently-viewed-section">
+              <h2>{isDE ? 'Zuletzt angesehen' : 'Recently viewed'}</h2>
+              <BooksSlider title="" books={recentlyViewed} className="home-swiper" />
+            </section>
           )}
         </div>
       </div>
