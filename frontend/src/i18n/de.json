@@ -534,5 +534,6 @@
   "wallet_no_transactions": "Keine Transaktionen vorhanden",
   "wallet_added": "Guthaben hinzugefügt",
   "wallet_used_order": "Verwendet in Bestellung",
-  "wallet_refund": "Rückerstattung"
+  "wallet_refund": "Rückerstattung",
+  "free_delivery_applied": "Kostenlose Lieferung angewendet"
 }
