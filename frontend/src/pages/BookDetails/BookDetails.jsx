@@ -488,7 +488,13 @@ function BookDetails() {
                 </div>
                 {reviewStats.total === 0 && (
                   <p className="text-sm text-gray-500 mt-2">
-                    {t('reviews.be_the_first') || 'Be the first to review this book'}
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' })}
+                      className="text-purple-600 hover:text-purple-800 underline font-medium bg-transparent border-none cursor-pointer p-0 text-sm"
+                    >
+                      {t('reviews.be_the_first') || 'Be the first to review this book'}
+                    </button>
                   </p>
                 )}
               </div>

@@ -9,9 +9,8 @@ const { logEmail } = require('./emailLogger');
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT) || 587,
-  //secure: false,
-  secure: true,   // ✅ VERY IMPORTANT for 465 (SSL)
+  port: parseInt(process.env.SMTP_PORT) || 465,
+  secure: parseInt(process.env.SMTP_PORT) !== 587, // true for 465 (SSL), false for 587 (STARTTLS)
   auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
   tls: { rejectUnauthorized: false },
 });
