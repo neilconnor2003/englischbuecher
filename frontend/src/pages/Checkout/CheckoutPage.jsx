@@ -107,6 +107,7 @@ const CheckoutPage = ({ clientSecret }) => {
 
   const finalTotal = grandTotal - walletUsed;
 
+  const [shippingResolved, setShippingResolved] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -115,10 +116,10 @@ const CheckoutPage = ({ clientSecret }) => {
       if (raw) {
         const parsed = JSON.parse(raw);
         setShippingAmount(Number(parsed.amount_eur || 0));
-        //setShippingMode(parsed.mode || 'delivery');
-        //setShippingMode(resolvedMode);
       }
     } catch { }
+    // Mark shipping as resolved regardless — if nothing in localStorage, 0 is correct
+    setShippingResolved(true);
   }, []);
 
   useEffect(() => {
@@ -319,51 +320,37 @@ const CheckoutPage = ({ clientSecret }) => {
   }, [clientSecret, totalPrice, shippingAmount, t]);*/}
 
   useEffect(() => {
+    // Don't fire until shipping cost is resolved from localStorage/DPD
+    if (!shippingResolved) return;
 
-    //console.log('🚀 updatePI triggered');
-    //console.log('🚀 shippingMode:', shippingMode);
-    //console.log('🚀 grandTotal:', grandTotal);
     console.log('PI update:', { grandTotal, walletUsed, finalTotal });
 
-    async function updatePI() {
-      if (!clientSecret) return;
+    // Debounce: wait 600ms after last change before hitting Stripe
+    const timer = setTimeout(async () => {
+      async function updatePI() {
+        if (!clientSecret) return;
 
-      //const amount_cents = Math.round(grandTotal * 100);
-      //const amount_cents = Math.round(finalTotal * 100);
-      const amount_cents = Math.max(50, Math.round(finalTotal * 100));
+        const amount_cents = Math.max(50, Math.round(finalTotal * 100));
+        const shipping_provider = 'DPD';
+        const shipping_service = 'Standard';
 
-
-      //const shipping_provider = shippingMode === 'pickup' ? 'PICKUP' : 'DPD';
-      //const shipping_service = shippingMode === 'pickup' ? 'Click & Collect' : 'Standard';
-
-      const shipping_provider = 'DPD';
-      const shipping_service = 'Standard';
-
-
-
-      try {
-        const res = /*await axios.post(
-          '/api/orders/update-payment-intent-amount',
-          { clientSecret, amount_cents, shipping_provider, shipping_service },
-          { withCredentials: true }
-        );*/
-
+        try {
           await axios.post(
             `${API_BASE}/orders/update-payment-intent-amount`,
             { clientSecret, amount_cents, shipping_provider, shipping_service },
             { withCredentials: true }
           );
-
-
-        //console.log('[PI UPDATED]', res.data);
-      } catch (e) {
-        console.error('[PI UPDATE FAILED]', e?.response?.data || e?.message);
-        toast.error(t('payment_failed_try_again'));
+        } catch (e) {
+          console.error('[PI UPDATE FAILED]', e?.response?.data || e?.message);
+          toast.error(t('payment_failed_try_again'));
+        }
       }
-    }
 
-    updatePI();
-  }, [clientSecret, finalTotal, shippingMode, t]);
+      updatePI();
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [clientSecret, finalTotal, shippingMode, shippingResolved, t]);
 
   const [discountError, setDiscountError] = useState("");
 
