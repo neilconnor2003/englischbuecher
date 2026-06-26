@@ -511,6 +511,7 @@ const CheckoutPage = ({ clientSecret }) => {
     <div className="checkout-page">
       <div className="checkout-container">
         <h1 className="checkout-title">{t('checkout')}</h1>
+        <p className="checkout-subtitle">{t('secure_checkout_note') || 'Secure checkout — payment handled by Stripe'}</p>
 
         <form onSubmit={submitHandler} id="checkout-form">
           <div className="checkout-grid">
@@ -518,7 +519,7 @@ const CheckoutPage = ({ clientSecret }) => {
             <div className="checkout-main">
               {/* Shipping / address */}
               <div className="address-card">
-                <div className="form-header">{t('shipping_address')}</div>
+                <div className="form-header"><span className="form-header-num">1</span>{t('shipping_address')}</div>
 
                 <div className="form-group">
                   <label>{t('delivery_method') || 'Delivery method'}</label>
@@ -587,7 +588,7 @@ const CheckoutPage = ({ clientSecret }) => {
 
               {/* Discount card */}
               <div className="discount-card">
-                <div className="form-header">{t('discount') || 'Discount'}</div>
+                <div className="form-header"><span className="form-header-num">2</span>{t('discount') || 'Promo code'}</div>
 
                 {!appliedDiscount ? (
                   <div className="promo-row">
@@ -649,10 +650,10 @@ const CheckoutPage = ({ clientSecret }) => {
               <div className="wallet-card modern-wallet">
 
                 <div className="wallet-header">
-                  <span className="wallet-title">{t('wallet')}</span>
-                  <span className="wallet-balance">
-                    €{walletBalance.toFixed(2)}
-                  </span>
+                  <div>
+                    <span className="wallet-title"><span className="form-header-num">3</span>{t('wallet')}</span>
+                    <span className="wallet-balance">€{walletBalance.toFixed(2)}</span>
+                  </div>
                 </div>
 
                 <label className="wallet-toggle">
@@ -675,7 +676,7 @@ const CheckoutPage = ({ clientSecret }) => {
 
               {/* Payment card */}
               <div className="payment-card">
-                <div className="form-header">{t('payment_method')}</div>
+                <div className="form-header"><span className="form-header-num">4</span>{t('payment_method')}</div>
 
                 <div className="payment-element-container">
                   <PaymentElement
