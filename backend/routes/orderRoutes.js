@@ -1135,6 +1135,8 @@ module.exports = (db, transporter) => {
       order.order_items = parseIfString(order.order_items);
       order.shipping_address = parseIfString(order.shipping_address);
       order.payment_result = parseIfString(order.payment_result);
+      order.coupon_discount = Number(order.coupon_discount || 0);
+      order.wallet_used = Number(order.wallet_used || 0);
 
       res.json(order);
     } catch (err) {

@@ -129,31 +129,53 @@ const OrderSuccessPage = () => {
               </tbody>
             </table>
 
-            {/* === Totals (Subtotal + Shipping + Total) === */}
             <div className="invoice-total">
               {(() => {
                 const shipping = Number(order.shipping_amount_eur || 0);
+                const couponDiscount = Number(order.coupon_discount || 0);
+                const walletUsed = Number(order.wallet_used || 0);
                 const total = Number(order.total || 0);
-                // Guard against negative / NaN with max(0, ...)
-                const subtotal = Math.max(0, +(total - shipping).toFixed(2));
+                const itemsTotal = (order.order_items || []).reduce(
+                  (s, i) => s + Number(i.price || 0) * Number(i.quantity || 1), 0
+                );
                 return (
                   <div style={{ display: 'grid', gap: 6 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span>{t('cart.subtotal') || 'Subtotal'}</span>
-                      <strong>€{subtotal.toFixed(2)}</strong>
+                      <strong>€{itemsTotal.toFixed(2)}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span>{t('cart.shipping_label') || 'Shipping'}</span>
-                      <strong>€{shipping.toFixed(2)}</strong>
+                      <strong>{shipping === 0 ? (t('free') || 'Free') : `€${shipping.toFixed(2)}`}</strong>
                     </div>
+                    {couponDiscount > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#16a34a' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          {t('discount') || 'Coupon'}
+                          {order.coupon_code && (
+                            <span style={{ background: '#dcfce7', color: '#15803d', padding: '1px 8px', borderRadius: 6, fontWeight: 700, fontSize: '0.78rem' }}>
+                              {order.coupon_code}
+                            </span>
+                          )}
+                        </span>
+                        <strong>−€{couponDiscount.toFixed(2)}</strong>
+                      </div>
+                    )}
+                    {walletUsed > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#7c3aed' }}>
+                        <span>💜 {t('wallet_used') || 'Wallet credit'}</span>
+                        <strong>−€{walletUsed.toFixed(2)}</strong>
+                      </div>
+                    )}
                     <div style={{
                       display: 'flex',
                       justifyContent: 'space-between',
                       borderTop: '1px solid #eee',
-                      paddingTop: 8
+                      paddingTop: 8,
+                      marginTop: 4
                     }}>
-                      <span>{t('total')}</span>
-                      <strong>€{total.toFixed(2)}</strong>
+                      <span style={{ fontWeight: 700 }}>{t('total')}</span>
+                      <strong style={{ color: '#7c3aed', fontSize: '1.1rem' }}>€{total.toFixed(2)}</strong>
                     </div>
                   </div>
                 );
