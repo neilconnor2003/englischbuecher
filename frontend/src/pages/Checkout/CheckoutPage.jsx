@@ -466,6 +466,13 @@ const CheckoutPage = ({ clientSecret }) => {
 
         discount_code: appliedDiscount?.code || null,
         discount_type: appliedDiscount?.type || null,
+        discount_amount: appliedDiscount
+          ? (appliedDiscount.type === 'FREE_SHIPPING'
+              ? Number(effectiveShipping.toFixed(2))
+              : appliedDiscount.type === 'PERCENTAGE'
+                ? Number((subtotal * (appliedDiscount.value / 100)).toFixed(2))
+                : Number((appliedDiscount.value || 0).toFixed(2)))
+          : 0,
         wallet_used: walletUsed,
 
         //totalPrice: Number(totalPrice || 0) + Number(shippingAmount || 0),

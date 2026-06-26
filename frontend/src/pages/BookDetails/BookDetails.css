@@ -1,10 +1,10 @@
 /* frontend/src/pages/BookDetails/BookDetails.css */
 .book-details-page {
-  background: #f8f9fa;
+  background: linear-gradient(160deg, #f6f3ff 0%, #ffffff 55%);
   min-height: 100vh;
-  padding: 20px 0;
-  font-family: 'Arial', sans-serif;
-  color: #111;
+  padding: 28px 0;
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  color: #1f1633;
 }
 
 .container {
@@ -16,13 +16,15 @@
 .back-btn {
   background: none;
   border: none;
-  color: #9333ea;
-  font-size: 15px;
+  color: #7c3aed;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   margin-bottom: 16px;
+  padding: 6px 4px;
 }
 
 .back-btn:hover {
@@ -36,7 +38,6 @@
   align-items: start;
 }
 
-/* Images */
 .image-section {
   position: static !important;
   top: 20px;
@@ -44,10 +45,11 @@
 
 .main-image-wrapper {
   position: relative;
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 16px 36px rgba(124, 58, 237, 0.16);
   margin-bottom: 16px;
+  border: 1px solid rgba(124, 58, 237, 0.08);
 }
 
 .main-image {
@@ -77,7 +79,7 @@
   width: 72px;
   height: 90px;
   object-fit: cover;
-  border: 2px solid #ddd;
+  border: 2px solid rgba(124, 58, 237, 0.15);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
@@ -89,7 +91,6 @@
   box-shadow: 0 0 0 2px #9333ea44;
 }
 
-/* Info & Buy Box */
 .info-section {
   display: flex;
   flex-direction: column;
@@ -97,38 +98,41 @@
 }
 
 .title {
-  font-size: 38px;
-  font-weight: 600;
-  line-height: 1.2;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(1.9rem, 3vw, 2.5rem);
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1.12;
   margin: 0;
   color: #9333ea;
-  max-width: 90%;
+  letter-spacing: -0.01em;
+  max-width: 95%;
 }
 
 .original-title {
-  font-size: 16px;
-  color: #555;
+  font-size: 15px;
+  color: #7a7490;
   font-style: italic;
   margin: 4px 0 12px;
 }
 
 .author {
-  font-size: 18px;
+  font-size: 17px;
   margin: 0;
-  color: #333;
+  color: #5b5570;
 }
 
 .author-name {
-  color: #9333ea !important;
-  font-weight: 600;
+  color: #7c3aed !important;
+  font-weight: 700;
 }
 
 .buy-box {
   background: white;
-  border: 1px solid #ddd;
-  border-radius: 12px;
+  border: 1px solid rgba(124, 58, 237, 0.1);
+  border-radius: 18px;
   padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 28px rgba(124, 58, 237, 0.1);
 }
 
 .price-row {
@@ -136,41 +140,48 @@
   align-items: baseline;
   gap: 12px;
   margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
 .price {
-  font-size: 36px;
-  color: #B12704;
-  font-weight: 600;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 2.2rem;
+  font-weight: 900;
+  font-style: italic;
+  background: linear-gradient(135deg, #7c3aed, #9333ea);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .list-price {
   text-decoration: line-through;
-  color: #666;
-  font-size: 16px;
+  color: #9a93ad;
+  font-size: 15px;
 }
 
 .save-badge {
-  background: #CC0C39;
+  background: linear-gradient(135deg, #f43f5e, #e11d48);
   color: white;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-weight: bold;
-  font-size: 13px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12.5px;
 }
 
 .stock-info {
-  margin: 16px 0;
-  font-weight: bold;
-  color: #008a00;
+  margin: 14px 0;
+  font-weight: 700;
+  color: #16a34a;
   display: flex;
   align-items: center;
   gap: 8px;
+  font-size: 0.92rem;
 }
 
 .out-of-stock {
-  color: #c40000;
-  font-weight: bold;
+  color: #dc2626;
+  font-weight: 700;
 }
 
 .buy-buttons {
@@ -183,53 +194,48 @@
 .add-to-cart,
 .buy-now-btn {
   width: 100%;
-  padding: 16px;
+  padding: 15px;
   border: none;
-  border-radius: 12px;
-  font-size: 17px;
-  font-weight: bold;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.25s ease;
 }
 
 .add-to-cart {
-  /*background: linear-gradient(135deg, #9333ea, #a855f7);
-  color: white;*/
-  box-shadow: 0 4px 16px rgba(147, 51, 234, 0.3);
   background: white;
-  color: #9333ea;
-  border: 2px solid #9333ea;
+  color: #7c3aed;
+  border: 2px solid #7c3aed;
+  box-shadow: none;
 }
 
 .add-to-cart:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(147, 51, 234, 0.4);
+  background: rgba(124, 58, 237, 0.04);
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.18);
 }
 
-/* Only apply our custom in-cart style when the class is present */
 .add-to-cart.in-cart,
 .add-to-cart.secondary.in-cart {
   background: #722ed1 !important;
   border-color: #722ed1 !important;
   color: white !important;
-  font-weight: bold !important;
-  box-shadow: 0 6px 20px rgba(114, 46, 209, 0.4) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 6px 20px rgba(114, 46, 209, 0.35) !important;
   transform: scale(1.02) !important;
 }
 
-/* NEW STYLE: when book is already in cart */
 .add-to-cart.already-in-cart,
 .add-to-cart.secondary.already-in-cart {
   background: #16a34a !important;
-  /* ← beautiful green (you can change this) */
   border-color: #16a34a !important;
   color: white !important;
-  font-weight: bold !important;
-  box-shadow: 0 6px 20px rgba(22, 163, 74, 0.4) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 6px 20px rgba(22, 163, 74, 0.35) !important;
   transform: scale(1.02) !important;
 }
 
-/* Optional: tiny checkmark icon when added */
 .add-to-cart.already-in-cart::after,
 .add-to-cart.secondary.already-in-cart::after {
   content: " ✓";
@@ -237,23 +243,28 @@
 }
 
 .add-to-cart.added {
-  background: #008a00;
+  background: #16a34a;
 }
 
 .add-to-cart.secondary {
   background: white;
-  color: #9333ea;
-  border: 2px solid #9333ea;
+  color: #7c3aed;
+  border: 2px solid #7c3aed;
 }
 
 .add-to-cart.secondary:hover {
-  background: #f5f0ff;
+  background: rgba(124, 58, 237, 0.05);
 }
 
 .buy-now-btn {
-  background: linear-gradient(#a855f7, #9333ea);
+  background: linear-gradient(135deg, #7c3aed, #9333ea);
   color: white;
-  box-shadow: 0 6px 20px rgba(147, 51, 234, 0.4);
+  box-shadow: 0 8px 22px rgba(124, 58, 237, 0.32);
+}
+
+.buy-now-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(124, 58, 237, 0.4);
 }
 
 .action-buttons {
@@ -267,22 +278,24 @@
 .share-btn {
   flex: 1;
   min-width: 140px;
-  padding: 12px 20px;
-  border: 2px solid #ddd;
+  padding: 11px 20px;
+  border: 1.5px solid rgba(124, 58, 237, 0.25);
   background: white;
-  border-radius: 50px;
+  border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 700;
+  font-size: 13.5px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.2s ease;
+  color: #5b5570;
 }
 
 .wishlist-btn:hover {
   border-color: #e91e63;
+  color: #e91e63;
 }
 
 .wishlist-btn[style*="background: #fdf2f8"] {
@@ -292,14 +305,14 @@
 }
 
 .share-btn:hover {
-  background: #f0f2f5;
-  border-color: #9333ea;
-  color: #9333ea;
+  background: rgba(124, 58, 237, 0.04);
+  border-color: #7c3aed;
+  color: #7c3aed;
 }
 
 .details-table {
   margin-top: 32px;
-  font-size: 14.5px;
+  font-size: 14px;
   line-height: 2.4;
 }
 
@@ -308,42 +321,41 @@
   grid-template-columns: 24px 130px 1fr;
   gap: 12px;
   align-items: center;
+  color: #5b5570;
 }
 
 .details-table svg {
-  color: #9333ea;
+  color: #7c3aed;
 }
 
 .description-section {
   background: white;
-  border: 1px solid #ddd;
-  border-radius: 12px;
+  border: 1px solid rgba(124, 58, 237, 0.1);
+  border-radius: 18px;
   padding: 28px;
   position: static !important;
   top: 20px;
+  box-shadow: 0 10px 28px rgba(124, 58, 237, 0.06);
 }
 
 .description-section h2 {
-  font-size: 22px;
-  margin: 0 0 20px;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.5rem;
+  font-style: italic;
+  margin: 0 0 18px;
   color: #9333ea;
-  /* Purple */
-  font-weight: 700;
-  /* Bold */
-
+  font-weight: 900;
 }
 
 .description-content {
-  line-height: 1.7;
-  color: #333;
+  line-height: 1.75;
+  color: #3a3550;
 }
 
-/* RESPONSIVE */
 @media (max-width: 1100px) {
   .book-grid {
     grid-template-columns: 320px 1fr;
   }
-
   .description-section {
     grid-column: 1 / -1;
     margin-top: 40px;
@@ -355,23 +367,20 @@
   .book-grid {
     grid-template-columns: 1fr;
   }
-
   .image-section {
     position: static;
   }
-
   .title {
     font-size: 32px;
   }
 }
 
-/* MAKE RECOMMENDATION CARDS EXACTLY SAME AS HOME PAGE — FINAL FIX */
 .recommendations-container {
   margin-top: 32px;
 }
 
 .recommendations-section {
-  padding: 5px 0;  /*was 24px 0*/
+  padding: 5px 0;
   background: #faf8ff;
 }
 
@@ -406,8 +415,10 @@
 }
 
 .recommendations-section h2 {
+  font-family: 'Fraunces', Georgia, serif;
   font-size: 2.4rem;
-  font-weight: 800;
+  font-weight: 900;
+  font-style: italic;
   color: #9333ea;
   text-align: left;
   margin: 0 0 50px 0;
@@ -432,7 +443,6 @@
   padding: 16px;
 }
 
-/* Make recommendations EXACTLY like homepage */
 .recommendations-section .books-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -470,7 +480,6 @@
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
-  /* ← missing or not recognized */
   -webkit-box-orient: vertical;
 }
 
@@ -496,7 +505,6 @@
   align-items: center;
   gap: 12px;
   margin-top: 8px;
-  /* ← THIS IS THE MISSING SPACE */
 }
 
 .rating-summary-top .ant-rate {
@@ -507,8 +515,6 @@
   color: #9333ea !important;
 }
 
-/* AMAZON-STYLE RATING SUMMARY — CLEAN & RESPONSIVE */
-/* RATING SUMMARY — PERFECT PURPLE THEME + CORRECT HALF STARS */
 .ratings-summary-amazon {
   margin: 16px 0 24px;
   padding: 12px 0;
@@ -516,11 +522,9 @@
 
 .ratings-summary-amazon .ant-rate {
   color: #9333ea !important;
-  /* empty stars = your purple */
   font-size: 19px;
 }
 
-/* Only the background of filled stars gets the gradient */
 .ratings-summary-amazon .ant-rate-star-filled .ant-rate-star-second {
   background: linear-gradient(135deg, #9333ea, #c084fc);
   -webkit-background-clip: text;
@@ -528,7 +532,6 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* Half-star: keep left side gradient, right side empty purple */
 .ratings-summary-amazon .ant-rate-star-half .ant-rate-star-first {
   color: #9333ea !important;
 }
@@ -540,7 +543,6 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* Full star: both layers gradient */
 .ratings-summary-amazon .ant-rate-star-full .ant-rate-star-second {
   background: linear-gradient(135deg, #9333ea, #c084fc);
   -webkit-background-clip: text;
@@ -548,7 +550,6 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* Rating number — gradient text */
 .ratings-summary-amazon .text-lg {
   font-weight: 800;
   background: linear-gradient(135deg, #9333ea, #d946ef);
@@ -557,13 +558,11 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* Review count */
 .ratings-summary-amazon .text-gray-600 {
   color: #9333ea !important;
   font-weight: 600;
 }
 
-/* "See all reviews" link */
 .ratings-summary-amazon .ant-btn-link {
   color: #9333ea !important;
   font-weight: 600;
@@ -574,27 +573,23 @@
   text-decoration: underline;
 }
 
-/* "Be the first" text */
 .ratings-summary-amazon p.text-sm {
   color: #9333ea;
   font-weight: 500;
   margin-top: 8px;
 }
 
-/* Mobile: stack vertically */
 @media (max-width: 768px) {
   .ratings-summary-amazon .flex {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
-
   .ratings-summary-amazon .ant-rate {
     font-size: 20px;
   }
 }
 
-/* FORCE 5-STAR DISTRIBUTION IN ONE ROW */
 .book-reviews .ant-rate {
   display: inline-flex !important;
   flex-wrap: nowrap !important;
@@ -608,32 +603,20 @@
   margin-right: 0 !important;
 }
 
-/* Mobile: smaller stars but still in one row */
 @media (max-width: 768px) {
   .book-reviews .ant-rate {
     font-size: 16px !important;
   }
 }
 
-
-/* Reviewer avatar — same style as header avatar, sized to your current 56px */
 .review-avatar {
   border: 2px solid #8A2BE2;
-  /* purple ring, same as header */
   background: #ffffff;
-  /* white background */
   color: #8A2BE2;
-  /* purple initials */
   font-weight: 700;
-  /* bold initials */
   box-shadow: 0 2px 8px rgba(138, 43, 226, 0.20);
-  /* subtle purple shadow */
-  /* AntD Avatar with size={56} already sets width/height & circle shape */
 }
 
-/* === NEW: RECOMMENDATIONS SLIDER (Book Details) — Consistent with Home === */
-
-/* Slide sizing + spacing */
 .recommendations-swiper .swiper-slide {
   width: auto;
   flex-shrink: 0 !important;
@@ -642,16 +625,13 @@
   margin-right: 30px !important;
 }
 
-/* Ensure the BookCard wrapper uses the same fixed width as Home */
 .book-details-page .popular-card-wrapper {
   width: 300px;
-  /* same as .home-page-v2 .popular-card-wrapper */
   height: 100% !important;
   display: flex !important;
   flex-direction: column !important;
 }
 
-/* Navigation buttons (match Home) */
 .recommendations-swiper .swiper-button-next,
 .recommendations-swiper .swiper-button-prev {
   background: white;
@@ -673,7 +653,6 @@
   font-weight: bold;
 }
 
-/* Pagination bullets (match Home) */
 .recommendations-swiper .swiper-pagination {
   opacity: 1 !important;
   visibility: visible !important;
@@ -685,13 +664,9 @@
   background: #9333ea;
 }
 
-/* Optional: neutralize the old grid wrapper in this section since we now use Swiper */
 .recommendations-section .books-grid {
   display: contents;
-  /* keep previous markup harmless; Swiper handles layout */
 }
-
-
 
 .other-editions-block {
   margin-top: 24px;
@@ -749,21 +724,19 @@
   background: #fdf4ff;
 }
 
-
-/* ===== Formats & Editions ===== */
-
 .formats-block {
   margin-top: 24px;
 }
 
 .formats-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #9333ea; /* purple heading */
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 900;
+  font-style: italic;
+  color: #9333ea;
   margin-bottom: 12px;
 }
 
-/* Format tiles row */
 .format-tiles {
   display: flex;
   flex-wrap: wrap;
@@ -774,24 +747,23 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  border: 1.5px solid #ddd;
-  border-radius: 8px;
+  padding: 8px 14px;
+  border: 1.5px solid rgba(124, 58, 237, 0.18);
+  border-radius: 999px;
   background: #fff;
-  color: #333;
+  color: #5b5570;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 .format-tile .fmt-label {
-  font-weight: 600;
+  font-weight: 700;
 }
 .format-tile .fmt-count {
-  font-size: 12px;
-  background: #f3f4f6;
-  color: #555;
-  padding: 2px 6px;
+  font-size: 11.5px;
+  background: rgba(124, 58, 237, 0.08);
+  color: #7c3aed;
+  padding: 2px 7px;
   border-radius: 999px;
-  border: 1px solid #e5e7eb;
 }
 .format-tile:hover {
   border-color: #9333ea;
@@ -799,11 +771,14 @@
 }
 .format-tile.active {
   border-color: #9333ea;
-  background: #fdf4ff;
-  color: #6b21a8;
+  background: linear-gradient(135deg, #7c3aed, #9333ea);
+  color: #fff;
+}
+.format-tile.active .fmt-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
 }
 
-/* Edition chips list */
 .edition-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -865,7 +840,6 @@
   box-shadow: 0 2px 10px rgba(147, 51, 234, 0.18);
 }
 
-/* Current edition (non-clickable) */
 .edition-chip.current {
   cursor: default;
   border-color: #9333ea;
@@ -877,7 +851,6 @@
   border-color: #9333ea;
 }
 
-/* Empty state */
 .edition-empty {
   grid-column: 1 / -1;
   font-size: 14px;
@@ -885,7 +858,6 @@
   padding: 8px 4px;
 }
 
-/* Mobile-friendly tiles */
 @media (max-width: 640px) {
   .format-tiles {
     gap: 6px;
@@ -893,11 +865,9 @@
   .format-tile {
     padding: 6px 10px;
   }
-  
   .edition-list {
-    grid-template-columns: 1fr; /* single-column chips */
+    grid-template-columns: 1fr;
   }
- 
   .edition-chip {
     grid-template-columns: 48px 1fr auto;
     padding: 8px 10px;
@@ -908,20 +878,22 @@
   }
 }
 
-
 .author-bio-section {
-  margin-top: 20px;
+  margin-top: 24px;
   background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  padding: 20px;
+  border: 1px solid rgba(124, 58, 237, 0.1);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 10px 28px rgba(124, 58, 237, 0.06);
 }
 
 .author-bio-title {
-  font-size: 18px;
-  font-weight: 700;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 900;
+  font-style: italic;
   color: #9333ea;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .author-bio-content {
@@ -956,19 +928,16 @@
   }
 }
 
-
-/* Avatar+image stack for author bio */
 .author-bio-avatar {
   position: relative;
   width: 90px;
   height: 90px;
   border-radius: 12px;
   overflow: hidden;
-  border: 2px solid #9333ea; /* matches your purple */
-  background: #fafafa;       /* subtle bg when no image */
+  border: 2px solid #9333ea;
+  background: #fafafa;
 }
 
-/* The overlay image sits on top; avatar is the base */
 .author-bio-photo-img {
   position: absolute;
   inset: 0;
@@ -978,11 +947,10 @@
   z-index: 1;
 }
 
-/* Optional: if you want to target the avatar itself */
 .initials-avatar {
   width: 100%;
   height: 100%;
-  display: flex;            /* (redundant, but safe) */
+  display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 12px;
@@ -995,57 +963,36 @@
   }
 }
 
-
-/* Shippo estimator */
 .shipping-estimator .ship-dest { font-size: 14px; }
 .shipping-estimator .ant-radio-wrapper { display: block; margin-top: 6px; }
 
-
-/* =========================================================
-   MOBILE — Make recommendation cards identical to Home
-   (prevents text & button truncation)
-   ========================================================= */
 @media (max-width: 768px) {
-
-  /* Let Swiper slides grow vertically */
   .book-details-page .recommendations-swiper .swiper-slide {
     height: auto !important;
     display: flex;
     align-items: stretch;
   }
-
-  /* Let the BookCard wrapper grow naturally */
   .book-details-page .popular-card-wrapper {
     height: auto !important;
   }
-
-  /* Ensure the BookCard itself can expand */
   .book-details-page .book-card {
     height: auto !important;
   }
 }
 
-
 @media (max-width: 640px) {
   .author-bio-avatar {
-    margin: 0 auto;          /* ✅ center horizontally */
+    margin: 0 auto;
     display: flex;
-    align-items: center;     /* ✅ center vertically */
-    justify-content: center; /* ✅ center horizontally */
+    align-items: center;
+    justify-content: center;
   }
-
   .author-bio-content {
     align-items: center;
   }
 }
 
-
-/* =========================================================
-   BookDetails mobile: force BookCard.css behavior (like Home)
-   ========================================================= */
 @media (max-width: 768px) {
-
-  /* restore title behavior */
   .book-details-page .recommendations-section .book-card h3 {
     margin: 12px 12px 6px !important;
     font-size: 1rem !important;
@@ -1054,32 +1001,22 @@
     min-height: auto !important;
     max-height: none !important;
   }
-
-  /* restore image height */
   .book-details-page .recommendations-section .book-card--default img {
     height: 220px !important;
   }
-
-  /* restore actions spacing */
   .book-details-page .recommendations-section .book-actions {
     margin: 0 12px 12px !important;
     padding: 0 !important;
     gap: 8px !important;
   }
-
-  /* restore price spacing */
   .book-details-page .recommendations-section .price-block {
     margin: 8px 12px 12px !important;
   }
-
-  /* restore rating spacing */
   .book-details-page .recommendations-section .rating-summary {
     margin: 8px 12px 10px !important;
   }
 }
 
-
-/* --- Mobile: Keep author photo + name on the same row --- */
 @media (max-width: 640px) {
   .author-bio-content {
     display: flex !important;
@@ -1087,25 +1024,21 @@
     align-items: flex-start !important;
     gap: 14px !important;
   }
-
   .author-bio-avatar {
     width: 60px !important;
     height: 60px !important;
     flex-shrink: 0 !important;
     margin: 0 !important;
   }
-
   .author-bio-text {
     flex: 1 !important;
   }
-
   .author-bio-text p {
     font-size: 14px !important;
     line-height: 1.4 !important;
   }
 }
 
-/* Use the same slide sizing as Home */
 .home-swiper .swiper-slide {
   width: auto !important;
   flex-shrink: 0 !important;
@@ -1114,7 +1047,6 @@
   box-sizing: border-box;
 }
 
-/* The same wrapper width the Home page uses around BookCard */
 .popular-card-wrapper {
   width: 100%;
   max-width: 260px !important;
@@ -1122,14 +1054,14 @@
   display: flex;
 }
 
-
-/* Optional: match Home section title look in BookDetails */
 .recommendations-section > .container > h2 {
-  font-size: 2.2rem;
-  font-weight: 800;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 2.1rem;
+  font-weight: 900;
+  font-style: italic;
   color: #9333ea;
   text-align: center;
-  margin: 0px 0 24px;  /* was 50px 0 30px */
+  margin: 0px 0 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1148,39 +1080,32 @@
   .recommendations-section > .container > h2::after { display: none; }
 }
 
-
-/* --- BookDetails-only tightening for stacked author sliders --- */
 .book-details-page .home-swiper .swiper-pagination {
-  margin-top: 12px !important;   /* override Home.css 30px */
+  margin-top: 12px !important;
 }
 
-/* Reduce heading bottom space just a touch for stacked sections */
 .book-details-page .recommendations-section > .container > h2 {
-  margin: 0 0 16px !important;   /* was 24–50px in various places */
+  margin: 0 0 16px !important;
 }
 
-/* Keep section padding modest; prevents compounded white space */
 .book-details-page .recommendations-section {
-  padding: 8px 0 12px !important;   /* slight increase from 5px for breathing */
+  padding: 8px 0 12px !important;
 }
 
-/* Optional: add a tiny separator between author sections only */
 .book-details-page .recommendations-section + .recommendations-section {
-  margin-top: 8px;                  /* replaces big visual gaps with a gentle step */
+  margin-top: 8px;
 }
 
-/* --- Delivery vs. Click & Collect toggle --- */
 .shipping-choice {
   margin-top: 12px;
 }
 
-/* --- Click & Collect info card --- */
 .pickup-card {
   margin-top: 12px;
-  padding: 12px;
-  border: 1px solid #e9d5ff;         /* light purple */
-  background: #fdf4ff;                /* soft purple */
-  border-radius: 10px;
+  padding: 14px;
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  background: rgba(124, 58, 237, 0.04);
+  border-radius: 12px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -1200,16 +1125,16 @@
 
 .pickup-title {
   font-weight: 700;
-  color: #6b21a8;                     /* purple heading */
+  color: #6b21a8;
 }
 
 .pickup-addr {
-  color: #4b5563;
+  color: #7a7490;
   font-size: 13px;
 }
 
 .pickup-free {
-  color: #16a34a;                     /* green "free" */
+  color: #16a34a;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -1266,4 +1191,148 @@
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
+}
+
+/* ── Views badge — prominent trust signal under the author line ── */
+.views-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #7c3aed;
+  background: rgba(124, 58, 237, 0.08);
+  border: 1px solid rgba(124, 58, 237, 0.18);
+  padding: 6px 13px;
+  border-radius: 999px;
+  width: fit-content;
+  margin: 2px 0 4px;
+}
+.views-badge-icon {
+  font-size: 13px;
+}
+
+/* ── Quantity selector ── */
+.qty-selector-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 14px 0;
+}
+.qty-selector-label {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #5b5570;
+}
+.qty-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1.5px solid rgba(124, 58, 237, 0.2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.qty-stepper-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(124, 58, 237, 0.06);
+  color: #7c3aed;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+.qty-stepper-btn:hover:not(:disabled) {
+  background: rgba(124, 58, 237, 0.14);
+}
+.qty-stepper-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.qty-stepper-value {
+  width: 40px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 15px;
+  color: #1f1633;
+}
+
+/* ── Notify-me (out of stock) ── */
+.notify-me-box {
+  margin: 14px 0;
+  padding: 14px;
+  background: rgba(124, 58, 237, 0.04);
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  border-radius: 12px;
+}
+.notify-me-label {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #5b5570;
+  margin: 0 0 10px;
+}
+.notify-me-row {
+  display: flex;
+  gap: 8px;
+}
+.notify-me-input {
+  flex: 1;
+  height: 40px;
+  border: 1.5px solid rgba(124, 58, 237, 0.2);
+  border-radius: 999px;
+  padding: 0 16px;
+  font-size: 13.5px;
+}
+.notify-me-input:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+.notify-me-btn {
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 20px;
+  background: linear-gradient(135deg, #7c3aed, #9333ea);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.2s ease;
+}
+.notify-me-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.notify-me-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.notify-me-confirmed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #16a34a;
+  font-weight: 700;
+  font-size: 13.5px;
+}
+
+/* ── Recently viewed ── */
+.recently-viewed-section {
+  margin-top: 8px;
+  padding: 8px 0 12px;
+}
+.recently-viewed-section h2 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.7rem;
+  font-weight: 900;
+  font-style: italic;
+  color: #9333ea;
+  text-align: center;
+  margin: 0 0 16px;
 }

@@ -312,24 +312,39 @@ async function fulfillRequestsForBook(db, transporter, book, req) {
       const to = reqRow.requester_email || reqRow.user_email;
       if (to) {
         try {
-          await transporter.sendMail({
-            from: process.env.SMTP_FROM || process.env.SMTP_USER,
-            to,
-            subject: 'Requested book is now available',
-            html: `
-              <p>${reqRow.requester_name ? `Hi ${reqRow.requester_name},` : 'Hi,'}</p>
-              <p>Good news! The book you requested is now available:</p>
-              <ul>
-                ${title_en ? `<li><strong>Title:</strong> ${title_en}</li>` : ''}
-                ${isbn13 ? `<li><strong>ISBN-13:</strong> ${isbn13}</li>` : ''}
-                ${isbn10 ? `<li><strong>ISBN-10:</strong> ${isbn10}</li>` : ''}
-              </ul>
-              ${reqRow.user_id
-                ? `<p>We also added it to your wishlist.</p>`
-                : `<p>Create an account or log in to add it to your wishlist.</p>`}
-              <p>Thanks,<br/>Dein Englisch Bücher</p>
-            `
-          });
+          const { buildEmail, SENDER_NAME } = require('./utils/emailTemplate');
+          // Look up the user's language preference — book_requests doesn't store it
+          let lang = 'de';
+          if (reqRow.user_id) {
+            const [[userLang]] = await db.execute('SELECT language FROM users WHERE id = ?', [reqRow.user_id]);
+            lang = userLang?.language || 'de';
+          }
+          const isDe = lang === 'de';
+          const bookTitle = title_en || title_de || '';
+          const bookUrl = `${process.env.FRONTEND_URL}/book/${slugifyTitle(bookTitle)}-${isbn13 || isbn10 || ''}-${bookId}`;
+          const reqSubject = isDe ? 'Dein Buchwunsch ist jetzt verfügbar!' : 'Your requested book is now available!';
+          const bodyHtml = `
+            <p style="font-size:17px;font-weight:600;color:#1a1a2e;margin:0 0 14px;">${isDe ? `Hallo ${reqRow.requester_name || ''},` : `Hi ${reqRow.requester_name || ''},`}</p>
+            <p style="font-size:15px;color:#444;margin:0 0 20px;">${isDe ? 'Gute Neuigkeiten! Das Buch, das du angefragt hast, ist jetzt verfügbar:' : 'Good news! The book you requested is now available:'}</p>
+            <div style="background:#f5f3ff;border-left:4px solid #7c3aed;padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 24px;font-size:14px;color:#333;">
+              ${bookTitle ? `<strong>${isDe ? 'Titel' : 'Title'}:</strong> ${bookTitle}<br>` : ''}
+              ${isbn13 ? `<strong>ISBN-13:</strong> ${isbn13}<br>` : ''}
+              ${isbn10 ? `<strong>ISBN-10:</strong> ${isbn10}` : ''}
+            </div>
+            ${reqRow.user_id
+              ? `<p style="font-size:15px;color:#444;margin:0 0 20px;">${isDe ? 'Wir haben es auch deiner Wunschliste hinzugefügt.' : "We've also added it to your wishlist."}</p>`
+              : `<p style="font-size:15px;color:#444;margin:0 0 20px;">${isDe ? 'Melde dich an, um es deiner Wunschliste hinzuzufügen.' : 'Log in to add it to your wishlist.'}</p>`
+            }
+            <div style="text-align:center;margin:24px 0;">
+              <a href="${bookUrl}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#5e42d6);color:#fff;padding:14px 36px;border-radius:999px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 6px 20px rgba(124,58,237,0.35);">${isDe ? 'Jetzt kaufen' : 'Buy Now'}</a>
+            </div>
+            <div style="font-size:15px;color:#333;margin-top:28px;">
+              ${isDe ? 'Viele Grüße,' : 'Best regards,'}<br>
+              <strong style="color:#7c3aed;">${isDe ? `Dein ${SENDER_NAME} Team` : `Your ${SENDER_NAME} Team`}</strong>
+            </div>
+          `;
+          const html = buildEmail({ lang, title: reqSubject, headerTitle: isDe ? 'Dein Buchwunsch!' : 'Your Book Request!', headerEmoji: '📚', bodyHtml });
+          await transporter.sendMail({ from: `"${SENDER_NAME}" <${process.env.SMTP_USER}>`, to, subject: reqSubject, html });
         } catch (mailErr) {
           console.error('Request notify email failed:', mailErr?.message);
         }
@@ -532,6 +547,29 @@ const computeWorkId = (titleEn, titleDe, author) => {
       new_data: { email: user.email },
       req: { headers: {} }
     });
+
+    // Send welcome email — only fires for NEW users (this block is skipped for returning users)
+    try {
+      const { sendWelcomeEmail } = require('./utils/email');
+      const juice = require('juice');
+      const nodemailer = require('nodemailer');
+      const welcomeTransporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT) || 465,
+        secure: parseInt(process.env.SMTP_PORT) !== 587,
+        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+        tls: { rejectUnauthorized: false },
+      });
+      await sendWelcomeEmail(
+        welcomeTransporter,
+        user.email,
+        user.given_name || 'there',
+        'google',
+        'de'   // default to DE; language not yet known at registration time
+      );
+    } catch (mailErr) {
+      console.error('[Google] Welcome email failed (non-fatal):', mailErr.message);
+    }
 
     return { insertId: result.insertId, ...user };
   });
@@ -1439,7 +1477,50 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
 
   // Record number of views per user per session in a day
+  // ── REPLACES: app.post('/api/books/:id/view', ...) ─────────
+  // Same dedup behavior as before, PLUS: upserts into
+  // recently_viewed for logged-in users (guests handled by
+  // localStorage on the frontend, no server call needed for them).
   app.post('/api/books/:id/view', async (req, res) => {
+    try {
+      const bookId = Number(req.params.id);
+      if (!bookId) return res.status(400).json({ error: 'Invalid book id' });
+
+      const userId = req.user?.id || null;
+
+      if (userId) {
+        const [rows] = await db.execute(
+          `SELECT 1 FROM book_views
+         WHERE book_id = ? AND user_id = ? AND viewed_at >= NOW() - INTERVAL 1 DAY
+         LIMIT 1`,
+          [bookId, userId]
+        );
+
+        // Recently-viewed list updates on every page load regardless of the
+        // once-a-day view-count dedup above — re-viewing a book should bump
+        // it back to the top of "recently viewed" even if it doesn't count
+        // as a fresh stat for analytics purposes.
+        await db.execute(`
+        INSERT INTO recently_viewed (user_id, book_id, viewed_at)
+        VALUES (?, ?, NOW())
+        ON DUPLICATE KEY UPDATE viewed_at = NOW()
+      `, [userId, bookId]).catch(err => {
+          console.error('recently_viewed upsert failed (non-fatal):', err.message);
+        });
+
+        if (rows.length > 0) {
+          return res.json({ success: true, skipped: true });
+        }
+      }
+
+      await db.execute(`INSERT INTO book_views (user_id, book_id) VALUES (?, ?)`, [userId, bookId]);
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Book view error:', err);
+      res.status(500).json({ error: 'Failed to record view' });
+    }
+  });
+  /*app.post('/api/books/:id/view', async (req, res) => {
     try {
       const bookId = Number(req.params.id);
       if (!bookId) return res.status(400).json({ error: 'Invalid book id' });
@@ -1478,7 +1559,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
       console.error('Book view error:', err);
       res.status(500).json({ error: 'Failed to record view' });
     }
-  });
+  });*/
 
 
   // GET FEATURED BOOKS — used in hero banner
@@ -1683,13 +1764,13 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
       const [rows] = email
         ? await db.query(
-            'SELECT * FROM newsletter_subscription_log WHERE email = ? ORDER BY created_at DESC LIMIT ?',
-            [email, limit]
-          )
+          'SELECT * FROM newsletter_subscription_log WHERE email = ? ORDER BY created_at DESC LIMIT ?',
+          [email, limit]
+        )
         : await db.query(
-            'SELECT * FROM newsletter_subscription_log ORDER BY created_at DESC LIMIT ?',
-            [limit]
-          );
+          'SELECT * FROM newsletter_subscription_log ORDER BY created_at DESC LIMIT ?',
+          [limit]
+        );
 
       res.json(rows);
     } catch (err) {
@@ -1781,66 +1862,57 @@ const computeWorkId = (titleEn, titleDe, author) => {
       let html = '';
       try {
         const isDe = language === 'de';
+        const { buildEmail, SENDER_NAME } = require('./utils/emailTemplate');
         const sourceLabel = source === 'homepage'
           ? (isDe ? 'unserer Startseite' : 'our homepage')
           : (isDe ? `"${source}"` : `"${source}"`);
 
         subject = isDe
-          ? 'Willkommen beim englischbücher.de Newsletter! 📚'
-          : 'Welcome to the englischbücher.de newsletter! 📚';
+          ? `Willkommen beim ${SENDER_NAME} Newsletter! 📚`
+          : `Welcome to the ${SENDER_NAME} Newsletter! 📚`;
 
-        html = isDe ? `
-          <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
-            <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
-              <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
-              <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">Willkommen an Bord! 🎉</h1>
-            </div>
-            <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
-              <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 16px;">
-                Danke, dass du dich über ${sourceLabel} angemeldet hast! Du bekommst ab jetzt:
-              </p>
-              <ul style="color:#1a1a2e;font-size:14px;line-height:1.8;padding-left:20px;margin:0 0 24px;">
-                <li>📖 Benachrichtigungen über neue englische Bücher</li>
-                <li>💰 Exklusive Rabatte und Angebote</li>
-                <li>✨ Empfehlungen und Autoren-Spotlights</li>
-              </ul>
-              <div style="text-align:center;margin:28px 0;">
-                <a href="${process.env.FRONTEND_URL}/books" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Bücher entdecken</a>
-              </div>
-              <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
-                Du erhältst diese E-Mail, weil du dich für unseren Newsletter angemeldet hast.<br>
-                <a href="${unsubscribeUrl}" style="color:#9ca3af;text-decoration:underline;">Abbestellen</a>
-              </p>
-            </div>
+        const bodyHtml = isDe ? `
+          <p style="font-size:17px;font-weight:600;color:#1a1a2e;margin:0 0 14px;">Willkommen an Bord! 🎉</p>
+          <p style="font-size:15px;color:#444;margin:0 0 16px;">Danke, dass du dich über ${sourceLabel} angemeldet hast! Du bekommst ab jetzt:</p>
+          <ul style="color:#444;font-size:14px;line-height:1.9;padding-left:20px;margin:0 0 24px;">
+            <li>📖 Benachrichtigungen über neue englische Bücher</li>
+            <li>💰 Exklusive Rabatte und Angebote</li>
+            <li>✨ Empfehlungen und Autoren-Spotlights</li>
+          </ul>
+          <div style="text-align:center;margin:28px 0;">
+            <a href="${process.env.FRONTEND_URL}/books" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#5e42d6);color:#fff;padding:14px 36px;border-radius:999px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 6px 20px rgba(124,58,237,0.35);">Bücher entdecken</a>
           </div>
+          <p style="font-size:13px;color:#9ca3af;text-align:center;margin:16px 0 0;border-top:1px solid #ede9fe;padding-top:16px;">
+            Du erhältst diese E-Mail, weil du dich für unseren Newsletter angemeldet hast.<br>
+            <a href="${unsubscribeUrl}" style="color:#9ca3af;">Abbestellen</a>
+          </p>
         ` : `
-          <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
-            <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
-              <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
-              <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">Welcome aboard! 🎉</h1>
-            </div>
-            <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
-              <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 16px;">
-                Thanks for signing up via ${sourceLabel}! From now on you'll get:
-              </p>
-              <ul style="color:#1a1a2e;font-size:14px;line-height:1.8;padding-left:20px;margin:0 0 24px;">
-                <li>📖 Heads-up on new English book arrivals</li>
-                <li>💰 Exclusive discounts and deals</li>
-                <li>✨ Recommendations and author spotlights</li>
-              </ul>
-              <div style="text-align:center;margin:28px 0;">
-                <a href="${process.env.FRONTEND_URL}/books" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Browse books</a>
-              </div>
-              <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
-                You're receiving this email because you signed up for our newsletter.<br>
-                <a href="${unsubscribeUrl}" style="color:#9ca3af;text-decoration:underline;">Unsubscribe</a>
-              </p>
-            </div>
+          <p style="font-size:17px;font-weight:600;color:#1a1a2e;margin:0 0 14px;">Welcome aboard! 🎉</p>
+          <p style="font-size:15px;color:#444;margin:0 0 16px;">Thanks for signing up via ${sourceLabel}! From now on you'll get:</p>
+          <ul style="color:#444;font-size:14px;line-height:1.9;padding-left:20px;margin:0 0 24px;">
+            <li>📖 Heads-up on new English book arrivals</li>
+            <li>💰 Exclusive discounts and deals</li>
+            <li>✨ Recommendations and author spotlights</li>
+          </ul>
+          <div style="text-align:center;margin:28px 0;">
+            <a href="${process.env.FRONTEND_URL}/books" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#5e42d6);color:#fff;padding:14px 36px;border-radius:999px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 6px 20px rgba(124,58,237,0.35);">Browse Books</a>
           </div>
+          <p style="font-size:13px;color:#9ca3af;text-align:center;margin:16px 0 0;border-top:1px solid #ede9fe;padding-top:16px;">
+            You're receiving this email because you signed up for our newsletter.<br>
+            <a href="${unsubscribeUrl}" style="color:#9ca3af;">Unsubscribe</a>
+          </p>
         `;
 
+        html = buildEmail({
+          lang: isDe ? 'de' : 'en',
+          title: subject,
+          headerTitle: isDe ? 'Willkommen beim Newsletter!' : 'Welcome to our Newsletter!',
+          headerEmoji: '📚',
+          bodyHtml,
+        });
+
         await transporter.sendMail({
-          from: process.env.SMTP_USER,
+          from: `"${SENDER_NAME}" <${process.env.SMTP_USER}>`,
           to: email,
           subject,
           html,
@@ -1851,7 +1923,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
         await db.query(`
           INSERT INTO sent_emails (to_email, subject, html, status, type, created_at)
           VALUES (?, ?, ?, 'sent', 'Newsletter', NOW())
-        `, [email, subject, html]).catch(() => {});
+        `, [email, subject, html]).catch(() => { });
       } catch (mailErr) {
         console.error('Newsletter welcome email failed:', mailErr.message);
 
@@ -1859,7 +1931,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
         await db.query(`
           INSERT INTO sent_emails (to_email, subject, html, status, error, type, created_at)
           VALUES (?, ?, ?, 'failed', ?, 'Newsletter', NOW())
-        `, [email, subject, html, mailErr.message]).catch(() => {});
+        `, [email, subject, html, mailErr.message]).catch(() => { });
       }
 
       res.json({ success: true });
@@ -2405,7 +2477,7 @@ ${bookList}`,
           await db.query(`
             INSERT INTO sent_emails (to_email, subject, html, status, type, created_at)
             VALUES (?, ?, ?, 'sent', 'ReviewRequest', NOW())
-          `, [row.email, subject, html]).catch(() => {});
+          `, [row.email, subject, html]).catch(() => { });
 
           console.log(`[ReviewRequests] Sent email ${sentCount}/4 to ${row.email} for book ${row.book_id}`);
         } catch (sendErr) {
@@ -3110,6 +3182,10 @@ ${bookList}`,
     try {
       await conn.beginTransaction();
 
+      // Read old stock BEFORE update so we can detect 0 → positive transition
+      const [[beforeUpdate]] = await conn.execute('SELECT stock FROM books WHERE id = ?', [id]);
+      const wasOutOfStock = beforeUpdate && Number(beforeUpdate.stock) <= 0;
+
       const [result] = await conn.execute(`
       UPDATE books SET
         title_en = ?, title_de = ?, author = ?, isbn = ?, isbn10 = ?, isbn13 = ?,
@@ -3156,13 +3232,20 @@ ${bookList}`,
 
       await conn.commit();
 
-      // ✅ Fetch and fulfill
+      // ✅ Fetch and fulfill book requests
       const [[updatedBook]] = await db.execute(
         `SELECT id, title_en, title_de, isbn13, isbn10 FROM books WHERE id = ? LIMIT 1`,
         [id]
       );
       if (updatedBook) {
         await fulfillRequestsForBook(db, transporter, updatedBook, req);
+
+        // Fire restock notifications if stock went 0 → positive via general book edit
+        if (wasOutOfStock && stock > 0) {
+          sendRestockNotifications(Number(id)).catch(err =>
+            console.error('[RestockNotify] book-edit trigger failed:', err.message)
+          );
+        }
       }
 
       res.json({ success: true, message: 'Book updated successfully' });
@@ -4383,7 +4466,7 @@ ${bookList}`,
           UPDATE review_requests
           SET review_submitted = 1, stopped = 1
           WHERE user_id = ? AND book_id = ?
-        `, [userId, bookId]).catch(() => {});
+        `, [userId, bookId]).catch(() => { });
       }
 
       res.json({ success: true, message: 'Review submitted!' });
@@ -4439,6 +4522,247 @@ ${bookList}`,
     } catch (err) {
       console.error('by-slug error:', err);
       res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  // =========================================================
+  // PASTE THESE ROUTES INTO server.js, inside the async IIFE,
+  // anywhere alongside your other /api/books/* routes.
+  // Requires the migration in bookdetails_features_migration.sql
+  // to be run first.
+  // =========================================================
+
+  // ── POST /api/books/:id/notify-me ──────────────────────────
+  // Subscribe an email to be notified when this book is back in stock.
+  // Works for both logged-in users and guests (guest must supply email).
+  app.post('/api/books/:id/notify-me', async (req, res) => {
+    const bookId = Number(req.params.id);
+    if (!bookId) return res.status(400).json({ error: 'Invalid book id' });
+
+    const isAuthed = req.isAuthenticated && req.isAuthenticated() && req.user;
+    const email = isAuthed
+      ? (req.user.email || '').trim().toLowerCase()
+      : String(req.body?.email || '').trim().toLowerCase();
+    const userId = isAuthed ? req.user.id : null;
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Valid email is required' });
+    }
+
+    try {
+      // Confirm the book is actually out of stock — no point subscribing
+      // someone to a restock alert for something already available.
+      const [[book]] = await db.execute('SELECT id, stock FROM books WHERE id = ?', [bookId]);
+      if (!book) return res.status(404).json({ error: 'Book not found' });
+      if (book.stock > 0) {
+        return res.status(400).json({ error: 'Book is already in stock' });
+      }
+
+      await db.execute(`
+      INSERT INTO stock_notifications (book_id, email, user_id, created_at)
+      VALUES (?, ?, ?, NOW())
+      ON DUPLICATE KEY UPDATE
+        notified_at = NULL,
+        user_id = COALESCE(VALUES(user_id), user_id)
+    `, [bookId, email, userId]);
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error('POST /api/books/:id/notify-me error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  // ── GET /api/books/:id/notify-me/status ────────────────────
+  // Lets the frontend check if the current user/email is already
+  // subscribed, so the button can show "You're on the list" instead
+  // of the form again.
+  app.get('/api/books/:id/notify-me/status', async (req, res) => {
+    const bookId = Number(req.params.id);
+    const isAuthed = req.isAuthenticated && req.isAuthenticated() && req.user;
+    const email = isAuthed
+      ? (req.user.email || '').trim().toLowerCase()
+      : String(req.query.email || '').trim().toLowerCase();
+
+    if (!bookId || !email) return res.json({ subscribed: false });
+
+    try {
+      const [[row]] = await db.execute(
+        'SELECT id FROM stock_notifications WHERE book_id = ? AND email = ? AND notified_at IS NULL',
+        [bookId, email]
+      );
+      res.json({ subscribed: !!row });
+    } catch (err) {
+      console.error('GET notify-me status error:', err);
+      res.json({ subscribed: false });
+    }
+  });
+
+  // Sends restock emails to everyone pending for a book, then marks them
+  // notified so they're never emailed twice for the same restock event.
+  async function sendRestockNotifications(bookId) {
+    try {
+      const [[book]] = await db.execute(
+        'SELECT id, title_en, title_de, slug, image, isbn13, isbn10, price FROM books WHERE id = ?',
+        [bookId]
+      );
+      if (!book) return;
+
+      const [pending] = await db.execute(
+        `SELECT sn.id, sn.email, u.language, u.first_name
+       FROM stock_notifications sn
+       LEFT JOIN users u ON u.id = sn.user_id
+       WHERE sn.book_id = ? AND sn.notified_at IS NULL`,
+        [bookId]
+      );
+      if (!pending.length) return;
+
+      const bookUrl = `${process.env.FRONTEND_URL}${buildBookUrl(book)}`;
+
+      for (const sub of pending) {
+        const isDe = sub.language === 'de';
+        const title = isDe ? (book.title_de || book.title_en) : (book.title_en || book.title_de);
+
+        const subject = isDe
+          ? `Wieder verfügbar: "${title}"`
+          : `Back in stock: "${title}"`;
+
+        const html = isDe ? `
+        <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
+          <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
+            <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
+            <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">Wieder da! 🎉</h1>
+          </div>
+          <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
+            <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 20px;">
+              Hallo ${sub.first_name || ''}, das Buch, auf das du gewartet hast, ist jetzt wieder auf Lager:
+            </p>
+            <div style="text-align:center;margin:0 0 24px;">
+              ${book.image ? `<img src="${book.image}" alt="${title}" style="width:100px;height:auto;border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,0.15);margin-bottom:14px;">` : ''}
+              <div style="font-size:16px;font-weight:700;color:#1a1a2e;">${title}</div>
+            </div>
+            <div style="text-align:center;margin:0 0 8px;">
+              <a href="${bookUrl}" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Jetzt ansehen</a>
+            </div>
+            <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
+              Bestand ist begrenzt — wir empfehlen, nicht zu lange zu warten.
+            </p>
+          </div>
+        </div>
+      ` : `
+        <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
+          <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
+            <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
+            <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">It's back! 🎉</h1>
+          </div>
+          <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
+            <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 20px;">
+              Hi ${sub.first_name || ''}, the book you were waiting for is back in stock:
+            </p>
+            <div style="text-align:center;margin:0 0 24px;">
+              ${book.image ? `<img src="${book.image}" alt="${title}" style="width:100px;height:auto;border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,0.15);margin-bottom:14px;">` : ''}
+              <div style="font-size:16px;font-weight:700;color:#1a1a2e;">${title}</div>
+            </div>
+            <div style="text-align:center;margin:0 0 8px;">
+              <a href="${bookUrl}" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">View it now</a>
+            </div>
+            <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
+              Stock is limited — we'd recommend not waiting too long.
+            </p>
+          </div>
+        </div>
+      `;
+
+        try {
+          await transporter.sendMail({ from: process.env.SMTP_USER, to: sub.email, subject, html });
+          await db.execute(`
+          INSERT INTO sent_emails (to_email, subject, html, status, type, created_at)
+          VALUES (?, ?, ?, 'sent', 'RestockNotification', NOW())
+        `, [sub.email, subject, html]).catch(() => { });
+        } catch (mailErr) {
+          console.error(`Restock email failed for ${sub.email}:`, mailErr.message);
+          await db.execute(`
+          INSERT INTO sent_emails (to_email, subject, html, status, error, type, created_at)
+          VALUES (?, ?, ?, 'failed', ?, 'RestockNotification', NOW())
+        `, [sub.email, subject, html, mailErr.message]).catch(() => { });
+        }
+
+        // Mark notified regardless of email success, so we don't retry-spam
+        // someone forever if their address bounces every time.
+        await db.execute('UPDATE stock_notifications SET notified_at = NOW() WHERE id = ?', [sub.id]);
+      }
+
+      console.log(`[RestockNotify] Sent ${pending.length} email(s) for book ${bookId}`);
+    } catch (err) {
+      console.error('sendRestockNotifications error:', err);
+    }
+  }
+
+  // ── GET /api/users/me/recently-viewed ──────────────────────
+  // Logged-in users only — guests use localStorage on the frontend.
+  app.get('/api/users/me/recently-viewed', authMiddleware, async (req, res) => {
+    try {
+      const limit = Math.min(Math.max(Number(req.query.limit) || 8, 1), 20);
+      const [rows] = await db.execute(`
+      SELECT b.id, b.title_en, b.title_de, b.author, b.slug, b.image,
+             b.price, b.original_price, b.rating, b.review_count,
+             b.isbn13, b.isbn10, b.stock
+      FROM recently_viewed rv
+      JOIN books b ON b.id = rv.book_id
+      WHERE rv.user_id = ?
+      ORDER BY rv.viewed_at DESC
+      LIMIT ?
+    `, [req.user.id, limit]);
+
+      const origin = `${req.protocol}://${req.get('host')}`;
+      const normalize = (url) => {
+        if (!url) return null;
+        if (url.startsWith('http://') || url.startsWith('https://')) return url;
+        return `${origin}${url.startsWith('/') ? '' : '/'}${url}`;
+      };
+      res.json(rows.map(b => ({ ...b, image: normalize(b.image) })));
+    } catch (err) {
+      console.error('GET recently-viewed error:', err);
+      res.json([]);
+    }
+  });
+
+  // ── POST /api/books/by-ids ──────────────────────────────────
+  // Used by the frontend to resolve a guest's localStorage list of
+  // book IDs into full book objects for rendering the strip.
+  app.post('/api/books/by-ids', async (req, res) => {
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.map(Number).filter(Boolean).slice(0, 20)
+      : [];
+    if (!ids.length) return res.json([]);
+
+    try {
+      const placeholders = ids.map(() => '?').join(',');
+      const [rows] = await db.query(`
+      SELECT id, title_en, title_de, author, slug, image,
+             price, original_price, rating, review_count,
+             isbn13, isbn10, stock
+      FROM books
+      WHERE id IN (${placeholders})
+    `, ids);
+
+      // Preserve the order the frontend asked for (most-recent-first),
+      // since SQL's IN() doesn't guarantee result order.
+      const byId = new Map(rows.map(r => [r.id, r]));
+      const origin = `${req.protocol}://${req.get('host')}`;
+      const normalize = (url) => {
+        if (!url) return null;
+        if (url.startsWith('http://') || url.startsWith('https://')) return url;
+        return `${origin}${url.startsWith('/') ? '' : '/'}${url}`;
+      };
+      const ordered = ids.map(id => byId.get(id)).filter(Boolean)
+        .map(b => ({ ...b, image: normalize(b.image) }));
+
+      res.json(ordered);
+    } catch (err) {
+      console.error('POST /api/books/by-ids error:', err);
+      res.json([]);
     }
   });
 
@@ -5920,7 +6244,7 @@ WHERE ci.user_id = ?
     res.json({ success: true });
   });
 
-  app.put('/api/admin/books/stock/:id', async (req, res) => {
+  /*app.put('/api/admin/books/stock/:id', async (req, res) => {
     const { stock } = req.body;
 
     await db.execute(`
@@ -5934,8 +6258,42 @@ WHERE ci.user_id = ?
     ]);
 
     res.json({ success: true });
+  });*/
+  // ── REPLACES: app.put('/api/admin/books/stock/:id', ...) ───
+  // Same stock-update behavior as before, PLUS: detects the
+  // 0 -> positive transition and fires restock notification
+  // emails to everyone waiting on this book.
+  app.put('/api/admin/books/stock/:id', async (req, res) => {
+    const { stock } = req.body;
+    const bookId = req.params.id;
+
+    try {
+      // Read the OLD stock value before updating, so we can detect the
+      // 0 -> positive transition precisely (only fire emails on that exact
+      // transition, never on every stock edit).
+      const [[before]] = await db.execute('SELECT stock FROM books WHERE id = ?', [bookId]);
+      const wasOutOfStock = before && Number(before.stock) <= 0;
+
+      await db.execute(`
+      UPDATE books
+      SET stock = ?, is_available = ?
+      WHERE id = ?
+    `, [stock, stock > 0 ? 1 : 0, bookId]);
+
+      const isNowInStock = Number(stock) > 0;
+      if (wasOutOfStock && isNowInStock) {
+        // Fire-and-forget — don't make the admin's save wait on email sending.
+        sendRestockNotifications(Number(bookId)).catch(err =>
+          console.error('sendRestockNotifications failed:', err)
+        );
+      }
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error('PUT /api/admin/books/stock/:id error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
   });
-  ``
 
 
 

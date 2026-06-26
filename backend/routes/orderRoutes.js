@@ -420,6 +420,8 @@ module.exports = (db, transporter) => {
       paymentResult,
       totalPrice,
       wallet_used,
+      discount_code,
+      discount_amount,
 
       // NEW — shipping metadata coming from CheckoutPage
       shipping_selected_rate_id,
@@ -638,11 +640,15 @@ module.exports = (db, transporter) => {
             total: totalPrice,
             is_paid: isPaid ? 1 : 0,
             paid_at: isPaid ? new Date() : null,
+            created_at: new Date(),
             status: isPaid ? 'processing' : 'pending',
             inventory_adjusted: 1,
             shipping_amount_eur: Number(shipping_amount_eur || 0),
             shipping_provider: shipping_provider || null,
-            shipping_service: shipping_service || null
+            shipping_service: shipping_service || null,
+            coupon_code: discount_code || null,
+            coupon_discount: Number(discount_amount || 0),
+            wallet_used: Number(wallet_used || 0),
           };
           // fire and forget
           sendInvoiceEmail(fullOrder, user, user.language || 'de').catch(console.error);

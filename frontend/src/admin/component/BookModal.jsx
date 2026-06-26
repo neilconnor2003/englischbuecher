@@ -931,7 +931,7 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
       series_name: data.series_name?.trim() || null,
       series_volume: data.series_volume?.trim() || null,
       reading_age: data.reading_age?.trim() || null,
-      tags: data.tags?.trim() || null,
+      tags: Array.isArray(data.tags) ? data.tags.join(', ').trim() || null : (data.tags?.trim() || null),
 
       //length_cm: parsedDims?.length_cm ?? null,
       //width_cm: parsedDims?.width_cm ?? null,

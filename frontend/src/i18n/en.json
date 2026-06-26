@@ -562,5 +562,6 @@
   "credit": "Credit",
   "debit": "Debit",
   "reason": "Reason",
-  "amount": "Amount"
+  "amount": "Amount",
+  "free_delivery_applied": "Free delivery applied"
 }

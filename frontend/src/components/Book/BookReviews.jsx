@@ -163,9 +163,17 @@ function BookReviews({ bookId }) {
                   {t('reviews.no_reviews_yet')}
                 </h3>
                 <p className="text-gray-500 mb-8">
-                  {t('reviews.be_the_first')}
+                  {t('reviews.be_the_first')}{' '}
+                  <button
+                    type="button"
+                    onClick={() => setModalOpen(true)}
+                    className="text-purple-600 hover:text-purple-800 underline font-medium bg-transparent border-none cursor-pointer p-0"
+                  >
+                    {t('reviews.write_first') || 'Write a review'}
+                  </button>
                 </p>
-                <Button size="large" type="primary" onClick={() => setModalOpen(true)}>
+                <Button size="large" type="primary" onClick={() => setModalOpen(true)}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 border-none h-12 px-8 text-base font-bold rounded-2xl">
                   {t('reviews.write_first')}
                 </Button>
               </div>
