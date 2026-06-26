@@ -409,9 +409,8 @@ const ProfilePage = () => {
                           </Tag>
                         </div>
 
-                        {/* Shipping summary (small, inline) */}
+                        {/* Shipping summary */}
                         <div className="order-shipping-mini" style={{ marginTop: 6, fontSize: '0.85rem', color: '#555' }}>
-                          {/* cost */}
                           <span>
                             {t('cart.shipping_label') || 'Shipping'}:{' '}
                             <strong>
@@ -420,11 +419,9 @@ const ProfilePage = () => {
                                 : '—'}
                             </strong>
                           </span>
-                          {/* provider/service */}
                           {order.shipping_provider ? (
                             <span> · {order.shipping_provider}{order.shipping_service ? ` · ${order.shipping_service}` : ''}</span>
                           ) : null}
-                          {/* tracking link */}
                           {order.tracking_number ? (
                             <>
                               {' '}· {t('tracking_number') || 'Tracking'}: <strong>{order.tracking_number}</strong>
@@ -436,6 +433,23 @@ const ProfilePage = () => {
                             <span style={{ color: '#999' }}> · {t('tracking_pending') || 'Label pending'}</span>
                           )}
                         </div>
+
+                        {/* Coupon discount */}
+                        {order.coupon_code && Number(order.coupon_discount) > 0 && (
+                          <div style={{ marginTop: 4, fontSize: '0.85rem', color: '#16a34a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ background: '#dcfce7', color: '#15803d', padding: '1px 8px', borderRadius: 6, fontWeight: 700, fontSize: '0.78rem' }}>
+                              {order.coupon_code}
+                            </span>
+                            <span>−€{Number(order.coupon_discount).toFixed(2)}</span>
+                          </div>
+                        )}
+
+                        {/* Wallet used */}
+                        {Number(order.wallet_used) > 0 && (
+                          <div style={{ marginTop: 4, fontSize: '0.85rem', color: '#7c3aed' }}>
+                            💜 {t('wallet_used') || 'Wallet credit'}: −€{Number(order.wallet_used).toFixed(2)}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
