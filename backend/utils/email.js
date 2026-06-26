@@ -1,7 +1,6 @@
 // backend/utils/email.js
 const nodemailer = require('nodemailer');
 const juice = require('juice');
-const config = require('../config');
 const { buildEmail, SENDER_NAME } = require('./emailTemplate');
 
 async function sendWelcomeEmail(transporter, to, name, method, lang = 'de', verifyUrl = null) {
@@ -46,8 +45,8 @@ async function sendWelcomeEmail(transporter, to, name, method, lang = 'de', veri
   const subject = isGoogle ? t.title_google : t.title_manual;
   const buttonText = isGoogle ? t.button_google : t.button_manual;
   const buttonLink = isGoogle
-    ? `${config.FRONTEND_URL}/`
-    : (verifyUrl || `${config.FRONTEND_URL}/login`);
+    ? `${process.env.FRONTEND_URL || 'https://englischbuecher.de'}/`
+    : (verifyUrl || `${process.env.FRONTEND_URL || 'https://englischbuecher.de'}/login`);
 
   const bodyHtml = `
     <p class="greeting">${t.greeting}</p>

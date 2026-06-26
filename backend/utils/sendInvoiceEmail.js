@@ -1,6 +1,4 @@
 // backend/utils/sendInvoiceEmail.js
-const emailFooter = require('./emailFooter');
-
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
@@ -9,9 +7,8 @@ const { logEmail } = require('./emailLogger');
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT) || 587,
-  //secure: false,
-  secure: true,   // ✅ VERY IMPORTANT for 465 (SSL)
+  port: parseInt(process.env.SMTP_PORT) || 465,
+  secure: parseInt(process.env.SMTP_PORT) !== 587,
   auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
   tls: { rejectUnauthorized: false },
 });
@@ -131,38 +128,82 @@ module.exports = async (order, user, lang = 'de') => {
     });
 
     // === EMAIL ===
-    subject = lang === 'de' ? `Ihre Rechnung #${order.id}` : `Your Invoice #${order.id}`;
-    const greeting = lang === 'de' ? `Hallo ${user.first_name},` : `Hi ${user.first_name},`;
+    const { buildEmail, SENDER_NAME } = require('./emailTemplate');
+    subject = lang === 'de' ? `Deine Rechnung #${order.id}` : `Your Invoice #${order.id}`;
 
+    const orderDateStr = order.created_at
+      ? new Date(order.created_at).toLocaleDateString(lang === 'de' ? 'de-DE' : 'en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
+      : (lang === 'de' ? 'Unbekanntes Datum' : 'Unknown date');
 
-    htmlBody = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 12px;">
-          ${fs.existsSync(logoPath) ? `<img src="cid:logo" style="width: 100px; display: block; margin: 0 auto 20px;" />` : ''}
-          <h2 style="color: #4f46e5; text-align: center;">${lang === 'de' ? 'Vielen Dank für Ihren Einkauf!' : 'Thank you for your purchase!'}</h2>
-          <p>${greeting}</p>
-          <p>${lang === 'de' ? 'Ihre Bestellung' : 'Your order'} <strong>#${order.id}</strong> ${lang === 'de' ? 'wurde erfolgreich abgeschlossen.' : 'has been successfully completed.'}</p>
-          <p>${lang === 'de' ? 'Im Anhang finden Sie Ihre Rechnung als PDF.' : 'Your invoice is attached as PDF.'}</p>
-          <p>${lang === 'de' ? 'Mit freundlichen Grüßen' : 'Best regards'},<br><strong>Englisch Buecher Team</strong></p>
+    const FRONTEND_URL = process.env.FRONTEND_URL || 'https://englischbuecher.de';
 
-          ${emailFooter(lang)}
-          
-        </div>
+    const emailItemRows = items.map(item => {
+      const lineTotal = ((item.price || 0) * (item.quantity || 1)).toFixed(2);
+      return `<tr>
+        <td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;color:#333;">${item.title_en || 'Unknown Book'}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;text-align:center;color:#333;">${item.quantity}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;text-align:right;color:#333;">€${(item.price || 0).toFixed(2)}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;text-align:right;color:#333;">€${lineTotal}</td>
+      </tr>`;
+    }).join('');
+
+    const emailShippingAmt = Number(order.shipping_amount_eur || 0);
+    const emailCouponAmt   = Number(order.coupon_discount || 0);
+    const emailWalletAmt   = Number(order.wallet_used || 0);
+
+    const extraRows = [
+      emailShippingAmt > 0 ? `<tr><td colspan="3" style="padding:8px 12px;text-align:right;color:#555;">${lang === 'de' ? 'Versand' : 'Shipping'}</td><td style="padding:8px 12px;text-align:right;color:#555;">€${emailShippingAmt.toFixed(2)}</td></tr>` : '',
+      emailCouponAmt > 0   ? `<tr><td colspan="3" style="padding:8px 12px;text-align:right;color:#16a34a;">${lang === 'de' ? 'Gutschein' : 'Coupon'}${order.coupon_code ? ` (${order.coupon_code})` : ''}</td><td style="padding:8px 12px;text-align:right;color:#16a34a;">−€${emailCouponAmt.toFixed(2)}</td></tr>` : '',
+      emailWalletAmt > 0   ? `<tr><td colspan="3" style="padding:8px 12px;text-align:right;color:#7c3aed;">${lang === 'de' ? 'Guthaben' : 'Wallet credit'}</td><td style="padding:8px 12px;text-align:right;color:#7c3aed;">−€${emailWalletAmt.toFixed(2)}</td></tr>` : '',
+      `<tr><td colspan="3" style="padding:12px;text-align:right;font-weight:700;font-size:16px;color:#1a1a2e;">${lang === 'de' ? 'Gesamtbetrag' : 'Grand Total'}</td><td style="padding:12px;text-align:right;font-weight:700;font-size:16px;color:#1a1a2e;">€${total.toFixed(2)}</td></tr>`,
+    ].join('');
+
+    const bodyHtml = `
+      <p class="greeting">${lang === 'de' ? `Hallo ${user.first_name},` : `Hi ${user.first_name},`}</p>
+      <p class="text">
+        ${lang === 'de'
+          ? `Deine Bestellung <strong>#${order.id}</strong> vom <strong>${orderDateStr}</strong> wurde erfolgreich abgeschlossen. Im Anhang findest du deine Rechnung als PDF.`
+          : `Your order <strong>#${order.id}</strong> placed on <strong>${orderDateStr}</strong> has been successfully completed. Your invoice is attached as a PDF.`}
+      </p>
+      <table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;">
+        <thead>
+          <tr>
+            <th style="background:#f5f3ff;color:#5e42d6;font-weight:700;padding:10px 12px;text-align:left;">${lang === 'de' ? 'Artikel' : 'Item'}</th>
+            <th style="background:#f5f3ff;color:#5e42d6;font-weight:700;padding:10px 12px;text-align:center;">${lang === 'de' ? 'Menge' : 'Qty'}</th>
+            <th style="background:#f5f3ff;color:#5e42d6;font-weight:700;padding:10px 12px;text-align:right;">${lang === 'de' ? 'Preis' : 'Price'}</th>
+            <th style="background:#f5f3ff;color:#5e42d6;font-weight:700;padding:10px 12px;text-align:right;">${lang === 'de' ? 'Gesamt' : 'Total'}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${emailItemRows}
+          ${extraRows}
+        </tbody>
+      </table>
+      <div class="btn-wrap">
+        <a href="${FRONTEND_URL}/profile#orders" class="btn">${lang === 'de' ? 'Meine Bestellungen' : 'View My Orders'}</a>
+      </div>
+      <div class="regards">
+        ${lang === 'de' ? 'Mit freundlichen Grüßen' : 'Best regards'},<br>
+        <div class="regards-team">${SENDER_NAME} Team</div>
+      </div>
     `;
 
+    htmlBody = buildEmail({
+      lang,
+      title: subject,
+      headerTitle: lang === 'de' ? 'Vielen Dank für deinen Einkauf!' : 'Thank you for your purchase!',
+      headerEmoji: '🎉',
+      bodyHtml,
+    });
 
     await transporter.sendMail({
-      from: `"Englisch Buecher" <${process.env.SMTP_USER}>`,
+      from: `"${SENDER_NAME}" <${process.env.SMTP_USER}>`,
       to: user.email,
       subject,
       html: htmlBody,
       attachments: [
         { filename, path: filepath, contentType: 'application/pdf' },
-        fs.existsSync(logoPath) ? {
-          filename: 'logo.png',
-          path: logoPath,
-          cid: 'logo'
-        } : null
-      ].filter(Boolean)
+      ]
     });
 
 

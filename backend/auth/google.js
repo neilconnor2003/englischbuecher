@@ -1,7 +1,6 @@
 // backend/auth/google.js
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const { sendWelcomeEmail } = require('../utils/email');
 
 //const API_URL = process.env.BACKEND_URL;
 const API_URL = process.env.FRONTEND_URL;
@@ -22,14 +21,15 @@ module.exports = function (db) {
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    //callbackURL: `${API_URL}/auth/google/callback`,
     callbackURL,
     scope: ['profile', 'email'],
-    //state: true
-    state: false
-  }, async (accessToken, refreshToken, profile, done) => {
+    state: false,
+    passReqToCallback: true,   // gives us access to req so we can read Accept-Language
+  }, async (req, accessToken, refreshToken, profile, done) => {
     try {
-      const email = profile.emails[0].value;
+      // Detect language from browser headers — default to 'de' for German market
+      const acceptLang = req.headers['accept-language'] || '';
+      const lang = acceptLang.toLowerCase().startsWith('de') ? 'de' : 'en';
       const givenName = profile.name?.givenName || '';
       const familyName = profile.name?.familyName || '';
       const displayName = profile.displayName || '';
@@ -104,8 +104,8 @@ module.exports = function (db) {
       const [result] = await db.execute(
         `INSERT INTO users
    (email, first_name, last_name, photo_url, registration_method, language, created_at, email_verified_at, deleted_at)
-   VALUES (?, ?, ?, ?, 'google', 'de', NOW(), NOW(), '1970-01-01 00:00:01')`,
-        [email, safeFirstName, safeLastName, photoURL]
+   VALUES (?, ?, ?, ?, 'google', ?, NOW(), NOW(), '1970-01-01 00:00:01')`,
+        [email, safeFirstName, safeLastName, photoURL, lang]
       );
 
       const newUser = {
@@ -116,14 +116,23 @@ module.exports = function (db) {
         photoURL,
         displayName: `${safeFirstName} ${safeLastName}`.trim(),
         role: 'user',
-        language: 'de'
+        language: lang
       };
 
       // SEND WELCOME EMAIL
       try {
-        sendWelcomeEmail(email, newUser.first_name, 'google');
+        const nodemailer = require('nodemailer');
+        const { sendWelcomeEmail } = require('../utils/email');
+        const welcomeTransporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: parseInt(process.env.SMTP_PORT) || 465,
+          secure: parseInt(process.env.SMTP_PORT) !== 587,
+          auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+          tls: { rejectUnauthorized: false },
+        });
+        await sendWelcomeEmail(welcomeTransporter, email, newUser.first_name, 'google', lang);
       } catch (emailErr) {
-        console.warn('Welcome email failed:', emailErr);
+        console.warn('[Google] Welcome email failed (non-fatal):', emailErr.message);
       }
 
       return done(null, newUser);

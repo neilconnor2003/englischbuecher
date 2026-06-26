@@ -1862,66 +1862,57 @@ const computeWorkId = (titleEn, titleDe, author) => {
       let html = '';
       try {
         const isDe = language === 'de';
+        const { buildEmail, SENDER_NAME } = require('./utils/emailTemplate');
         const sourceLabel = source === 'homepage'
           ? (isDe ? 'unserer Startseite' : 'our homepage')
           : (isDe ? `"${source}"` : `"${source}"`);
 
         subject = isDe
-          ? 'Willkommen beim englischbücher.de Newsletter! 📚'
-          : 'Welcome to the englischbücher.de newsletter! 📚';
+          ? `Willkommen beim ${SENDER_NAME} Newsletter! 📚`
+          : `Welcome to the ${SENDER_NAME} Newsletter! 📚`;
 
-        html = isDe ? `
-          <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
-            <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
-              <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
-              <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">Willkommen an Bord! 🎉</h1>
-            </div>
-            <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
-              <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 16px;">
-                Danke, dass du dich über ${sourceLabel} angemeldet hast! Du bekommst ab jetzt:
-              </p>
-              <ul style="color:#1a1a2e;font-size:14px;line-height:1.8;padding-left:20px;margin:0 0 24px;">
-                <li>📖 Benachrichtigungen über neue englische Bücher</li>
-                <li>💰 Exklusive Rabatte und Angebote</li>
-                <li>✨ Empfehlungen und Autoren-Spotlights</li>
-              </ul>
-              <div style="text-align:center;margin:28px 0;">
-                <a href="${process.env.FRONTEND_URL}/books" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Bücher entdecken</a>
-              </div>
-              <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
-                Du erhältst diese E-Mail, weil du dich für unseren Newsletter angemeldet hast.<br>
-                <a href="${unsubscribeUrl}" style="color:#9ca3af;text-decoration:underline;">Abbestellen</a>
-              </p>
-            </div>
+        const bodyHtml = isDe ? `
+          <p style="font-size:17px;font-weight:600;color:#1a1a2e;margin:0 0 14px;">Willkommen an Bord! 🎉</p>
+          <p style="font-size:15px;color:#444;margin:0 0 16px;">Danke, dass du dich über ${sourceLabel} angemeldet hast! Du bekommst ab jetzt:</p>
+          <ul style="color:#444;font-size:14px;line-height:1.9;padding-left:20px;margin:0 0 24px;">
+            <li>📖 Benachrichtigungen über neue englische Bücher</li>
+            <li>💰 Exklusive Rabatte und Angebote</li>
+            <li>✨ Empfehlungen und Autoren-Spotlights</li>
+          </ul>
+          <div style="text-align:center;margin:28px 0;">
+            <a href="${process.env.FRONTEND_URL}/books" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#5e42d6);color:#fff;padding:14px 36px;border-radius:999px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 6px 20px rgba(124,58,237,0.35);">Bücher entdecken</a>
           </div>
+          <p style="font-size:13px;color:#9ca3af;text-align:center;margin:16px 0 0;border-top:1px solid #ede9fe;padding-top:16px;">
+            Du erhältst diese E-Mail, weil du dich für unseren Newsletter angemeldet hast.<br>
+            <a href="${unsubscribeUrl}" style="color:#9ca3af;">Abbestellen</a>
+          </p>
         ` : `
-          <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
-            <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
-              <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
-              <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">Welcome aboard! 🎉</h1>
-            </div>
-            <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
-              <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 16px;">
-                Thanks for signing up via ${sourceLabel}! From now on you'll get:
-              </p>
-              <ul style="color:#1a1a2e;font-size:14px;line-height:1.8;padding-left:20px;margin:0 0 24px;">
-                <li>📖 Heads-up on new English book arrivals</li>
-                <li>💰 Exclusive discounts and deals</li>
-                <li>✨ Recommendations and author spotlights</li>
-              </ul>
-              <div style="text-align:center;margin:28px 0;">
-                <a href="${process.env.FRONTEND_URL}/books" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Browse books</a>
-              </div>
-              <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
-                You're receiving this email because you signed up for our newsletter.<br>
-                <a href="${unsubscribeUrl}" style="color:#9ca3af;text-decoration:underline;">Unsubscribe</a>
-              </p>
-            </div>
+          <p style="font-size:17px;font-weight:600;color:#1a1a2e;margin:0 0 14px;">Welcome aboard! 🎉</p>
+          <p style="font-size:15px;color:#444;margin:0 0 16px;">Thanks for signing up via ${sourceLabel}! From now on you'll get:</p>
+          <ul style="color:#444;font-size:14px;line-height:1.9;padding-left:20px;margin:0 0 24px;">
+            <li>📖 Heads-up on new English book arrivals</li>
+            <li>💰 Exclusive discounts and deals</li>
+            <li>✨ Recommendations and author spotlights</li>
+          </ul>
+          <div style="text-align:center;margin:28px 0;">
+            <a href="${process.env.FRONTEND_URL}/books" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#5e42d6);color:#fff;padding:14px 36px;border-radius:999px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 6px 20px rgba(124,58,237,0.35);">Browse Books</a>
           </div>
+          <p style="font-size:13px;color:#9ca3af;text-align:center;margin:16px 0 0;border-top:1px solid #ede9fe;padding-top:16px;">
+            You're receiving this email because you signed up for our newsletter.<br>
+            <a href="${unsubscribeUrl}" style="color:#9ca3af;">Unsubscribe</a>
+          </p>
         `;
 
+        html = buildEmail({
+          lang: isDe ? 'de' : 'en',
+          title: subject,
+          headerTitle: isDe ? 'Willkommen beim Newsletter!' : 'Welcome to our Newsletter!',
+          headerEmoji: '📚',
+          bodyHtml,
+        });
+
         await transporter.sendMail({
-          from: process.env.SMTP_USER,
+          from: `"${SENDER_NAME}" <${process.env.SMTP_USER}>`,
           to: email,
           subject,
           html,
