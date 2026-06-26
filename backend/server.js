@@ -312,24 +312,39 @@ async function fulfillRequestsForBook(db, transporter, book, req) {
       const to = reqRow.requester_email || reqRow.user_email;
       if (to) {
         try {
-          await transporter.sendMail({
-            from: process.env.SMTP_FROM || process.env.SMTP_USER,
-            to,
-            subject: 'Requested book is now available',
-            html: `
-              <p>${reqRow.requester_name ? `Hi ${reqRow.requester_name},` : 'Hi,'}</p>
-              <p>Good news! The book you requested is now available:</p>
-              <ul>
-                ${title_en ? `<li><strong>Title:</strong> ${title_en}</li>` : ''}
-                ${isbn13 ? `<li><strong>ISBN-13:</strong> ${isbn13}</li>` : ''}
-                ${isbn10 ? `<li><strong>ISBN-10:</strong> ${isbn10}</li>` : ''}
-              </ul>
-              ${reqRow.user_id
-                ? `<p>We also added it to your wishlist.</p>`
-                : `<p>Create an account or log in to add it to your wishlist.</p>`}
-              <p>Thanks,<br/>Dein Englisch Bücher</p>
-            `
-          });
+          const { buildEmail, SENDER_NAME } = require('./utils/emailTemplate');
+          // Look up the user's language preference — book_requests doesn't store it
+          let lang = 'de';
+          if (reqRow.user_id) {
+            const [[userLang]] = await db.execute('SELECT language FROM users WHERE id = ?', [reqRow.user_id]);
+            lang = userLang?.language || 'de';
+          }
+          const isDe = lang === 'de';
+          const bookTitle = title_en || title_de || '';
+          const bookUrl = `${process.env.FRONTEND_URL}/book/${slugifyTitle(bookTitle)}-${isbn13 || isbn10 || ''}-${bookId}`;
+          const reqSubject = isDe ? 'Dein Buchwunsch ist jetzt verfügbar!' : 'Your requested book is now available!';
+          const bodyHtml = `
+            <p style="font-size:17px;font-weight:600;color:#1a1a2e;margin:0 0 14px;">${isDe ? `Hallo ${reqRow.requester_name || ''},` : `Hi ${reqRow.requester_name || ''},`}</p>
+            <p style="font-size:15px;color:#444;margin:0 0 20px;">${isDe ? 'Gute Neuigkeiten! Das Buch, das du angefragt hast, ist jetzt verfügbar:' : 'Good news! The book you requested is now available:'}</p>
+            <div style="background:#f5f3ff;border-left:4px solid #7c3aed;padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 24px;font-size:14px;color:#333;">
+              ${bookTitle ? `<strong>${isDe ? 'Titel' : 'Title'}:</strong> ${bookTitle}<br>` : ''}
+              ${isbn13 ? `<strong>ISBN-13:</strong> ${isbn13}<br>` : ''}
+              ${isbn10 ? `<strong>ISBN-10:</strong> ${isbn10}` : ''}
+            </div>
+            ${reqRow.user_id
+              ? `<p style="font-size:15px;color:#444;margin:0 0 20px;">${isDe ? 'Wir haben es auch deiner Wunschliste hinzugefügt.' : "We've also added it to your wishlist."}</p>`
+              : `<p style="font-size:15px;color:#444;margin:0 0 20px;">${isDe ? 'Melde dich an, um es deiner Wunschliste hinzuzufügen.' : 'Log in to add it to your wishlist.'}</p>`
+            }
+            <div style="text-align:center;margin:24px 0;">
+              <a href="${bookUrl}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#5e42d6);color:#fff;padding:14px 36px;border-radius:999px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 6px 20px rgba(124,58,237,0.35);">${isDe ? 'Jetzt kaufen' : 'Buy Now'}</a>
+            </div>
+            <div style="font-size:15px;color:#333;margin-top:28px;">
+              ${isDe ? 'Viele Grüße,' : 'Best regards,'}<br>
+              <strong style="color:#7c3aed;">${isDe ? `Dein ${SENDER_NAME} Team` : `Your ${SENDER_NAME} Team`}</strong>
+            </div>
+          `;
+          const html = buildEmail({ lang, title: reqSubject, headerTitle: isDe ? 'Dein Buchwunsch!' : 'Your Book Request!', headerEmoji: '📚', bodyHtml });
+          await transporter.sendMail({ from: `"${SENDER_NAME}" <${process.env.SMTP_USER}>`, to, subject: reqSubject, html });
         } catch (mailErr) {
           console.error('Request notify email failed:', mailErr?.message);
         }
@@ -532,6 +547,29 @@ const computeWorkId = (titleEn, titleDe, author) => {
       new_data: { email: user.email },
       req: { headers: {} }
     });
+
+    // Send welcome email — only fires for NEW users (this block is skipped for returning users)
+    try {
+      const { sendWelcomeEmail } = require('./utils/email');
+      const juice = require('juice');
+      const nodemailer = require('nodemailer');
+      const welcomeTransporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT) || 465,
+        secure: parseInt(process.env.SMTP_PORT) !== 587,
+        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+        tls: { rejectUnauthorized: false },
+      });
+      await sendWelcomeEmail(
+        welcomeTransporter,
+        user.email,
+        user.given_name || 'there',
+        'google',
+        'de'   // default to DE; language not yet known at registration time
+      );
+    } catch (mailErr) {
+      console.error('[Google] Welcome email failed (non-fatal):', mailErr.message);
+    }
 
     return { insertId: result.insertId, ...user };
   });
@@ -3153,6 +3191,10 @@ ${bookList}`,
     try {
       await conn.beginTransaction();
 
+      // Read old stock BEFORE update so we can detect 0 → positive transition
+      const [[beforeUpdate]] = await conn.execute('SELECT stock FROM books WHERE id = ?', [id]);
+      const wasOutOfStock = beforeUpdate && Number(beforeUpdate.stock) <= 0;
+
       const [result] = await conn.execute(`
       UPDATE books SET
         title_en = ?, title_de = ?, author = ?, isbn = ?, isbn10 = ?, isbn13 = ?,
@@ -3199,13 +3241,20 @@ ${bookList}`,
 
       await conn.commit();
 
-      // ✅ Fetch and fulfill
+      // ✅ Fetch and fulfill book requests
       const [[updatedBook]] = await db.execute(
         `SELECT id, title_en, title_de, isbn13, isbn10 FROM books WHERE id = ? LIMIT 1`,
         [id]
       );
       if (updatedBook) {
         await fulfillRequestsForBook(db, transporter, updatedBook, req);
+
+        // Fire restock notifications if stock went 0 → positive via general book edit
+        if (wasOutOfStock && stock > 0) {
+          sendRestockNotifications(Number(id)).catch(err =>
+            console.error('[RestockNotify] book-edit trigger failed:', err.message)
+          );
+        }
       }
 
       res.json({ success: true, message: 'Book updated successfully' });

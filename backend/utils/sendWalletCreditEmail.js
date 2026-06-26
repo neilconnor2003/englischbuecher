@@ -1,118 +1,91 @@
-
+// backend/utils/sendWalletCreditEmail.js
 const nodemailer = require('nodemailer');
-const path = require('path');
-const fs = require('fs');
-const emailFooter = require('./emailFooter');
-
 const { logEmail } = require('./emailLogger');
+const { buildEmail, SENDER_NAME } = require('./emailTemplate');
 
 const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT) || 587,
-    //secure: false,
-    secure: true,   // ✅ VERY IMPORTANT for 465 (SSL)
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-    },
-    tls: { rejectUnauthorized: false }
+  host: process.env.SMTP_HOST,
+  port: parseInt(process.env.SMTP_PORT) || 465,
+  secure: parseInt(process.env.SMTP_PORT) !== 587,
+  auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+  tls: { rejectUnauthorized: false },
 });
 
-//module.exports = async (user, amount, reason = "Admin credit") => {
-module.exports = async (user, amount, reason = "Admin credit", balance = null) => {
+module.exports = async (user, amount, reason = 'Admin credit', balance = null) => {
+  let subject = '';
+  let htmlBody = null;
+  const lang = user.language || 'de';
+  const isDe = lang === 'de';
 
-    let subject = '';
-    let htmlBody = null;
+  try {
+    subject = isDe
+      ? `€${amount.toFixed(2)} wurde deinem Guthaben gutgeschrieben${balance !== null ? ` (Neues Guthaben: €${balance.toFixed(2)})` : ''}`
+      : `€${amount.toFixed(2)} added to your wallet${balance !== null ? ` (New balance: €${balance.toFixed(2)})` : ''}`;
 
-    try {
-        const logoPath = path.join(__dirname, '..', 'public', 'assets', 'logo.png');
+    const greeting = isDe ? `Hallo ${user.first_name || ''},` : `Hi ${user.first_name || ''},`;
 
+    const bodyHtml = `
+      <p class="greeting">${greeting}</p>
+      <p class="text">
+        ${isDe
+          ? `Dein Guthaben wurde um <strong style="color:#7c3aed;">€${amount.toFixed(2)}</strong> aufgeladen.`
+          : `Your wallet has been credited with <strong style="color:#7c3aed;">€${amount.toFixed(2)}</strong>.`}
+      </p>
 
-        htmlBody = `
-            <div style="font-family: Arial; max-width:600px; margin:auto; padding:20px; border:1px solid #eee; border-radius:12px;">
-          
-          ${fs.existsSync(logoPath) ? `<img src="cid:logo" style="width:100px; display:block; margin:0 auto 20px;" />` : ''}
+      ${balance !== null ? `
+      <div class="highlight-box">
+        <div class="highlight-label">${isDe ? 'Neues Guthaben' : 'New Balance'}</div>
+        <div class="highlight-value">€${balance.toFixed(2)}</div>
+      </div>` : ''}
 
-          <h2 style="color:#6b21a8; text-align:center;">Wallet Updated</h2>
-          
-          <p>Hi ${user.first_name || ''},</p>
+      <div class="info-box">
+        <strong>${isDe ? 'Grund' : 'Reason'}:</strong> ${reason}
+      </div>
 
-            <p>
-                Your wallet has been credited with 
-                <strong style="color:green;">€${amount.toFixed(2)}</strong>.
-            </p>
+      <p class="text">
+        ${isDe
+          ? 'Du kannst dieses Guthaben beim nächsten Checkout auf <strong>englischbuecher.de</strong> verwenden.'
+          : 'You can use this balance during checkout on <strong>englischbuecher.de</strong>.'}
+      </p>
 
-            ${balance !== null ? `
-                <div style="margin: 15px 0; padding: 12px; background: #faf5ff; border-radius: 10px; text-align: center;">
-                    <div style="font-size: 14px; color: #555;">New Balance</div>
-                    <div style="font-size: 22px; font-weight: bold; color: #6b21a8;">
-                      €${balance.toFixed(2)}
-                    </div>
-                </div>
-            ` : ''}
+      <div class="btn-wrap">
+        <a href="${process.env.FRONTEND_URL || 'https://englischbuecher.de'}/books" class="btn">
+          ${isDe ? 'Jetzt stöbern' : 'Browse Books'}
+        </a>
+      </div>
 
+      <div class="regards">
+        ${isDe ? 'Viele Grüße' : 'Best regards'},<br>
+        <div class="regards-team">${isDe ? `Dein ${SENDER_NAME} Team` : `Your ${SENDER_NAME} Team`}</div>
+      </div>
+    `;
 
-          <p>
-            <strong>Reason:</strong> ${reason}
-          </p>
+    htmlBody = buildEmail({
+      lang,
+      title: subject,
+      headerTitle: isDe ? 'Guthaben aufgeladen!' : 'Wallet Credited!',
+      headerEmoji: '💜',
+      bodyHtml,
+    });
 
-          <p>
-            You can use this balance during checkout on 
-            <strong>englischbuecher.de</strong>.
-          </p>
+    await transporter.sendMail({
+      from: `"${SENDER_NAME}" <${process.env.SMTP_USER}>`,
+      to: user.email,
+      subject,
+      html: htmlBody,
+    });
 
-          <p style="margin-top:20px;">
-            Best regards,<br/>
-            <strong>Englisch Buecher Team</strong>
-          </p>
+    await logEmail({ to: user.email, subject, html: htmlBody, status: 'sent', type: 'WalletCredit' });
 
-          ${emailFooter(user.language || 'en')}
-          
-        </div>
-        `;
-
-        subject = `€${amount.toFixed(2)} added to your wallet${balance !== null ? ` (New balance €${balance.toFixed(2)})` : ''}`;
-
-
-        await transporter.sendMail({
-            from: `"Englisch Buecher" <${process.env.SMTP_USER}>`,
-            to: user.email,
-            //subject: `Wallet credited €${amount.toFixed(2)}`,
-            subject,
-            html: htmlBody,
-            attachments: [
-                fs.existsSync(logoPath)
-                    ? {
-                        filename: 'logo.png',
-                        path: logoPath,
-                        cid: 'logo'
-                    }
-                    : null
-            ].filter(Boolean)
-        });
-
-
-        await logEmail({
-            to: user.email,
-            subject,
-            html: htmlBody,
-            status: 'sent',
-            type: 'WalletCredit'
-        });
-
-
-    } catch (err) {
-        console.error('WALLET EMAIL ERROR:', err);
-
-
-        await logEmail({
-            to: user?.email || null,
-            subject: subject || 'Wallet email',
-            html: htmlBody,
-            status: 'failed',
-            error: err.message,
-            type: 'WalletCredit'
-        });
-
-    }
+  } catch (err) {
+    console.error('WALLET EMAIL ERROR:', err);
+    await logEmail({
+      to: user?.email || null,
+      subject: subject || 'Wallet email',
+      html: htmlBody,
+      status: 'failed',
+      error: err.message,
+      type: 'WalletCredit',
+    });
+  }
 };

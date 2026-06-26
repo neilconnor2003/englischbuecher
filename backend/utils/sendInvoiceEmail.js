@@ -9,8 +9,9 @@ const { logEmail } = require('./emailLogger');
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT) || 465,
-  secure: parseInt(process.env.SMTP_PORT) !== 587, // true for 465 (SSL), false for 587 (STARTTLS)
+  port: parseInt(process.env.SMTP_PORT) || 587,
+  //secure: false,
+  secure: true,   // ✅ VERY IMPORTANT for 465 (SSL)
   auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
   tls: { rejectUnauthorized: false },
 });
@@ -49,7 +50,11 @@ module.exports = async (order, user, lang = 'de') => {
     // === ORDER INFO ===
     doc.fontSize(12).font('Helvetica');
     doc.text(`${lang === 'de' ? 'Bestellnummer' : 'Order ID'}: #${order.id}`);
-    doc.text(`${lang === 'de' ? 'Datum' : 'Date'}: ${new Date(order.created_at).toLocaleDateString(lang === 'de' ? 'de-DE' : 'en-US')}`);
+    // Safe date — order.created_at may be a Date object, string, or undefined
+    const safeDate = order.created_at
+      ? new Date(order.created_at).toLocaleDateString(lang === 'de' ? 'de-DE' : 'en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
+      : (lang === 'de' ? 'Unbekanntes Datum' : 'Unknown date');
+    doc.text(`${lang === 'de' ? 'Datum' : 'Date'}: ${safeDate}`);
     doc.text(`${lang === 'de' ? 'Status' : 'Status'}: ${order.status}`);
     doc.moveDown();
 
@@ -88,11 +93,35 @@ module.exports = async (order, user, lang = 'de') => {
       y += 25;
     });
 
-    // === TOTAL ===
+    // === TOTALS SECTION ===
     doc.moveTo(50, y + 10).lineTo(550, y + 10).stroke();
     y += 25;
+    doc.fontSize(11).font('Helvetica');
+
+    const shippingAmt = Number(order.shipping_amount_eur || 0);
+    const couponAmt = Number(order.coupon_discount || 0);
+    const walletAmt = Number(order.wallet_used || 0);
+
+    if (shippingAmt > 0) {
+      doc.text(`${lang === 'de' ? 'Versand' : 'Shipping'}:`, 350, y);
+      doc.text(`€${shippingAmt.toFixed(2)}`, 480, y);
+      y += 20;
+    }
+    if (couponAmt > 0) {
+      doc.text(`${lang === 'de' ? 'Gutschein' : 'Coupon'}${order.coupon_code ? ` (${order.coupon_code})` : ''}:`, 350, y);
+      doc.text(`-€${couponAmt.toFixed(2)}`, 480, y);
+      y += 20;
+    }
+    if (walletAmt > 0) {
+      doc.text(`${lang === 'de' ? 'Guthaben' : 'Wallet credit'}:`, 350, y);
+      doc.text(`-€${walletAmt.toFixed(2)}`, 480, y);
+      y += 20;
+    }
+
+    doc.moveTo(350, y + 5).lineTo(550, y + 5).stroke();
+    y += 15;
     doc.fontSize(14).font('Helvetica-Bold');
-    doc.text(`${lang === 'de' ? 'Gesamt' : 'Total'}: €${total.toFixed(2)}`, 400, y, { align: 'right' });
+    doc.text(`${lang === 'de' ? 'Gesamt' : 'Total'}: €${total.toFixed(2)}`, 350, y);
 
     doc.end();
 
