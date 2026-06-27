@@ -1,6 +1,7 @@
 // backend/utils/email.js
 const nodemailer = require('nodemailer');
 const juice = require('juice');
+
 const { buildEmail, SENDER_NAME } = require('./emailTemplate');
 
 async function sendWelcomeEmail(transporter, to, name, method, lang = 'de', verifyUrl = null) {
