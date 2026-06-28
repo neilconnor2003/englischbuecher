@@ -564,5 +564,7 @@
   "reason": "Reason",
   "amount": "Amount",
   "free_delivery_applied": "Free delivery applied",
-  "street_address": "Street Address"
+  "street_address": "Street Address",
+  "check_inbox": "We've sent a reset link to your email. It expires in 15 minutes.",
+  "resend_link": "Send again"
 }
