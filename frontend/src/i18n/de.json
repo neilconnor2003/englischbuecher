@@ -536,5 +536,7 @@
   "wallet_used_order": "Verwendet in Bestellung",
   "wallet_refund": "Rückerstattung",
   "free_delivery_applied": "Kostenlose Lieferung angewendet",
-  "street_address": "Straßenadresse"
+  "street_address": "Straßenadresse",
+  "check_inbox": "Wir haben dir einen Link gesendet. Er ist 15 Minuten gültig.",
+  "resend_link": "Erneut senden"
 }
