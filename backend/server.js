@@ -1862,57 +1862,66 @@ const computeWorkId = (titleEn, titleDe, author) => {
       let html = '';
       try {
         const isDe = language === 'de';
-        const { buildEmail, SENDER_NAME } = require('./utils/emailTemplate');
         const sourceLabel = source === 'homepage'
           ? (isDe ? 'unserer Startseite' : 'our homepage')
           : (isDe ? `"${source}"` : `"${source}"`);
 
         subject = isDe
-          ? `Willkommen beim ${SENDER_NAME} Newsletter! 📚`
-          : `Welcome to the ${SENDER_NAME} Newsletter! 📚`;
+          ? 'Willkommen beim englischbücher.de Newsletter! 📚'
+          : 'Welcome to the englischbücher.de newsletter! 📚';
 
-        const bodyHtml = isDe ? `
-          <p style="font-size:17px;font-weight:600;color:#1a1a2e;margin:0 0 14px;">Willkommen an Bord! 🎉</p>
-          <p style="font-size:15px;color:#444;margin:0 0 16px;">Danke, dass du dich über ${sourceLabel} angemeldet hast! Du bekommst ab jetzt:</p>
-          <ul style="color:#444;font-size:14px;line-height:1.9;padding-left:20px;margin:0 0 24px;">
-            <li>📖 Benachrichtigungen über neue englische Bücher</li>
-            <li>💰 Exklusive Rabatte und Angebote</li>
-            <li>✨ Empfehlungen und Autoren-Spotlights</li>
-          </ul>
-          <div style="text-align:center;margin:28px 0;">
-            <a href="${process.env.FRONTEND_URL}/books" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#5e42d6);color:#fff;padding:14px 36px;border-radius:999px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 6px 20px rgba(124,58,237,0.35);">Bücher entdecken</a>
+        html = isDe ? `
+          <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
+            <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
+              <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
+              <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">Willkommen an Bord! 🎉</h1>
+            </div>
+            <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
+              <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 16px;">
+                Danke, dass du dich über ${sourceLabel} angemeldet hast! Du bekommst ab jetzt:
+              </p>
+              <ul style="color:#1a1a2e;font-size:14px;line-height:1.8;padding-left:20px;margin:0 0 24px;">
+                <li>📖 Benachrichtigungen über neue englische Bücher</li>
+                <li>💰 Exklusive Rabatte und Angebote</li>
+                <li>✨ Empfehlungen und Autoren-Spotlights</li>
+              </ul>
+              <div style="text-align:center;margin:28px 0;">
+                <a href="${process.env.FRONTEND_URL}/books" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Bücher entdecken</a>
+              </div>
+              <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
+                Du erhältst diese E-Mail, weil du dich für unseren Newsletter angemeldet hast.<br>
+                <a href="${unsubscribeUrl}" style="color:#9ca3af;text-decoration:underline;">Abbestellen</a>
+              </p>
+            </div>
           </div>
-          <p style="font-size:13px;color:#9ca3af;text-align:center;margin:16px 0 0;border-top:1px solid #ede9fe;padding-top:16px;">
-            Du erhältst diese E-Mail, weil du dich für unseren Newsletter angemeldet hast.<br>
-            <a href="${unsubscribeUrl}" style="color:#9ca3af;">Abbestellen</a>
-          </p>
         ` : `
-          <p style="font-size:17px;font-weight:600;color:#1a1a2e;margin:0 0 14px;">Welcome aboard! 🎉</p>
-          <p style="font-size:15px;color:#444;margin:0 0 16px;">Thanks for signing up via ${sourceLabel}! From now on you'll get:</p>
-          <ul style="color:#444;font-size:14px;line-height:1.9;padding-left:20px;margin:0 0 24px;">
-            <li>📖 Heads-up on new English book arrivals</li>
-            <li>💰 Exclusive discounts and deals</li>
-            <li>✨ Recommendations and author spotlights</li>
-          </ul>
-          <div style="text-align:center;margin:28px 0;">
-            <a href="${process.env.FRONTEND_URL}/books" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#5e42d6);color:#fff;padding:14px 36px;border-radius:999px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 6px 20px rgba(124,58,237,0.35);">Browse Books</a>
+          <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
+            <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
+              <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
+              <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">Welcome aboard! 🎉</h1>
+            </div>
+            <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
+              <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 16px;">
+                Thanks for signing up via ${sourceLabel}! From now on you'll get:
+              </p>
+              <ul style="color:#1a1a2e;font-size:14px;line-height:1.8;padding-left:20px;margin:0 0 24px;">
+                <li>📖 Heads-up on new English book arrivals</li>
+                <li>💰 Exclusive discounts and deals</li>
+                <li>✨ Recommendations and author spotlights</li>
+              </ul>
+              <div style="text-align:center;margin:28px 0;">
+                <a href="${process.env.FRONTEND_URL}/books" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Browse books</a>
+              </div>
+              <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
+                You're receiving this email because you signed up for our newsletter.<br>
+                <a href="${unsubscribeUrl}" style="color:#9ca3af;text-decoration:underline;">Unsubscribe</a>
+              </p>
+            </div>
           </div>
-          <p style="font-size:13px;color:#9ca3af;text-align:center;margin:16px 0 0;border-top:1px solid #ede9fe;padding-top:16px;">
-            You're receiving this email because you signed up for our newsletter.<br>
-            <a href="${unsubscribeUrl}" style="color:#9ca3af;">Unsubscribe</a>
-          </p>
         `;
 
-        html = buildEmail({
-          lang: isDe ? 'de' : 'en',
-          title: subject,
-          headerTitle: isDe ? 'Willkommen beim Newsletter!' : 'Welcome to our Newsletter!',
-          headerEmoji: '📚',
-          bodyHtml,
-        });
-
         await transporter.sendMail({
-          from: `"${SENDER_NAME}" <${process.env.SMTP_USER}>`,
+          from: process.env.SMTP_USER,
           to: email,
           subject,
           html,
@@ -4628,54 +4637,46 @@ ${bookList}`,
           ? `Wieder verfügbar: "${title}"`
           : `Back in stock: "${title}"`;
 
-        const html = isDe ? `
-        <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
-          <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
-            <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
-            <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">Wieder da! 🎉</h1>
+        const { buildEmail, SENDER_NAME } = require('./utils/emailTemplate');
+        const bookPrice = Number(book.price || 0); // DB returns price as string
+        const restockBodyHtml = isDe ? `
+          <p style="font-size:17px;font-weight:600;color:#1a1a2e;margin:0 0 14px;">Hallo ${sub.first_name || ''},</p>
+          <p style="font-size:15px;color:#444;margin:0 0 20px;">Das Buch, auf das du gewartet hast, ist jetzt wieder auf Lager:</p>
+          <div style="text-align:center;margin:0 0 24px;">
+            ${book.image ? `<img src="${book.image}" alt="${title}" style="width:90px;height:auto;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,0.14);display:block;margin:0 auto 12px;">` : ''}
+            <div style="font-size:17px;font-weight:700;color:#1a1a2e;">${title}</div>
+            <div style="font-size:18px;font-weight:800;color:#7c3aed;margin-top:6px;">€${bookPrice.toFixed(2)}</div>
           </div>
-          <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
-            <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 20px;">
-              Hallo ${sub.first_name || ''}, das Buch, auf das du gewartet hast, ist jetzt wieder auf Lager:
-            </p>
-            <div style="text-align:center;margin:0 0 24px;">
-              ${book.image ? `<img src="${book.image}" alt="${title}" style="width:100px;height:auto;border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,0.15);margin-bottom:14px;">` : ''}
-              <div style="font-size:16px;font-weight:700;color:#1a1a2e;">${title}</div>
-            </div>
-            <div style="text-align:center;margin:0 0 8px;">
-              <a href="${bookUrl}" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Jetzt ansehen</a>
-            </div>
-            <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
-              Bestand ist begrenzt — wir empfehlen, nicht zu lange zu warten.
-            </p>
+          <div style="text-align:center;margin:24px 0;">
+            <a href="${bookUrl}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#5e42d6);color:#fff;padding:14px 36px;border-radius:999px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 6px 20px rgba(124,58,237,0.35);">Jetzt kaufen</a>
           </div>
-        </div>
-      ` : `
-        <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
-          <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
-            <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
-            <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">It's back! 🎉</h1>
+          <p style="font-size:13px;color:#9ca3af;text-align:center;margin:16px 0 0;border-top:1px solid #ede9fe;padding-top:16px;">Bestand ist begrenzt — wir empfehlen, nicht zu lange zu warten.</p>
+          <div style="font-size:15px;color:#333;margin-top:28px;">Viele Grüße,<br><strong style="color:#7c3aed;">Dein ${SENDER_NAME} Team</strong></div>
+        ` : `
+          <p style="font-size:17px;font-weight:600;color:#1a1a2e;margin:0 0 14px;">Hi ${sub.first_name || ''},</p>
+          <p style="font-size:15px;color:#444;margin:0 0 20px;">The book you were waiting for is back in stock:</p>
+          <div style="text-align:center;margin:0 0 24px;">
+            ${book.image ? `<img src="${book.image}" alt="${title}" style="width:90px;height:auto;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,0.14);display:block;margin:0 auto 12px;">` : ''}
+            <div style="font-size:17px;font-weight:700;color:#1a1a2e;">${title}</div>
+            <div style="font-size:18px;font-weight:800;color:#7c3aed;margin-top:6px;">€${bookPrice.toFixed(2)}</div>
           </div>
-          <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
-            <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 20px;">
-              Hi ${sub.first_name || ''}, the book you were waiting for is back in stock:
-            </p>
-            <div style="text-align:center;margin:0 0 24px;">
-              ${book.image ? `<img src="${book.image}" alt="${title}" style="width:100px;height:auto;border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,0.15);margin-bottom:14px;">` : ''}
-              <div style="font-size:16px;font-weight:700;color:#1a1a2e;">${title}</div>
-            </div>
-            <div style="text-align:center;margin:0 0 8px;">
-              <a href="${bookUrl}" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">View it now</a>
-            </div>
-            <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
-              Stock is limited — we'd recommend not waiting too long.
-            </p>
+          <div style="text-align:center;margin:24px 0;">
+            <a href="${bookUrl}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#5e42d6);color:#fff;padding:14px 36px;border-radius:999px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 6px 20px rgba(124,58,237,0.35);">Buy Now</a>
           </div>
-        </div>
-      `;
+          <p style="font-size:13px;color:#9ca3af;text-align:center;margin:16px 0 0;border-top:1px solid #ede9fe;padding-top:16px;">Stock is limited — we'd recommend not waiting too long.</p>
+          <div style="font-size:15px;color:#333;margin-top:28px;">Best regards,<br><strong style="color:#7c3aed;">Your ${SENDER_NAME} Team</strong></div>
+        `;
+
+        const html = buildEmail({
+          lang: isDe ? 'de' : 'en',
+          title: subject,
+          headerTitle: isDe ? 'Wieder da!' : "It's back!",
+          headerEmoji: '🎉',
+          bodyHtml: restockBodyHtml,
+        });
 
         try {
-          await transporter.sendMail({ from: process.env.SMTP_USER, to: sub.email, subject, html });
+          await transporter.sendMail({ from: `"${SENDER_NAME}" <${process.env.SMTP_USER}>`, to: sub.email, subject, html });
           await db.execute(`
           INSERT INTO sent_emails (to_email, subject, html, status, type, created_at)
           VALUES (?, ?, ?, 'sent', 'RestockNotification', NOW())
@@ -4703,7 +4704,7 @@ ${bookList}`,
   // Logged-in users only — guests use localStorage on the frontend.
   app.get('/api/users/me/recently-viewed', authMiddleware, async (req, res) => {
     try {
-      const limit = Math.min(Math.max(Number(req.query.limit) || 8, 1), 20);
+      const limit = parseInt(Math.min(Math.max(Number(req.query.limit) || 8, 1), 20), 10);
       const [rows] = await db.execute(`
       SELECT b.id, b.title_en, b.title_de, b.author, b.slug, b.image,
              b.price, b.original_price, b.rating, b.review_count,

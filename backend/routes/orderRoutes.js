@@ -472,8 +472,12 @@ module.exports = (db, transporter) => {
         shipping_amount_eur,
         shipping_provider,
         shipping_service,
-        shippo_rate_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        shippo_rate_id,
+
+        coupon_code,
+        coupon_discount,
+        wallet_used
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           userId,
           JSON.stringify(orderItems),
@@ -484,12 +488,16 @@ module.exports = (db, transporter) => {
           isPaid ? 1 : 0,
           isPaid ? new Date() : null,
           isPaid ? 'processing' : 'pending',
-          0, // inventory_adjusted: not yet
+          0,
 
           Number(shipping_amount_eur || 0),
           shipping_provider || null,
           shipping_service || null,
-          shipping_selected_rate_id || null
+          shipping_selected_rate_id || null,
+
+          discount_code || null,
+          Number(discount_amount || 0),
+          Number(wallet_used || 0)
         ]
       );
 
@@ -775,8 +783,12 @@ module.exports = (db, transporter) => {
            inventory_adjusted,
 
            shipping_provider,
-           shipping_service
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           shipping_service,
+
+           coupon_code,
+           coupon_discount,
+           wallet_used
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             userId,
             JSON.stringify(orderItems),
@@ -789,9 +801,12 @@ module.exports = (db, transporter) => {
             'processing',
             0,
 
-            // ✅ THIS IS THE FIX
             shipping_provider,
             shipping_service,
+
+            null, // coupon not available via webhook path
+            0,
+            0,
           ]
         );
 
@@ -1120,6 +1135,8 @@ module.exports = (db, transporter) => {
       order.order_items = parseIfString(order.order_items);
       order.shipping_address = parseIfString(order.shipping_address);
       order.payment_result = parseIfString(order.payment_result);
+      order.coupon_discount = Number(order.coupon_discount || 0);
+      order.wallet_used = Number(order.wallet_used || 0);
 
       res.json(order);
     } catch (err) {

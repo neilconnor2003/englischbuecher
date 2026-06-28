@@ -108,6 +108,7 @@ const CheckoutPage = ({ clientSecret }) => {
   const finalTotal = grandTotal - walletUsed;
 
   const [hydrated, setHydrated] = useState(false);
+  const [shippingResolved, setShippingResolved] = useState(false);
 
   useEffect(() => {
     try {
@@ -115,10 +116,10 @@ const CheckoutPage = ({ clientSecret }) => {
       if (raw) {
         const parsed = JSON.parse(raw);
         setShippingAmount(Number(parsed.amount_eur || 0));
-        //setShippingMode(parsed.mode || 'delivery');
-        //setShippingMode(resolvedMode);
       }
     } catch { }
+    // Always resolve — if nothing in localStorage, 0 is the correct starting value
+    setShippingResolved(true);
   }, []);
 
   useEffect(() => {
@@ -319,51 +320,38 @@ const CheckoutPage = ({ clientSecret }) => {
   }, [clientSecret, totalPrice, shippingAmount, t]);*/}
 
   useEffect(() => {
+    // Don't fire until shipping cost is resolved from localStorage
+    if (!shippingResolved) return;
+    // Don't fire with a zero total — cart hasn't loaded yet
+    if (finalTotal <= 0) return;
+    // Don't fire after payment is already confirmed
+    if (!clientSecret) return;
 
-    //console.log('🚀 updatePI triggered');
-    //console.log('🚀 shippingMode:', shippingMode);
-    //console.log('🚀 grandTotal:', grandTotal);
     console.log('PI update:', { grandTotal, walletUsed, finalTotal });
 
-    async function updatePI() {
-      if (!clientSecret) return;
-
-      //const amount_cents = Math.round(grandTotal * 100);
-      //const amount_cents = Math.round(finalTotal * 100);
-      const amount_cents = Math.max(50, Math.round(finalTotal * 100));
-
-
-      //const shipping_provider = shippingMode === 'pickup' ? 'PICKUP' : 'DPD';
-      //const shipping_service = shippingMode === 'pickup' ? 'Click & Collect' : 'Standard';
-
+    // Debounce: wait 600ms after last change before hitting Stripe
+    const timer = setTimeout(async () => {
+      const amount_cents      = Math.max(50, Math.round(finalTotal * 100));
       const shipping_provider = 'DPD';
-      const shipping_service = 'Standard';
-
-
+      const shipping_service  = 'Standard';
 
       try {
-        const res = /*await axios.post(
-          '/api/orders/update-payment-intent-amount',
+        await axios.post(
+          `${API_BASE}/orders/update-payment-intent-amount`,
           { clientSecret, amount_cents, shipping_provider, shipping_service },
           { withCredentials: true }
-        );*/
-
-          await axios.post(
-            `${API_BASE}/orders/update-payment-intent-amount`,
-            { clientSecret, amount_cents, shipping_provider, shipping_service },
-            { withCredentials: true }
-          );
-
-
-        //console.log('[PI UPDATED]', res.data);
+        );
       } catch (e) {
         console.error('[PI UPDATE FAILED]', e?.response?.data || e?.message);
-        toast.error(t('payment_failed_try_again'));
+        // Only show toast for genuine errors, not post-payment stale calls
+        if (e?.response?.status !== 400) {
+          toast.error(t('payment_failed_try_again'));
+        }
       }
-    }
+    }, 600);
 
-    updatePI();
-  }, [clientSecret, finalTotal, shippingMode, t]);
+    return () => clearTimeout(timer);
+  }, [clientSecret, finalTotal, shippingMode, shippingResolved, t]);
 
   const [discountError, setDiscountError] = useState("");
 
