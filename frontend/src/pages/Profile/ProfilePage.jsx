@@ -465,7 +465,7 @@ const ProfilePage = () => {
                   <h2 className="prof-card-title">{t('my_reviews') || 'My Reviews'} {reviews.length > 0 && <span className="prof-count">{reviews.length}</span>}</h2>
                 </div>
                 {reviews.length === 0 ? (
-                  <div className="prof-empty"><Star size={36} /><p>{t('no_reviews_yet') || 'You haven't written any reviews yet.'}</p></div>
+                  <div className="prof-empty"><Star size={36} /><p>{t('no_reviews_yet') || "You haven't written any reviews yet."}</p></div>
                 ) : (
                   <div className="prof-reviews-list">
                     {reviews.map(r => (
