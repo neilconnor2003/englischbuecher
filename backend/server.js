@@ -1385,6 +1385,118 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
 
 
+  // ── POST /api/user/change-password ──────────────────────────
+  app.post('/api/user/change-password', async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: 'Unauthorized' });
+    const { current_password, new_password } = req.body;
+    if (!current_password || !new_password) return res.status(400).json({ error: 'Both fields required' });
+    if (new_password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    try {
+      const [[user]] = await db.execute('SELECT password, registration_method FROM users WHERE id = ?', [req.user.id]);
+      if (!user) return res.status(404).json({ error: 'User not found' });
+      if (user.registration_method === 'google') return res.status(400).json({ error: 'Google accounts cannot change password here' });
+      const bcrypt = require('bcrypt');
+      const valid  = await bcrypt.compare(current_password, user.password || '');
+      if (!valid) return res.status(400).json({ error: 'Current password is incorrect' });
+      const hashed = await bcrypt.hash(new_password, 12);
+      await db.execute('UPDATE users SET password = ? WHERE id = ?', [hashed, req.user.id]);
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Change password error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  // ── GET /api/user/reviews ────────────────────────────────────
+  app.get('/api/user/reviews', async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+      const [rows] = await db.execute(
+        `SELECT r.id, r.rating, r.review_text, r.created_at,
+                b.id AS book_id, b.title_en, b.title_de, b.image, b.slug, b.isbn13
+         FROM reviews r
+         JOIN books b ON b.id = r.book_id
+         WHERE r.user_id = ?
+         ORDER BY r.created_at DESC`,
+        [req.user.id]
+      );
+      res.json(rows);
+    } catch (err) {
+      console.error('GET /api/user/reviews error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  // ── GET/PUT /api/user/address ────────────────────────────────
+  app.get('/api/user/address', async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+      const [[row]] = await db.execute('SELECT default_address FROM users WHERE id = ?', [req.user.id]);
+      const addr = row?.default_address ? (typeof row.default_address === 'string' ? JSON.parse(row.default_address) : row.default_address) : null;
+      res.json(addr || {});
+    } catch (err) {
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  app.put('/api/user/address', async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: 'Unauthorized' });
+    const { address, postalCode, city, country } = req.body;
+    try {
+      await db.execute('UPDATE users SET default_address = ? WHERE id = ?', [JSON.stringify({ address, postalCode, city, country }), req.user.id]);
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  // ── GET/PUT /api/user/notify-prefs ──────────────────────────
+  app.get('/api/user/notify-prefs', async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+      const [[row]] = await db.execute('SELECT notify_prefs FROM users WHERE id = ?', [req.user.id]);
+      const prefs = row?.notify_prefs ? (typeof row.notify_prefs === 'string' ? JSON.parse(row.notify_prefs) : row.notify_prefs) : {};
+      const defaults = { review_requests: true, restock: true, wallet_credits: true, newsletter: true };
+      res.json({ ...defaults, ...prefs });
+    } catch (err) {
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  app.put('/api/user/notify-prefs', async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+      const allowed = ['review_requests', 'restock', 'wallet_credits', 'newsletter'];
+      const prefs   = {};
+      allowed.forEach(k => { if (req.body[k] !== undefined) prefs[k] = !!req.body[k]; });
+      await db.execute('UPDATE users SET notify_prefs = ? WHERE id = ?', [JSON.stringify(prefs), req.user.id]);
+
+      // If newsletter pref changed, sync the newsletter_subscribers table
+      if (req.body.newsletter !== undefined) {
+        const email   = req.user.email;
+        const isOn    = !!req.body.newsletter;
+        const lang    = req.user.language || 'de';
+        if (isOn) {
+          await db.execute(
+            `INSERT INTO newsletter_subscribers (email, language, source, is_active, unsubscribe_token, created_at)
+             VALUES (?, ?, 'profile', 1, UUID(), NOW())
+             ON DUPLICATE KEY UPDATE is_active = 1, unsubscribed_at = NULL`,
+            [email, lang]
+          ).catch(() => {});
+        } else {
+          await db.execute(
+            `UPDATE newsletter_subscribers SET is_active = 0, unsubscribed_at = NOW() WHERE email = ?`,
+            [email]
+          ).catch(() => {});
+        }
+      }
+
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
   app.post('/api/user/profile-photo', uploadProfilePic.single('photo'), async (req, res) => {
     try {
       const filePath = `/uploads/profile-pics/${req.file.filename}`;
@@ -4637,46 +4749,54 @@ ${bookList}`,
           ? `Wieder verfügbar: "${title}"`
           : `Back in stock: "${title}"`;
 
-        const { buildEmail, SENDER_NAME } = require('./utils/emailTemplate');
-        const bookPrice = Number(book.price || 0); // DB returns price as string
-        const restockBodyHtml = isDe ? `
-          <p style="font-size:17px;font-weight:600;color:#1a1a2e;margin:0 0 14px;">Hallo ${sub.first_name || ''},</p>
-          <p style="font-size:15px;color:#444;margin:0 0 20px;">Das Buch, auf das du gewartet hast, ist jetzt wieder auf Lager:</p>
-          <div style="text-align:center;margin:0 0 24px;">
-            ${book.image ? `<img src="${book.image}" alt="${title}" style="width:90px;height:auto;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,0.14);display:block;margin:0 auto 12px;">` : ''}
-            <div style="font-size:17px;font-weight:700;color:#1a1a2e;">${title}</div>
-            <div style="font-size:18px;font-weight:800;color:#7c3aed;margin-top:6px;">€${bookPrice.toFixed(2)}</div>
+        const html = isDe ? `
+        <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
+          <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
+            <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
+            <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">Wieder da! 🎉</h1>
           </div>
-          <div style="text-align:center;margin:24px 0;">
-            <a href="${bookUrl}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#5e42d6);color:#fff;padding:14px 36px;border-radius:999px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 6px 20px rgba(124,58,237,0.35);">Jetzt kaufen</a>
+          <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
+            <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 20px;">
+              Hallo ${sub.first_name || ''}, das Buch, auf das du gewartet hast, ist jetzt wieder auf Lager:
+            </p>
+            <div style="text-align:center;margin:0 0 24px;">
+              ${book.image ? `<img src="${book.image}" alt="${title}" style="width:100px;height:auto;border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,0.15);margin-bottom:14px;">` : ''}
+              <div style="font-size:16px;font-weight:700;color:#1a1a2e;">${title}</div>
+            </div>
+            <div style="text-align:center;margin:0 0 8px;">
+              <a href="${bookUrl}" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">Jetzt ansehen</a>
+            </div>
+            <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
+              Bestand ist begrenzt — wir empfehlen, nicht zu lange zu warten.
+            </p>
           </div>
-          <p style="font-size:13px;color:#9ca3af;text-align:center;margin:16px 0 0;border-top:1px solid #ede9fe;padding-top:16px;">Bestand ist begrenzt — wir empfehlen, nicht zu lange zu warten.</p>
-          <div style="font-size:15px;color:#333;margin-top:28px;">Viele Grüße,<br><strong style="color:#7c3aed;">Dein ${SENDER_NAME} Team</strong></div>
-        ` : `
-          <p style="font-size:17px;font-weight:600;color:#1a1a2e;margin:0 0 14px;">Hi ${sub.first_name || ''},</p>
-          <p style="font-size:15px;color:#444;margin:0 0 20px;">The book you were waiting for is back in stock:</p>
-          <div style="text-align:center;margin:0 0 24px;">
-            ${book.image ? `<img src="${book.image}" alt="${title}" style="width:90px;height:auto;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,0.14);display:block;margin:0 auto 12px;">` : ''}
-            <div style="font-size:17px;font-weight:700;color:#1a1a2e;">${title}</div>
-            <div style="font-size:18px;font-weight:800;color:#7c3aed;margin-top:6px;">€${bookPrice.toFixed(2)}</div>
+        </div>
+      ` : `
+        <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;background:#ffffff;">
+          <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:36px 32px;border-radius:16px 16px 0 0;text-align:center;">
+            <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:#c4b5fd;text-transform:uppercase;margin-bottom:10px;">englischbücher.de</div>
+            <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800;">It's back! 🎉</h1>
           </div>
-          <div style="text-align:center;margin:24px 0;">
-            <a href="${bookUrl}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#5e42d6);color:#fff;padding:14px 36px;border-radius:999px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 6px 20px rgba(124,58,237,0.35);">Buy Now</a>
+          <div style="padding:32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 16px 16px;">
+            <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 20px;">
+              Hi ${sub.first_name || ''}, the book you were waiting for is back in stock:
+            </p>
+            <div style="text-align:center;margin:0 0 24px;">
+              ${book.image ? `<img src="${book.image}" alt="${title}" style="width:100px;height:auto;border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,0.15);margin-bottom:14px;">` : ''}
+              <div style="font-size:16px;font-weight:700;color:#1a1a2e;">${title}</div>
+            </div>
+            <div style="text-align:center;margin:0 0 8px;">
+              <a href="${bookUrl}" style="display:inline-block;background:#7C3AED;color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">View it now</a>
+            </div>
+            <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
+              Stock is limited — we'd recommend not waiting too long.
+            </p>
           </div>
-          <p style="font-size:13px;color:#9ca3af;text-align:center;margin:16px 0 0;border-top:1px solid #ede9fe;padding-top:16px;">Stock is limited — we'd recommend not waiting too long.</p>
-          <div style="font-size:15px;color:#333;margin-top:28px;">Best regards,<br><strong style="color:#7c3aed;">Your ${SENDER_NAME} Team</strong></div>
-        `;
-
-        const html = buildEmail({
-          lang: isDe ? 'de' : 'en',
-          title: subject,
-          headerTitle: isDe ? 'Wieder da!' : "It's back!",
-          headerEmoji: '🎉',
-          bodyHtml: restockBodyHtml,
-        });
+        </div>
+      `;
 
         try {
-          await transporter.sendMail({ from: `"${SENDER_NAME}" <${process.env.SMTP_USER}>`, to: sub.email, subject, html });
+          await transporter.sendMail({ from: process.env.SMTP_USER, to: sub.email, subject, html });
           await db.execute(`
           INSERT INTO sent_emails (to_email, subject, html, status, type, created_at)
           VALUES (?, ?, ?, 'sent', 'RestockNotification', NOW())
@@ -4704,7 +4824,7 @@ ${bookList}`,
   // Logged-in users only — guests use localStorage on the frontend.
   app.get('/api/users/me/recently-viewed', authMiddleware, async (req, res) => {
     try {
-      const limit = parseInt(Math.min(Math.max(Number(req.query.limit) || 8, 1), 20), 10);
+      const limit = Math.min(Math.max(Number(req.query.limit) || 8, 1), 20);
       const [rows] = await db.execute(`
       SELECT b.id, b.title_en, b.title_de, b.author, b.slug, b.image,
              b.price, b.original_price, b.rating, b.review_count,
