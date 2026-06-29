@@ -1,106 +1,128 @@
+// frontend/src/pages/Auth/ResetPassword.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import config from '@config';
 import { Lock, CheckCircle, AlertCircle } from 'lucide-react';
+import './ResetPassword.css';
 
 export default function ResetPassword() {
-  const { token } = useParams();
-  const navigate = useNavigate();
+  const { token }   = useParams();
+  const navigate    = useNavigate();
   const { t, i18n } = useTranslation();
   const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [confirm,  setConfirm]  = useState('');
+  const [error,    setError]    = useState('');
+  const [success,  setSuccess]  = useState(false);
+  const [loading,  setLoading]  = useState(false);
 
   useEffect(() => {
-    const savedLang = localStorage.getItem('i18nextLng') || 'de';
-    i18n.changeLanguage(savedLang);
+    const saved = localStorage.getItem('i18nextLng') || 'de';
+    if (saved !== i18n.language) i18n.changeLanguage(saved);
   }, [i18n]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (password !== confirm) return setError(t('password_mismatch'));
-    if (password.length < 8) return setError(t('password_too_short'));
-
+    setError('');
+    if (password !== confirm) return setError(t('passwords_dont_match') || "Passwords don't match");
+    if (password.length < 8) return setError(t('password_too_short') || 'Min 8 characters');
     setLoading(true);
     try {
-      const res = await fetch(`${config.API_URL}/api/auth/reset-password/${token}`, {
+      const res  = await fetch(`${config.API_URL}/api/auth/reset-password/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password })
+        body: JSON.stringify({ password }),
       });
       const data = await res.json();
-
       if (res.ok) {
-        setMessage(t('reset_success'));
+        setSuccess(true);
         setTimeout(() => navigate('/login'), 3000);
       } else {
-        setError(data.error || 'Link expired');
+        setError(data.error || t('link_expired') || 'Link expired or invalid');
       }
     } catch {
-      setError('Something went wrong');
+      setError(t('network_error') || 'Something went wrong');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-full mb-4">
-              <Lock className="w-8 h-8 text-white" />
-            </div>
-            <h2 className="text-3xl font-bold text-gray-800">{t('password_reset')}</h2>
+    <div className="rp-page">
+      <div className="rp-card">
+
+        <div className="rp-header">
+          <div className="rp-icon">🔑</div>
+          <h1 className="rp-title">{t('password_reset') || 'Reset Password'}</h1>
+          <p className="rp-subtitle">{t('reset_password_subtitle') || 'Enter your new password below'}</p>
+        </div>
+
+        {success ? (
+          <div className="rp-success">
+            <CheckCircle size={36} className="rp-success-icon" />
+            <h2 className="rp-success-title">{t('reset_success') || 'Password updated!'}</h2>
+            <p className="rp-success-text">{t('redirecting_login') || 'Redirecting you to login…'}</p>
           </div>
+        ) : (
+          <>
+            {error && (
+              <div className="rp-error">
+                <AlertCircle size={16} />
+                <span>{error}</span>
+              </div>
+            )}
 
-          {message && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-center">
-              <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
-              <p className="text-green-800">{message}</p>
-              <p className="text-sm text-gray-600 mt-2">{t('redirecting_login')}</p>
-            </div>
-          )}
+            <form onSubmit={handleSubmit} className="rp-form">
+              <div className="rp-field">
+                <label>{t('new_password') || 'New password'}</label>
+                <div className="rp-input-wrap">
+                  <Lock size={15} className="rp-icon-field" />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    minLength="8"
+                    disabled={loading}
+                  />
+                </div>
+              </div>
 
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600" />
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
-          )}
+              <div className="rp-field">
+                <label>{t('confirm_password') || 'Confirm new password'}</label>
+                <div className="rp-input-wrap">
+                  <Lock size={15} className="rp-icon-field" />
+                  <input
+                    type="password"
+                    value={confirm}
+                    onChange={e => setConfirm(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+                {confirm && password !== confirm && (
+                  <span className="rp-mismatch">{t('passwords_dont_match') || "Passwords don't match"}</span>
+                )}
+              </div>
 
-          {!message && (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={t('new_password')}
-                required
-                minLength="8"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-              />
-              <input
-                type="password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                placeholder={t('confirm_password')}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-              />
               <button
                 type="submit"
-                disabled={loading || password !== confirm || password.length < 8}
-                className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50"
+                className="rp-submit"
+                disabled={loading || !password || password !== confirm}
               >
-                {loading ? 'Saving...' : t('change_password') || 'Change Password'}
+                {loading
+                  ? <><span className="rp-spinner" />{t('saving') || 'Saving…'}</>
+                  : t('change_password') || 'Set New Password'}
               </button>
             </form>
-          )}
-        </div>
+          </>
+        )}
+
+        <p className="rp-footer">
+          <Link to="/login">← {t('back_to_login') || 'Back to Login'}</Link>
+        </p>
       </div>
     </div>
   );

@@ -27,9 +27,12 @@ const CheckoutPage = ({ clientSecret }) => {
 
   const [email, setEmail] = useState(user?.email || "");
   const [address, setAddress] = useState(shippingAddress?.address || "");
-
   const [postalCode, setPostalCode] = useState("");
   const [city, setCity] = useState("");
+  const [saveAddress, setSaveAddress] = useState(false);
+  const [saveAddressLabel, setSaveAddressLabel] = useState('Home');
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState(''); // '' = new
 
   //const [shippingMode, setShippingMode] = useState('delivery');
   const shippingMode = 'delivery';
@@ -118,9 +121,25 @@ const CheckoutPage = ({ clientSecret }) => {
         setShippingAmount(Number(parsed.amount_eur || 0));
       }
     } catch { }
-    // Always resolve — if nothing in localStorage, 0 is the correct starting value
     setShippingResolved(true);
   }, []);
+
+  // Load all saved addresses and pre-fill default
+  useEffect(() => {
+    if (!user) return;
+    axios.get(`${API_BASE}/user/addresses`, { withCredentials: true })
+      .then(({ data }) => {
+        if (data?.length) {
+          setSavedAddresses(data);
+          const def = data.find(a => a.is_default) || data[0];
+          setSelectedAddressId(String(def.id));
+          setAddress(def.address || '');
+          setPostalCode(def.postalCode || '');
+          setCity(def.city || '');
+        }
+      })
+      .catch(() => {});
+  }, [user]);
 
   useEffect(() => {
     if (!user) navigate("/login?redirect=checkout");
@@ -320,18 +339,14 @@ const CheckoutPage = ({ clientSecret }) => {
   }, [clientSecret, totalPrice, shippingAmount, t]);*/}
 
   useEffect(() => {
-    // Don't fire until shipping cost is resolved from localStorage
     if (!shippingResolved) return;
-    // Don't fire with a zero total — cart hasn't loaded yet
     if (finalTotal <= 0) return;
-    // Don't fire after payment is already confirmed
     if (!clientSecret) return;
 
     console.log('PI update:', { grandTotal, walletUsed, finalTotal });
 
-    // Debounce: wait 600ms after last change before hitting Stripe
     const timer = setTimeout(async () => {
-      const amount_cents      = Math.max(50, Math.round(finalTotal * 100));
+      const amount_cents     = Math.max(50, Math.round(finalTotal * 100));
       const shipping_provider = 'DPD';
       const shipping_service  = 'Standard';
 
@@ -343,7 +358,6 @@ const CheckoutPage = ({ clientSecret }) => {
         );
       } catch (e) {
         console.error('[PI UPDATE FAILED]', e?.response?.data || e?.message);
-        // Only show toast for genuine errors, not post-payment stale calls
         if (e?.response?.status !== 400) {
           toast.error(t('payment_failed_try_again'));
         }
@@ -406,6 +420,15 @@ const CheckoutPage = ({ clientSecret }) => {
 
     if (shippingMode === 'delivery' && shippingAmount <= 0 && !isFreeShipping)
       return toast.error(t('shipping_error'));
+
+    // Save new address if user ticked the checkbox and chose "new address"
+    if (saveAddress && user && selectedAddressId === '') {
+      axios.post(`${API_BASE}/user/addresses`, {
+        label: saveAddressLabel || 'Home',
+        address, postalCode, city, country: 'DE',
+        setAsDefault: savedAddresses.length === 0,
+      }, { withCredentials: true }).catch(() => {});
+    }
 
     setLoading(true);
 
@@ -508,6 +531,88 @@ const CheckoutPage = ({ clientSecret }) => {
               <div className="address-card">
                 <div className="form-header">{t('shipping_address')}</div>
 
+                {/* ── Saved address tiles ── */}
+                {savedAddresses.length > 0 && (
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', marginBottom: 8 }}>
+                      {t('select_address') || 'Choose a saved address'}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {savedAddresses.map(a => {
+                        const isSelected = String(selectedAddressId) === String(a.id);
+                        return (
+                          <div
+                            key={a.id}
+                            onClick={() => {
+                              setSelectedAddressId(String(a.id));
+                              setAddress(a.address || '');
+                              setPostalCode(a.postalCode || '');
+                              setCity(a.city || '');
+                            }}
+                            style={{
+                              display: 'flex', alignItems: 'flex-start', gap: 12,
+                              padding: '12px 14px', borderRadius: 12, cursor: 'pointer',
+                              border: `2px solid ${isSelected ? '#7c3aed' : '#e5e7eb'}`,
+                              background: isSelected ? '#faf5ff' : '#fff',
+                              transition: 'border-color 0.15s, background 0.15s',
+                            }}
+                          >
+                            <div style={{
+                              width: 18, height: 18, borderRadius: '50%', flexShrink: 0, marginTop: 2,
+                              border: `2px solid ${isSelected ? '#7c3aed' : '#d1d5db'}`,
+                              background: isSelected ? '#7c3aed' : '#fff',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                              {isSelected && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }} />}
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: '#1a1a2e', marginBottom: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                {a.label}
+                                {a.is_default === 1 && (
+                                  <span style={{ background: '#7c3aed', color: '#fff', fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 999 }}>
+                                    {t('default') || 'Default'}
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.5 }}>
+                                {a.address}, {a.postalCode} {a.city}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {/* New address tile */}
+                      <div
+                        onClick={() => {
+                          setSelectedAddressId('');
+                          setAddress(''); setPostalCode(''); setCity('');
+                        }}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 12,
+                          padding: '12px 14px', borderRadius: 12, cursor: 'pointer',
+                          border: `2px solid ${selectedAddressId === '' ? '#7c3aed' : '#e5e7eb'}`,
+                          background: selectedAddressId === '' ? '#faf5ff' : '#fff',
+                          transition: 'border-color 0.15s, background 0.15s',
+                        }}
+                      >
+                        <div style={{
+                          width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
+                          border: `2px solid ${selectedAddressId === '' ? '#7c3aed' : '#d1d5db'}`,
+                          background: selectedAddressId === '' ? '#7c3aed' : '#fff',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          {selectedAddressId === '' && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }} />}
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: '#7c3aed' }}>
+                          + {t('enter_new_address') || 'Enter a new address'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Delivery method ── */}
                 <div className="form-group">
                   <label>{t('delivery_method') || 'Delivery method'}</label>
                   <div className="shipping-choice">
@@ -517,60 +622,80 @@ const CheckoutPage = ({ clientSecret }) => {
                   </div>
                 </div>
 
+                {/* ── Email ── */}
                 <div className="form-group">
                   <label>{t('email')}</label>
-                  {/*<input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />*/}
-                  <div className="readonly-field">
-                    <strong>{email}</strong>
-                  </div>
-                  <div className="mini-hint">
-                    {t('checkout_email_fixed') || 'This email is linked to your account'}
-                  </div>
+                  <div className="readonly-field"><strong>{email}</strong></div>
+                  <div className="mini-hint">{t('checkout_email_fixed') || 'This email is linked to your account'}</div>
                 </div>
 
+                {/* ── Address fields — read-only if tile selected, editable if new ── */}
                 <div className="form-group">
                   <label>{t('street_address')}</label>
-                  <input
-                    type="text"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    required
-                  />
+                  {selectedAddressId !== '' ? (
+                    <div className="readonly-field">{address}</div>
+                  ) : (
+                    <input type="text" value={address} onChange={e => setAddress(e.target.value)} required placeholder="Musterstraße 42" />
+                  )}
                 </div>
 
                 <div className="grid-2">
                   <div className="form-group">
                     <label>{t('city')}</label>
-                    <input
-                      type="text"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      required
-                    />
+                    {selectedAddressId !== '' ? (
+                      <div className="readonly-field">{city}</div>
+                    ) : (
+                      <input type="text" value={city} onChange={e => setCity(e.target.value)} required placeholder="Frankfurt" />
+                    )}
                   </div>
-
                   <div className="form-group">
                     <label>{t('postal_code')}</label>
-                    <input
-                      type="text"
-                      value={postalCode}
-                      onChange={(e) => setPostalCode(e.target.value)}
-                      required
-                    />
+                    {selectedAddressId !== '' ? (
+                      <div className="readonly-field">{postalCode}</div>
+                    ) : (
+                      <input type="text" value={postalCode} onChange={e => setPostalCode(e.target.value)} required placeholder="60313" />
+                    )}
                   </div>
                 </div>
 
                 <div className="form-group">
                   <label>{t('country')}</label>
-                  <div className="readonly-field">
-                    <strong>Deutschland (DE)</strong>
-                  </div>
+                  <div className="readonly-field"><strong>Deutschland (DE)</strong></div>
                 </div>
+
+                {/* ── Save checkbox — only when typing a new address ── */}
+                {selectedAddressId === '' && (
+                  <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#374151' }}>
+                      <input
+                        type="checkbox"
+                        checked={saveAddress}
+                        onChange={e => setSaveAddress(e.target.checked)}
+                        style={{ accentColor: '#7c3aed', width: 16, height: 16, cursor: 'pointer' }}
+                      />
+                      {t('save_address_for_next_time') || 'Save this address for next time'}
+                    </label>
+                    {saveAddress && (
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {['Home', 'Work', 'Other'].map(lbl => (
+                          <button
+                            key={lbl}
+                            type="button"
+                            onClick={() => setSaveAddressLabel(lbl)}
+                            style={{
+                              padding: '6px 16px', borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                              border: `1.5px solid ${saveAddressLabel === lbl ? '#7c3aed' : '#e5e7eb'}`,
+                              background: saveAddressLabel === lbl ? '#faf5ff' : '#fff',
+                              color: saveAddressLabel === lbl ? '#7c3aed' : '#6b7280',
+                            }}
+                          >
+                            {t(`address_label_${lbl.toLowerCase()}`) || lbl}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Discount card */}

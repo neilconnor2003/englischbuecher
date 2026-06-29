@@ -1414,10 +1414,8 @@ const computeWorkId = (titleEn, titleDe, author) => {
       const [rows] = await db.execute(
         `SELECT r.id, r.rating, r.review_text, r.created_at,
                 b.id AS book_id, b.title_en, b.title_de, b.image, b.slug, b.isbn13
-         FROM reviews r
-         JOIN books b ON b.id = r.book_id
-         WHERE r.user_id = ?
-         ORDER BY r.created_at DESC`,
+         FROM reviews r JOIN books b ON b.id = r.book_id
+         WHERE r.user_id = ? ORDER BY r.created_at DESC`,
         [req.user.id]
       );
       res.json(rows);
@@ -1427,30 +1425,129 @@ const computeWorkId = (titleEn, titleDe, author) => {
     }
   });
 
-  // ── GET/PUT /api/user/address ────────────────────────────────
+  // ── GET /api/user/addresses — list all saved addresses ──────
+  app.get('/api/user/addresses', async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+      const [rows] = await db.execute(
+        'SELECT id, label, address, postal_code AS postalCode, city, country, is_default FROM user_addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC',
+        [req.user.id]
+      );
+      res.json(rows);
+    } catch (err) {
+      console.error('GET /api/user/addresses error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  // ── POST /api/user/addresses — add a new address ─────────────
+  app.post('/api/user/addresses', async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: 'Unauthorized' });
+    const { label = 'Home', address, postalCode, city, country = 'DE', setAsDefault = false } = req.body;
+    if (!address || !postalCode || !city) return res.status(400).json({ error: 'address, postalCode and city are required' });
+    try {
+      if (setAsDefault) {
+        await db.execute('UPDATE user_addresses SET is_default = 0 WHERE user_id = ?', [req.user.id]);
+      }
+      const [result] = await db.execute(
+        'INSERT INTO user_addresses (user_id, label, address, postal_code, city, country, is_default) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [req.user.id, label, address, postalCode, city, country, setAsDefault ? 1 : 0]
+      );
+      // First address ever → auto-set as default
+      const [[{ cnt }]] = await db.execute('SELECT COUNT(*) as cnt FROM user_addresses WHERE user_id = ?', [req.user.id]);
+      if (cnt === 1) {
+        await db.execute('UPDATE user_addresses SET is_default = 1 WHERE id = ?', [result.insertId]);
+      }
+      res.json({ success: true, id: result.insertId });
+    } catch (err) {
+      console.error('POST /api/user/addresses error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  // ── PUT /api/user/addresses/:id — update an address ──────────
+  app.put('/api/user/addresses/:id', async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: 'Unauthorized' });
+    const { label, address, postalCode, city, country } = req.body;
+    try {
+      const [[row]] = await db.execute('SELECT id FROM user_addresses WHERE id = ? AND user_id = ?', [req.params.id, req.user.id]);
+      if (!row) return res.status(404).json({ error: 'Address not found' });
+      await db.execute(
+        'UPDATE user_addresses SET label = ?, address = ?, postal_code = ?, city = ?, country = ? WHERE id = ?',
+        [label || 'Home', address, postalCode, city, country || 'DE', req.params.id]
+      );
+      res.json({ success: true });
+    } catch (err) {
+      console.error('PUT /api/user/addresses/:id error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  // ── PUT /api/user/addresses/:id/default — set as default ─────
+  app.put('/api/user/addresses/:id/default', async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+      const [[row]] = await db.execute('SELECT id FROM user_addresses WHERE id = ? AND user_id = ?', [req.params.id, req.user.id]);
+      if (!row) return res.status(404).json({ error: 'Address not found' });
+      await db.execute('UPDATE user_addresses SET is_default = 0 WHERE user_id = ?', [req.user.id]);
+      await db.execute('UPDATE user_addresses SET is_default = 1 WHERE id = ?', [req.params.id]);
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  // ── DELETE /api/user/addresses/:id ───────────────────────────
+  app.delete('/api/user/addresses/:id', async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+      const [[row]] = await db.execute('SELECT id, is_default FROM user_addresses WHERE id = ? AND user_id = ?', [req.params.id, req.user.id]);
+      if (!row) return res.status(404).json({ error: 'Address not found' });
+      await db.execute('DELETE FROM user_addresses WHERE id = ?', [req.params.id]);
+      // Promote next most-recent address to default if deleted was default
+      if (row.is_default) {
+        await db.execute(
+          'UPDATE user_addresses SET is_default = 1 WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+          [req.user.id]
+        );
+      }
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  // ── Legacy GET/PUT /api/user/address (single) — still used by checkout ──
   app.get('/api/user/address', async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ error: 'Unauthorized' });
     try {
-      const [[row]] = await db.execute('SELECT default_address FROM users WHERE id = ?', [req.user.id]);
-      const addr = row?.default_address
-        ? (typeof row.default_address === 'string' ? JSON.parse(row.default_address) : row.default_address)
-        : {};
-      res.json(addr);
+      const [[row]] = await db.execute(
+        'SELECT address, postal_code AS postalCode, city, country FROM user_addresses WHERE user_id = ? AND is_default = 1 LIMIT 1',
+        [req.user.id]
+      );
+      res.json(row || {});
     } catch (err) {
-      console.error('GET /api/user/address error:', err);
       res.status(500).json({ error: 'Server error' });
     }
   });
 
   app.put('/api/user/address', async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ error: 'Unauthorized' });
-    const { address, postalCode, city, country } = req.body;
+    const { address, postalCode, city, country = 'DE' } = req.body;
     try {
-      await db.execute('UPDATE users SET default_address = ? WHERE id = ?',
-        [JSON.stringify({ address, postalCode, city, country }), req.user.id]);
+      const [[existing]] = await db.execute(
+        'SELECT id FROM user_addresses WHERE user_id = ? AND is_default = 1 LIMIT 1',
+        [req.user.id]
+      );
+      if (existing) {
+        await db.execute('UPDATE user_addresses SET address = ?, postal_code = ?, city = ?, country = ? WHERE id = ?',
+          [address, postalCode, city, country, existing.id]);
+      } else {
+        await db.execute('INSERT INTO user_addresses (user_id, label, address, postal_code, city, country, is_default) VALUES (?, ?, ?, ?, ?, ?, 1)',
+          [req.user.id, 'Home', address, postalCode, city, country]);
+      }
       res.json({ success: true });
     } catch (err) {
-      console.error('PUT /api/user/address error:', err);
       res.status(500).json({ error: 'Server error' });
     }
   });
@@ -1463,10 +1560,8 @@ const computeWorkId = (titleEn, titleDe, author) => {
       const saved = row?.notify_prefs
         ? (typeof row.notify_prefs === 'string' ? JSON.parse(row.notify_prefs) : row.notify_prefs)
         : {};
-      const defaults = { review_requests: true, restock: true, wallet_credits: true, newsletter: true };
-      res.json({ ...defaults, ...saved });
+      res.json({ review_requests: true, restock: true, wallet_credits: true, newsletter: true, ...saved });
     } catch (err) {
-      console.error('GET /api/user/notify-prefs error:', err);
       res.status(500).json({ error: 'Server error' });
     }
   });
@@ -1477,30 +1572,22 @@ const computeWorkId = (titleEn, titleDe, author) => {
       const allowed = ['review_requests', 'restock', 'wallet_credits', 'newsletter'];
       const prefs = {};
       allowed.forEach(k => { if (req.body[k] !== undefined) prefs[k] = !!req.body[k]; });
-      await db.execute('UPDATE users SET notify_prefs = ? WHERE id = ?',
-        [JSON.stringify(prefs), req.user.id]);
-
-      // Sync newsletter toggle with newsletter_subscribers table
+      await db.execute('UPDATE users SET notify_prefs = ? WHERE id = ?', [JSON.stringify(prefs), req.user.id]);
       if (req.body.newsletter !== undefined) {
         const isOn = !!req.body.newsletter;
-        const lang = req.user.language || 'de';
         if (isOn) {
           await db.execute(
             `INSERT INTO newsletter_subscribers (email, language, source, is_active, unsubscribe_token, created_at)
              VALUES (?, ?, 'profile', 1, UUID(), NOW())
              ON DUPLICATE KEY UPDATE is_active = 1, unsubscribed_at = NULL`,
-            [req.user.email, lang]
+            [req.user.email, req.user.language || 'de']
           ).catch(() => {});
         } else {
-          await db.execute(
-            `UPDATE newsletter_subscribers SET is_active = 0, unsubscribed_at = NOW() WHERE email = ?`,
-            [req.user.email]
-          ).catch(() => {});
+          await db.execute(`UPDATE newsletter_subscribers SET is_active = 0, unsubscribed_at = NOW() WHERE email = ?`, [req.user.email]).catch(() => {});
         }
       }
       res.json({ success: true });
     } catch (err) {
-      console.error('PUT /api/user/notify-prefs error:', err);
       res.status(500).json({ error: 'Server error' });
     }
   });
@@ -2496,7 +2583,7 @@ ${bookList}`,
     try {
       const [due] = await db.query(`
         SELECT rr.id, rr.order_id, rr.user_id, rr.book_id, rr.emails_sent,
-               u.email, u.first_name, u.language, u.notify_prefs,
+               u.email, u.first_name, u.language,
                b.title_en, b.title_de, b.slug, b.image, b.isbn13, b.isbn10
         FROM review_requests rr
         JOIN users u ON u.id = rr.user_id
@@ -2513,15 +2600,6 @@ ${bookList}`,
       }
 
       for (const row of due) {
-        // Respect user's notification preference
-        const prefs = row.notify_prefs
-          ? (typeof row.notify_prefs === 'string' ? JSON.parse(row.notify_prefs) : row.notify_prefs)
-          : {};
-        if (prefs.review_requests === false) {
-          console.log(`[ReviewRequests] Skipping ${row.email} — review_requests disabled`);
-          continue;
-        }
-
         const isDe = row.language === 'de';
         const title = isDe ? (row.title_de || row.title_en) : (row.title_en || row.title_de);
         const reviewUrl = `${process.env.FRONTEND_URL}${buildBookUrl({ id: row.book_id, slug: row.slug, isbn13: row.isbn13, isbn10: row.isbn10 })}#reviews`;
@@ -2631,6 +2709,62 @@ ${bookList}`,
   // Run daily at 10:00 Berlin time
   cron.schedule('0 10 * * *', sendReviewRequestEmails, { timezone: 'Europe/Berlin' });
   console.log('[ReviewRequests] Cron scheduled — daily at 10:00 Berlin time');
+
+  // ── POPULARITY SCORE CRON ─────────────────────────────────
+  // Runs nightly at 02:00 Berlin time.
+  // Weights: purchases(90d)×10, wishlist×3, rating×5, reviews×2, views(30d)×1
+  // New books (≤14 days) get +20 discovery boost.
+  async function recalculatePopularityScores() {
+    console.log('[Popularity] Recalculating scores…');
+    try {
+      await db.query(`
+        UPDATE books b
+        LEFT JOIN (
+          SELECT oi.bookId, SUM(oi.quantity) AS total_qty
+          FROM orders o
+          JOIN JSON_TABLE(
+            o.order_items, '$[*]'
+            COLUMNS (bookId INT PATH '$.bookId', quantity INT PATH '$.quantity')
+          ) AS oi
+          WHERE o.created_at >= NOW() - INTERVAL 90 DAY
+            AND o.status NOT IN ('cancelled', 'refunded')
+          GROUP BY oi.bookId
+        ) AS sales ON sales.bookId = b.id
+        LEFT JOIN (
+          SELECT book_id, COUNT(*) AS view_count
+          FROM book_views
+          WHERE viewed_at >= NOW() - INTERVAL 30 DAY
+          GROUP BY book_id
+        ) AS views ON views.book_id = b.id
+        LEFT JOIN (
+          SELECT book_id, COUNT(*) AS wishlist_count
+          FROM wishlist
+          WHERE deleted_at IS NULL
+          GROUP BY book_id
+        ) AS wl ON wl.book_id = b.id
+        SET b.popularity_score = ROUND(
+          (COALESCE(sales.total_qty,   0) * 10) +
+          (COALESCE(wl.wishlist_count, 0) * 3)  +
+          (COALESCE(b.rating,          0) * 5)  +
+          (COALESCE(b.review_count,    0) * 2)  +
+          (COALESCE(views.view_count,  0) * 1)  +
+          IF(b.created_at >= NOW() - INTERVAL 14 DAY, 20, 0)
+        , 2)
+        WHERE b.is_available = 1
+      `);
+      console.log('[Popularity] Scores updated.');
+    } catch (err) {
+      console.error('[Popularity] Cron error:', err.message);
+    }
+  }
+
+  cron.schedule('0 2 * * *', recalculatePopularityScores, { timezone: 'Europe/Berlin' });
+  console.log('[Popularity] Cron scheduled — nightly at 02:00 Berlin time');
+
+  // Run once on startup if needed
+  recalculatePopularityScores().catch(err =>
+    console.error('[Popularity] Startup run failed:', err.message)
+  );
 
   // ── END REVIEW REQUEST EMAIL CRON ─────────────────────────
 
@@ -4748,7 +4882,7 @@ ${bookList}`,
       if (!book) return;
 
       const [pending] = await db.execute(
-        `SELECT sn.id, sn.email, u.language, u.first_name, u.notify_prefs
+        `SELECT sn.id, sn.email, u.language, u.first_name
        FROM stock_notifications sn
        LEFT JOIN users u ON u.id = sn.user_id
        WHERE sn.book_id = ? AND sn.notified_at IS NULL`,
@@ -4759,15 +4893,6 @@ ${bookList}`,
       const bookUrl = `${process.env.FRONTEND_URL}${buildBookUrl(book)}`;
 
       for (const sub of pending) {
-        // Respect user's notification preference
-        const prefs = sub.notify_prefs
-          ? (typeof sub.notify_prefs === 'string' ? JSON.parse(sub.notify_prefs) : sub.notify_prefs)
-          : {};
-        if (prefs.restock === false) {
-          console.log(`[RestockNotify] Skipping ${sub.email} — restock notifications disabled`);
-          continue;
-        }
-
         const isDe = sub.language === 'de';
         const title = isDe ? (book.title_de || book.title_en) : (book.title_en || book.title_de);
 
