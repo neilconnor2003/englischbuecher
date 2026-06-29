@@ -1,9 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Spin } from 'antd';
+import { Button, Result, Card, Spin, Tag, Divider } from 'antd';
+import {
+  CheckCircleOutlined,
+  HomeOutlined,
+  ShoppingOutlined,
+  PrinterOutlined,
+} from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import './OrderSuccessPage.css';
+
+import { trackPurchase } from '../../utils/Analytics';
 
 const OrderSuccessPage = () => {
   const { orderId } = useParams();
@@ -17,6 +25,12 @@ const OrderSuccessPage = () => {
       try {
         const { data } = await axios.get(`/api/orders/${orderId}`, { withCredentials: true });
         setOrder(data);
+        // Fire GA4 purchase event once — guard with sessionStorage to prevent double-fire on refresh
+        const firedKey = `ga_purchase_fired_${orderId}`;
+        if (!sessionStorage.getItem(firedKey)) {
+          trackPurchase(data);
+          sessionStorage.setItem(firedKey, '1');
+        }
       } catch (err) {
         console.error('Failed to load order:', err);
       } finally {
@@ -26,213 +40,249 @@ const OrderSuccessPage = () => {
     if (orderId) fetchOrder();
   }, [orderId]);
 
+  const printInvoice = () => window.print();
+
   if (loading) {
     return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />;
   }
 
   if (!order) {
     return (
-      <div className="success-page">
-        <div className="success-container">
-          <div className="success-error-card">
-            <div className="success-error-icon">⚠️</div>
-            <h2>{t('order_not_found')}</h2>
-            <p>{t('order_load_error')}</p>
-            <button className="success-btn-primary" onClick={() => navigate('/')}>
-              {t('back_home')}
-            </button>
-          </div>
-        </div>
-      </div>
+      <Result
+        status="error"
+        title={t('order_not_found')}
+        subTitle={t('order_load_error')}
+      />
     );
   }
-
-  const shipping = Number(order.shipping_amount_eur || 0);
-  const couponDiscount = Number(order.coupon_discount || 0);
-  const walletUsed = Number(order.wallet_used || 0);
-  const total = Number(order.total || 0);
-  const itemsSubtotal = (order.order_items || []).reduce(
-    (s, i) => s + Number(i.price || 0) * Number(i.quantity || 1), 0
-  );
-
-  const statusColor = {
-    processing: '#7c3aed',
-    shipped: '#0891b2',
-    delivered: '#16a34a',
-    pending: '#d97706',
-    cancelled: '#dc2626',
-  }[order.status] || '#6b7280';
 
   return (
     <div className="success-page">
       <div className="success-container">
+        <Result
+          status="success"
+          icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+          title={t('order_placed_success')}
+          subTitle={
+            <div style={{ textAlign: 'center' }}>
+              <p>
+                {t('order_id')}: <strong>#{orderId}</strong>
+              </p>
+              <p>{t('email_confirmation_sent')}</p>
+              <Tag color="green">{t('paid')}</Tag>
+            </div>
+          }
+        />
 
-        {/* ── HERO ── */}
-        <div className="success-hero">
-          <div className="success-checkmark">✓</div>
-          <h1 className="success-title">{t('order_placed_success')}</h1>
-          <p className="success-meta">
-            {t('order_id')}: <strong>#{orderId}</strong>
-            &nbsp;·&nbsp;
-            <span style={{ color: statusColor, fontWeight: 700, textTransform: 'capitalize' }}>
-              {order.status}
-            </span>
-          </p>
-          <p className="success-hint">{t('email_confirmation_sent')}</p>
-        </div>
-
-        <div className="success-grid">
-
-          {/* ── LEFT: ITEMS + TOTALS ── */}
-          <div className="success-main">
-
-            {/* Items */}
-            <div className="success-card">
-              <div className="success-card-title">{t('invoice_preview') || 'Order Summary'}</div>
-              <div className="success-items">
-                {(order.order_items || []).map((item, i) => (
-                  <div key={i} className="success-item">
-                    {item.image && (
-                      <img src={item.image} alt={item.title_en} className="success-item-img" />
-                    )}
-                    <div className="success-item-info">
-                      <div className="success-item-title">{item.title_en}</div>
-                      {item.author && <div className="success-item-author">{item.author}</div>}
-                    </div>
-                    <div className="success-item-right">
-                      <div className="success-item-qty">×{item.quantity}</div>
-                      <div className="success-item-price">€{(Number(item.price) * Number(item.quantity)).toFixed(2)}</div>
-                    </div>
-                  </div>
-                ))}
+        {/* INVOICE PREVIEW */}
+        <Card
+          className="invoice-card"
+          title={t('invoice_preview')}
+          extra={
+            <Button icon={<PrinterOutlined />} onClick={printInvoice}>
+              {t('print')}
+            </Button>
+          }
+        >
+          <div className="invoice">
+            <div className="invoice-header">
+              <div>
+                <img src="/assets/logo.png" alt="EnglischBuecher.de" className="invoice-logo" />
+                <p>
+                  EnglischBuecher.de<br />
+                  Im Schwalg 60, 55411 Bingen<br />
+                  Deutschland<br />
+                  <small>USt-ID: DE123456789</small>
+                </p>
               </div>
-
-              {/* Totals */}
-              <div className="success-totals">
-                <div className="success-total-row">
-                  <span>{t('cart.subtotal') || 'Subtotal'}</span>
-                  <span>€{itemsSubtotal.toFixed(2)}</span>
-                </div>
-                <div className="success-total-row">
-                  <span>{t('cart.shipping_label') || 'Shipping'}</span>
-                  <span>{shipping === 0
-                    ? <span className="success-badge-free">{t('free') || 'Free'}</span>
-                    : `€${shipping.toFixed(2)}`}
-                  </span>
-                </div>
-                {couponDiscount > 0 && (
-                  <div className="success-total-row success-total-coupon">
-                    <span>
-                      {t('discount') || 'Coupon'}
-                      {order.coupon_code && (
-                        <span className="success-coupon-badge">{order.coupon_code}</span>
-                      )}
-                    </span>
-                    <span>−€{couponDiscount.toFixed(2)}</span>
-                  </div>
-                )}
-                {walletUsed > 0 && (
-                  <div className="success-total-row success-total-wallet">
-                    <span>💜 {t('wallet_used') || 'Wallet credit'}</span>
-                    <span>−€{walletUsed.toFixed(2)}</span>
-                  </div>
-                )}
-                <div className="success-total-row success-total-grand">
-                  <span>{t('total')}</span>
-                  <span>€{total.toFixed(2)}</span>
-                </div>
+              <div style={{ textAlign: 'right' }}>
+                <h3>{t('invoice')}</h3>
+                <p><strong>{t('invoice_no')}:</strong> #{orderId}</p>
+                <p><strong>{t('date')}:</strong> {new Date().toLocaleDateString('de-DE')}</p>
               </div>
             </div>
 
-            {/* Delivery address */}
-            {order.shipping_address && (
-              <div className="success-card">
-                <div className="success-card-title">{t('shipping_address')}</div>
-                <div className="success-address">
-                  <div>{order.user?.first_name} {order.user?.last_name}</div>
-                  <div>{order.shipping_address.address}</div>
-                  <div>{order.shipping_address.postalCode} {order.shipping_address.city}</div>
-                  <div>{order.shipping_address.country}</div>
-                  {order.user?.email && <div style={{ color: '#9ca3af', marginTop: 4 }}>{order.user.email}</div>}
-                </div>
-              </div>
-            )}
+            <Divider />
+
+            <div className="invoice-address">
+              <strong>{t('bill_to')}:</strong>
+              <br />
+              {order.user?.first_name} {order.user?.last_name}
+              <br />
+              {order.shipping_address?.address}
+              <br />
+              {order.shipping_address?.postalCode} {order.shipping_address?.city}
+              <br />
+              {order.shipping_address?.country}
+            </div>
+
+            <table className="invoice-table">
+              <thead>
+                <tr>
+                  <th>{t('item')}</th>
+                  <th>{t('quantity')}</th>
+                  <th>{t('price')}</th>
+                  <th>{t('total')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {order.order_items?.map((item, i) => (
+                  <tr key={i}>
+                    <td>{item.title_en}</td>
+                    <td>{item.quantity}</td>
+                    <td>€{item.price.toFixed(2)}</td>
+                    <td>€{(item.price * item.quantity).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div className="invoice-total">
+              {(() => {
+                const shipping = Number(order.shipping_amount_eur || 0);
+                const couponDiscount = Number(order.coupon_discount || 0);
+                const walletUsed = Number(order.wallet_used || 0);
+                const total = Number(order.total || 0);
+                const itemsTotal = (order.order_items || []).reduce(
+                  (s, i) => s + Number(i.price || 0) * Number(i.quantity || 1), 0
+                );
+                return (
+                  <div style={{ display: 'grid', gap: 6 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>{t('cart.subtotal') || 'Subtotal'}</span>
+                      <strong>€{itemsTotal.toFixed(2)}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>{t('cart.shipping_label') || 'Shipping'}</span>
+                      <strong>{shipping === 0 ? (t('free') || 'Free') : `€${shipping.toFixed(2)}`}</strong>
+                    </div>
+                    {couponDiscount > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#16a34a' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          {t('discount') || 'Coupon'}
+                          {order.coupon_code && (
+                            <span style={{ background: '#dcfce7', color: '#15803d', padding: '1px 8px', borderRadius: 6, fontWeight: 700, fontSize: '0.78rem' }}>
+                              {order.coupon_code}
+                            </span>
+                          )}
+                        </span>
+                        <strong>−€{couponDiscount.toFixed(2)}</strong>
+                      </div>
+                    )}
+                    {walletUsed > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#7c3aed' }}>
+                        <span>💜 {t('wallet_used') || 'Wallet credit'}</span>
+                        <strong>−€{walletUsed.toFixed(2)}</strong>
+                      </div>
+                    )}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      borderTop: '1px solid #eee',
+                      paddingTop: 8,
+                      marginTop: 4
+                    }}>
+                      <span style={{ fontWeight: 700 }}>{t('total')}</span>
+                      <strong style={{ color: '#7c3aed', fontSize: '1.1rem' }}>€{total.toFixed(2)}</strong>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+
+            <div className="invoice-footer">
+              <p>{t('thank_you')}</p>
+            </div>
           </div>
+        </Card>
 
-          {/* ── RIGHT: SHIPPING + ACTIONS ── */}
-          <div className="success-sidebar">
 
-            {/* Shipping & tracking */}
-            <div className="success-card">
-              <div className="success-card-title">{t('shipping_info') || 'Shipping'}</div>
+        {/* SHIPPING & TRACKING */}
+        <Card className="shipping-card" style={{ marginTop: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h3 style={{ marginBottom: 8 }}>{t('shipping_info') || 'Shipping Information'}</h3>
+              <div style={{ color: '#555' }}>
+                {/* Carrier & service */}
+                {order.shipping_provider ? (
+                  <div>
+                    <strong>{order.shipping_provider}</strong>
+                    {order.shipping_service ? <> · {order.shipping_service}</> : null}
+                  </div>
+                ) : (
+                  //<div>{t('shipping') || 'Shipping'}: —</div>
+                  <div>{t('cart.shipping_label')}: —</div>
+                )}
 
-              <div className="success-shipping-row">
-                <span className="success-shipping-label">{t('cart.shipping_label') || 'Carrier'}</span>
-                <span className="success-shipping-val">
-                  {order.shipping_provider
-                    ? <>{order.shipping_provider}{order.shipping_service ? ` · ${order.shipping_service}` : ''}</>
-                    : '—'}
-                </span>
-              </div>
+                {/* Shipping cost */}
+                <div>
+                  {t('cart.shipping_label') || 'Shipping'}:{' '}
+                  <strong>
+                    {Number.isFinite(Number(order.shipping_amount_eur))
+                      ? `€${Number(order.shipping_amount_eur).toFixed(2)}`
+                      : '—'}
+                  </strong>
+                </div>
 
-              <div className="success-shipping-row">
-                <span className="success-shipping-label">{t('status')}</span>
-                <span className="success-status-pill" style={{ background: statusColor + '20', color: statusColor }}>
-                  {String(order.status || '').toUpperCase()}
-                </span>
-              </div>
-
-              {order.tracking_number ? (
-                <div className="success-tracking">
-                  <div className="success-shipping-label">{t('tracking_number') || 'Tracking'}</div>
-                  <div style={{ fontWeight: 700, marginTop: 4 }}>{order.tracking_number}</div>
-                  {order.tracking_url && (
-                    <a href={order.tracking_url} target="_blank" rel="noreferrer" className="success-track-link">
-                      {t('track_package') || 'Track package'} →
-                    </a>
+                {/* Tracking number + link */}
+                <div style={{ marginTop: 6 }}>
+                  {order.tracking_number ? (
+                    <>
+                      {t('tracking_number') || 'Tracking'}:{' '}
+                      <strong>{order.tracking_number}</strong>
+                      {order.tracking_url ? (
+                        <>
+                          {' '}
+                          ·{' '}
+                          <a href={order.tracking_url} target="_blank" rel="noreferrer">
+                            {t('track_package') || 'Track package'}
+                          </a>
+                        </>
+                      ) : null}
+                    </>
+                  ) : (
+                    <span style={{ color: '#999' }}>
+                      {t('tracking_pending') || 'Tracking will appear shortly after the label is purchased.'}
+                    </span>
                   )}
                 </div>
-              ) : (
-                <div className="success-tracking-pending">
-                  {t('tracking_pending') || 'Tracking will appear once the label is created.'}
-                </div>
-              )}
 
-              {order.label_url && (
-                <a href={order.label_url} target="_blank" rel="noreferrer" className="success-label-link">
-                  📄 {t('download_label') || 'Download shipping label'}
-                </a>
-              )}
-            </div>
-
-            {/* Payment */}
-            <div className="success-card">
-              <div className="success-card-title">{t('payment_method')}</div>
-              <div className="success-shipping-row">
-                <span className="success-shipping-label">{t('paid')}</span>
-                <span className={`success-status-pill ${order.is_paid ? 'success-paid' : 'success-unpaid'}`}>
-                  {order.is_paid ? '✓ ' + t('paid') : t('pending')}
-                </span>
-              </div>
-              <div className="success-shipping-row">
-                <span className="success-shipping-label">{t('date')}</span>
-                <span>{new Date(order.created_at || Date.now()).toLocaleDateString('de-DE')}</span>
+                {/* Optional: Label PDF link */}
+                {order.label_url && (
+                  <div style={{ marginTop: 6 }}>
+                    <a href={order.label_url} target="_blank" rel="noreferrer">
+                      {t('download_label') || 'Download shipping label (PDF)'}
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* CTA buttons */}
-            <div className="success-actions">
-              <button className="success-btn-primary" onClick={() => navigate('/profile#orders')}>
-                {t('my_orders')}
-              </button>
-              <button className="success-btn-secondary" onClick={() => navigate('/')}>
-                {t('back_home')}
-              </button>
-              <button className="success-btn-ghost" onClick={() => window.print()}>
-                🖨 {t('print') || 'Print'}
-              </button>
+            {/* Status tag from order.status */}
+            <div>
+              <Tag color={
+                order.status === 'shipped' ? 'green'
+                  : order.status === 'processing' ? 'blue'
+                    : order.status === 'pending' ? 'orange'
+                      : order.status === 'delivered' ? 'green'
+                        : order.status === 'cancelled' ? 'red'
+                          : 'default'
+              }>
+                {String(order.status || '').toUpperCase() || '—'}
+              </Tag>
             </div>
           </div>
+        </Card>
+
+
+        <div className="success-buttons">
+          <Button type="primary" size="large" onClick={() => navigate('/profile#orders')}>
+            {t('my_orders')}
+          </Button>
+          <Button size="large" onClick={() => navigate('/')}>
+            {t('back_home')}
+          </Button>
         </div>
       </div>
     </div>

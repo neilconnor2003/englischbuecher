@@ -54,13 +54,15 @@ module.exports = function (db, transporter) {  // ← ACCEPT transporter
       const token = crypto.randomBytes(32).toString('hex');
       const expires = new Date(Date.now() + 3600000); // 1 hour
 
+      const DEFAULT_NOTIFY_PREFS = JSON.stringify({ review_requests: true, restock: true, wallet_credits: true, newsletter: true });
+
       // Insert user
       const [result] = await db.execute(
         `INSERT INTO users 
          (first_name, last_name, email, password, language, registration_method,
-          created_at, deleted_at, verification_token, verification_expires)
-         VALUES (?, ?, ?, ?, ?, 'manual', NOW(), ?, ?, ?)`,
-        [first_name, last_name, email, hash, language, ACTIVE_SENTINEL, token, expires]
+          created_at, deleted_at, verification_token, verification_expires, notify_prefs)
+         VALUES (?, ?, ?, ?, ?, 'manual', NOW(), ?, ?, ?, ?)`,
+        [first_name, last_name, email, hash, language, ACTIVE_SENTINEL, token, expires, DEFAULT_NOTIFY_PREFS]
       );
 
       const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
