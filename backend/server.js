@@ -1396,7 +1396,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
       if (!user) return res.status(404).json({ error: 'User not found' });
       if (user.registration_method === 'google') return res.status(400).json({ error: 'Google accounts cannot change password here' });
       const bcrypt = require('bcrypt');
-      const valid  = await bcrypt.compare(current_password, user.password || '');
+      const valid = await bcrypt.compare(current_password, user.password || '');
       if (!valid) return res.status(400).json({ error: 'Current password is incorrect' });
       const hashed = await bcrypt.hash(new_password, 12);
       await db.execute('UPDATE users SET password = ? WHERE id = ?', [hashed, req.user.id]);
@@ -1432,9 +1432,12 @@ const computeWorkId = (titleEn, titleDe, author) => {
     if (!req.isAuthenticated()) return res.status(401).json({ error: 'Unauthorized' });
     try {
       const [[row]] = await db.execute('SELECT default_address FROM users WHERE id = ?', [req.user.id]);
-      const addr = row?.default_address ? (typeof row.default_address === 'string' ? JSON.parse(row.default_address) : row.default_address) : null;
-      res.json(addr || {});
+      const addr = row?.default_address
+        ? (typeof row.default_address === 'string' ? JSON.parse(row.default_address) : row.default_address)
+        : {};
+      res.json(addr);
     } catch (err) {
+      console.error('GET /api/user/address error:', err);
       res.status(500).json({ error: 'Server error' });
     }
   });
@@ -1443,9 +1446,11 @@ const computeWorkId = (titleEn, titleDe, author) => {
     if (!req.isAuthenticated()) return res.status(401).json({ error: 'Unauthorized' });
     const { address, postalCode, city, country } = req.body;
     try {
-      await db.execute('UPDATE users SET default_address = ? WHERE id = ?', [JSON.stringify({ address, postalCode, city, country }), req.user.id]);
+      await db.execute('UPDATE users SET default_address = ? WHERE id = ?',
+        [JSON.stringify({ address, postalCode, city, country }), req.user.id]);
       res.json({ success: true });
     } catch (err) {
+      console.error('PUT /api/user/address error:', err);
       res.status(500).json({ error: 'Server error' });
     }
   });
@@ -1455,10 +1460,13 @@ const computeWorkId = (titleEn, titleDe, author) => {
     if (!req.isAuthenticated()) return res.status(401).json({ error: 'Unauthorized' });
     try {
       const [[row]] = await db.execute('SELECT notify_prefs FROM users WHERE id = ?', [req.user.id]);
-      const prefs = row?.notify_prefs ? (typeof row.notify_prefs === 'string' ? JSON.parse(row.notify_prefs) : row.notify_prefs) : {};
+      const saved = row?.notify_prefs
+        ? (typeof row.notify_prefs === 'string' ? JSON.parse(row.notify_prefs) : row.notify_prefs)
+        : {};
       const defaults = { review_requests: true, restock: true, wallet_credits: true, newsletter: true };
-      res.json({ ...defaults, ...prefs });
+      res.json({ ...defaults, ...saved });
     } catch (err) {
+      console.error('GET /api/user/notify-prefs error:', err);
       res.status(500).json({ error: 'Server error' });
     }
   });
@@ -1467,32 +1475,32 @@ const computeWorkId = (titleEn, titleDe, author) => {
     if (!req.isAuthenticated()) return res.status(401).json({ error: 'Unauthorized' });
     try {
       const allowed = ['review_requests', 'restock', 'wallet_credits', 'newsletter'];
-      const prefs   = {};
+      const prefs = {};
       allowed.forEach(k => { if (req.body[k] !== undefined) prefs[k] = !!req.body[k]; });
-      await db.execute('UPDATE users SET notify_prefs = ? WHERE id = ?', [JSON.stringify(prefs), req.user.id]);
+      await db.execute('UPDATE users SET notify_prefs = ? WHERE id = ?',
+        [JSON.stringify(prefs), req.user.id]);
 
-      // If newsletter pref changed, sync the newsletter_subscribers table
+      // Sync newsletter toggle with newsletter_subscribers table
       if (req.body.newsletter !== undefined) {
-        const email   = req.user.email;
-        const isOn    = !!req.body.newsletter;
-        const lang    = req.user.language || 'de';
+        const isOn = !!req.body.newsletter;
+        const lang = req.user.language || 'de';
         if (isOn) {
           await db.execute(
             `INSERT INTO newsletter_subscribers (email, language, source, is_active, unsubscribe_token, created_at)
              VALUES (?, ?, 'profile', 1, UUID(), NOW())
              ON DUPLICATE KEY UPDATE is_active = 1, unsubscribed_at = NULL`,
-            [email, lang]
+            [req.user.email, lang]
           ).catch(() => {});
         } else {
           await db.execute(
             `UPDATE newsletter_subscribers SET is_active = 0, unsubscribed_at = NOW() WHERE email = ?`,
-            [email]
+            [req.user.email]
           ).catch(() => {});
         }
       }
-
       res.json({ success: true });
     } catch (err) {
+      console.error('PUT /api/user/notify-prefs error:', err);
       res.status(500).json({ error: 'Server error' });
     }
   });

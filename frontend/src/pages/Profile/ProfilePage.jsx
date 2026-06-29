@@ -136,7 +136,7 @@ const ProfilePage = () => {
     return url;
   };
 
-  const memberDate = new Date(authUser?.created_at || Date.now()).toLocaleDateString('de-DE');
+  const memberDate = new Date(authUser?.created_at || Date.now()).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
   const photoSrc   = normalizePhoto(authUser?.photoURL);
 
   const handlePhotoUpload = async (e) => {
@@ -198,12 +198,26 @@ const ProfilePage = () => {
   };
 
   const handleReorder = (order) => {
-    if (!order.order_items_parsed?.length) return toast.error(t('no_items_to_reorder') || 'No items');
-    order.order_items_parsed.forEach(item => {
-      dispatch(addItem({ bookId: item.bookId, book: { title_en: item.title_en, price: item.price, image: item.image }, quantity: item.quantity }));
-      dispatch(syncAdd({ bookId: item.bookId, quantity: item.quantity }));
+    const items = order.order_items_parsed;
+    if (!items?.length) return toast.error(t('no_items_to_reorder') || 'No items');
+    items.forEach(item => {
+      dispatch(addItem({
+        bookId: item.bookId,
+        quantity: item.quantity || 1,
+        book: {
+          title_en: item.title_en,
+          price: item.price,
+          image: item.image,
+          stock: Infinity, // allow re-adding regardless of current stock display
+        }
+      }));
     });
-    toast.success(t('items_readded_to_cart') || 'Added to cart!');
+    // Sync cart to backend in one batch after all items added
+    items.forEach(item => {
+      dispatch(syncAdd({ bookId: item.bookId, quantity: item.quantity || 1 }));
+    });
+    toast.success(t('items_readded_to_cart') || 'Items added to cart!');
+    navigate('/cart');
   };
 
   const paginatedOrders = orders.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
@@ -307,7 +321,7 @@ const ProfilePage = () => {
                     <div className="prof-info-item"><span>{t('email')}</span><strong>{authUser.email}</strong></div>
                     <div className="prof-info-item"><span>{t('language')}</span><strong>{authUser.language === 'de' ? 'Deutsch' : 'English'}</strong></div>
                     <div className="prof-info-item"><span>{t('member_since')}</span><strong>{memberDate}</strong></div>
-                    <div className="prof-info-item"><span>{t('registration_method') || 'Login method'}</span><strong style={{ textTransform: 'capitalize' }}>{authUser.registration_method || '—'}</strong></div>
+                    <div className="prof-info-item"><span>{t('registration_method') || 'Login method'}</span><strong style={{ textTransform: 'capitalize' }}>{authUser.registration_method === 'google' ? 'Google' : authUser.registration_method === 'manual' ? 'Email' : '—'}</strong></div>
                   </div>
                 )}
               </div>
@@ -335,7 +349,7 @@ const ProfilePage = () => {
                           <div className="prof-order-top">
                             <div className="prof-order-meta">
                               <strong>#{order.id}</strong>
-                              <span className="prof-order-date">{new Date(order.created_at).toLocaleDateString('de-DE')}</span>
+                              <span className="prof-order-date">{new Date(order.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
                               <StatusBadge status={order.status} t={t} />
                             </div>
                             <div className="prof-order-amount">€{Number(order.total).toFixed(2)}</div>
@@ -395,7 +409,7 @@ const ProfilePage = () => {
                       <div key={tx.id} className="prof-tx-row">
                         <div>
                           <div className="prof-tx-reason">{tx.reason}</div>
-                          <div className="prof-tx-date">{new Date(tx.created_at).toLocaleDateString('de-DE')}</div>
+                          <div className="prof-tx-date">{new Date(tx.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
                         </div>
                         <div className={`prof-tx-amount ${tx.type === 'CREDIT' ? 'credit' : 'debit'}`}>
                           {tx.type === 'CREDIT' ? '+' : '−'}€{Number(tx.amount).toFixed(2)}
@@ -475,7 +489,7 @@ const ProfilePage = () => {
                           <div className="prof-review-title">{r.title_en}</div>
                           <StarRating rating={r.rating} />
                           {r.review_text && <p className="prof-review-text">{r.review_text}</p>}
-                          <div className="prof-review-date">{new Date(r.created_at).toLocaleDateString('de-DE')}</div>
+                          <div className="prof-review-date">{new Date(r.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
                         </div>
                         <ChevronRight size={16} className="prof-review-arrow" />
                       </div>
@@ -500,7 +514,7 @@ const ProfilePage = () => {
                         <div className="prof-req-info">
                           <div className="prof-req-title">{r.title_en || r.title_de || r.isbn13 || '—'}</div>
                           {r.isbn13 && <div className="prof-req-isbn">ISBN: {r.isbn13}</div>}
-                          <div className="prof-req-date">{new Date(r.created_at).toLocaleDateString('de-DE')}</div>
+                          <div className="prof-req-date">{new Date(r.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
                         </div>
                         <span className={`prof-req-badge ${r.status === 'fulfilled' ? 'fulfilled' : r.status === 'added' ? 'added' : 'pending'}`}>
                           {r.status === 'fulfilled' ? '✓ ' + (t('available') || 'Available') : r.status === 'added' ? '📦 ' + (t('added') || 'Added') : '⏳ ' + (t('pending') || 'Pending')}
