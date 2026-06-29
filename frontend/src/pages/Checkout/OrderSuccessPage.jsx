@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import './OrderSuccessPage.css';
 
-import { trackPurchase } from '../../utils/analytics';
+import { trackPurchase } from '../../utils/Analytics';
 
 const OrderSuccessPage = () => {
   const { orderId } = useParams();
