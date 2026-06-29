@@ -7,7 +7,7 @@ import { AuthProvider, AuthContext } from './context/AuthContext';
 import ScrollToTop from './ScrollToTop';
 import { loadStripe } from '@stripe/stripe-js';
 import { fetchWishlist } from './features/wishlist/wishlistSlice';
-import { trackPageView } from './utils/analytics';
+import { trackPageView } from './utils/Analytics';
 
 import HeaderBeforeLogin from './components/Header/HeaderBeforeLogin';
 import HeaderAfterLogin from './components/Header/HeaderAfterLogin';
