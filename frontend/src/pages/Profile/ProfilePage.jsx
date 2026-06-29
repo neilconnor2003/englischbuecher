@@ -72,17 +72,17 @@ const ProfilePage = () => {
   const [walletTx, setWalletTx]       = useState([]);
   const [reviews, setReviews]         = useState([]);
   const [requests, setRequests]       = useState([]);
-  const [address, setAddress]         = useState({});
+  const [addresses, setAddresses]     = useState([]);
   const [notifPrefs, setNotifPrefs]   = useState({});
   const [editMode, setEditMode]       = useState(false);
   const [editForm, setEditForm]       = useState({});
-  const [addrForm, setAddrForm]       = useState({});
-  const [addrEdit, setAddrEdit]       = useState(false);
+  const [addrForm, setAddrForm]       = useState({ label: 'Home', address: '', postalCode: '', city: '', country: 'DE' });
+  const [addrEdit, setAddrEdit]       = useState(null); // null=none, 'new'=adding, id=editing
+  const [saving, setSaving]           = useState(false);
   const [pwForm, setPwForm]           = useState({ current: '', next: '', confirm: '' });
   const [pwLoading, setPwLoading]     = useState(false);
   const [pwError, setPwError]         = useState('');
   const [pwSuccess, setPwSuccess]     = useState('');
-  const [saving, setSaving]           = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 8;
 
@@ -120,8 +120,8 @@ const ProfilePage = () => {
     // book requests
     API.get('/book-requests/mine').then(({ data }) => setRequests(data || [])).catch(() => {});
 
-    // address
-    API.get('/user/address').then(({ data }) => { setAddress(data); setAddrForm(data); }).catch(() => {});
+    // addresses
+    API.get('/user/addresses').then(({ data }) => setAddresses(data || [])).catch(() => {});
 
     // notify prefs
     API.get('/user/notify-prefs').then(({ data }) => setNotifPrefs(data)).catch(() => {});
@@ -136,7 +136,7 @@ const ProfilePage = () => {
     return url;
   };
 
-  const memberDate = new Date(authUser?.created_at || Date.now()).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const memberDate = new Date(authUser?.created_at || Date.now()).toLocaleDateString('de-DE');
   const photoSrc   = normalizePhoto(authUser?.photoURL);
 
   const handlePhotoUpload = async (e) => {
@@ -168,12 +168,35 @@ const ProfilePage = () => {
   const handleSaveAddress = async () => {
     setSaving(true);
     try {
-      await API.put('/user/address', addrForm);
-      setAddress(addrForm);
-      setAddrEdit(false);
-      toast.success(t('address_saved') || 'Address saved!');
+      if (addrEdit === 'new') {
+        await API.post('/user/addresses', { ...addrForm, setAsDefault: addresses.length === 0 });
+        toast.success(t('address_saved') || 'Address saved!');
+      } else if (addrEdit) {
+        await API.put(`/user/addresses/${addrEdit}`, addrForm);
+        toast.success(t('address_saved') || 'Address updated!');
+      }
+      const { data } = await API.get('/user/addresses');
+      setAddresses(data || []);
+      setAddrEdit(null);
     } catch { toast.error(t('update_failed') || 'Failed'); }
     finally { setSaving(false); }
+  };
+
+  const handleDeleteAddress = async (id) => {
+    if (!window.confirm(t('confirm_delete_address') || 'Delete this address?')) return;
+    try {
+      await API.delete(`/user/addresses/${id}`);
+      const { data } = await API.get('/user/addresses');
+      setAddresses(data || []);
+      toast.success(t('address_deleted') || 'Address deleted');
+    } catch { toast.error(t('update_failed') || 'Failed'); }
+  };
+
+  const handleSetDefault = async (id) => {
+    try {
+      await API.put(`/user/addresses/${id}/default`);
+      setAddresses(prev => prev.map(a => ({ ...a, is_default: a.id === id ? 1 : 0 })));
+    } catch { toast.error(t('update_failed') || 'Failed'); }
   };
 
   const handleChangePassword = async () => {
@@ -198,26 +221,12 @@ const ProfilePage = () => {
   };
 
   const handleReorder = (order) => {
-    const items = order.order_items_parsed;
-    if (!items?.length) return toast.error(t('no_items_to_reorder') || 'No items');
-    items.forEach(item => {
-      dispatch(addItem({
-        bookId: item.bookId,
-        quantity: item.quantity || 1,
-        book: {
-          title_en: item.title_en,
-          price: item.price,
-          image: item.image,
-          stock: Infinity, // allow re-adding regardless of current stock display
-        }
-      }));
+    if (!order.order_items_parsed?.length) return toast.error(t('no_items_to_reorder') || 'No items');
+    order.order_items_parsed.forEach(item => {
+      dispatch(addItem({ bookId: item.bookId, book: { title_en: item.title_en, price: item.price, image: item.image }, quantity: item.quantity }));
+      dispatch(syncAdd({ bookId: item.bookId, quantity: item.quantity }));
     });
-    // Sync cart to backend in one batch after all items added
-    items.forEach(item => {
-      dispatch(syncAdd({ bookId: item.bookId, quantity: item.quantity || 1 }));
-    });
-    toast.success(t('items_readded_to_cart') || 'Items added to cart!');
-    navigate('/cart');
+    toast.success(t('items_readded_to_cart') || 'Added to cart!');
   };
 
   const paginatedOrders = orders.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
@@ -321,7 +330,7 @@ const ProfilePage = () => {
                     <div className="prof-info-item"><span>{t('email')}</span><strong>{authUser.email}</strong></div>
                     <div className="prof-info-item"><span>{t('language')}</span><strong>{authUser.language === 'de' ? 'Deutsch' : 'English'}</strong></div>
                     <div className="prof-info-item"><span>{t('member_since')}</span><strong>{memberDate}</strong></div>
-                    <div className="prof-info-item"><span>{t('registration_method') || 'Login method'}</span><strong style={{ textTransform: 'capitalize' }}>{authUser.registration_method === 'google' ? 'Google' : authUser.registration_method === 'manual' ? 'Email' : '—'}</strong></div>
+                    <div className="prof-info-item"><span>{t('registration_method') || 'Login method'}</span><strong style={{ textTransform: 'capitalize' }}>{authUser.registration_method || '—'}</strong></div>
                   </div>
                 )}
               </div>
@@ -349,7 +358,7 @@ const ProfilePage = () => {
                           <div className="prof-order-top">
                             <div className="prof-order-meta">
                               <strong>#{order.id}</strong>
-                              <span className="prof-order-date">{new Date(order.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+                              <span className="prof-order-date">{new Date(order.created_at).toLocaleDateString('de-DE')}</span>
                               <StatusBadge status={order.status} t={t} />
                             </div>
                             <div className="prof-order-amount">€{Number(order.total).toFixed(2)}</div>
@@ -409,7 +418,7 @@ const ProfilePage = () => {
                       <div key={tx.id} className="prof-tx-row">
                         <div>
                           <div className="prof-tx-reason">{tx.reason}</div>
-                          <div className="prof-tx-date">{new Date(tx.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
+                          <div className="prof-tx-date">{new Date(tx.created_at).toLocaleDateString('de-DE')}</div>
                         </div>
                         <div className={`prof-tx-amount ${tx.type === 'CREDIT' ? 'credit' : 'debit'}`}>
                           {tx.type === 'CREDIT' ? '+' : '−'}€{Number(tx.amount).toFixed(2)}
@@ -421,19 +430,42 @@ const ProfilePage = () => {
               </div>
             )}
 
-            {/* ── 4. SAVED ADDRESS ── */}
+            {/* ── 4. SAVED ADDRESSES ── */}
             {activeTab === 'address' && (
               <div className="prof-card">
                 <div className="prof-card-header">
-                  <h2 className="prof-card-title">{t('saved_address') || 'Delivery Address'}</h2>
-                  {!addrEdit && (
-                    <button className="prof-btn-ghost" onClick={() => { setAddrEdit(true); setAddrForm(address); }}>
-                      {Object.keys(address).length ? <><Edit2 size={14}/> {t('edit')}</> : <><Plus size={14}/> {t('add_address') || 'Add'}</>}
+                  <h2 className="prof-card-title">
+                    {t('saved_address') || 'Saved Addresses'}
+                    {addresses.length > 0 && <span className="prof-count">{addresses.length}</span>}
+                  </h2>
+                  {addrEdit === null && (
+                    <button className="prof-btn-ghost" onClick={() => {
+                      setAddrEdit('new');
+                      setAddrForm({ label: 'Home', address: '', postalCode: '', city: '', country: 'DE' });
+                    }}>
+                      <Plus size={14} /> {t('add_address') || 'Add address'}
                     </button>
                   )}
                 </div>
-                {addrEdit ? (
-                  <div className="prof-form">
+
+                {/* Add / Edit form */}
+                {addrEdit !== null && (
+                  <div className="prof-form" style={{ marginBottom: 24, padding: 16, background: '#faf5ff', borderRadius: 12, border: '1px solid #ede9fe' }}>
+                    <h3 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: '#7c3aed' }}>
+                      {addrEdit === 'new' ? (t('add_address') || 'Add address') : (t('edit') || 'Edit address')}
+                    </h3>
+                    <div className="prof-field">
+                      <label>{t('address_label') || 'Label'}</label>
+                      <select
+                        value={addrForm.label || 'Home'}
+                        onChange={e => setAddrForm({ ...addrForm, label: e.target.value })}
+                        style={{ padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: 10, fontSize: 14, fontFamily: 'Inter,sans-serif' }}
+                      >
+                        <option value="Home">{t('address_label_home') || 'Home'}</option>
+                        <option value="Work">{t('address_label_work') || 'Work'}</option>
+                        <option value="Other">{t('address_label_other') || 'Other'}</option>
+                      </select>
+                    </div>
                     <div className="prof-field">
                       <label>{t('address') || 'Street address'}</label>
                       <input value={addrForm.address || ''} onChange={e => setAddrForm({ ...addrForm, address: e.target.value })} placeholder="Musterstraße 42" />
@@ -448,26 +480,70 @@ const ProfilePage = () => {
                         <input value={addrForm.city || ''} onChange={e => setAddrForm({ ...addrForm, city: e.target.value })} placeholder="Frankfurt" />
                       </div>
                     </div>
-                    <div className="prof-field">
-                      <label>{t('country') || 'Country'}</label>
-                      <input value={addrForm.country || ''} onChange={e => setAddrForm({ ...addrForm, country: e.target.value })} placeholder="Deutschland" />
-                    </div>
                     <div className="prof-form-actions">
-                      <button className="prof-btn-primary" onClick={handleSaveAddress} disabled={saving}><Save size={14}/> {saving ? '…' : t('save_changes')}</button>
-                      <button className="prof-btn-ghost" onClick={() => setAddrEdit(false)}><X size={14}/> {t('cancel')}</button>
+                      <button className="prof-btn-primary" onClick={handleSaveAddress} disabled={saving}>
+                        <Save size={14} /> {saving ? '…' : t('save_changes')}
+                      </button>
+                      <button className="prof-btn-ghost" onClick={() => setAddrEdit(null)}>
+                        <X size={14} /> {t('cancel')}
+                      </button>
                     </div>
                   </div>
-                ) : Object.values(address).some(Boolean) ? (
-                  <div className="prof-address-display">
-                    <MapPin size={18} className="prof-address-icon" />
-                    <div>
-                      <div>{address.address}</div>
-                      <div>{address.postalCode} {address.city}</div>
-                      <div>{address.country}</div>
-                    </div>
+                )}
+
+                {/* Address cards list */}
+                {addresses.length === 0 && addrEdit === null ? (
+                  <div className="prof-empty">
+                    <MapPin size={36} />
+                    <p>{t('no_address_saved') || 'No addresses saved yet.'}</p>
                   </div>
                 ) : (
-                  <div className="prof-empty"><MapPin size={36} /><p>{t('no_address_saved') || 'No default address saved yet.'}</p></div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {addresses.map(a => (
+                      <div key={a.id} style={{
+                        display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+                        gap: 12, padding: '14px 16px', borderRadius: 12,
+                        border: `1px solid ${a.is_default ? '#c4b5fd' : '#f0eefb'}`,
+                        background: a.is_default ? '#faf5ff' : '#fdfcff',
+                      }}>
+                        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                          <MapPin size={16} style={{ color: '#7c3aed', marginTop: 2, flexShrink: 0 }} />
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                              <span style={{ fontSize: 13, fontWeight: 700, color: '#1a1a2e' }}>{a.label}</span>
+                              {a.is_default === 1 && (
+                                <span style={{ background: '#7c3aed', color: '#fff', fontSize: 10, fontWeight: 700, padding: '1px 8px', borderRadius: 999 }}>
+                                  {t('default') || 'Default'}
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.6 }}>
+                              <div>{a.address}</div>
+                              <div>{a.postalCode} {a.city}</div>
+                              <div>{a.country}</div>
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                          {!a.is_default && (
+                            <button className="prof-btn-sm" onClick={() => handleSetDefault(a.id)}>
+                              ★ {t('set_default') || 'Set default'}
+                            </button>
+                          )}
+                          <button className="prof-btn-sm" onClick={() => {
+                            setAddrEdit(a.id);
+                            setAddrForm({ label: a.label, address: a.address, postalCode: a.postalCode, city: a.city, country: a.country });
+                          }}>
+                            <Edit2 size={12} /> {t('edit')}
+                          </button>
+                          <button className="prof-btn-sm" style={{ color: '#dc2626', borderColor: '#fecaca' }}
+                            onClick={() => handleDeleteAddress(a.id)}>
+                            <X size={12} /> {t('delete') || 'Delete'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             )}
@@ -489,7 +565,7 @@ const ProfilePage = () => {
                           <div className="prof-review-title">{r.title_en}</div>
                           <StarRating rating={r.rating} />
                           {r.review_text && <p className="prof-review-text">{r.review_text}</p>}
-                          <div className="prof-review-date">{new Date(r.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
+                          <div className="prof-review-date">{new Date(r.created_at).toLocaleDateString('de-DE')}</div>
                         </div>
                         <ChevronRight size={16} className="prof-review-arrow" />
                       </div>
@@ -514,7 +590,7 @@ const ProfilePage = () => {
                         <div className="prof-req-info">
                           <div className="prof-req-title">{r.title_en || r.title_de || r.isbn13 || '—'}</div>
                           {r.isbn13 && <div className="prof-req-isbn">ISBN: {r.isbn13}</div>}
-                          <div className="prof-req-date">{new Date(r.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
+                          <div className="prof-req-date">{new Date(r.created_at).toLocaleDateString('de-DE')}</div>
                         </div>
                         <span className={`prof-req-badge ${r.status === 'fulfilled' ? 'fulfilled' : r.status === 'added' ? 'added' : 'pending'}`}>
                           {r.status === 'fulfilled' ? '✓ ' + (t('available') || 'Available') : r.status === 'added' ? '📦 ' + (t('added') || 'Added') : '⏳ ' + (t('pending') || 'Pending')}
