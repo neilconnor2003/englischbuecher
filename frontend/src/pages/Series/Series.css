@@ -34,11 +34,7 @@
   border-radius: 10px;
   transition: background 0.15s;
 }
-.series-back-btn:hover { background: #faf5ff; text-decoration: none; }
-
-.series-back-btn:hover {
-  text-decoration: underline;
-}
+.series-back-btn:hover { background: #faf5ff; }
 
 .series-empty-card {
   background: white;
