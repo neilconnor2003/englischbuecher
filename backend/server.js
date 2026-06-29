@@ -2496,7 +2496,7 @@ ${bookList}`,
     try {
       const [due] = await db.query(`
         SELECT rr.id, rr.order_id, rr.user_id, rr.book_id, rr.emails_sent,
-               u.email, u.first_name, u.language,
+               u.email, u.first_name, u.language, u.notify_prefs,
                b.title_en, b.title_de, b.slug, b.image, b.isbn13, b.isbn10
         FROM review_requests rr
         JOIN users u ON u.id = rr.user_id
@@ -2513,6 +2513,15 @@ ${bookList}`,
       }
 
       for (const row of due) {
+        // Respect user's notification preference
+        const prefs = row.notify_prefs
+          ? (typeof row.notify_prefs === 'string' ? JSON.parse(row.notify_prefs) : row.notify_prefs)
+          : {};
+        if (prefs.review_requests === false) {
+          console.log(`[ReviewRequests] Skipping ${row.email} — review_requests disabled`);
+          continue;
+        }
+
         const isDe = row.language === 'de';
         const title = isDe ? (row.title_de || row.title_en) : (row.title_en || row.title_de);
         const reviewUrl = `${process.env.FRONTEND_URL}${buildBookUrl({ id: row.book_id, slug: row.slug, isbn13: row.isbn13, isbn10: row.isbn10 })}#reviews`;
@@ -4739,7 +4748,7 @@ ${bookList}`,
       if (!book) return;
 
       const [pending] = await db.execute(
-        `SELECT sn.id, sn.email, u.language, u.first_name
+        `SELECT sn.id, sn.email, u.language, u.first_name, u.notify_prefs
        FROM stock_notifications sn
        LEFT JOIN users u ON u.id = sn.user_id
        WHERE sn.book_id = ? AND sn.notified_at IS NULL`,
@@ -4750,6 +4759,15 @@ ${bookList}`,
       const bookUrl = `${process.env.FRONTEND_URL}${buildBookUrl(book)}`;
 
       for (const sub of pending) {
+        // Respect user's notification preference
+        const prefs = sub.notify_prefs
+          ? (typeof sub.notify_prefs === 'string' ? JSON.parse(sub.notify_prefs) : sub.notify_prefs)
+          : {};
+        if (prefs.restock === false) {
+          console.log(`[RestockNotify] Skipping ${sub.email} — restock notifications disabled`);
+          continue;
+        }
+
         const isDe = sub.language === 'de';
         const title = isDe ? (book.title_de || book.title_en) : (book.title_en || book.title_de);
 
@@ -5210,7 +5228,8 @@ ${bookList}`,
         initials,
         customPic: req.user.custom_pic || 0,
         created_at: req.user.created_at || null,
-        email_verified_at: req.user.email_verified_at || null
+        email_verified_at: req.user.email_verified_at || null,
+        registration_method: req.user.registration_method || null
       });
     } else {
       res.status(401).json({ message: 'Not authenticated' });

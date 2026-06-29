@@ -2,11 +2,12 @@
 import React, { useContext, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import './App.css';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import ScrollToTop from './ScrollToTop';
 import { loadStripe } from '@stripe/stripe-js';
-import { fetchWishlist } from './features/wishlist/wishlistSlice'; // ← Added
+import { fetchWishlist } from './features/wishlist/wishlistSlice';
+import { trackPageView } from './utils/analytics';
 
 import HeaderBeforeLogin from './components/Header/HeaderBeforeLogin';
 import HeaderAfterLogin from './components/Header/HeaderAfterLogin';
@@ -47,10 +48,15 @@ import Series from './pages/Series/Series';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
-// ←←← NEW COMPONENT — THIS FIXES THE HOOK ERROR ←←←
 const AppContent = () => {
   const dispatch = useDispatch();
   const { user, loading } = useContext(AuthContext);
+  const location = useLocation();
+
+  // Track GA4 page views on every route change
+  useEffect(() => {
+    trackPageView(location.pathname + location.search);
+  }, [location]);
 
   // Load wishlist when user logs in
   useEffect(() => {

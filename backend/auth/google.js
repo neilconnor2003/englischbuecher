@@ -101,13 +101,11 @@ module.exports = function (db) {
       const safeFirstName = givenName || 'User';
       const safeLastName = familyName || '';
 
-      const DEFAULT_NOTIFY_PREFS = JSON.stringify({ review_requests: true, restock: true, wallet_credits: true, newsletter: true });
-
       const [result] = await db.execute(
         `INSERT INTO users
-   (email, first_name, last_name, photo_url, registration_method, language, created_at, email_verified_at, deleted_at, notify_prefs)
-   VALUES (?, ?, ?, ?, 'google', 'de', NOW(), NOW(), '1970-01-01 00:00:01', ?)`,
-        [email, safeFirstName, safeLastName, photoURL, DEFAULT_NOTIFY_PREFS]
+   (email, first_name, last_name, photo_url, registration_method, language, created_at, email_verified_at, deleted_at)
+   VALUES (?, ?, ?, ?, 'google', 'de', NOW(), NOW(), '1970-01-01 00:00:01')`,
+        [email, safeFirstName, safeLastName, photoURL]
       );
 
       const newUser = {
@@ -144,7 +142,7 @@ module.exports = function (db) {
   passport.deserializeUser(async (id, done) => {
     try {
       const [[user]] = await db.execute(
-        'SELECT id, email, first_name, last_name, role, language, photo_url, created_at, email_verified_at FROM users WHERE id = ?',
+        'SELECT id, email, first_name, last_name, role, language, photo_url, created_at, email_verified_at, registration_method, custom_pic FROM users WHERE id = ?',
         [id]
       );
 
