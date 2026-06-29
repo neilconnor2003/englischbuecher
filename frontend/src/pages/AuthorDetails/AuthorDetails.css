@@ -1,38 +1,57 @@
-
 /* frontend/src/pages/AuthorDetails/AuthorDetails.css */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@1,700;1,900&family=Inter:wght@400;500;600;700&display=swap');
 
 .author-details-page {
-  background: #faf9ff;
-  padding: 20px 0 60px;
-  color: #111;
+  background: linear-gradient(160deg, #f6f3ff 0%, #ffffff 55%);
+  padding: 32px 0 72px;
   min-height: 100vh;
+  font-family: 'Inter', -apple-system, sans-serif;
 }
 
-/* Header: fluid and wraps on small screens */
+/* ── BACK BUTTON ── */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid #ede9fe;
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #7c3aed;
+  cursor: pointer;
+  margin-bottom: 28px;
+  transition: background 0.15s, border-color 0.15s;
+  font-family: 'Inter', sans-serif;
+}
+.back-btn:hover { background: #faf5ff; border-color: #c4b5fd; }
+
+/* ── HEADER ── */
 .author-header {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: clamp(16px, 2.5vw, 28px);
+  gap: clamp(20px, 3vw, 40px);
   align-items: start;
-  margin-bottom: clamp(16px, 3vw, 28px);
+  background: #fff;
+  border: 1px solid #ede9fe;
+  border-radius: 20px;
+  padding: clamp(20px, 3vw, 36px);
+  margin-bottom: 32px;
+  box-shadow: 0 4px 20px rgba(124,58,237,0.07);
 }
 
-/* Responsive portrait frame:
-   - width/height scale with viewport (min 96px, pref ~22vw, max 180px)
-   - keeps rounded corners + purple border
-*/
+/* ── PORTRAIT ── */
 .author-portrait {
   position: relative;
-  width: clamp(96px, 22vw, 180px);
-  height: clamp(96px, 22vw, 180px);
-  border-radius: 16px;
+  width: clamp(100px, 18vw, 160px);
+  height: clamp(100px, 18vw, 160px);
+  border-radius: 50%;
   overflow: hidden;
-  border: 2px solid #9333ea;
-  background: #fafafa;
+  border: 3px solid #ede9fe;
   flex-shrink: 0;
 }
 
-/* Base initials avatar always present (revealed if image is missing/fails) */
 .author-fallback-avatar {
   width: 100%;
   height: 100%;
@@ -41,12 +60,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* font scales a bit with box */
-  font-size: clamp(28px, 6vw, 44px);
-  border-radius: 16px;
+  font-size: clamp(28px, 5vw, 44px);
+  border-radius: 50%;
 }
 
-/* Photo overlay */
 .author-photo-img {
   position: absolute;
   inset: 0;
@@ -55,52 +72,73 @@
   object-fit: cover;
 }
 
-/* Headline block */
+/* ── HEADLINE ── */
 .author-headline {
-  display: grid;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
 }
 
 .author-name-title {
-  margin: 0;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 900;
+  font-style: italic;
   color: #9333ea;
-  font-weight: 800;
-  /* fluid type */
-  font-size: clamp(26px, 4.5vw, 40px);
-  line-height: 1.15;
+  margin: 0;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
 }
 
 .author-bio {
-  margin: 4px 0 0;
-  font-size: clamp(14px, 2.2vw, 16px);
-  color: #333;
-  line-height: 1.7;
-  white-space: pre-wrap;      /* respect line breaks */
-  word-break: break-word;     /* break long words to keep layout stable */
+  font-size: clamp(13px, 1.8vw, 15px);
+  color: #4b5563;
+  line-height: 1.75;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-width: 680px;
 }
 
-/* Section title */
+/* ── BOOKS SECTION ── */
 .books-by-author-title {
-  margin: clamp(24px, 4vw, 40px) 0 clamp(16px, 2.5vw, 24px);
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(1.4rem, 3vw, 1.9rem);
+  font-weight: 900;
+  font-style: italic;
   color: #9333ea;
-  font-weight: 800;
-  font-size: clamp(20px, 3.6vw, 28px);
+  margin: 0 0 clamp(16px, 2.5vw, 24px);
 }
 
-/* Responsive books grid that works with your centralized BookCard */
 .author-books-grid {
   display: grid;
-  gap: clamp(16px, 2.4vw, 28px);
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: clamp(16px, 2vw, 24px);
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 }
 
-/* Small screens: stack header vertically */
+/* ── LOADING / NOT FOUND ── */
+.loading-spinner,
+.not-found {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  color: #9ca3af;
+}
+
+/* ── MOBILE ── */
 @media (max-width: 640px) {
   .author-header {
     grid-template-columns: 1fr;
+    text-align: center;
     align-items: center;
   }
-  .author-headline {
-    text-align: left;
+  .author-portrait {
+    margin: 0 auto;
   }
+  .author-headline { align-items: center; }
+  .author-bio { text-align: left; }
 }

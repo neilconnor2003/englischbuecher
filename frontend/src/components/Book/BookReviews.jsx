@@ -1,289 +1,248 @@
-
 // frontend/src/components/Book/BookReviews.jsx
 import React, { useState, useEffect, useContext } from 'react';
-import { MessageCircle } from 'lucide-react';
-import { Modal, Rate, Input, Button, Form, message, Avatar } from 'antd';
+import { Star, MessageCircle, X } from 'lucide-react';
 import axios from 'axios';
 import config from '../../config';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../../context/AuthContext';
+import './BookReviews.css';
 
-const { TextArea } = Input;
-
-const normalizeFromApi = (url) => {
+const normalizeUrl = (url) => {
   if (!url) return '';
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
   if (url.startsWith('/')) return `${config.API_URL}${url}`;
   return url;
 };
 
-function BookReviews({ bookId }) {
-  //const { t } = useTranslation();
-  //const locale = (t?.i18n?.resolvedLanguage || 'en') === 'de' ? 'de-DE' : 'en-US';
+const StarRating = ({ value, interactive = false, onChange, size = 22 }) => {
+  const [hovered, setHovered] = useState(0);
+  const display = interactive ? (hovered || value) : value;
+  return (
+    <div className="br-stars" style={{ gap: size < 18 ? 2 : 4 }}>
+      {[1, 2, 3, 4, 5].map(s => (
+        <button
+          key={s}
+          type="button"
+          className={`br-star ${s <= display ? 'filled' : ''} ${interactive ? 'interactive' : ''}`}
+          style={{ width: size, height: size }}
+          onClick={() => interactive && onChange?.(s)}
+          onMouseEnter={() => interactive && setHovered(s)}
+          onMouseLeave={() => interactive && setHovered(0)}
+          disabled={!interactive}
+        >
+          <Star size={size} fill={s <= display ? '#f59e0b' : 'none'} color={s <= display ? '#f59e0b' : '#d1d5db'} />
+        </button>
+      ))}
+    </div>
+  );
+};
 
+const Avatar = ({ src, name, size = 44 }) => {
+  const [imgError, setImgError] = useState(false);
+  const initials = (name || 'A').split(' ').map(s => s[0]).join('').slice(0, 2).toUpperCase();
+  const colors = ['#7c3aed', '#2563eb', '#059669', '#d97706', '#dc2626'];
+  const color = colors[(name?.charCodeAt(0) || 0) % colors.length];
+
+  if (src && !imgError) {
+    return (
+      <img
+        src={normalizeUrl(src)}
+        alt={name}
+        className="br-avatar br-avatar-img"
+        style={{ width: size, height: size }}
+        onError={() => setImgError(true)}
+      />
+    );
+  }
+  return (
+    <div className="br-avatar br-avatar-initials" style={{ width: size, height: size, background: color }}>
+      {initials}
+    </div>
+  );
+};
+
+function BookReviews({ bookId }) {
   const { t, i18n } = useTranslation();
   const locale = (i18n.resolvedLanguage || 'en') === 'de' ? 'de-DE' : 'en-US';
-
-
-  const formatOneDecimal = (value) =>
-    new Intl.NumberFormat(locale, {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1
-    }).format(Number(value) || 0);
-
-  const formatReviewDate = (iso) => {
-    if (!iso) return '';
-    return new Date(iso).toLocaleDateString(locale, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-
   const { user } = useContext(AuthContext);
-  const [reviews, setReviews] = useState([]);
-  const [stats, setStats] = useState({
-    average: 0,
-    total: 0,
-    distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
-  });
-  const [loading, setLoading] = useState(true);
+
+  const [reviews, setReviews]   = useState([]);
+  const [stats, setStats]       = useState({ average: 0, total: 0, distribution: { 1:0,2:0,3:0,4:0,5:0 } });
+  const [loading, setLoading]   = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
-  const [form] = Form.useForm();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError]       = useState('');
+  const [form, setForm]         = useState({ rating: 0, review_text: '', reviewer_name: '' });
+
+  const formatDate = (iso) => iso ? new Date(iso).toLocaleDateString(locale, { year:'numeric', month:'short', day:'numeric' }) : '';
+  const formatRating = (v) => new Intl.NumberFormat(locale, { minimumFractionDigits:1, maximumFractionDigits:1 }).format(Number(v)||0);
 
   const fetchData = async () => {
     try {
       const [statsRes, reviewsRes] = await Promise.all([
         axios.get(`${config.API_URL}/api/books/${bookId}/reviews/stats`),
-        axios.get(`${config.API_URL}/api/books/${bookId}/reviews`)
+        axios.get(`${config.API_URL}/api/books/${bookId}/reviews`),
       ]);
       setStats(statsRes.data);
       setReviews(reviewsRes.data);
     } catch (err) {
       console.error('Failed to load reviews', err);
-      message.error(t('reviews.load_error') || 'Failed to load reviews');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (bookId) fetchData();
-  }, [bookId]);
+  useEffect(() => { if (bookId) fetchData(); }, [bookId]);
 
-  const onSubmitReview = async (values) => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (!form.rating) return setError(t('reviews.rating_required') || 'Please select a rating');
+    if (!form.review_text || form.review_text.trim().length < 10)
+      return setError(t('reviews.text_too_short') || 'Review must be at least 10 characters');
+    if (!user && !form.reviewer_name.trim())
+      return setError(t('reviews.name_required') || 'Please enter your name');
+
+    setSubmitting(true);
     try {
-      await axios.post(
-        `${config.API_URL}/api/books/${bookId}/reviews`,
-        {
-          rating: values.rating,                 // ← now bound correctly
-          review_text: values.review_text,
-          reviewer_name: values.reviewer_name || user?.name || 'Anonymous'
-        }
-        // ← no withCredentials needed for guest posting
-      );
-      message.success(t('review_submitted') || 'Thank you! Your review has been submitted.');
-      form.resetFields();
+      await axios.post(`${config.API_URL}/api/books/${bookId}/reviews`, {
+        rating: form.rating,
+        review_text: form.review_text,
+        reviewer_name: form.reviewer_name || user?.first_name || 'Anonymous',
+      });
       setModalOpen(false);
+      setForm({ rating: 0, review_text: '', reviewer_name: '' });
       fetchData();
     } catch (err) {
-      console.error('submit review failed:', err?.response?.status, err?.response?.data, err);
-      message.error(err.response?.data?.message || 'Failed to submit review');
+      setError(err.response?.data?.message || t('reviews.submit_error') || 'Failed to submit');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   if (loading) {
-    return (
-      <div className="py-20 text-center text-gray-500">
-        {t('reviews.loading') || 'Loading reviews...'}
-      </div>
-    );
+    return <div className="br-loading">{t('reviews.loading') || 'Loading reviews…'}</div>;
   }
 
   return (
-    <div className="book-reviews mt-24 bg-gradient-to-b from-purple-50/50 to-transparent">
+    <div className="br-wrap" id="reviews-section">
       <div className="container">
-        <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-          {t('customer_reviews') || 'Customer Reviews'}
-        </h2>
+        <h2 className="br-heading">{t('customer_reviews') || 'Customer Reviews'}</h2>
 
-        <div className="grid lg:grid-cols-4 gap-12">
-          {/* Rating Summary */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-3xl shadow-xl p-8 sticky top-24 border border-purple-100">
-              <div className="text-center mb-8">
-                <div className="text-7xl font-bold text-purple-600">
-                  {formatOneDecimal(stats.average)}
-                </div>
-                <Rate disabled allowHalf value={stats.average} className="text-4xl mt-3" style={{ color: '#9333ea' }} />
-                <p className="text-gray-600 mt-3 text-lg">
-                  {t('review_count', { count: stats.total })}
-                </p>
+        <div className="br-layout">
+          {/* ── LEFT: summary ── */}
+          <aside className="br-sidebar">
+            <div className="br-summary-card">
+              <div className="br-big-score">{formatRating(stats.average)}</div>
+              <StarRating value={Math.round(stats.average)} size={20} />
+              <p className="br-total-count">{t('review_count', { count: stats.total })}</p>
+
+              <div className="br-distribution">
+                {[5,4,3,2,1].map(star => {
+                  const pct = stats.total > 0 ? (stats.distribution[star] / stats.total) * 100 : 0;
+                  return (
+                    <div key={star} className="br-dist-row">
+                      <span className="br-dist-label">{star}★</span>
+                      <div className="br-dist-bar">
+                        <div className="br-dist-fill" style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="br-dist-count">{stats.distribution[star] || 0}</span>
+                    </div>
+                  );
+                })}
               </div>
 
-              {/* Star distribution */}
-              {[5, 4, 3, 2, 1].map(star => (
-                <div key={star} className="flex items-center gap-4 mb-4">
-
-                  <span className="text-sm font-medium w-10">
-                    {t('reviews.star_label', { count: star })}
-                  </span>
-
-                  <div className="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
-                      style={{ width: `${stats.total > 0 ? (stats.distribution[star] / stats.total) * 100 : 0}%` }}
-                    />
-                  </div>
-                  <span className="text-sm text-gray-600 w-12 text-right">
-                    {stats.distribution[star] || 0}
-                  </span>
-                </div>
-              ))}
-
-              <Button
-                type="primary"
-                size="large"
-                block
-                onClick={() => setModalOpen(true)}
-                className="mt-10 h-14 text-lg font-bold rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600"
-              >
-                {t('write_review')}
-              </Button>
+              <button className="br-write-btn" onClick={() => setModalOpen(true)}>
+                {t('write_review') || 'Write a review'}
+              </button>
             </div>
-          </div>
+          </aside>
 
-          {/* Reviews List */}
-          <div className="lg:col-span-3 space-y-8">
+          {/* ── RIGHT: reviews list ── */}
+          <div className="br-list">
             {reviews.length === 0 ? (
-              <div className="text-center py-24 bg-white rounded-3xl shadow-lg">
-                <MessageCircle size={80} className="mx-auto text-purple-300 mb-6" />
-                <h3 className="text-2xl font-bold text-gray-700 mb-4">
-                  {t('reviews.no_reviews_yet')}
-                </h3>
-                <p className="text-gray-500 mb-8">
-                  {t('reviews.be_the_first')}{' '}
-                  <button
-                    type="button"
-                    onClick={() => setModalOpen(true)}
-                    className="text-purple-600 hover:text-purple-800 underline font-medium bg-transparent border-none cursor-pointer p-0"
-                  >
+              <div className="br-empty">
+                <MessageCircle size={48} className="br-empty-icon" />
+                <h3>{t('reviews.no_reviews_yet') || 'No reviews yet'}</h3>
+                <p>
+                  {t('reviews.be_the_first') || 'Be the first to review this book.'}{' '}
+                  <button type="button" className="br-inline-link" onClick={() => setModalOpen(true)}>
                     {t('reviews.write_first') || 'Write a review'}
                   </button>
                 </p>
-                <Button size="large" type="primary" onClick={() => setModalOpen(true)}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 border-none h-12 px-8 text-base font-bold rounded-2xl">
-                  {t('reviews.write_first')}
-                </Button>
               </div>
             ) : (
-              reviews.map(review => {
-                const initials = (review.reviewer_name || 'Anonymous')
-                  .split(' ')
-                  .map(s => s[0])
-                  .join('')
-                  .slice(0, 2)
-                  .toUpperCase();
-
-                const avatarSrc = review.reviewer_photo_url
-                  ? normalizeFromApi(review.reviewer_photo_url)
-                  : undefined;
-
-                return (
-                  <div key={review.id} className="bg-white rounded-3xl shadow-lg p-8 border border-purple-100 hover:border-purple-300 transition-all">
-                    <div className="flex items-start justify-between mb-6">
-                      <div className="flex items-center gap-4">
-                        <Avatar
-                          src={avatarSrc}
-                          size={56}
-                          className="review-avatar"
-                          alt="Reviewer avatar"
-                          //onError={(e) => { e.currentTarget.src = ''; return false; }}
-
-                          onError={(e) => {
-                            if (e?.currentTarget) {
-                              e.currentTarget.src = '/assets/avatar-placeholder.png';
-                            }
-                            return false; // keep initials fallback if image fails
-                          }}
-
-                        >
-                          {!avatarSrc && initials}
-                        </Avatar>
-
-                        <div>
-                          <h4 className="font-bold text-lg text-gray-800">
-                            {review.reviewer_name || 'Anonymous'}
-                          </h4>
-                          <p className="text-sm text-gray-500">
-                            {formatReviewDate(review.created_at)}
-                          </p>
-                        </div>
-                      </div>
-
-                      <Rate disabled allowHalf value={review.rating} style={{ fontSize: 22, color: '#9333ea' }} />
+              reviews.map(review => (
+                <div key={review.id} className="br-card">
+                  <div className="br-card-header">
+                    <Avatar src={review.reviewer_photo_url} name={review.reviewer_name} />
+                    <div className="br-card-meta">
+                      <span className="br-reviewer-name">{review.reviewer_name || 'Anonymous'}</span>
+                      <span className="br-review-date">{formatDate(review.created_at)}</span>
                     </div>
-
-                    {review.review_text && (
-                      <p className="text-gray-700 leading-relaxed text-lg">{review.review_text}</p>
-                    )}
+                    <StarRating value={review.rating} size={16} />
                   </div>
-                );
-              })
+                  {review.review_text && (
+                    <p className="br-review-text">{review.review_text}</p>
+                  )}
+                </div>
+              ))
             )}
           </div>
         </div>
       </div>
 
-      {/* Modal */}
-      <Modal
-        title={<h2 className="text-3xl font-bold text-center bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Write Your Review</h2>}
-        open={modalOpen}
-        onCancel={() => setModalOpen(false)}
-        footer={null}
-        width={600}
-      >
-        <Form form={form} onFinish={onSubmitReview} layout="vertical" className="mt-8">
-          {/* Rating MUST be direct child of Form.Item */}
-          <Form.Item
-            name="rating"
-            rules={[{ required: true, message: t('reviews.rating_required') }]}
-            className="text-center mb-4"
-            valuePropName="value"
-          >
-            <Rate allowHalf className="text-4xl" />
-          </Form.Item>
-          <p className="text-center text-gray-600 mb-6">{t('reviews.rating_question')}</p>
+      {/* ── MODAL ── */}
+      {modalOpen && (
+        <div className="br-modal-overlay" onClick={(e) => e.target === e.currentTarget && setModalOpen(false)}>
+          <div className="br-modal">
+            <button className="br-modal-close" onClick={() => setModalOpen(false)}><X size={20} /></button>
+            <h2 className="br-modal-title">{t('write_review') || 'Write a Review'}</h2>
 
-          {!user && (
-            <Form.Item name="reviewer_name" rules={[{ required: true, message: t('reviews.name_required') }]}>
-              <Input size="large" placeholder={t('reviews.name_placeholder')} />
-            </Form.Item>
-          )}
+            <form onSubmit={handleSubmit} className="br-form">
+              {error && <div className="br-form-error">{error}</div>}
 
-          <Form.Item
-            name="review_text"
-            rules={[
-              { required: true, message: t('reviews.text_required') },
-              { min: 10, message: t('reviews.text_too_short') } // align with server requirement
-            ]}
-          >
-            <TextArea rows={6} placeholder={t('reviews.text_placeholder')} className="text-lg" />
-          </Form.Item>
+              <div className="br-form-group">
+                <label>{t('reviews.rating_question') || 'Your rating'}</label>
+                <StarRating
+                  value={form.rating}
+                  interactive
+                  onChange={(v) => setForm(f => ({ ...f, rating: v }))}
+                  size={32}
+                />
+              </div>
 
-          <div className="text-center">
-            <Button
-              type="primary"
-              htmlType="submit"
-              size="large"
-              className="h-14 px-12 text-lg font-bold rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600"
-            >
-              {t('reviews.submit')}
-            </Button>
+              {!user && (
+                <div className="br-form-group">
+                  <label>{t('reviews.name_placeholder') || 'Your name'}</label>
+                  <input
+                    type="text"
+                    className="br-input"
+                    value={form.reviewer_name}
+                    onChange={e => setForm(f => ({ ...f, reviewer_name: e.target.value }))}
+                    placeholder={t('reviews.name_placeholder') || 'Your name'}
+                  />
+                </div>
+              )}
+
+              <div className="br-form-group">
+                <label>{t('reviews.text_placeholder') || 'Your review'}</label>
+                <textarea
+                  className="br-textarea"
+                  rows={5}
+                  value={form.review_text}
+                  onChange={e => setForm(f => ({ ...f, review_text: e.target.value }))}
+                  placeholder={t('reviews.text_placeholder') || 'Share your thoughts about this book…'}
+                />
+              </div>
+
+              <button type="submit" className="br-submit-btn" disabled={submitting}>
+                {submitting ? (t('saving') || 'Submitting…') : (t('reviews.submit') || 'Submit Review')}
+              </button>
+            </form>
           </div>
-        </Form>
-      </Modal>
+        </div>
+      )}
     </div>
   );
 }

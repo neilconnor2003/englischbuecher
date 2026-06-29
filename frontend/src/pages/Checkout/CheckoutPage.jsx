@@ -27,9 +27,10 @@ const CheckoutPage = ({ clientSecret }) => {
 
   const [email, setEmail] = useState(user?.email || "");
   const [address, setAddress] = useState(shippingAddress?.address || "");
-
   const [postalCode, setPostalCode] = useState("");
   const [city, setCity] = useState("");
+  const [saveAddress, setSaveAddress] = useState(false);
+  const [hasSavedAddress, setHasSavedAddress] = useState(false);
 
   //const [shippingMode, setShippingMode] = useState('delivery');
   const shippingMode = 'delivery';
@@ -108,7 +109,6 @@ const CheckoutPage = ({ clientSecret }) => {
   const finalTotal = grandTotal - walletUsed;
 
   const [hydrated, setHydrated] = useState(false);
-  const [shippingResolved, setShippingResolved] = useState(false);
 
   useEffect(() => {
     try {
@@ -118,9 +118,23 @@ const CheckoutPage = ({ clientSecret }) => {
         setShippingAmount(Number(parsed.amount_eur || 0));
       }
     } catch { }
-    // Always resolve — if nothing in localStorage, 0 is the correct starting value
     setShippingResolved(true);
   }, []);
+
+  // Pre-fill address from user's saved default
+  useEffect(() => {
+    if (!user) return;
+    axios.get(`${API_BASE}/user/address`, { withCredentials: true })
+      .then(({ data }) => {
+        if (data?.address) {
+          setAddress(data.address || '');
+          setPostalCode(data.postalCode || '');
+          setCity(data.city || '');
+          setHasSavedAddress(true);
+        }
+      })
+      .catch(() => {});
+  }, [user]);
 
   useEffect(() => {
     if (!user) navigate("/login?redirect=checkout");
@@ -320,38 +334,51 @@ const CheckoutPage = ({ clientSecret }) => {
   }, [clientSecret, totalPrice, shippingAmount, t]);*/}
 
   useEffect(() => {
-    // Don't fire until shipping cost is resolved from localStorage
-    if (!shippingResolved) return;
-    // Don't fire with a zero total — cart hasn't loaded yet
-    if (finalTotal <= 0) return;
-    // Don't fire after payment is already confirmed
-    if (!clientSecret) return;
 
+    //console.log('🚀 updatePI triggered');
+    //console.log('🚀 shippingMode:', shippingMode);
+    //console.log('🚀 grandTotal:', grandTotal);
     console.log('PI update:', { grandTotal, walletUsed, finalTotal });
 
-    // Debounce: wait 600ms after last change before hitting Stripe
-    const timer = setTimeout(async () => {
-      const amount_cents      = Math.max(50, Math.round(finalTotal * 100));
+    async function updatePI() {
+      if (!clientSecret) return;
+
+      //const amount_cents = Math.round(grandTotal * 100);
+      //const amount_cents = Math.round(finalTotal * 100);
+      const amount_cents = Math.max(50, Math.round(finalTotal * 100));
+
+
+      //const shipping_provider = shippingMode === 'pickup' ? 'PICKUP' : 'DPD';
+      //const shipping_service = shippingMode === 'pickup' ? 'Click & Collect' : 'Standard';
+
       const shipping_provider = 'DPD';
-      const shipping_service  = 'Standard';
+      const shipping_service = 'Standard';
+
+
 
       try {
-        await axios.post(
-          `${API_BASE}/orders/update-payment-intent-amount`,
+        const res = /*await axios.post(
+          '/api/orders/update-payment-intent-amount',
           { clientSecret, amount_cents, shipping_provider, shipping_service },
           { withCredentials: true }
-        );
+        );*/
+
+          await axios.post(
+            `${API_BASE}/orders/update-payment-intent-amount`,
+            { clientSecret, amount_cents, shipping_provider, shipping_service },
+            { withCredentials: true }
+          );
+
+
+        //console.log('[PI UPDATED]', res.data);
       } catch (e) {
         console.error('[PI UPDATE FAILED]', e?.response?.data || e?.message);
-        // Only show toast for genuine errors, not post-payment stale calls
-        if (e?.response?.status !== 400) {
-          toast.error(t('payment_failed_try_again'));
-        }
+        toast.error(t('payment_failed_try_again'));
       }
-    }, 600);
+    }
 
-    return () => clearTimeout(timer);
-  }, [clientSecret, finalTotal, shippingMode, shippingResolved, t]);
+    updatePI();
+  }, [clientSecret, finalTotal, shippingMode, t]);
 
   const [discountError, setDiscountError] = useState("");
 
@@ -406,6 +433,12 @@ const CheckoutPage = ({ clientSecret }) => {
 
     if (shippingMode === 'delivery' && shippingAmount <= 0 && !isFreeShipping)
       return toast.error(t('shipping_error'));
+
+    // Save address to profile if user ticked the checkbox
+    if (saveAddress && user) {
+      axios.put(`${API_BASE}/user/address`, { address, postalCode, city, country: 'DE' }, { withCredentials: true })
+        .catch(() => {}); // non-blocking
+    }
 
     setLoading(true);
 
@@ -570,6 +603,22 @@ const CheckoutPage = ({ clientSecret }) => {
                   <div className="readonly-field">
                     <strong>Deutschland (DE)</strong>
                   </div>
+                </div>
+
+                {/* Save address checkbox */}
+                <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input
+                    type="checkbox"
+                    id="save-address"
+                    checked={saveAddress}
+                    onChange={e => setSaveAddress(e.target.checked)}
+                    style={{ accentColor: '#7c3aed', width: 16, height: 16, cursor: 'pointer' }}
+                  />
+                  <label htmlFor="save-address" style={{ fontSize: 13, color: '#374151', cursor: 'pointer', margin: 0 }}>
+                    {hasSavedAddress
+                      ? (t('update_saved_address') || 'Update my saved address')
+                      : (t('save_address_for_next_time') || 'Save this address for next time')}
+                  </label>
                 </div>
               </div>
 
