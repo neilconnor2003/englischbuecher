@@ -238,3 +238,113 @@
     max-width: 320px;
   }
 }
+/* ── Native form replacements (AntD removal) ── */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@1,700;1,900&family=Inter:wght@400;500;600;700&display=swap');
+
+.rbook-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+.rbook-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  letter-spacing: 0.02em;
+}
+.rbook-required { color: #dc2626; }
+.rbook-hint { font-size: 11px; color: #9ca3af; margin-top: 3px; }
+
+.rbook-field input,
+.rbook-field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #1a1a2e;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  resize: vertical;
+}
+.rbook-field input:focus,
+.rbook-field textarea:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+}
+
+.rbook-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.rbook-field--autocomplete { position: relative; }
+.rbook-autocomplete-wrap { position: relative; }
+.rbook-spinner { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; animation: rbook-rot 0.8s linear infinite; }
+.rbook-spin { animation: rbook-rot 0.7s linear infinite; }
+@keyframes rbook-rot { to { transform: rotate(360deg); } }
+
+.rbook-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: #fff;
+  border: 1px solid #ede9fe;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(124,58,237,0.12);
+  z-index: 100;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.rbook-suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.rbook-suggestion-item:hover { background: #faf5ff; }
+.rbook-sugg-img { width: 32px; height: 44px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+.rbook-sugg-title { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+.rbook-sugg-meta { font-size: 11px; color: #9ca3af; }
+
+.rbook-submit {
+  width: 100%;
+  background: linear-gradient(135deg, #7c3aed, #5e42d6);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 17px;
+  font-weight: 900;
+  font-style: italic;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.rbook-submit:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+.rbook-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.request-success {
+  text-align: center;
+  padding: 40px 20px;
+}
+.request-success-icon { color: #16a34a; margin: 0 auto 16px; display: block; }
+.request-success-title {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.6rem;
+  font-weight: 900;
+  font-style: italic;
+  color: #16a34a;
+  margin: 0 0 10px;
+}
+.request-success-desc { font-size: 14px; color: #6b7280; margin: 0 0 24px; line-height: 1.6; }
+
+@media (max-width: 600px) {
+  .rbook-row { grid-template-columns: 1fr; }
+}

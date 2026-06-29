@@ -1,140 +1,83 @@
-
-import React, { useContext, useState } from 'react';
-//import { Form, Input, Button, message } from 'antd';
-import { Form, Input, Button, message, AutoComplete, Spin } from 'antd';
+// frontend/src/pages/RequestBook/RequestBookPage.jsx
+import React, { useContext, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
 import config from '../../config';
+import { toast } from 'react-toastify';
+import { Search, BookOpen, CheckCircle, Loader } from 'lucide-react';
 import './request-book.css';
 
-const { TextArea } = Input;
-
 export default function RequestBookPage() {
-  //const { t } = useTranslation();
   const { t, i18n } = useTranslation();
   const { user } = useContext(AuthContext);
+  const isDe = i18n.resolvedLanguage === 'de';
+
   const [submitting, setSubmitting] = useState(false);
-  const [form] = Form.useForm();
-
-  const atLeastOneRule = ({ getFieldValue }) => ({
-    validator() {
-      const hasISBN13 = !!getFieldValue('isbn13');
-      const hasISBN10 = !!getFieldValue('isbn10');
-      const hasTitle = !!getFieldValue('title');
-      if (hasISBN13 || hasISBN10 || hasTitle) return Promise.resolve();
-      return Promise.reject(new Error(t('request.validation_isbn_or_title')));
-    },
-  });
-
-
+  const [success, setSuccess] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const debounceRef = useRef(null);
 
-  const fetchSuggestions = async (value) => {
-    const q = value?.trim();
-    if (!q || q.length < 2) {
-      setSuggestions([]);
+  const [form, setForm] = useState({
+    requester_name: '', requester_email: '',
+    isbn13: '', isbn10: '', title: '', author: '', publisher: '', notes: '',
+  });
+
+  const setField = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const fetchSuggestions = (value) => {
+    clearTimeout(debounceRef.current);
+    if (!value || value.length < 2) { setSuggestions([]); return; }
+    debounceRef.current = setTimeout(async () => {
+      setLoadingSuggestions(true);
+      try {
+        const { data } = await axios.get(`${config.API_URL}/api/book-search/suggest`, { params: { q: value } });
+        setSuggestions(Array.isArray(data) ? data : []);
+      } catch { setSuggestions([]); }
+      finally { setLoadingSuggestions(false); }
+    }, 300);
+  };
+
+  const handleSuggestionSelect = (book) => {
+    setForm(f => ({
+      ...f,
+      title:     book.title     || f.title,
+      author:    book.author    || f.author,
+      publisher: book.publisher || f.publisher,
+      isbn13:    book.isbn13    || f.isbn13,
+      isbn10:    book.isbn10    || f.isbn10,
+    }));
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.isbn13 && !form.isbn10 && !form.title.trim()) {
+      toast.error(t('request.validation_isbn_or_title') || 'Please provide ISBN or title');
       return;
     }
-
-    setLoadingSuggestions(true);
-    try {
-      const res = await axios.get(`${config.API_URL}/api/book-search/suggest`, {
-        params: { q }
-      });
-
-      const options = (Array.isArray(res.data) ? res.data : []).map(item => ({
-        value: item.title,
-        label: (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {item.cover ? (
-              <img
-                src={item.cover}
-                alt={item.title}
-                style={{ width: 32, height: 44, objectFit: 'cover', borderRadius: 4 }}
-              />
-            ) : null}
-            <div>
-              <div style={{ fontWeight: 600 }}>{item.title}</div>
-              <div style={{ fontSize: 12, color: '#666' }}>
-                {[item.author, item.year].filter(Boolean).join(' • ')}
-              </div>
-            </div>
-          </div>
-        ),
-        raw: item
-      }));
-
-      setSuggestions(options);
-    } catch (err) {
-      console.error('Autocomplete failed:', err);
-      //setSuggestions([]);
-
-      // ✅ Better UX: show fallback suggestion
-      setSuggestions([
-        {
-          value,
-          label: (
-            <div>
-              <strong>{value}</strong>
-              <div style={{ fontSize: 12 }}>Press enter to request manually</div>
-            </div>
-          ),
-          raw: { title: value }
-        }
-      ]);
-
-    } finally {
-      setLoadingSuggestions(false);
+    if (!user && (!form.requester_name.trim() || !form.requester_email.trim())) {
+      toast.error(t('request.name_required') || 'Name and email are required');
+      return;
     }
-  };
-
-
-  const handleSuggestionSelect = (_value, option) => {
-    const book = option.raw;
-    if (!book) return;
-
-    form.setFieldsValue({
-      title: book.title || undefined,
-      author: book.author || undefined,
-      publisher: book.publisher || undefined,
-      isbn13: book.isbn13 || undefined,
-      isbn10: book.isbn10 || undefined
-    });
-  };
-
-
-  // simple debounce
-  const handleTitleSearch = (() => {
-    let timer;
-    return (value) => {
-      clearTimeout(timer);
-      timer = setTimeout(() => fetchSuggestions(value), 300);
-    };
-  })();
-
-
-  const onSubmit = async (vals) => {
     setSubmitting(true);
     try {
       await axios.post(`${config.API_URL}/api/book-requests`, {
-        isbn13: vals.isbn13?.trim() || null,
-        isbn10: vals.isbn10?.trim() || null,
-        title: vals.title?.trim() || null,
-        author: vals.author?.trim() || null,
-        publisher: vals.publisher?.trim() || null,
-        notes: vals.notes?.trim() || null,
-        requester_name: user ? null : vals.requester_name?.trim(),
-        requester_email: user ? null : vals.requester_email?.trim(),
+        isbn13: form.isbn13.trim() || null,
+        isbn10: form.isbn10.trim() || null,
+        title:  form.title.trim()  || null,
+        author: form.author.trim() || null,
+        publisher: form.publisher.trim() || null,
+        notes:  form.notes.trim()  || null,
+        requester_name:  user ? null : form.requester_name.trim(),
+        requester_email: user ? null : form.requester_email.trim(),
       });
-      message.success(t('request.submitted'));
-      form.resetFields();
-    } catch (err) {
-      message.error(t('request.submit_failed'));
-    } finally {
-      setSubmitting(false);
-    }
+      setSuccess(true);
+    } catch { toast.error(t('request.submit_failed') || 'Submission failed. Please try again.'); }
+    finally { setSubmitting(false); }
   };
 
   return (
@@ -142,144 +85,126 @@ export default function RequestBookPage() {
       <div className="request-container">
         <div className="request-layout">
 
-          {/* ── LEFT: reassurance panel — what happens after you submit ── */}
+          {/* ── LEFT: info panel ── */}
           <div className="request-intro">
             <p className="request-intro__eyebrow">
               <span className="request-intro__eyebrow-dot" />
-              {i18n.resolvedLanguage === 'de' ? 'Buch anfragen' : 'Request a book'}
+              {isDe ? 'Buch anfragen' : 'Request a book'}
             </p>
             <h1 className="request-title">{t('request.page_title')}</h1>
             <p className="request-subtitle">
-              {i18n.resolvedLanguage === 'de'
-                ? 'Finde dein Buch nicht? Frag es einfach an – wir helfen dir schnell.'
-                : 'Didn’t find your book? Just request it — we’ll help you quickly.'}
+              {isDe ? 'Finde dein Buch nicht? Frag es einfach an – wir helfen dir schnell.' : "Didn't find your book? Just request it — we'll help you quickly."}
             </p>
-
             <ol className="request-steps">
-              <li className="request-step">
-                <span className="request-step__num">1</span>
-                <div>
-                  <div className="request-step__title">
-                    {i18n.resolvedLanguage === 'de' ? 'Details teilen' : 'Share the details'}
+              {[
+                { title: isDe ? 'Details teilen' : 'Share the details', desc: isDe ? 'Titel, ISBN oder so viel du weißt.' : 'Title, ISBN, or just whatever you know.' },
+                { title: isDe ? 'Wir suchen' : 'We source it',        desc: isDe ? 'Unser Team prüft Verfügbarkeit und Preis.' : 'Our team checks availability and pricing.' },
+                { title: isDe ? 'Du erfährst es zuerst' : "You'll hear back", desc: isDe ? 'Per E-Mail, sobald dein Buch bereit ist.' : "By email, as soon as your book's ready." },
+              ].map((step, i) => (
+                <li key={i} className="request-step">
+                  <span className="request-step__num">{i + 1}</span>
+                  <div>
+                    <div className="request-step__title">{step.title}</div>
+                    <div className="request-step__desc">{step.desc}</div>
                   </div>
-                  <div className="request-step__desc">
-                    {i18n.resolvedLanguage === 'de'
-                      ? 'Titel, ISBN oder einfach so viel du weißt.'
-                      : 'Title, ISBN, or just whatever you know.'}
-                  </div>
-                </div>
-              </li>
-              <li className="request-step">
-                <span className="request-step__num">2</span>
-                <div>
-                  <div className="request-step__title">
-                    {i18n.resolvedLanguage === 'de' ? 'Wir suchen' : 'We source it'}
-                  </div>
-                  <div className="request-step__desc">
-                    {i18n.resolvedLanguage === 'de'
-                      ? 'Unser Team prüft Verfügbarkeit und Preis.'
-                      : 'Our team checks availability and pricing.'}
-                  </div>
-                </div>
-              </li>
-              <li className="request-step">
-                <span className="request-step__num">3</span>
-                <div>
-                  <div className="request-step__title">
-                    {i18n.resolvedLanguage === 'de' ? 'Du erfährst es zuerst' : "You'll hear back"}
-                  </div>
-                  <div className="request-step__desc">
-                    {i18n.resolvedLanguage === 'de'
-                      ? 'Per E-Mail, sobald dein Buch bereit ist.'
-                      : "By email, as soon as your book's ready."}
-                  </div>
-                </div>
-              </li>
+                </li>
+              ))}
             </ol>
           </div>
 
-          {/* ── RIGHT: the form ── */}
+          {/* ── RIGHT: form ── */}
           <div className="request-box">
-          <Form form={form} layout="vertical" onFinish={onSubmit} className="request-form">
-            {!user && (
-              <>
-                <Form.Item
-                  label={t('request.name')}
-                  name="requester_name"
-                  rules={[{ required: true, message: t('request.name_required') }]}
-                >
-                  <Input />
-                </Form.Item>
-                <Form.Item
-                  label={t('request.email')}
-                  name="requester_email"
-                  rules={[
-                    { required: true, message: t('request.email_required') },
-                    { type: 'email', message: t('request.email_invalid') }
-                  ]}
-                >
-                  <Input />
-                </Form.Item>
-              </>
-            )}
+            {success ? (
+              <div className="request-success">
+                <CheckCircle size={48} className="request-success-icon" />
+                <h2 className="request-success-title">
+                  {isDe ? 'Anfrage eingegangen!' : 'Request received!'}
+                </h2>
+                <p className="request-success-desc">
+                  {isDe ? 'Wir melden uns per E-Mail, sobald wir etwas für dich haben.' : "We'll reach out by email as soon as we have something for you."}
+                </p>
+                <button className="rbook-submit" onClick={() => { setSuccess(false); setForm({ requester_name:'', requester_email:'', isbn13:'', isbn10:'', title:'', author:'', publisher:'', notes:'' }); }}>
+                  {isDe ? 'Weiteres Buch anfragen' : 'Request another book'}
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={onSubmit} className="request-form" noValidate>
+                {!user && (
+                  <>
+                    <div className="rbook-field">
+                      <label>{t('request.name')}</label>
+                      <input type="text" value={form.requester_name} onChange={e => setField('requester_name', e.target.value)} required />
+                    </div>
+                    <div className="rbook-field">
+                      <label>{t('request.email')}</label>
+                      <input type="email" value={form.requester_email} onChange={e => setField('requester_email', e.target.value)} required />
+                    </div>
+                  </>
+                )}
 
-            <Form.Item label={t('request.isbn13')} name="isbn13">
-              <Input placeholder="978..." />
-            </Form.Item>
-
-            <Form.Item label={t('request.isbn10')} name="isbn10">
-              <Input placeholder="0-..." />
-            </Form.Item>
-
-            {/*<Form.Item label={t('request.title')} name="title" rules={[atLeastOneRule]}>
-              <Input placeholder={t('request.title_placeholder')} />
-            </Form.Item>*/}
-
-            <Form.Item label={t('request.title')} name="title" rules={[atLeastOneRule]}>
-
-              <AutoComplete
-                options={suggestions}
-                onSearch={handleTitleSearch}
-                onSelect={handleSuggestionSelect}
-                notFoundContent={loadingSuggestions ? <Spin size="small" /> : 'No results'}
-              >
-                <Input
-                  placeholder={t('request.title_placeholder')}
-                  suffix={loadingSuggestions ? <Spin size="small" /> : null}
-                />
-
-                <div className="request-search-hint">
-                  {i18n.resolvedLanguage === 'de'
-                    ? 'Tippe mindestens 2 Buchstaben für Vorschläge'
-                    : 'Type at least 2 characters for suggestions'}
+                {/* Title with autocomplete */}
+                <div className="rbook-field rbook-field--autocomplete">
+                  <label>{t('request.title')} <span className="rbook-required">*</span></label>
+                  <div className="rbook-autocomplete-wrap">
+                    <input
+                      type="text"
+                      value={form.title}
+                      placeholder={t('request.title_placeholder')}
+                      onChange={e => { setField('title', e.target.value); fetchSuggestions(e.target.value); setShowSuggestions(true); }}
+                      onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                      onFocus={() => suggestions.length && setShowSuggestions(true)}
+                    />
+                    {loadingSuggestions && <Loader size={14} className="rbook-spinner" />}
+                    {showSuggestions && suggestions.length > 0 && (
+                      <div className="rbook-suggestions">
+                        {suggestions.map((s, i) => (
+                          <div key={i} className="rbook-suggestion-item" onMouseDown={() => handleSuggestionSelect(s)}>
+                            {s.cover && <img src={s.cover} alt={s.title} className="rbook-sugg-img" />}
+                            <div>
+                              <div className="rbook-sugg-title">{s.title}</div>
+                              <div className="rbook-sugg-meta">{[s.author, s.year].filter(Boolean).join(' · ')}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <span className="rbook-hint">{isDe ? 'Mind. 2 Zeichen für Vorschläge' : 'Type at least 2 characters for suggestions'}</span>
                 </div>
 
-              </AutoComplete>
-            </Form.Item>
+                <div className="rbook-row">
+                  <div className="rbook-field">
+                    <label>{t('request.isbn13')}</label>
+                    <input type="text" value={form.isbn13} placeholder="978..." onChange={e => setField('isbn13', e.target.value)} />
+                  </div>
+                  <div className="rbook-field">
+                    <label>{t('request.isbn10')}</label>
+                    <input type="text" value={form.isbn10} placeholder="0-..." onChange={e => setField('isbn10', e.target.value)} />
+                  </div>
+                </div>
 
+                <div className="rbook-field">
+                  <label>{t('request.author')}</label>
+                  <input type="text" value={form.author} onChange={e => setField('author', e.target.value)} />
+                </div>
 
-            <Form.Item label={t('request.author')} name="author">
-              <Input />
-            </Form.Item>
+                <div className="rbook-field">
+                  <label>{t('request.publisher')}</label>
+                  <input type="text" value={form.publisher} onChange={e => setField('publisher', e.target.value)} />
+                </div>
 
-            <Form.Item label={t('request.publisher')} name="publisher">
-              <Input />
-            </Form.Item>
+                <div className="rbook-field">
+                  <label>{t('request.notes')}</label>
+                  <textarea rows={3} value={form.notes} onChange={e => setField('notes', e.target.value)} />
+                </div>
 
-            <Form.Item
-              label={t('request.notes')}
-              name="notes"
-              className="ant-form-item-textarea"
-            >
-              <TextArea rows={3} />
-            </Form.Item>
-
-            <div className="request-actions">
-              <Button type="primary" htmlType="submit" loading={submitting}>
-                {t('request.submit')}
-              </Button>
-            </div>
-          </Form>
+                <button type="submit" className="rbook-submit" disabled={submitting}>
+                  {submitting
+                    ? <><Loader size={16} className="rbook-spin" /> {isDe ? 'Wird gesendet…' : 'Sending…'}</>
+                    : t('request.submit')}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </div>
