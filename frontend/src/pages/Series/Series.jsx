@@ -498,8 +498,67 @@ function Series() {
                                                 </div>
                                             </div>*/}
 
-                                            <div className="series-bookcard-wrapper">
-                                                <BookCard book={book} />
+                                            <div className="series-book-grid">
+
+                                                <div className="series-book-cover-wrap">
+                                                    <img
+                                                        src={book.image || '/book-placeholder.png'}
+                                                        alt={book.title_en || 'Book'}
+                                                        className="series-book-cover"
+                                                    />
+                                                </div>
+
+                                                <div className="series-book-main">
+                                                    <h3 className="series-book-title">
+                                                        {isDE ? (book.title_de || book.title_en) : book.title_en}
+                                                    </h3>
+
+                                                    {authorNames && (
+                                                        <div className="series-book-author">
+                                                            {isDE ? 'von' : 'by'} {authorNames}
+                                                        </div>
+                                                    )}
+
+                                                    <div className="series-book-meta">
+                                                        {book.publish_date && (
+                                                            <span><Calendar size={13} />{formatDate(book.publish_date)}</span>
+                                                        )}
+                                                        {book.publisher && <span>{book.publisher}</span>}
+                                                        {book.format && <span>{book.format}</span>}
+                                                    </div>
+
+                                                    <div className="series-book-price-row">
+                                                        <span className="series-book-price">
+                                                            {formatPrice(book.price)}
+                                                        </span>
+                                                        {book.original_price && Number(book.original_price) > Number(book.price) && (
+                                                            <span className="series-book-list-price">
+                                                                {formatPrice(book.original_price)}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <div className={`series-book-stock ${book.stock > 0 ? 'in' : 'out'}`}>
+                                                        {book.stock > 0 ? (
+                                                            <>
+                                                                <CheckCircle2 size={14} />
+                                                                <span>
+                                                                    {book.stock > 10
+                                                                        ? (isDE ? 'Auf Lager' : 'In stock')
+                                                                        : (isDE ? `Nur noch ${book.stock} verfügbar` : `Only ${book.stock} left`)}
+                                                                </span>
+                                                            </>
+                                                        ) : (
+                                                            <span>{isDE ? 'Nicht auf Lager' : 'Out of stock'}</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="series-book-action">
+                                                    <Link to={generateBookUrl(book)} className="series-view-btn">
+                                                        {isDE ? 'Ansehen' : 'View'}
+                                                    </Link>
+                                                </div>
                                             </div>
 
                                         </div>
@@ -525,6 +584,23 @@ function Series() {
                             />
                         </section>
                     )}
+
+                    {/* SEO BLOCK */}
+                    <section className="series-seo-section">
+                        <div className="series-seo-card">
+                            <h2 className="series-section-title small">
+                                {isDE
+                                    ? `${displaySeriesName} Reihenfolge`
+                                    : `${displaySeriesName} reading order`}
+                            </h2>
+
+                            <p>
+                                {isDE
+                                    ? `Auf dieser Seite findest du alle aktuell verfügbaren Bücher der Reihe ${displaySeriesName} in der richtigen Reihenfolge. Starte mit Band 1 oder springe direkt zu dem Band, den du gerade brauchst.`
+                                    : `This page shows all currently available books in the ${displaySeriesName} series in the correct order. Start with Book 1 or jump directly to the volume you need.`}
+                            </p>
+                        </div>
+                    </section>
                 </div>
             </div>
         </>
