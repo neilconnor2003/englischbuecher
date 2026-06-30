@@ -1,6 +1,6 @@
+// frontend/src/pages/FooterPages/revocation.jsx
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-//import './Legal.css';
 import './legal.css';
 
 const Revocation = () => {
@@ -10,22 +10,25 @@ const Revocation = () => {
     <div className="legal-page">
       <div className="legal-container">
         <h1>{t('revocation.title')}</h1>
+
         <h2>{t('revocation.right')}</h2>
         <p>{t('revocation.right_text')}</p>
 
         <h2>{t('revocation.consequences')}</h2>
         <p>{t('revocation.consequences_text')}</p>
 
+        <hr className="legal-divider" />
+
         <h2>{t('revocation.form')}</h2>
         <p>{t('revocation.form_text')}</p>
-        <p>
+        <div className="legal-info-box">
           <strong>{t('revocation.to')}</strong><br />
           EnglischBücher<br />
           Shelly Biswal<br />
           Im Schwalg 60<br />
           55411 Bingen<br />
           E-Mail: admin@englischbuecher.de
-        </p>
+        </div>
 
         <p><em>{t('revocation.end')}</em></p>
       </div>

@@ -1,50 +1,40 @@
+// frontend/src/pages/FooterPages/returns.jsx
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-//import './Returns.css';
+import { CheckCircle } from 'lucide-react';
+import './legal.css';
 import './returns.css';
 
 const Returns = () => {
   const { t } = useTranslation();
+  const steps = ['1', '2', '3', '4'];
 
   return (
-    <div className="returns-page">
+    <div className="legal-page">
       <div className="returns-hero">
         <h1>{t('returns.title')}</h1>
         <p>{t('returns.subtitle')}</p>
       </div>
 
-      <div className="returns-content">
-        <section className="returns-steps">
-          <h2>{t('returns.steps.title')}</h2>
-          <div className="steps-grid">
-            <div className="step">
-              <div className="step-number">1</div>
-              <h3>{t('returns.steps.1.title')}</h3>
-              <p>{t('returns.steps.1.text')}</p>
+      <div className="legal-container">
+        <h2>{t('returns.steps.title')}</h2>
+        <div className="returns-steps-grid">
+          {steps.map(n => (
+            <div key={n} className="returns-step">
+              <div className="returns-step-num">{n}</div>
+              <h3>{t(`returns.steps.${n}.title`)}</h3>
+              <p>{t(`returns.steps.${n}.text`)}</p>
             </div>
-            <div className="step">
-              <div className="step-number">2</div>
-              <h3>{t('returns.steps.2.title')}</h3>
-              <p>{t('returns.steps.2.text')}</p>
-            </div>
-            <div className="step">
-              <div className="step-number">3</div>
-              <h3>{t('returns.steps.3.title')}</h3>
-              <p>{t('returns.steps.3.text')}</p>
-            </div>
-          </div>
-        </section>
+          ))}
+        </div>
 
-        <section className="returns-info">
-          <h2>{t('returns.info.title')}</h2>
-          <p>
-            <strong>{t('returns.info.address.line1')}</strong><br />
-            {t('returns.info.address.line2')}<br />
-            {t('returns.info.address.line3')}<br />
-            {t('returns.info.address.line4')}
-          </p>
-          <p className="highlight">{t('returns.info.free')}</p>
-        </section>
+        <h2>{t('returns.info.title')}</h2>
+        <ul>
+          <li><CheckCircle size={14} className="returns-check" /> {t('returns.info.timeframe')}</li>
+          <li><CheckCircle size={14} className="returns-check" /> {t('returns.info.condition')}</li>
+          <li><CheckCircle size={14} className="returns-check" /> {t('returns.info.cost')}</li>
+          <li><CheckCircle size={14} className="returns-check" /> {t('returns.info.damaged')}</li>
+        </ul>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
+// frontend/src/pages/FooterPages/shipping.jsx
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-//import './Legal.css';
 import './legal.css';
 
 const Shipping = () => {
@@ -14,18 +14,24 @@ const Shipping = () => {
         <h2>{t('shipping.methods.title')}</h2>
         <ul>
           <li>{t('shipping.methods.dpd')}</li>
-          {/*<li>{t('shipping.methods.dpd_gogreen')}</li>*/}
         </ul>
 
         <h2>{t('shipping.costs.title')}</h2>
         <p>{t('shipping.costs.description')}</p>
 
+        <h2>{t('shipping.tracking.title')}</h2>
+        <p>{t('shipping.tracking.text')}</p>
+
         <h2>{t('shipping.payment.title')}</h2>
         <ul>
-          <li>{t('shipping.payment.paypal')}</li>
           <li>{t('shipping.payment.card')}</li>
+          <li>{t('shipping.payment.paypal')}</li>
         </ul>
 
+        <div className="legal-info-box">{t('shipping.checkout_note')}</div>
+
+        <h2>{t('shipping.international.title')}</h2>
+        <p>{t('shipping.international.text')}</p>
       </div>
     </div>
   );
