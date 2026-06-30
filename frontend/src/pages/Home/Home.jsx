@@ -715,6 +715,31 @@ function Home() {
         <title>{t('home.meta.title')}</title>
         <meta name="description" content={t('home.meta.description')} />
         <link rel="canonical" href="https://englischbuecher.de/" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={t('home.meta.title')} />
+        <meta property="og:description" content={t('home.meta.description')} />
+        <meta property="og:url" content="https://englischbuecher.de/" />
+        <meta property="og:site_name" content="EnglischBuecher" />
+
+        {/* Organization schema — helps Google identify the business
+            and can enable sitelinks search box in results. */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'OnlineStore',
+            name: 'EnglischBuecher',
+            url: 'https://englischbuecher.de',
+            description: t('home.meta.description'),
+            address: {
+              '@type': 'PostalAddress',
+              streetAddress: 'Im Schwalg 60',
+              postalCode: '55411',
+              addressLocality: 'Bingen',
+              addressCountry: 'DE',
+            },
+            sameAs: [],
+          })}
+        </script>
       </Helmet>
 
       <Banner />

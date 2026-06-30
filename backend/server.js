@@ -132,10 +132,14 @@ const uploadBookImage = multer({
 });
 
 const profileStorage = multer.diskStorage({
-  destination: path.join(__dirname, 'uploads/profile-pics'),
+  destination: (req, file, cb) => {
+    const dir = path.join(__dirname, 'uploads', 'profile-pics');
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `profile-${Date.now()}${ext}`);
+    const ext = path.extname(file.originalname) || '.jpg';
+    cb(null, `profile-${req.user?.id || 'anon'}-${Date.now()}${ext}`);
   }
 });
 
@@ -1675,11 +1679,18 @@ const computeWorkId = (titleEn, titleDe, author) => {
   });
 
   app.post('/api/user/profile-photo', uploadProfilePic.single('photo'), async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
     try {
       const filePath = `/uploads/profile-pics/${req.file.filename}`;
       await db.execute('UPDATE users SET photo_url = ?, custom_pic = 1 WHERE id = ?', [filePath, req.user.id]);
       res.json({ photoURL: filePath });
     } catch (err) {
+      console.error('Profile photo upload error:', err);
       res.status(500).json({ error: 'Upload failed' });
     }
   });
