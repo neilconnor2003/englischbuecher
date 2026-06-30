@@ -1,235 +1,134 @@
+/* frontend/src/pages/FooterPages/About.css */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@1,700;1,900&family=Inter:wght@400;500;600;700&display=swap');
+
+.about-page {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: linear-gradient(160deg, #f6f3ff 0%, #ffffff 55%);
+}
+
+/* ── HERO ── */
 .about-hero {
-  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url('/assets/about-hero.jpg');
   background-size: cover;
   background-position: center;
-  height: 60vh;
-  min-height: 400px;
+  height: 50vh;
+  min-height: 380px;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  color: white;
-}
-
-.hero-content h1 {
-  font-size: 48px;
-  font-weight: 700;
-  margin-bottom: 16px;
-  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
-
-.subtitle {
-  font-size: 20px;
-  max-width: 700px;
-  opacity: 0.95;
-}
-
-.about-content {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 80px 20px;
-}
-
-section {
-  margin-bottom: 100px;
-}
-
-section h2 {
-  font-size: 36px;
-  color: #5b21b6;
-  text-align: center;
-  margin-bottom: 40px;
-}
-
-.mission p {
-  font-size: 18px;
-  line-height: 1.8;
-  text-align: center;
-  max-width: 800px;
-  margin: 0 auto;
-  color: #475569;
-}
-
-.story {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
-  align-items: center;
-}
-
-.story-image img {
-  width: 100%;
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-}
-
-.values-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 30px;
-}
-
-.value-card {
-  background: white;
-  padding: 32px;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  text-align: center;
-  transition: transform 0.3s;
-}
-
-.value-card:hover {
-  transform: translateY(-8px);
-}
-
-.value-card h3 {
-  color: #7c3aed;
-  font-size: 22px;
-  margin-bottom: 16px;
-}
-
-.team {
-  text-align: center;
-  padding: 60px 40px;
-  background: #e9d5ff;
-  border-radius: 20px;
-}
-
-.team-contact a {
-  color: #5b21b6;
-  font-weight: 600;
-  text-decoration: underline;
-}
-
-@media (max-width: 768px) {
-  .about-hero h1 {
-    font-size: 36px;
-  }
-
-  .subtitle {
-    font-size: 18px;
-  }
-
-  .story {
-    grid-template-columns: 1fr;
-  }
-
-  .story-image img {
-    order: -1;
-  }
-
-  section h2 {
-    font-size: 30px;
-  }
-}
-
-.hero-content {
-  padding: 0 18px;
-}
-
-.about-content p {
-  letter-spacing: 0.2px;
-}
-
-.value-card p {
-  margin: 0;
-}
-
-.value-card {
-  border: 1px solid rgba(124, 58, 237, 0.08);
-}
-
-.about-hero {
-  position: relative;
-}
-
-.about-hero::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 20% 20%, rgba(124, 58, 237, 0.25), transparent 55%);
-  pointer-events: none;
-}
-
-.hero-content {
-  position: relative;
-  z-index: 1;
-}
-
-/* Reuse Home page typography for About */
-.about-page {
-  background: linear-gradient(to bottom, #faf8ff 0%, #ffffff 100%);
-  min-height: 100vh;
-  font-family: 'Inter', -apple-system, sans-serif;
-}
-
-.about-container {
-  max-width: 1400px;
-  margin: 0 auto;
+  color: #fff;
   padding: 0 20px;
 }
 
-/* Same section title look as Home */
-.about-section-title {
-  font-size: 2.5rem;
-  font-weight: 800;
-  text-align: center;
-  margin: 80px 0 50px;
-  color: #9333ea;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
+.hero-content h1 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(2.2rem, 6vw, 3.4rem);
+  font-weight: 900;
+  font-style: italic;
+  margin: 0 0 14px;
+  text-shadow: 0 4px 20px rgba(0,0,0,0.35);
+  letter-spacing: -0.01em;
 }
 
-.about-section-title::before,
-.about-section-title::after {
-  content: '';
-  flex: 1;
-  height: 2px;
-  background: linear-gradient(to right, transparent, #c4b5fd, transparent);
-  max-width: 200px;
-}
-
-/* Body text style like Home */
-.about-text {
-  font-size: 1.05rem;
-  line-height: 1.8;
-  color: #475569; /* same calm gray as Home */
-  max-width: 900px;
+.hero-content .subtitle {
+  font-size: clamp(15px, 2.2vw, 18px);
+  max-width: 640px;
   margin: 0 auto;
+  opacity: 0.95;
+  line-height: 1.6;
 }
 
+/* ── CONTENT ── */
+.about-content {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 72px 20px 100px;
+}
+
+.about-content section {
+  margin-bottom: 88px;
+}
+
+.about-section-title {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+  font-weight: 900;
+  font-style: italic;
+  color: #9333ea;
+  text-align: center;
+  margin: 0 0 36px;
+  letter-spacing: -0.01em;
+}
+
+.about-text {
+  font-size: 15.5px;
+  line-height: 1.85;
+  text-align: center;
+  max-width: 760px;
+  margin: 0 auto;
+  color: #4b5563;
+}
+
+/* ── STORY (image + text) ── */
+.story {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  align-items: center;
+}
+
+.story-text .about-text { text-align: left; margin: 0; max-width: none; }
+.story-text .about-section-title { text-align: left; margin-bottom: 18px; }
+
+.story-image img {
+  width: 100%;
+  border-radius: 20px;
+  box-shadow: 0 16px 48px rgba(124, 58, 237, 0.15);
+  border: 1px solid #ede9fe;
+}
+
+/* ── VALUES ── */
 .values-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 32px;
-  margin-top: 40px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
 }
 
 .value-card {
-  background: white;
-  border-radius: 24px;
-  padding: 32px;
-  box-shadow: 0 10px 30px rgba(147, 51, 234, 0.1);
-  border: 1px solid #e4d9ff;
-  transition: all 0.3s ease;
+  background: #fff;
+  padding: 32px 28px;
+  border-radius: 18px;
+  border: 1px solid #ede9fe;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
 }
-
 .value-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 50px rgba(147, 51, 234, 0.2);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px rgba(124, 58, 237, 0.12);
+  border-color: #c4b5fd;
 }
 
 .value-card h3 {
-  font-size: 1.25rem;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.15rem;
   font-weight: 700;
-  color: #9333ea;
-  margin-bottom: 12px;
+  font-style: italic;
+  color: #7c3aed;
+  margin: 0 0 10px;
 }
 
 .value-card p {
-  font-size: 1rem;
+  font-size: 13.5px;
+  color: #6b7280;
   line-height: 1.7;
-  color: #475569;
+  margin: 0;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .story { grid-template-columns: 1fr; gap: 32px; }
+  .story-text .about-text,
+  .story-text .about-section-title { text-align: center; }
+  .about-content { padding: 48px 20px 72px; }
+  .about-content section { margin-bottom: 56px; }
 }

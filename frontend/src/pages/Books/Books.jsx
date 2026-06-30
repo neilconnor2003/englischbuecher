@@ -7,10 +7,10 @@ import { Search } from 'lucide-react';
 import BookCard from '../../components/Book/BookCard';
 import config from '../../config';
 import { useTranslation } from 'react-i18next';
-import { Button, Input, Select, Slider, Checkbox, message, Switch } from 'antd';
+import { toast } from 'react-toastify';
 import './Books.css';
 
-const CheckboxGroup = Checkbox.Group;
+
 
 function Books() {
   const { t, i18n } = useTranslation();
@@ -428,20 +428,14 @@ function Books() {
               </button>
               {openSections.author && (
                 <div className="filter-group-body">
-                  <Select
-                    value={authorId ? (resolvedAuthorName || undefined) : (author || undefined)}
-                    options={authorOptions}
-                    allowClear
-                    showSearch
-                    placeholder={t('all_authors')}
-                    style={{ width: '100%' }}
-                    popupMatchSelectWidth={false}
-                    getPopupContainer={() => document.body}
-                    optionFilterProp="label"
-                    onChange={(val) => {
-                      updateParams({ author: val || null, author_id: null });
-                    }}
-                  />
+                  <select
+                    value={authorId ? (resolvedAuthorName || '') : (author || '')}
+                    className="filter-native-select"
+                    onChange={(e) => updateParams({ author: e.target.value || null, author_id: null })}
+                  >
+                    <option value="">{t('all_authors')}</option>
+                    {authorOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
                 </div>
               )}
             </div>
@@ -454,17 +448,14 @@ function Books() {
               </button>
               {openSections.category && (
                 <div className="filter-group-body">
-                  <Select
-                    value={category || undefined}
-                    options={categoryOptions}
-                    allowClear
-                    placeholder={t('all_categories')}
-                    style={{ width: '100%' }}
-                    popupMatchSelectWidth={false}
-                    getPopupContainer={() => document.body}
-                    optionFilterProp="label"
-                    onChange={(val) => updateParams({ category: val || null })}
-                  />
+                  <select
+                    value={category || ''}
+                    className="filter-native-select"
+                    onChange={(e) => updateParams({ category: e.target.value || null })}
+                  >
+                    <option value="">{t('all_categories')}</option>
+                    {categoryOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
                 </div>
               )}
             </div>
@@ -477,23 +468,29 @@ function Books() {
               </button>
               {openSections.price && (
                 <div className="filter-group-body">
-                  <Slider
-                    range
-                    value={tempPrice}
-                    max={200}
-                    tooltip={{ open: false }}
-                    onChange={(val) => {
-                      setTempPrice(val);
-                    }}
-                    onAfterChange={(val) => {
-                      const [min, max] = val;
-                      updateParams({
-                        min_price: min > 0 ? String(min) : null,
-                        max_price: max < 200 ? String(max) : null,
-                      });
-                    }}
-                  />
-                  <div className="price-values">€{tempPrice[0]} – €{tempPrice[1]}</div>
+                  <div className="price-range-wrap">
+                    <div className="price-range-inputs">
+                      <input type="range" min={0} max={200} value={tempPrice[0]}
+                        className="filter-range"
+                        onChange={e => {
+                          const v = Number(e.target.value);
+                          setTempPrice([Math.min(v, tempPrice[1]), tempPrice[1]]);
+                        }}
+                        onMouseUp={() => updateParams({ min_price: tempPrice[0] > 0 ? String(tempPrice[0]) : null })}
+                        onTouchEnd={() => updateParams({ min_price: tempPrice[0] > 0 ? String(tempPrice[0]) : null })}
+                      />
+                      <input type="range" min={0} max={200} value={tempPrice[1]}
+                        className="filter-range"
+                        onChange={e => {
+                          const v = Number(e.target.value);
+                          setTempPrice([tempPrice[0], Math.max(v, tempPrice[0])]);
+                        }}
+                        onMouseUp={() => updateParams({ max_price: tempPrice[1] < 200 ? String(tempPrice[1]) : null })}
+                        onTouchEnd={() => updateParams({ max_price: tempPrice[1] < 200 ? String(tempPrice[1]) : null })}
+                      />
+                    </div>
+                    <div className="price-values">€{tempPrice[0]} – €{tempPrice[1]}</div>
+                  </div>
                 </div>
               )}
             </div>
@@ -506,18 +503,14 @@ function Books() {
               </button>
               {openSections.publisher && (
                 <div className="filter-group-body">
-                  <Select
-                    value={publisher || undefined}
-                    options={publisherOptions}
-                    allowClear
-                    showSearch
-                    placeholder={t('all_publishers')}
-                    style={{ width: '100%' }}
-                    popupMatchSelectWidth={false}
-                    getPopupContainer={() => document.body}
-                    optionFilterProp="label"
-                    onChange={(val) => updateParams({ publisher: val || null })}
-                  />
+                  <select
+                    value={publisher || ''}
+                    className="filter-native-select"
+                    onChange={(e) => updateParams({ publisher: e.target.value || null })}
+                  >
+                    <option value="">{t('all_publishers')}</option>
+                    {publisherOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
                 </div>
               )}
             </div>
@@ -530,15 +523,24 @@ function Books() {
               </button>
               {openSections.format && (
                 <div className="filter-group-body">
-                  <CheckboxGroup
-                    className="format-checkbox-list"
-                    value={formatList}
-                    onChange={(list) => updateParams({ format: list.length ? list.join(',') : null })}
-                  >
+                  <div className="format-checkbox-list">
                     {filterOptions.formats.map(f => (
-                      <div key={f}><Checkbox value={f}>{f}</Checkbox></div>
+                      <label key={f} className="filter-checkbox-item">
+                        <input
+                          type="checkbox"
+                          checked={formatList.includes(f)}
+                          onChange={(e) => {
+                            const next = e.target.checked
+                              ? [...formatList, f]
+                              : formatList.filter(x => x !== f);
+                            updateParams({ format: next.length ? next.join(',') : null });
+                          }}
+                          style={{ accentColor: '#7c3aed' }}
+                        />
+                        {f}
+                      </label>
                     ))}
-                  </CheckboxGroup>
+                  </div>
                 </div>
               )}
             </div>
@@ -551,18 +553,14 @@ function Books() {
               </button>
               {openSections.edition && (
                 <div className="filter-group-body">
-                  <Select
-                    value={edition || undefined}
-                    options={editionOptions}
-                    allowClear
-                    showSearch
-                    placeholder={t('all_editions')}
-                    style={{ width: '100%' }}
-                    popupMatchSelectWidth={false}
-                    getPopupContainer={() => document.body}
-                    optionFilterProp="label"
-                    onChange={(val) => updateParams({ edition: val || null })}
-                  />
+                  <select
+                    value={edition || ''}
+                    className="filter-native-select"
+                    onChange={(e) => updateParams({ edition: e.target.value || null })}
+                  >
+                    <option value="">{t('all_editions')}</option>
+                    {editionOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
                 </div>
               )}
             </div>
@@ -597,19 +595,22 @@ function Books() {
             {/* In Stock — toggle switch, own labeled row matching the
                 rest of the sidebar instead of a bare unlabeled checkbox */}
             <div className="filter-group filter-group--toggle">
-              <div className="stock-toggle-row">
-                <span className="stock-toggle-label">{t('in_stock_only')}</span>
-                <Switch
-                  checked={stock}
-                  onChange={(checked) => updateParams({ stock: checked ? '1' : null })}
-                />
-              </div>
+                <div className="stock-toggle-row">
+                  <span className="stock-toggle-label">{t('in_stock_only')}</span>
+                  <button
+                    type="button"
+                    className={`filter-toggle-btn ${stock ? 'on' : 'off'}`}
+                    onClick={() => updateParams({ stock: stock ? null : '1' })}
+                  >
+                    <span className="filter-toggle-knob" />
+                  </button>
+                </div>
             </div>
 
             {/* Clear all */}
-            <Button type="link" danger onClick={clearFilters} block>
+            <button type="button" className="clear-filters-btn" onClick={clearFilters}>
               {t('clear_all_filters')}
-            </Button>
+            </button>
 
             {/* Mobile-only — explicit way to close the panel once done,
                 now that it no longer auto-closes on every change */}
@@ -632,12 +633,14 @@ function Books() {
             {/* Sort */}
             <div className="sort-bar">
               <span className="sort-bar-label">{t('sort_by')}</span>
-              <Select
+              <select
                 value={sort}
-                options={sortOptions}
-                style={{ width: 240 }}
-                onChange={(val) => updateParams({ sort: val || null })}
-              />
+                className="filter-native-select"
+                style={{ width: 220 }}
+                onChange={(e) => updateParams({ sort: e.target.value || null })}
+              >
+                {sortOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
             </div>
 
             {/* Search within results */}

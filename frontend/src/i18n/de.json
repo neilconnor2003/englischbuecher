@@ -200,49 +200,62 @@
     "security": "Datensicherheit"
   },
   "terms": {
-    "title": "Allgemeine Geschäftsbedingungen (AGB)",
-    "scope": "Geltungsbereich",
-    "contract": "Vertragsschluss",
-    "prices": "Preise und Zahlungsbedingungen",
-    "shipping": "Versandkosten",
-    "payment": "Zahlungsarten",
-    "revocation": "Widerrufsrecht",
-    "scope_text": "Diese Allgemeinen Geschäftsbedingungen gelten für alle Verträge, die zwischen uns und unseren Kunden über den Online-Shop geschlossen werden.",
-    "contract_text": "Die Darstellung von Waren in unserem Online-Shop stellt kein rechtlich bindendes Angebot, sondern lediglich eine unverbindliche Aufforderung zur Abgabe einer Bestellung dar.",
-    "prices_text": "Alle Preise verstehen sich inklusive der gesetzlichen Mehrwertsteuer. Die Zahlung kann mit den im Bestellprozess angebotenen Zahlungsmethoden erfolgen.",
-    "shipping_text": "Die Versandkosten werden im Warenkorb und in der Bestellübersicht separat ausgewiesen.",
-    "payment_text": "Wir akzeptieren PayPal und Kreditkarte.",
-    "revocation_text": "Verbraucher haben ein 7-tägiges Widerrufsrecht. Einzelheiten finden Sie in unserer Widerrufsbelehrung."
+    "title": "Allgemeine Geschäftsbedingungen",
+    "scope": "1. Geltungsbereich",
+    "scope_text": "Diese Allgemeinen Geschäftsbedingungen gelten für alle Bestellungen über englischbuecher.de, betrieben von Shelly Biswal, Im Schwalg 60, 55411 Bingen. Mit der Bestellung akzeptieren Sie diese Bedingungen.",
+    "contract": "2. Vertragsschluss",
+    "contract_text": "Die Darstellung der Produkte auf unserer Website stellt kein bindendes Angebot dar. Durch Klick auf „Jetzt kaufen“ und Abschluss des Bestellvorgangs geben Sie ein verbindliches Kaufangebot ab. Wir bestätigen den Eingang Ihrer Bestellung per E-Mail; ein verbindlicher Vertrag kommt mit einer separaten Auftragsbestätigung oder dem Versand der Ware zustande.",
+    "prices": "3. Preise und Zahlung",
+    "prices_text": "Alle angegebenen Preise sind Endpreise in Euro (€) und enthalten keine Umsatzsteuer, da wir die Kleinunternehmerregelung gemäß § 19 UStG anwenden. Versandkosten werden im Bestellvorgang vor Bestellabschluss separat ausgewiesen. Die Zahlung erfolgt sicher über Stripe (Kredit-/Debitkarte) oder PayPal.",
+    "shipping": "4. Versand und Lieferung",
+    "shipping_text": "Wir versenden derzeit innerhalb Deutschlands per DPD. Voraussichtliche Lieferzeiten werden im Bestellvorgang und auf unserer Versandseite angezeigt. Die Gefahr des zufälligen Untergangs geht mit Übergabe der Ware an den Versanddienstleister auf Sie über.",
+    "payment": "5. Zahlungsbedingungen",
+    "payment_text": "Die Zahlung ist sofort bei Bestellabschluss fällig. Wir akzeptieren Kredit-/Debitkarte und PayPal über unseren sicheren Zahlungsdienstleister Stripe. Ihre Bestellung wird erst nach erfolgreicher Zahlungsbestätigung bearbeitet.",
+    "revocation": "6. Widerrufsrecht",
+    "revocation_text": "Als Verbraucher haben Sie ein gesetzliches Widerrufsrecht und können diesen Vertrag innerhalb von 14 Tagen ohne Angabe von Gründen widerrufen. Ausführliche Informationen finden Sie auf unserer Widerrufsbelehrung.",
+    "warranty": "7. Gewährleistung",
+    "warranty_text": "Es gelten die gesetzlichen Gewährleistungsrechte gemäß §§ 434 ff. BGB. Sollte Ware beschädigt oder fehlerhaft geliefert werden, kontaktieren Sie uns bitte unter admin@englischbuecher.de.",
+    "liability": "8. Haftungsbeschränkung",
+    "liability_text": "Wir haften unbeschränkt für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit, die auf einer vorsätzlichen oder fahrlässigen Pflichtverletzung beruhen, sowie für Schäden aus der Verletzung wesentlicher Vertragspflichten (Kardinalpflichten). In allen anderen Fällen ist unsere Haftung auf den vorhersehbaren, vertragstypischen Schaden begrenzt.",
+    "law": "9. Anwendbares Recht und Gerichtsstand",
+    "law_text": "Es gilt deutsches Recht unter Ausschluss des UN-Kaufrechts. Bei Verbrauchern bleiben zwingende Verbraucherschutzvorschriften ihres Wohnsitzlandes unberührt."
   },
   "revocation": {
     "title": "Widerrufsbelehrung",
     "right": "Widerrufsrecht",
-    "right_text": "Sie haben das Recht, binnen 7 Tagen ohne Angabe von Gründen diesen Vertrag zu widerrufen. Die Widerrufsfrist beträgt 7 Tage ab dem Tag, an dem Sie oder ein von Ihnen benannter Dritter, der nicht der Beförderer ist, die Ware in Besitz genommen haben.",
+    "right_text": "Sie haben das Recht, binnen 14 Tagen ohne Angabe von Gründen diesen Vertrag zu widerrufen. Die Widerrufsfrist beträgt 14 Tage ab dem Tag, an dem Sie oder ein von Ihnen benannter Dritter, der nicht der Beförderer ist, die letzte Ware in Besitz genommen haben. Um Ihr Widerrufsrecht auszuüben, müssen Sie uns (Kontaktdaten unten) mittels einer eindeutigen Erklärung (z. B. ein mit der Post versandter Brief oder E-Mail) über Ihren Entschluss, diesen Vertrag zu widerrufen, informieren. Sie können dafür das unten stehende Muster-Widerrufsformular verwenden, das jedoch nicht vorgeschrieben ist.",
     "consequences": "Folgen des Widerrufs",
-    "consequences_text": "Wenn Sie diesen Vertrag widerrufen, erstatten wir Ihnen alle von Ihnen erhaltenen Zahlungen, mit Ausnahme der Lieferkosten, unverzüglich und in jedem Fall binnen 14 Tagen ab dem Tag, an dem wir über Ihren Widerruf dieses Vertrags informiert wurden.",
-    "form": "Widerrufsformular",
-    "form_text": "Um Ihr Widerrufsrecht auszuüben, teilen Sie uns dies bitte mittels einer eindeutigen Erklärung (z. B. ein mit der Post versandter Brief oder eine E-Mail) mit.",
-    "to": "An",
-    "end": "– Ende der Widerrufsbelehrung –"
+    "consequences_text": "Wenn Sie diesen Vertrag widerrufen, haben wir Ihnen alle Zahlungen, die wir von Ihnen erhalten haben, einschließlich der Lieferkosten (mit Ausnahme der zusätzlichen Kosten, die sich daraus ergeben, dass Sie eine andere Art der Lieferung als die von uns angebotene, günstigste Standardlieferung gewählt haben), unverzüglich und spätestens binnen 14 Tagen ab dem Tag zurückzuzahlen, an dem die Mitteilung über Ihren Widerruf bei uns eingegangen ist. Für diese Rückzahlung verwenden wir dasselbe Zahlungsmittel, das Sie bei der ursprünglichen Transaktion eingesetzt haben, es sei denn, mit Ihnen wurde ausdrücklich etwas anderes vereinbart; in keinem Fall werden Ihnen wegen dieser Rückzahlung Entgelte berechnet. Wir können die Rückzahlung verweigern, bis wir die Waren zurückerhalten haben oder bis Sie den Nachweis erbracht haben, dass Sie die Waren zurückgesandt haben, je nachdem, welches der frühere Zeitpunkt ist. Sie haben die Waren unverzüglich und in jedem Fall spätestens binnen 14 Tagen ab dem Tag, an dem Sie uns über den Widerruf dieses Vertrags unterrichten, zurückzusenden. Sie tragen die unmittelbaren Kosten der Rücksendung der Waren.",
+    "form": "Muster-Widerrufsformular",
+    "form_text": "Wenn Sie den Vertrag widerrufen wollen, füllen Sie bitte dieses Formular aus und senden Sie es uns:",
+    "to": "An:",
+    "end": "Hiermit widerrufe(n) ich/wir den von mir/uns abgeschlossenen Vertrag über den Kauf der folgenden Waren, bestellt am (Datum), erhalten am (Datum). Name des/der Verbraucher(s), Anschrift des/der Verbraucher(s), Unterschrift des/der Verbraucher(s) (nur bei Mitteilung auf Papier), Datum."
   },
   "shipping": {
-    "title": "Versand & Zahlung",
+    "title": "Versandinformationen",
+    "methods": {
+      "title": "Versandart",
+      "dpd": "Wir versenden alle Bestellungen innerhalb Deutschlands per DPD (in der Regel 2–4 Werktage)."
+    },
     "costs": {
       "title": "Versandkosten",
-      "description": "Die Versandkosten werden im Warenkorb berechnet und angezeigt."
-    },
-    "methods": {
-      "title": "Versandarten",
-      "dpd": "DPD Classic (2–3 Werktage)",
-      "dpd_gogreen": "DPD Predict / klimaneutraler Versand"
+      "description": "Die Versandkosten werden im Bestellvorgang automatisch anhand von Paketgewicht und Lieferadresse berechnet. Bei Bestellungen über 40 € entfallen die Versandkosten. Die genauen Kosten werden vor Bestellabschluss angezeigt."
     },
     "payment": {
       "title": "Zahlungsarten",
       "paypal": "PayPal",
-      "card": "Kreditkarte (Visa, Mastercard)"
+      "card": "Kredit-/Debitkarte (über Stripe)"
     },
-    "provider_label": "DPD · Deutschlandweit (inkl. MwSt.)",
-    "checkout_note": "Exakte Versandkosten werden im Checkout bestätigt"
+    "provider_label": "Versanddienstleister",
+    "checkout_note": "Alle Versandkosten werden transparent im Bestellvorgang berechnet — keine versteckten Gebühren.",
+    "tracking": {
+      "title": "Sendungsverfolgung",
+      "text": "Sobald Ihre Bestellung versendet wurde, erhalten Sie per E-Mail eine Sendungsnummer, mit der Sie Ihr Paket bei DPD verfolgen können."
+    },
+    "international": {
+      "title": "Internationaler Versand",
+      "text": "Derzeit versenden wir ausschließlich innerhalb Deutschlands. Wir arbeiten daran, weitere EU-Länder hinzuzufügen — schauen Sie bald wieder vorbei!"
+    }
   },
   "about": {
     "title": "Über uns",
@@ -287,7 +300,10 @@
       "email": "Deine E-Mail",
       "subject": "Betreff",
       "message": "Deine Nachricht",
-      "submit": "Absenden"
+      "submit": "Absenden",
+      "sending": "Wird gesendet…",
+      "success": "Nachricht erfolgreich gesendet!",
+      "error": "Senden fehlgeschlagen. Bitte versuche es erneut."
     }
   },
   "faq": {
@@ -305,32 +321,33 @@
     ]
   },
   "returns": {
-    "title": "Rücksendungen & Widerruf",
-    "subtitle": "30 Tage Rückgaberecht – kostenlos für dich",
+    "title": "Rückgabe & Umtausch",
+    "subtitle": "Nicht zufrieden mit Ihrer Bestellung? So funktioniert die Rückgabe.",
     "steps": {
-      "title": "So einfach geht’s",
+      "title": "So geben Sie einen Artikel zurück",
       "1": {
-        "title": "Senden Sie uns eine E-Mail",
-        "text": "Schreiben Sie an admin@englischbuecher.de mit Ihrer Bestellnummer."
+        "title": "Kontaktieren Sie uns",
+        "text": "Schreiben Sie innerhalb von 14 Tagen nach Erhalt Ihrer Bestellung an admin@englischbuecher.de und geben Sie Ihre Bestellnummer an."
       },
       "2": {
-        "title": "Rücksendeetikett erhalten",
-        "text": "Wir senden Ihnen umgehend ein Rücksendeetikett per E-Mail zu."
+        "title": "Verpacken Sie den Artikel",
+        "text": "Verpacken Sie die Bücher sicher in der Original- oder ähnlichen Verpackung, im unbenutzten, wiederverkäuflichen Zustand."
       },
       "3": {
-        "title": "Abgeben & Rückerstattung erhalten",
-        "text": "Geben Sie das Paket ab – das Geld ist innerhalb von 14 Tagen auf Ihrem Konto."
+        "title": "Senden Sie es zurück",
+        "text": "Wir senden Ihnen die Rücksendeadresse. Versenden Sie das Paket mit einer nachverfolgbaren Versandmethode zurück."
+      },
+      "4": {
+        "title": "Erhalten Sie Ihre Erstattung",
+        "text": "Nach Eingang und Prüfung der Rücksendung erstatten wir den Betrag innerhalb von 14 Tagen auf Ihre ursprüngliche Zahlungsmethode."
       }
     },
     "info": {
-      "title": "Retourenadresse",
-      "address": {
-        "line1": "EnglischBücher",
-        "line2": "Shelly Biswal",
-        "line3": "Im Schwalg 60",
-        "line4": "55411 Bingen"
-      },
-      "free": "Rückversand ist für dich kostenlos!"
+      "title": "Gut zu wissen",
+      "condition": "Bücher müssen im Original, unbenutzten Zustand zurückgesendet werden, um erstattungsfähig zu sein.",
+      "cost": "Die Kosten der Rücksendung trägt der Kunde, außer die Ware kam beschädigt oder falsch an.",
+      "damaged": "Sollte Ihre Bestellung beschädigt oder falsch ankommen, kontaktieren Sie uns sofort — wir übernehmen alle Kosten und organisieren Ersatz oder Erstattung.",
+      "timeframe": "Sie haben 14 Tage ab Erhalt Ihrer Bestellung, um eine Rückgabe gemäß deutschem Verbraucherschutzrecht einzuleiten."
     }
   },
   "back": "Zurück",
@@ -592,5 +609,6 @@
   "valid_email_required": "Bitte gib eine gültige E-Mail-Adresse ein",
   "address_label_home": "Zuhause",
   "address_label_work": "Arbeit",
-  "address_label_other": "Sonstige"
+  "address_label_other": "Sonstige",
+  "legal_updated": "Stand: Juni 2026"
 }

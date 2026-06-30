@@ -205,49 +205,62 @@
     "security_text": "We use technical and organisational security measures to protect your data against manipulation, loss, destruction or unauthorised access."
   },
   "terms": {
-    "title": "General Terms and Conditions (GTC)",
-    "scope": "Scope of Application",
-    "scope_text": "These General Terms and Conditions apply to all contracts concluded between us and our customers via the online shop.",
-    "contract": "Conclusion of Contract",
-    "contract_text": "The presentation of goods in our online shop does not constitute a legally binding offer, but a non-binding invitation to place an order.",
-    "prices": "Prices and Payment Terms",
-    "prices_text": "All prices include statutory VAT. Payment can be made using the methods offered during checkout.",
-    "shipping": "Shipping Costs",
-    "shipping_text": "Shipping costs are shown separately in the shopping cart and order overview.",
-    "payment": "Payment Methods",
-    "payment_text": "We accept PayPal and credit card.",
-    "revocation": "Right of Withdrawal",
-    "revocation_text": "Consumers are entitled to a 7-day right of withdrawal. Details can be found in our withdrawal policy."
+    "title": "Terms and Conditions",
+    "scope": "1. Scope",
+    "scope_text": "These General Terms and Conditions apply to all orders placed through englischbuecher.de, operated by Shelly Biswal, Im Schwalg 60, 55411 Bingen, Germany. By placing an order, you accept these terms.",
+    "contract": "2. Conclusion of Contract",
+    "contract_text": "The presentation of products on our website does not constitute a binding offer. By clicking \"Buy Now\" and completing checkout, you submit a binding offer to purchase. We confirm receipt of your order by email; a binding contract is formed once we send a separate order confirmation or ship the goods.",
+    "prices": "3. Prices and Payment",
+    "prices_text": "All prices shown are final prices in Euro (€) and do not include statutory VAT, as we operate under the German small business regulation (§19 UStG). Shipping costs are shown separately during checkout before you confirm your order. Payment is processed securely via Stripe (credit/debit card) or PayPal.",
+    "shipping": "4. Shipping and Delivery",
+    "shipping_text": "We currently ship within Germany via DPD. Estimated delivery times are shown at checkout and on our Shipping page. Risk of loss passes to you upon delivery of the goods to the carrier.",
+    "payment": "5. Payment Terms",
+    "payment_text": "Payment is due immediately upon placing your order. We accept payment via credit card, debit card, and PayPal through our secure payment provider Stripe. Your order will only be processed once payment has been successfully confirmed.",
+    "revocation": "6. Right of Withdrawal",
+    "revocation_text": "As a consumer, you have a statutory right to withdraw from this contract within 14 days without giving any reason. Full details are provided on our Revocation page.",
+    "warranty": "7. Warranty",
+    "warranty_text": "We are liable for material defects in accordance with the applicable statutory provisions, in particular §§ 434 et seq. BGB. If goods are delivered damaged or defective, please contact us at admin@englischbuecher.de.",
+    "liability": "8. Limitation of Liability",
+    "liability_text": "We are liable without limitation for damages arising from injury to life, body, or health caused by an intentional or negligent breach of duty, and for damages arising from the breach of essential contractual obligations (cardinal obligations). In all other cases, our liability is limited to foreseeable, contract-typical damage.",
+    "law": "9. Governing Law and Jurisdiction",
+    "law_text": "These terms are governed by German law, excluding the UN Convention on Contracts for the International Sale of Goods. For consumers, statutory consumer protection provisions of the country of residence remain unaffected."
   },
   "revocation": {
-    "title": "Cancellation Policy",
+    "title": "Right of Withdrawal",
     "right": "Right of Withdrawal",
-    "right_text": "You have the right to withdraw from this contract within 7 days without giving any reason. The withdrawal period is 7 days from the day on which you or a third party named by you, who is not the carrier, took possession of the goods.",
+    "right_text": "You have the right to withdraw from this contract within 14 days without giving any reason. The withdrawal period is 14 days from the day on which you, or a third party named by you who is not the carrier, took possession of the last goods. To exercise your right of withdrawal, you must inform us (contact details below) of your decision to withdraw from this contract by means of a clear statement (e.g. a letter sent by post or an email). You can use the model withdrawal form below, but it is not mandatory.",
     "consequences": "Consequences of Withdrawal",
-    "consequences_text": "If you withdraw from this contract, we shall reimburse you all payments received from you, excluding delivery costs, without undue delay and in any event not later than 14 days from the day on which we are informed about your decision to withdraw from this contract.",
-    "form": "Withdrawal Form",
-    "form_text": "To exercise your right of withdrawal, please inform us by means of a clear statement (e.g. a letter sent by post or email).",
-    "to": "To",
-    "end": "— End of cancellation policy —"
+    "consequences_text": "If you withdraw from this contract, we will reimburse all payments received from you, including delivery costs (except for additional costs resulting from your choice of a delivery method other than the cheapest standard delivery offered by us), without undue delay and at the latest within 14 days from the day on which we receive notice of your withdrawal. We will use the same payment method you used for the original transaction, unless expressly agreed otherwise; under no circumstances will you be charged fees for this reimbursement. We may withhold reimbursement until we have received the goods back, or until you have supplied evidence of having sent back the goods, whichever is earliest. You must send back the goods without undue delay and in any event no later than 14 days from the day on which you communicate your withdrawal. You will bear the direct cost of returning the goods.",
+    "form": "Model Withdrawal Form",
+    "form_text": "If you wish to withdraw from the contract, please fill out this form and send it to us:",
+    "to": "To:",
+    "end": "(I/we) hereby give notice that (I/we) withdraw from my/our contract of sale of the following goods, ordered on (date), received on (date). Name of consumer(s), address of consumer(s), signature (only if this form is notified on paper), date."
   },
   "shipping": {
-    "title": "Shipping & Payment",
+    "title": "Shipping Information",
+    "methods": {
+      "title": "Shipping Method",
+      "dpd": "We ship all orders within Germany via DPD (typically 2–4 business days)."
+    },
     "costs": {
       "title": "Shipping Costs",
-      "description": "Shipping costs are displayed in the cart."
-    },
-    "methods": {
-      "title": "Shipping Methods",
-      "dpd": "DPD Classic (2–3 business days)",
-      "dpd_gogreen": "DPD Predict / Climate-neutral delivery"
+      "description": "Shipping costs are calculated automatically at checkout based on package weight and your delivery address. Orders over €40 qualify for free shipping. The exact cost is always shown before you confirm your order."
     },
     "payment": {
       "title": "Payment Methods",
       "paypal": "PayPal",
-      "card": "Credit card (Visa, Mastercard)"
+      "card": "Credit / Debit Card (via Stripe)"
     },
-    "provider_label": "DPD · Germany-wide (incl. VAT)",
-    "checkout_note": "Exact shipping confirmed at checkout"
+    "provider_label": "Shipping Provider",
+    "checkout_note": "All shipping costs are calculated transparently at checkout — no hidden fees.",
+    "tracking": {
+      "title": "Order Tracking",
+      "text": "Once your order ships, you'll receive a tracking number by email so you can follow your package's journey with DPD."
+    },
+    "international": {
+      "title": "International Shipping",
+      "text": "We currently only ship within Germany. We're working on expanding to other EU countries — check back soon!"
+    }
   },
   "about": {
     "title": "About Us",
@@ -292,7 +305,10 @@
       "email": "Your Email",
       "subject": "Subject",
       "message": "Your Message",
-      "submit": "Send Message"
+      "submit": "Send Message",
+      "sending": "Sending…",
+      "success": "Message sent successfully!",
+      "error": "Failed to send. Please try again."
     }
   },
   "faq": {
@@ -334,32 +350,33 @@
     ]
   },
   "returns": {
-    "title": "Returns & Cancellation",
-    "subtitle": "30-day return policy — completely free for you",
+    "title": "Returns & Exchanges",
+    "subtitle": "Not happy with your order? Here's how returns work.",
     "steps": {
-      "title": "It’s that simple",
+      "title": "How to Return an Item",
       "1": {
-        "title": "Send us an email",
-        "text": "Write to admin@englischbuecher.de with your order number."
+        "title": "Contact us",
+        "text": "Email admin@englischbuecher.de within 14 days of receiving your order, including your order number."
       },
       "2": {
-        "title": "Receive return label",
-        "text": "We’ll immediately send you a return label by email."
+        "title": "Pack the item",
+        "text": "Pack the book(s) securely in their original or similar packaging, in unused, resaleable condition."
       },
       "3": {
-        "title": "Drop off & get refunded",
-        "text": "Drop off the package — money is back in your account within 14 days."
+        "title": "Send it back",
+        "text": "We'll send you the return address. Ship the package back to us using a trackable shipping method."
+      },
+      "4": {
+        "title": "Get refunded",
+        "text": "Once we receive and inspect the return, we'll process your refund within 14 days to your original payment method."
       }
     },
     "info": {
-      "title": "Return Address",
-      "address": {
-        "line1": "EnglischBücher",
-        "line2": "Shelly Biswal",
-        "line3": "Im Schwalg 60",
-        "line4": "55411 Bingen"
-      },
-      "free": "Return shipping is completely free for you within Germany!"
+      "title": "Good to know",
+      "condition": "Books must be returned in their original, unused condition to be eligible for a refund.",
+      "cost": "Return shipping costs are covered by the customer, unless the item arrived damaged or incorrect.",
+      "damaged": "If your order arrived damaged or you received the wrong item, contact us immediately — we'll cover all costs and arrange a replacement or refund.",
+      "timeframe": "You have 14 days from receiving your order to initiate a return, in line with German consumer protection law."
     }
   },
   "back": "Back",
@@ -621,5 +638,6 @@
   "valid_email_required": "Please enter a valid email address",
   "address_label_home": "Home",
   "address_label_work": "Work",
-  "address_label_other": "Other"
+  "address_label_other": "Other",
+  "legal_updated": "Last updated: June 2026"
 }

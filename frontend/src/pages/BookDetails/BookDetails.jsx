@@ -17,8 +17,8 @@ import { replaceWithServerCart } from '../../features/cart/cartSlice';
 import { toggleWishlist, fetchWishlist } from '../../features/wishlist/wishlistSlice';
 import { AuthContext } from '../../context/AuthContext';
 import BookCard from '../../components/Book/BookCard';
-import { HeartFilled, HeartOutlined } from '@ant-design/icons';
-import { message, Button, Rate, Radio } from 'antd';
+import { Heart } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { generateBookUrl } from '../../utils/seoUrl';
 import BookReviews from '../../components/Book/BookReviews';
 import BooksSlider from '../../components/BooksSlider/BooksSlider';
@@ -297,7 +297,7 @@ function BookDetails() {
         setTimeout(() => navigate('/checkout'), 500);
       }
     } catch (err) {
-      if (err.response?.status === 401) message.warning(t('please_login'));
+      if (err.response?.status === 401) toast.warning(t('please_login'));
     } finally {
       setAdding(false);
     }
@@ -323,16 +323,18 @@ function BookDetails() {
     const isWishlisted = useSelector(state => state.wishlist?.items?.some(item => item.id === book.id) ?? false);
     const handleWishlist = async (e) => {
       e.preventDefault(); e.stopPropagation();
-      if (!user) return message.warning(t('login_required'));
+      if (!user) return toast.warning(t('login_required'));
       try {
         const result = await dispatch(toggleWishlist(book.id)).unwrap();
         dispatch(fetchWishlist());
-        message.success(result.added ? t('added_to_wishlist') : t('removed_from_wishlist'));
-      } catch { message.error(t('wishlist_error')); }
+        toast.success(result.added ? t('added_to_wishlist') : t('removed_from_wishlist'));
+      } catch { toast.error(t('wishlist_error')); }
     };
     return (
       <button onClick={handleWishlist} className="wishlist-btn">
-        {isWishlisted ? <HeartFilled style={{ color: '#e91e63' }} /> : <HeartOutlined />}
+        {isWishlisted
+          ? <Heart size={18} fill="#e91e63" color="#e91e63" />
+          : <Heart size={18} />}
         {isWishlisted ? t('in_wishlist') : t('add_to_wishlist')}
       </button>
     );
@@ -343,7 +345,7 @@ function BookDetails() {
     const email = user ? user.email : notifyEmail.trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      message.warning(isDE ? 'Bitte gültige E-Mail eingeben' : 'Please enter a valid email');
+      toast.warning(isDE ? 'Bitte gültige E-Mail eingeben' : 'Please enter a valid email');
       return;
     }
     setNotifySubmitting(true);
@@ -354,9 +356,9 @@ function BookDetails() {
         { withCredentials: true }
       );
       setNotifySubscribed(true);
-      message.success(isDE ? 'Wir benachrichtigen dich!' : "We'll let you know!");
+      toast.success(isDE ? 'Wir benachrichtigen dich!' : "We'll let you know!");
     } catch (err) {
-      message.error(err.response?.data?.error || (isDE ? 'Fehler beim Anmelden' : 'Something went wrong'));
+      toast.error(err.response?.data?.error || (isDE ? 'Fehler beim Anmelden' : 'Something went wrong'));
     } finally {
       setNotifySubmitting(false);
     }
@@ -366,8 +368,8 @@ function BookDetails() {
     const shareData = { title, text: `Check out "${title}" by ${book.author}`, url: window.location.href };
     try {
       if (navigator.share && navigator.canShare(shareData)) await navigator.share(shareData);
-      else { await navigator.clipboard.writeText(window.location.href); message.success(t('link_copied')); }
-    } catch { message.success(t('link_copied')); }
+      else { await navigator.clipboard.writeText(window.location.href); toast.success(t('link_copied')); }
+    } catch { toast.success(t('link_copied')); }
   };
 
   const renderBooksSlider = (books, swiperClassName) => (
@@ -468,7 +470,11 @@ function BookDetails() {
 
               <div className="ratings-summary-amazon mb-6">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <Rate disabled allowHalf value={reviewStats.average || 0} className="text-lg" />
+                  <span className="bd-star-rating">
+                    {[1,2,3,4,5].map(s => (
+                      <span key={s} style={{ color: s <= Math.round(reviewStats.average || 0) ? '#f59e0b' : '#d1d5db', fontSize: 18 }}>★</span>
+                    ))}
+                  </span>
                   <span className="text-lg font-bold text-gray-900">
                     {formatRating(reviewStats.average, i18n)}
                   </span>
@@ -476,14 +482,13 @@ function BookDetails() {
                     {t('review_count', { count: reviewStats.total || 0 })}
                   </span>
                   {reviewStats.total > 0 && (
-                    <Button
-                      type="link"
-                      size="small"
+                    <button
+                      type="button"
                       onClick={() => document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' })}
-                      className="text-purple-600 hover:text-purple-800 font-medium"
+                      style={{ background: 'none', border: 'none', color: '#7c3aed', fontWeight: 600, fontSize: 13, cursor: 'pointer', padding: 0 }}
                     >
                       {t('reviews.read_all') || 'See all reviews'}
-                    </Button>
+                    </button>
                   )}
                 </div>
                 {reviewStats.total === 0 && (
