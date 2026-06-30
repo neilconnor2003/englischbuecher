@@ -36,8 +36,8 @@ function Footer() {
             <li>
               <button
                 type="button"
+                className="footer-link-btn"
                 onClick={() => window.dispatchEvent(new Event('open-cookie-settings'))}
-                style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer', color: 'inherit', textAlign: 'left' }}
               >
                 {t('footer.cookie_settings') || 'Cookie Settings'}
               </button>
