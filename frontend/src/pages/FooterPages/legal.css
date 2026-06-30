@@ -44,8 +44,10 @@
   font-size: 1.25rem;
   font-weight: 700;
   font-style: italic;
-  margin: 32px 0 10px;
+  margin: 48px 0 14px;
   color: #7c3aed;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f3f0ff;
 }
 
 .legal-container h2:first-of-type { margin-top: 8px; }
@@ -53,7 +55,7 @@
 .legal-container p {
   font-size: 14.5px;
   color: #4b5563;
-  margin: 0 0 14px;
+  margin: 0 0 18px;
 }
 
 .legal-container strong { color: #1a1a2e; }
@@ -67,12 +69,12 @@
 
 .legal-container ul,
 .legal-container ol {
-  margin: 0 0 16px;
+  margin: 0 0 20px;
   padding-left: 22px;
   font-size: 14.5px;
   color: #4b5563;
 }
-.legal-container li { margin-bottom: 8px; }
+.legal-container li { margin-bottom: 10px; }
 
 .legal-container ol.terms-list {
   list-style: none;
