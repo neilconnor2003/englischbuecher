@@ -120,11 +120,11 @@ const Contact = () => {
               <textarea name="message" rows="6" placeholder={t('contact.form.message')} required></textarea>
 
               <button type="submit" className="submit-btn" disabled={status === 'sending'}>
-                {status === 'sending' ? 'Sending…' : t('contact.form.submit')}
+                {status === 'sending' ? t('contact.form.sending') || 'Sending…' : t('contact.form.submit')}
               </button>
 
-              {status === 'success' && <p style={{ color: 'green', marginTop: '1rem' }}>Message sent successfully!</p>}
-              {status === 'error' && <p style={{ color: 'red', marginTop: '1rem' }}>Failed. Please try again.</p>}
+              {status === 'success' && <p className="form-status form-status-success">{t('contact.form.success') || 'Message sent successfully!'}</p>}
+              {status === 'error' && <p className="form-status form-status-error">{t('contact.form.error') || 'Failed. Please try again.'}</p>}
             </form>
           </div>
         </div>
