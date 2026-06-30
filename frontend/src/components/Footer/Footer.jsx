@@ -33,6 +33,15 @@ function Footer() {
             <li><Link to="/terms">{t('footer.terms')}</Link></li>
             <li><Link to="/revocation">{t('footer.revocation')}</Link></li>
             <li><Link to="/shipping">{t('footer.shipping')}</Link></li>
+            <li>
+              <button
+                type="button"
+                className="footer-link-btn"
+                onClick={() => window.dispatchEvent(new Event('open-cookie-settings'))}
+              >
+                {t('footer.cookie_settings') || 'Cookie Settings'}
+              </button>
+            </li>
           </ul>
         </div>
 

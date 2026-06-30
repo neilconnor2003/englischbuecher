@@ -8,6 +8,7 @@ import ScrollToTop from './ScrollToTop';
 import { loadStripe } from '@stripe/stripe-js';
 import { fetchWishlist } from './features/wishlist/wishlistSlice';
 import { trackPageView } from './utils/Analytics';
+import CookieConsent, { initConsentOnLoad } from './components/CookieConsent/CookieConsent';
 
 import HeaderBeforeLogin from './components/Header/HeaderBeforeLogin';
 import HeaderAfterLogin from './components/Header/HeaderAfterLogin';
@@ -57,6 +58,11 @@ const AppContent = () => {
   useEffect(() => {
     trackPageView(location.pathname + location.search);
   }, [location]);
+
+  // Re-apply previously saved cookie consent (loads GA4/Clarity if accepted)
+  useEffect(() => {
+    initConsentOnLoad();
+  }, []);
 
   // Load wishlist when user logs in
   useEffect(() => {
@@ -118,6 +124,8 @@ const AppContent = () => {
       <Footer
         className={window.location.pathname.startsWith('/admin') ? 'admin-active' : ''}
       />
+
+      <CookieConsent />
     </>
   );
 };
