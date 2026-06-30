@@ -410,6 +410,10 @@ function BookDetails() {
           content={isDE ? (book.meta_description_de || description.substring(0, 155)) : (book.meta_description_en || description.substring(0, 155))}
         />
         <link rel="canonical" href={`${window.location.origin}${generateBookUrl(book)}`} />
+        {/* hreflang — tells Google this page serves both DE and EN users */}
+        <link rel="alternate" hreflang="de" href={`https://englischbuecher.de${generateBookUrl(book)}`} />
+        <link rel="alternate" hreflang="en" href={`https://englischbuecher.de${generateBookUrl(book)}`} />
+        <link rel="alternate" hreflang="x-default" href={`https://englischbuecher.de${generateBookUrl(book)}`} />
 
         {/* ── Open Graph (Facebook, WhatsApp, LinkedIn) ── */}
         <meta property="og:type" content="product" />

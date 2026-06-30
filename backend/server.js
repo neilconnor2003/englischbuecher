@@ -132,14 +132,10 @@ const uploadBookImage = multer({
 });
 
 const profileStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = path.join(__dirname, 'uploads', 'profile-pics');
-    fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
+  destination: path.join(__dirname, 'uploads/profile-pics'),
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname) || '.jpg';
-    cb(null, `profile-${req.user?.id || 'anon'}-${Date.now()}${ext}`);
+    const ext = path.extname(file.originalname);
+    cb(null, `profile-${Date.now()}${ext}`);
   }
 });
 
@@ -1679,18 +1675,11 @@ const computeWorkId = (titleEn, titleDe, author) => {
   });
 
   app.post('/api/user/profile-photo', uploadProfilePic.single('photo'), async (req, res) => {
-    if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
     try {
       const filePath = `/uploads/profile-pics/${req.file.filename}`;
       await db.execute('UPDATE users SET photo_url = ?, custom_pic = 1 WHERE id = ?', [filePath, req.user.id]);
       res.json({ photoURL: filePath });
     } catch (err) {
-      console.error('Profile photo upload error:', err);
       res.status(500).json({ error: 'Upload failed' });
     }
   });
@@ -6706,55 +6695,73 @@ WHERE ci.user_id = ?
       const baseUrl = 'https://englischbuecher.de';
 
       const [books] = await db.execute(`
-      SELECT slug, created_at
-      FROM books
-      WHERE stock > 0
-    `);
+        SELECT id, slug, isbn13, isbn10, title_en, created_at
+        FROM books
+        WHERE stock > 0 AND is_available = 1
+      `);
+
+      const [categories] = await db.execute(`
+        SELECT slug FROM categories WHERE is_visible = 1 AND parent_id IS NULL
+      `);
+
+      const [authors] = await db.execute(`
+        SELECT slug FROM authors WHERE slug IS NOT NULL AND slug != ''
+      `);
 
       const urls = [];
 
+      // Static pages — highest priority
       const staticPages = [
-        '',
-        '/about',
-        '/contact',
-        '/faq',
-        '/imprint',
-        '/privacy',
-        '/terms',
-        '/shipping',
-        '/returns',
-        '/revocation',
-        '/books',
-        '/request-book',
+        { path: '', priority: '1.0', changefreq: 'weekly' },
+        { path: '/books', priority: '0.9', changefreq: 'daily' },
+        { path: '/about', priority: '0.7', changefreq: 'monthly' },
+        { path: '/contact', priority: '0.6', changefreq: 'monthly' },
+        { path: '/faq', priority: '0.6', changefreq: 'monthly' },
+        { path: '/request-book', priority: '0.6', changefreq: 'monthly' },
+        { path: '/imprint', priority: '0.3', changefreq: 'yearly' },
+        { path: '/privacy', priority: '0.3', changefreq: 'yearly' },
+        { path: '/terms', priority: '0.3', changefreq: 'yearly' },
+        { path: '/shipping', priority: '0.4', changefreq: 'monthly' },
+        { path: '/returns', priority: '0.4', changefreq: 'monthly' },
+        { path: '/revocation', priority: '0.3', changefreq: 'yearly' },
       ];
 
-      staticPages.forEach((path) => {
-        urls.push(`
-        <url>
-          <loc>${baseUrl}${path}</loc>
-          <changefreq>monthly</changefreq>
-          <priority>0.8</priority>
-        </url>
-      `);
+      staticPages.forEach(({ path, priority, changefreq }) => {
+        urls.push(`  <url>
+    <loc>${baseUrl}${path}</loc>
+    <changefreq>${changefreq}</changefreq>
+    <priority>${priority}</priority>
+  </url>`);
       });
 
+      // Book pages — must match generateBookUrl format: /book/{slug}-{isbn}-{id}
       books.forEach((book) => {
-        urls.push(`
-        <url>
-          <loc>${baseUrl}/book/${book.slug}</loc>
-          <lastmod>${new Date(book.created_at).toISOString()}</lastmod>
-          <changefreq>weekly</changefreq>
-          <priority>0.9</priority>
-        </url>
-      `);
+        const isbn = book.isbn13 || book.isbn10 || '';
+        const bookPath = `/book/${book.slug}${isbn ? '-' + isbn : ''}-${book.id}`;
+        urls.push(`  <url>
+    <loc>${baseUrl}${bookPath}</loc>
+    <lastmod>${new Date(book.created_at).toISOString().split('T')[0]}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>`);
+      });
+
+      // Author pages
+      authors.forEach(({ slug }) => {
+        urls.push(`  <url>
+    <loc>${baseUrl}/author/${slug}</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>`);
       });
 
       const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.join('')}
+${urls.join('\n')}
 </urlset>`;
 
       res.header('Content-Type', 'application/xml');
+      res.header('Cache-Control', 'public, max-age=3600'); // cache 1 hour
       res.send(sitemap);
     } catch (err) {
       console.error('Sitemap error:', err);

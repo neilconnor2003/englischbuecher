@@ -1,5 +1,9 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Disallow: /admin/
+Disallow: /admin
+Disallow: /books?*format=*
+Disallow: /books?*rating=*
+Disallow: /books?*popularity=*
 
 Sitemap: https://englischbuecher.de/sitemap.xml

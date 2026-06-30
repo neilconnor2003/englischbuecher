@@ -140,8 +140,10 @@ const ProfilePage = () => {
   const normalizePhoto = (url) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
-    if (url.startsWith('/')) return `${window.location.origin}${url}`;
-    return url;
+    // Uploaded photos are served from the backend, not Netlify
+    const base = config.API_URL.replace(/\/$/, '');
+    if (url.startsWith('/')) return `${base}${url}`;
+    return `${base}/${url}`;
   };
 
   const memberDate = new Date(authUser?.created_at || Date.now()).toLocaleDateString('de-DE');
