@@ -1592,6 +1592,88 @@ const computeWorkId = (titleEn, titleDe, author) => {
     }
   });
 
+  // ── POST /api/cookie-consent — log a consent decision ────────
+  // Works for both logged-in users (req.user.id) and anonymous
+  // guests (client sends a consent_id UUID it generated itself).
+  // Append-only — every change creates a new row, never updates one.
+  app.post('/api/cookie-consent', async (req, res) => {
+    const { essential = true, analytics = false, source = 'banner', consent_id = null } = req.body || {};
+    const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.ip || 'unknown';
+    const ua = req.headers['user-agent'] || 'unknown';
+    const userId = (req.isAuthenticated && req.isAuthenticated() && req.user) ? req.user.id : null;
+
+    if (!userId && !consent_id) {
+      return res.status(400).json({ error: 'consent_id required for anonymous consent' });
+    }
+
+    try {
+      await db.execute(
+        `INSERT INTO cookie_consent_log (user_id, consent_id, essential, analytics, source, ip_address, user_agent, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+        [userId, userId ? null : consent_id, essential ? 1 : 0, analytics ? 1 : 0, source, ip, ua]
+      );
+      res.json({ success: true });
+    } catch (err) {
+      console.error('POST /api/cookie-consent error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  // ── GET /api/admin/cookie-consent — global log (admin) ───────
+  app.get('/api/admin/cookie-consent', authMiddleware, async (req, res) => {
+    if (!req.user || req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
+    try {
+      const page = Math.max(parseInt(req.query.page) || 1, 1);
+      const limit = Math.min(Math.max(parseInt(req.query.limit) || 25, 1), 100);
+      const offset = (page - 1) * limit;
+      const analyticsFilter = req.query.analytics; // 'true' | 'false' | undefined
+
+      let where = '';
+      const params = [];
+      if (analyticsFilter === 'true' || analyticsFilter === 'false') {
+        where = 'WHERE cl.analytics = ?';
+        params.push(analyticsFilter === 'true' ? 1 : 0);
+      }
+
+      const [rows] = await db.query(
+        `SELECT cl.id, cl.user_id, cl.consent_id, cl.essential, cl.analytics, cl.source,
+                cl.ip_address, cl.created_at,
+                u.email, u.first_name, u.last_name
+         FROM cookie_consent_log cl
+         LEFT JOIN users u ON u.id = cl.user_id
+         ${where}
+         ORDER BY cl.created_at DESC
+         LIMIT ? OFFSET ?`,
+        [...params, limit, offset]
+      );
+      const [[{ total }]] = await db.query(
+        `SELECT COUNT(*) as total FROM cookie_consent_log cl ${where}`,
+        params
+      );
+      res.json({ rows, total, page, limit });
+    } catch (err) {
+      console.error('GET /api/admin/cookie-consent error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  // ── GET /api/admin/users/:id/cookie-consent — per-user history ──
+  app.get('/api/admin/users/:id/cookie-consent', authMiddleware, async (req, res) => {
+    if (!req.user || req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
+    try {
+      const [rows] = await db.execute(
+        `SELECT id, essential, analytics, source, ip_address, created_at
+         FROM cookie_consent_log
+         WHERE user_id = ?
+         ORDER BY created_at DESC`,
+        [req.params.id]
+      );
+      res.json(rows);
+    } catch (err) {
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
   app.post('/api/user/profile-photo', uploadProfilePic.single('photo'), async (req, res) => {
     try {
       const filePath = `/uploads/profile-pics/${req.file.filename}`;

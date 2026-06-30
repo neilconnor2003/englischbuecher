@@ -21,6 +21,7 @@ import AuthorsDashboard from './component/AuthorsDashboard';
 import DiscountDashboard from './component/DiscountDashboard';
 import WalletDashboard from './component/WalletDashboard';
 import EmailLogsPage from './component/EmailLogsPage';
+import CookieConsentLogPage from './component/CookieConsentLogPage';
 import ExcelBooksDashboard from './component/ExcelBooksDashboard';
 import StockManager from './component/StockManager';
 import PriceManager from './component/PriceManager';
@@ -54,6 +55,7 @@ function AdminApp() {
         <Route path="discounts" element={<DiscountDashboard />} />
         <Route path="wallet" element={<WalletDashboard />} />
         <Route path="email-logs" element={<EmailLogsPage />} />
+        <Route path="cookie-consent" element={<CookieConsentLogPage />} />
         <Route path="excel-books" element={<ExcelBooksDashboard />} />
         <Route path="stock" element={<StockManager />} />
         <Route path="price" element={<PriceManager />} />
