@@ -197,7 +197,12 @@
     "cookies": "Cookies & Tracking",
     "tools": "Eingesetzte Dienste",
     "rights": "Ihre Rechte",
-    "security": "Datensicherheit"
+    "security": "Datensicherheit",
+    "cookies_text": "Wir verwenden technisch notwendige Cookies, um grundlegende Funktionen wie Login und Warenkorb zu ermöglichen, sowie optionale Cookies für Analysezwecke.",
+    "analytics": "wird zur Analyse des Nutzerverhaltens auf unserer Website eingesetzt, sofern Sie der Nutzung zugestimmt haben.",
+    "payment": "verarbeitet Ihre Zahlungsdaten sicher zur Abwicklung Ihrer Bestellung.",
+    "rights_text": "Sie haben jederzeit das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung Ihrer personenbezogenen Daten.",
+    "security_text": "Wir setzen technische und organisatorische Maßnahmen ein, um Ihre Daten vor unbefugtem Zugriff zu schützen."
   },
   "terms": {
     "title": "Allgemeine Geschäftsbedingungen",
