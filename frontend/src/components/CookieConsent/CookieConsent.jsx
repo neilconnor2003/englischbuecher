@@ -3,11 +3,36 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Cookie, X } from 'lucide-react';
+import axios from 'axios';
+import config from '../../config';
 import './CookieConsent.css';
 
 const STORAGE_KEY = 'cookie_consent_v1';
+const ANON_ID_KEY = 'cookie_consent_anon_id';
 const GA4_ID = 'G-T5FKMD328X';
 const CLARITY_ID = 'xembtgq0cs';
+
+// ── Get or create a stable anonymous ID for guests ──
+function getAnonId() {
+  let id = localStorage.getItem(ANON_ID_KEY);
+  if (!id) {
+    id = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    localStorage.setItem(ANON_ID_KEY, id);
+  }
+  return id;
+}
+
+// ── Log the consent decision to the backend (non-blocking) ──
+function logConsentToServer(consent, source) {
+  axios.post(`${config.API_URL}/api/cookie-consent`, {
+    essential: true,
+    analytics: !!consent.analytics,
+    source,
+    consent_id: getAnonId(), // ignored server-side if user is logged in
+  }, { withCredentials: true }).catch(() => {
+    // Non-fatal — consent already applied locally either way
+  });
+}
 
 // ── Load GA4 dynamically once consent is given ──
 function loadGA4() {
@@ -81,16 +106,17 @@ export default function CookieConsent() {
     return () => window.removeEventListener('open-cookie-settings', reopen);
   }, []);
 
-  const save = (consent) => {
+  const save = (consent, source) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...consent, ts: Date.now() }));
     applyConsent(consent);
+    logConsentToServer(consent, source);
     setVisible(false);
     setShowCustomize(false);
   };
 
-  const acceptAll = () => save({ essential: true, analytics: true });
-  const declineAll = () => save({ essential: true, analytics: false });
-  const saveCustom = () => save({ essential: true, analytics: analyticsChecked });
+  const acceptAll = () => save({ essential: true, analytics: true }, 'accept_all');
+  const declineAll = () => save({ essential: true, analytics: false }, 'decline_all');
+  const saveCustom = () => save({ essential: true, analytics: analyticsChecked }, 'settings');
 
   if (!visible) return null;
 

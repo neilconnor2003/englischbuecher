@@ -17,7 +17,8 @@ import {
   Euro,
   Percent,
   StoreIcon,
-  File
+  File,
+  Cookie
 } from 'lucide-react';
 
 const AdminMenu = () => {
@@ -38,6 +39,7 @@ const AdminMenu = () => {
     { name: 'Discounts', path: 'discounts', icon: <Percent className="w-5 h-5" /> },
     { name: 'Wallets', path: 'wallet', icon: <Euro className="w-5 h-5" /> },
     { name: 'Email Logs', path: 'email-logs', icon: <Mail className="w-5 h-5" /> },
+    { name: 'Cookie Consent', path: 'cookie-consent', icon: <Cookie className="w-5 h-5" /> },
     { name: 'Upload Excel Books', path: 'excel-books', icon: <File className="w-5 h-5" /> },
     { name: 'Update Stocks', path: 'stock', icon: <StoreIcon className="w-5 h-5" /> },
     { name: 'Update Book Price', path: 'price', icon: <Euro className="w-5 h-5" /> },

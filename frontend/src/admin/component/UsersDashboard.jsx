@@ -50,6 +50,18 @@ const UsersDashboard = () => {
   const [deleteUser] = useDeleteUserMutation();
   const [reactivateUser] = useReactivateUserMutation();
   const { data: auditLogs } = useGetUserAuditQuery(selectedUserForAudit?.id, { skip: !selectedUserForAudit });
+  const [cookieConsentLogs, setCookieConsentLogs] = useState([]);
+  const [auditTab, setAuditTab] = useState('actions'); // 'actions' | 'cookies'
+
+  React.useEffect(() => {
+    if (!selectedUserForAudit?.id) { setCookieConsentLogs([]); return; }
+    fetch(`${import.meta.env.VITE_API_URL}/api/admin/users/${selectedUserForAudit.id}/cookie-consent`, {
+      credentials: 'include'
+    })
+      .then(res => res.json())
+      .then(data => setCookieConsentLogs(Array.isArray(data) ? data : []))
+      .catch(() => setCookieConsentLogs([]));
+  }, [selectedUserForAudit]);
 
   const users = data?.users || [];
   const total = data?.total || 0;
@@ -388,46 +400,100 @@ const UsersDashboard = () => {
       {/* AUDIT MODAL */}
       {selectedUserForAudit && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-96 overflow-y-auto p-6">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[28rem] overflow-y-auto p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-purple-800">
                 Audit Log: {selectedUserForAudit.email}
               </h3>
               <button
-                onClick={() => setSelectedUserForAudit(null)}
+                onClick={() => { setSelectedUserForAudit(null); setAuditTab('actions'); }}
                 className="text-red-600 hover:text-red-800"
               >
                 Close
               </button>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="text-left py-2 px-3">Action</th>
-                    <th className="text-left py-2 px-3">By</th>
-                    <th className="text-left py-2 px-3">Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {auditLogs?.length > 0 ? (
-                    auditLogs.map(log => (
-                      <tr key={log.id} className="border-b hover:bg-gray-50">
-                        <td className="py-2 px-3">{log.action}</td>
-                        <td className="py-2 px-3">{log.changed_by_role || 'user'}</td>
-                        <td className="py-2 px-3 text-xs">
-                          {format(new Date(log.created_at), 'MMM d, yyyy HH:mm')}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="3" className="text-center py-4 text-gray-500">No audit logs</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+
+            {/* TAB SWITCHER */}
+            <div className="flex gap-2 mb-4 border-b">
+              <button
+                onClick={() => setAuditTab('actions')}
+                className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${auditTab === 'actions' ? 'border-purple-600 text-purple-700' : 'border-transparent text-gray-500'}`}
+              >
+                Account Actions
+              </button>
+              <button
+                onClick={() => setAuditTab('cookies')}
+                className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${auditTab === 'cookies' ? 'border-purple-600 text-purple-700' : 'border-transparent text-gray-500'}`}
+              >
+                Cookie Consent ({cookieConsentLogs.length})
+              </button>
             </div>
+
+            {auditTab === 'actions' ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left py-2 px-3">Action</th>
+                      <th className="text-left py-2 px-3">By</th>
+                      <th className="text-left py-2 px-3">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {auditLogs?.length > 0 ? (
+                      auditLogs.map(log => (
+                        <tr key={log.id} className="border-b hover:bg-gray-50">
+                          <td className="py-2 px-3">{log.action}</td>
+                          <td className="py-2 px-3">{log.changed_by_role || 'user'}</td>
+                          <td className="py-2 px-3 text-xs">
+                            {format(new Date(log.created_at), 'MMM d, yyyy HH:mm')}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="3" className="text-center py-4 text-gray-500">No audit logs</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left py-2 px-3">Analytics</th>
+                      <th className="text-left py-2 px-3">Source</th>
+                      <th className="text-left py-2 px-3">IP</th>
+                      <th className="text-left py-2 px-3">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cookieConsentLogs.length > 0 ? (
+                      cookieConsentLogs.map(log => (
+                        <tr key={log.id} className="border-b hover:bg-gray-50">
+                          <td className="py-2 px-3">
+                            <span className={`px-2 py-0.5 rounded-full text-xs ${log.analytics ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                              {log.analytics ? 'Accepted' : 'Declined'}
+                            </span>
+                          </td>
+                          <td className="py-2 px-3 capitalize">{log.source?.replace('_', ' ')}</td>
+                          <td className="py-2 px-3 text-xs text-gray-500">{log.ip_address}</td>
+                          <td className="py-2 px-3 text-xs">
+                            {format(new Date(log.created_at), 'MMM d, yyyy HH:mm')}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="4" className="text-center py-4 text-gray-500">No cookie consent records</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}
