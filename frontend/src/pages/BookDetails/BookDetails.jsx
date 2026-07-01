@@ -32,6 +32,13 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import ShippoEstimator from '../../components/Shipping/ShippoEstimator';
 
+// Serve resized WebP images via /api/image endpoint (sharp on backend)
+const optimisedImg = (url, width = 500) => {
+  if (!url) return '/book-placeholder.png';
+  if (!url.startsWith('/uploads/')) return url;
+  return `${config.API_URL}/api/image?src=${encodeURIComponent(url)}&w=${width}&q=85`;
+};
+
 function BookDetails() {
   const { isbn, slug, id: idFromUrl } = useParams();
   const navigate = useNavigate();

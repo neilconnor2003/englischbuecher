@@ -1715,6 +1715,46 @@ const computeWorkId = (titleEn, titleDe, author) => {
     }
 
     try {
+      // ── Check if book already exists in stock ──────────────────
+      // Match by ISBN13, ISBN10, or normalised title (any provided)
+      const stockConditions = [];
+      const stockParams = [];
+      if (isbn13?.trim()) { stockConditions.push('isbn13 = ?'); stockParams.push(isbn13.trim()); }
+      if (isbn10?.trim()) { stockConditions.push('isbn10 = ?'); stockParams.push(isbn10.trim()); }
+      if (title?.trim()) {
+        stockConditions.push('LOWER(REPLACE(title_en, " ", "")) = LOWER(REPLACE(?, " ", ""))');
+        stockParams.push(title.trim());
+      }
+
+      if (stockConditions.length > 0) {
+        const [inStock] = await db.execute(
+          `SELECT id, slug, isbn13, isbn10, title_en, title_de, price, stock
+           FROM books
+           WHERE stock > 0 AND is_available = 1
+             AND (${stockConditions.join(' OR ')})
+           LIMIT 1`,
+          stockParams
+        );
+
+        if (inStock.length > 0) {
+          const book = inStock[0];
+          const isbn = book.isbn13 || book.isbn10 || '';
+          const bookUrl = `/book/${book.slug}${isbn ? '-' + isbn : ''}-${book.id}`;
+          return res.json({
+            success: false,
+            alreadyInStock: true,
+            book: {
+              id: book.id,
+              title_en: book.title_en,
+              title_de: book.title_de,
+              price: book.price,
+              stock: book.stock,
+              url: bookUrl,
+            }
+          });
+        }
+      }
+
       // Optional: dedupe (same user/email pending request for same book)
       const [dups] = await db.execute(
         `SELECT id FROM book_requests
@@ -2749,7 +2789,7 @@ ${bookList}`,
 
         try {
           await transporter.sendMail({
-            from: process.env.SMTP_USER,
+            from: `"EnglischBücher" <${process.env.SMTP_USER}>`,
             to: row.email,
             subject,
             html,
@@ -3972,11 +4012,15 @@ ${bookList}`,
   // === CATEGORY APIs (UPDATED WITH ICON) ===
   app.get('/api/categories', async (req, res) => {
     try {
+      // Admin panel passes ?all=1 to see hidden categories too
+      const showAll = req.query.all === '1';
+      const whereClause = showAll ? '' : 'WHERE is_visible = 1';
       const [rows] = await db.execute(`
-      SELECT id, name_en, name_de, slug, icon_path, parent_id, is_visible, updated_at 
-      FROM categories 
-      ORDER BY parent_id, id
-    `);
+        SELECT id, name_en, name_de, slug, icon_path, parent_id, is_visible, updated_at
+        FROM categories
+        ${whereClause}
+        ORDER BY parent_id, id
+      `);
       res.json(rows);
     } catch (err) {
       console.error('GET /api/categories error:', err);
@@ -3995,17 +4039,17 @@ ${bookList}`,
   });
 
   app.post('/api/categories', uploadCategoryIcon.single('icon'), async (req, res) => {
-    const { name_en, name_de, slug } = req.body;
+    const { name_en, name_de, slug, parent_id } = req.body;
     const icon_path = req.file ? `/uploads/categories/${req.file.filename}` : null;
-
     const finalSlug = slug || name_en?.toLowerCase().replace(/\s+/g, '-');
+    const parentId = parent_id ? parseInt(parent_id) : null;
 
     try {
       const [result] = await db.execute(
-        'INSERT INTO categories (name_en, name_de, slug, icon_path) VALUES (?, ?, ?, ?)',
-        [name_en || 'Untitled', name_de || 'Unbenannt', finalSlug, icon_path]
+        'INSERT INTO categories (name_en, name_de, slug, icon_path, parent_id) VALUES (?, ?, ?, ?, ?)',
+        [name_en || 'Untitled', name_de || 'Unbenannt', finalSlug, icon_path, parentId]
       );
-      res.json({ id: result.insertId, name_en, name_de, slug: finalSlug, icon_path });
+      res.json({ id: result.insertId, name_en, name_de, slug: finalSlug, icon_path, parent_id: parentId });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -4018,7 +4062,7 @@ ${bookList}`,
   ]), async (req, res) => {
 
     const { id } = req.params;
-    const { name_en, name_de, slug, is_visible } = req.body;
+    const { name_en, name_de, slug, is_visible, parent_id } = req.body;
 
     // ✅ accept either field name
     const file =
@@ -4034,6 +4078,8 @@ ${bookList}`,
     if (slug !== undefined) updates.slug = slug.trim() || (name_en ? name_en.toLowerCase().replace(/\s+/g, '-') : undefined);
     if (is_visible !== undefined) updates.is_visible = String(is_visible) === '1' ? 1 : 0;
     if (icon_path) updates.icon_path = icon_path;
+    // Allow setting/clearing parent_id (empty string = root category)
+    if (parent_id !== undefined) updates.parent_id = parent_id ? parseInt(parent_id) : null;
 
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: 'No data to update' });
