@@ -32,6 +32,13 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import ShippoEstimator from '../../components/Shipping/ShippoEstimator';
 
+// Serve resized WebP images via /api/image endpoint (sharp on backend)
+const optimisedImg = (url, width = 500) => {
+  if (!url) return '/book-placeholder.png';
+  if (!url.startsWith('/uploads/')) return url;
+  return `${config.API_URL}/api/image?src=${encodeURIComponent(url)}&w=${width}&q=85`;
+};
+
 function BookDetails() {
   const { isbn, slug, id: idFromUrl } = useParams();
   const navigate = useNavigate();
@@ -409,8 +416,71 @@ function BookDetails() {
           name="description"
           content={isDE ? (book.meta_description_de || description.substring(0, 155)) : (book.meta_description_en || description.substring(0, 155))}
         />
-        <meta property="og:image" content={book.image || ''} />
         <link rel="canonical" href={`${window.location.origin}${generateBookUrl(book)}`} />
+        {/* hreflang — tells Google this page serves both DE and EN users */}
+        <link rel="alternate" hreflang="de" href={`https://englischbuecher.de${generateBookUrl(book)}`} />
+        <link rel="alternate" hreflang="en" href={`https://englischbuecher.de${generateBookUrl(book)}`} />
+        <link rel="alternate" hreflang="x-default" href={`https://englischbuecher.de${generateBookUrl(book)}`} />
+
+        {/* ── Open Graph (Facebook, WhatsApp, LinkedIn) ── */}
+        <meta property="og:type" content="product" />
+        <meta property="og:title" content={isDE ? (book.meta_title_de || title) : (book.meta_title_en || title)} />
+        <meta
+          property="og:description"
+          content={isDE ? (book.meta_description_de || description.substring(0, 200)) : (book.meta_description_en || description.substring(0, 200))}
+        />
+        <meta property="og:image" content={book.image || `${window.location.origin}/book-placeholder.png`} />
+        <meta property="og:url" content={`${window.location.origin}${generateBookUrl(book)}`} />
+        <meta property="og:site_name" content="EnglischBuecher" />
+        <meta property="product:price:amount" content={String(book.price ?? '')} />
+        <meta property="product:price:currency" content="EUR" />
+        <meta property="product:availability" content={book.stock > 0 ? 'in stock' : 'out of stock'} />
+
+        {/* ── Twitter Card ── */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={isDE ? (book.meta_title_de || title) : (book.meta_title_en || title)} />
+        <meta
+          name="twitter:description"
+          content={isDE ? (book.meta_description_de || description.substring(0, 200)) : (book.meta_description_en || description.substring(0, 200))}
+        />
+        <meta name="twitter:image" content={book.image || `${window.location.origin}/book-placeholder.png`} />
+
+        {/* ── Product structured data (JSON-LD) ──
+             Enables Google rich results: star rating, price, stock badge
+             directly in search results. https://schema.org/Product */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            name: title,
+            image: book.image ? [book.image] : undefined,
+            description: (description || '').substring(0, 5000) || undefined,
+            sku: book.isbn13 || book.isbn10 || String(book.id),
+            ...(book.isbn13 ? { gtin13: book.isbn13 } : {}),
+            ...(book.isbn10 ? { gtin10: book.isbn10 } : {}),
+            brand: book.publisher ? { '@type': 'Brand', name: book.publisher } : undefined,
+            author: book.authors?.length
+              ? book.authors.map(a => ({ '@type': 'Person', name: a.name }))
+              : (book.author ? { '@type': 'Person', name: book.author } : undefined),
+            offers: {
+              '@type': 'Offer',
+              url: `${window.location.origin}${generateBookUrl(book)}`,
+              priceCurrency: 'EUR',
+              price: book.price,
+              availability: book.stock > 0
+                ? 'https://schema.org/InStock'
+                : 'https://schema.org/OutOfStock',
+              itemCondition: 'https://schema.org/NewCondition',
+            },
+            ...(reviewStats.total > 0 ? {
+              aggregateRating: {
+                '@type': 'AggregateRating',
+                ratingValue: Number(reviewStats.average || 0).toFixed(1),
+                reviewCount: reviewStats.total,
+              },
+            } : {}),
+          })}
+        </script>
       </Helmet>
 
       <div className="book-details-page">
@@ -422,7 +492,7 @@ function BookDetails() {
           <div className="book-grid">
             <div className="image-section">
               <div className="main-image-wrapper">
-                <img src={mainImage || '/book-placeholder.png'} alt={title} className="main-image" />
+                <img src={optimisedImg(mainImage, 500)} alt={title} className="main-image" />
                 {book.stock === 0 && <div className="sold-out-badge">Sold Out</div>}
               </div>
               {gallery.length > 1 && (

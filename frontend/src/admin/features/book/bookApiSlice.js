@@ -40,6 +40,12 @@ export const bookApi = createApi({
           map[id] = { ...cat, id, children: [] };
         });
 
+        // Build hierarchy and calculate depth level for indentation
+        const calcLevel = (cat, level = 0) => {
+          map[Number(cat.id)].level = level;
+          (map[Number(cat.id)].children || []).forEach(child => calcLevel(child, level + 1));
+        };
+
         flat.forEach(cat => {
           const id = Number(cat.id);
           const parentId = cat.parent_id === null ? null : Number(cat.parent_id);
@@ -50,12 +56,53 @@ export const bookApi = createApi({
           }
         });
 
+        roots.forEach(r => calcLevel(r));
+
+        // flat with levels computed
+        const flatWithLevel = flat.map(cat => ({ ...cat, level: map[Number(cat.id)]?.level || 0 }));
+
         return {
-          flat,
+          flat: flatWithLevel,
           hierarchy: roots,
           visibleRoots: roots.filter(r => r.is_visible == 1),
-          all: flat
+          all: flatWithLevel
         };
+      }
+    }),
+
+    // Admin-only: fetch ALL categories including hidden ones
+    getAllCategories: builder.query({
+      query: () => 'categories?all=1',
+      providesTags: ['Categories'],
+      transformResponse: (response) => {
+        const flat = Array.isArray(response) ? response : [];
+        const map = {};
+        const roots = [];
+
+        flat.forEach(cat => {
+          const id = Number(cat.id);
+          map[id] = { ...cat, id, children: [] };
+        });
+
+        flat.forEach(cat => {
+          const id = Number(cat.id);
+          const parentId = cat.parent_id === null ? null : Number(cat.parent_id);
+          if (parentId === null) {
+            roots.push(map[id]);
+          } else if (map[parentId]) {
+            map[parentId].children.push(map[id]);
+          }
+        });
+
+        const calcLevel = (cat, level = 0) => {
+          map[Number(cat.id)].level = level;
+          (map[Number(cat.id)].children || []).forEach(child => calcLevel(child, level + 1));
+        };
+        roots.forEach(r => calcLevel(r));
+
+        const flatWithLevel = flat.map(cat => ({ ...cat, level: map[Number(cat.id)]?.level || 0 }));
+
+        return { flat: flatWithLevel, hierarchy: roots, all: flatWithLevel };
       }
     }),
 
@@ -249,6 +296,7 @@ export const bookApi = createApi({
 export const {
   useGetBooksQuery,
   useGetCategoriesQuery,
+  useGetAllCategoriesQuery,
   useGetBookByISBNQuery,
   useAddBookMutation,
   useUpdateBookMutation,

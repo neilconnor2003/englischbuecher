@@ -12,7 +12,7 @@ import {
   User, Mail, Globe, ShoppingBag, Wallet, Settings, BookOpen, Star,
   MapPin, Bell, Camera, Edit2, Lock, ChevronRight, AlertCircle,
   CheckCircle, Package, Clock, Truck, XCircle, RotateCcw, Plus,
-  Save, X, Eye
+  Save, X, Eye, ShieldCheck, Cookie
 } from 'lucide-react';
 import './ProfilePage.css';
 
@@ -62,6 +62,7 @@ const ProfilePage = () => {
     { id: 'reviews', icon: Star,       label: t('my_reviews') || 'Reviews' },
     { id: 'requests',icon: BookOpen,   label: t('book_requests') || 'Requests' },
     { id: 'notifs',  icon: Bell,       label: t('notifications') || 'Notifications' },
+    { id: 'privacy', icon: ShieldCheck,label: t('privacy_cookies') || 'Privacy & Cookies' },
     { id: 'settings',icon: Settings,   label: t('account_settings') },
   ];
 
@@ -84,6 +85,7 @@ const ProfilePage = () => {
   const [pwError, setPwError]         = useState('');
   const [pwSuccess, setPwSuccess]     = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [cookieAnalytics, setCookieAnalytics] = useState(false);
   const PAGE_SIZE = 8;
 
   // ── redirect ──
@@ -126,17 +128,25 @@ const ProfilePage = () => {
     // notify prefs
     API.get('/user/notify-prefs').then(({ data }) => setNotifPrefs(data)).catch(() => {});
 
+    // cookie consent — read current choice from localStorage
+    try {
+      const raw = localStorage.getItem('cookie_consent_v1');
+      if (raw) setCookieAnalytics(!!JSON.parse(raw).analytics);
+    } catch {}
+
   }, [authUser]);
 
   // ── helpers ──
   const normalizePhoto = (url) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
-    if (url.startsWith('/')) return `${window.location.origin}${url}`;
-    return url;
+    // Uploaded photos are served from the backend, not Netlify
+    const base = config.API_URL.replace(/\/$/, '');
+    if (url.startsWith('/')) return `${base}${url}`;
+    return `${base}/${url}`;
   };
 
-  const memberDate = new Date(authUser?.created_at || Date.now()).toLocaleDateString('de-DE');
+  const memberDate = new Date(authUser?.created_at || Date.now()).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
   const photoSrc   = normalizePhoto(authUser?.photoURL);
 
   const handlePhotoUpload = async (e) => {
@@ -218,6 +228,48 @@ const ProfilePage = () => {
     setNotifPrefs(updated);
     try { await API.put('/user/notify-prefs', updated); }
     catch { toast.error(t('update_failed') || 'Failed to save'); setNotifPrefs(notifPrefs); }
+  };
+
+  // Mirrors the logic in CookieConsent.jsx — same storage key, same
+  // GA4/Clarity load/no-op behavior, same server-side logging endpoint.
+  const handleCookieToggle = async () => {
+    const next = !cookieAnalytics;
+    setCookieAnalytics(next);
+    const consent = { essential: true, analytics: next };
+    localStorage.setItem('cookie_consent_v1', JSON.stringify({ ...consent, ts: Date.now() }));
+
+    if (next && !window.gtag) {
+      // Lazy-load GA4 + Clarity the same way CookieConsent.jsx does
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = 'https://www.googletagmanager.com/gtag/js?id=G-T5FKMD328X';
+      document.head.appendChild(script);
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { window.dataLayer.push(arguments); }
+      window.gtag = gtag;
+      gtag('js', new Date());
+      gtag('config', 'G-T5FKMD328X', { anonymize_ip: true, cookie_flags: 'SameSite=None;Secure' });
+
+      if (!window.clarity) {
+        (function (c, l, a, r, i, t, y) {
+          c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments); };
+          t = l.createElement(r); t.async = 1; t.src = 'https://www.clarity.ms/tag/' + i;
+          y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
+        })(window, document, 'clarity', 'script', 'xembtgq0cs');
+      }
+    }
+
+    try {
+      let anonId = localStorage.getItem('cookie_consent_anon_id');
+      if (!anonId) {
+        anonId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        localStorage.setItem('cookie_consent_anon_id', anonId);
+      }
+      await API.post('/cookie-consent', { essential: true, analytics: next, source: 'profile', consent_id: anonId });
+      toast.success(t('cookie_prefs_updated') || 'Cookie preferences updated');
+    } catch {
+      // Non-fatal — preference still applied locally even if logging fails
+    }
   };
 
   const handleReorder = (order) => {
@@ -358,7 +410,7 @@ const ProfilePage = () => {
                           <div className="prof-order-top">
                             <div className="prof-order-meta">
                               <strong>#{order.id}</strong>
-                              <span className="prof-order-date">{new Date(order.created_at).toLocaleDateString('de-DE')}</span>
+                              <span className="prof-order-date">{new Date(order.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
                               <StatusBadge status={order.status} t={t} />
                             </div>
                             <div className="prof-order-amount">€{Number(order.total).toFixed(2)}</div>
@@ -418,7 +470,7 @@ const ProfilePage = () => {
                       <div key={tx.id} className="prof-tx-row">
                         <div>
                           <div className="prof-tx-reason">{tx.reason}</div>
-                          <div className="prof-tx-date">{new Date(tx.created_at).toLocaleDateString('de-DE')}</div>
+                          <div className="prof-tx-date">{new Date(tx.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
                         </div>
                         <div className={`prof-tx-amount ${tx.type === 'CREDIT' ? 'credit' : 'debit'}`}>
                           {tx.type === 'CREDIT' ? '+' : '−'}€{Number(tx.amount).toFixed(2)}
@@ -565,7 +617,7 @@ const ProfilePage = () => {
                           <div className="prof-review-title">{r.title_en}</div>
                           <StarRating rating={r.rating} />
                           {r.review_text && <p className="prof-review-text">{r.review_text}</p>}
-                          <div className="prof-review-date">{new Date(r.created_at).toLocaleDateString('de-DE')}</div>
+                          <div className="prof-review-date">{new Date(r.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
                         </div>
                         <ChevronRight size={16} className="prof-review-arrow" />
                       </div>
@@ -590,7 +642,7 @@ const ProfilePage = () => {
                         <div className="prof-req-info">
                           <div className="prof-req-title">{r.title_en || r.title_de || r.isbn13 || '—'}</div>
                           {r.isbn13 && <div className="prof-req-isbn">ISBN: {r.isbn13}</div>}
-                          <div className="prof-req-date">{new Date(r.created_at).toLocaleDateString('de-DE')}</div>
+                          <div className="prof-req-date">{new Date(r.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
                         </div>
                         <span className={`prof-req-badge ${r.status === 'fulfilled' ? 'fulfilled' : r.status === 'added' ? 'added' : 'pending'}`}>
                           {r.status === 'fulfilled' ? '✓ ' + (t('available') || 'Available') : r.status === 'added' ? '📦 ' + (t('added') || 'Added') : '⏳ ' + (t('pending') || 'Pending')}
@@ -629,6 +681,49 @@ const ProfilePage = () => {
                     </button>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* ── PRIVACY & COOKIES ── */}
+            {activeTab === 'privacy' && (
+              <div className="prof-card">
+                <div className="prof-card-header">
+                  <h2 className="prof-card-title">{t('privacy_cookies') || 'Privacy & Cookies'}</h2>
+                </div>
+                <p className="prof-section-desc">
+                  {t('privacy_cookies_desc') || 'Manage how we use cookies on this device. This setting only applies to your current browser.'}
+                </p>
+
+                <div className="prof-notif-row">
+                  <div className="prof-notif-info">
+                    <div className="prof-notif-label">{t('cookie_essential') || 'Essential cookies'}</div>
+                    <div className="prof-notif-desc">{t('cookie_essential_desc') || 'Required for login, your cart, and core site functions. Cannot be turned off.'}</div>
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', background: '#f3f4f6', padding: '4px 10px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                    {t('always_on') || 'Always on'}
+                  </span>
+                </div>
+
+                <div className="prof-notif-row">
+                  <div className="prof-notif-info">
+                    <div className="prof-notif-label">{t('cookie_analytics') || 'Analytics cookies'}</div>
+                    <div className="prof-notif-desc">{t('cookie_analytics_desc') || 'Google Analytics and Microsoft Clarity help us understand how visitors use our website.'}</div>
+                  </div>
+                  <button
+                    className={`prof-toggle ${cookieAnalytics ? 'on' : 'off'}`}
+                    onClick={handleCookieToggle}
+                    title={cookieAnalytics ? 'On' : 'Off'}
+                  >
+                    <span className="prof-toggle-knob" />
+                  </button>
+                </div>
+
+                <p className="prof-section-desc" style={{ marginTop: 16 }}>
+                  {t('privacy_full_policy') || 'Read our full'}{' '}
+                  <a href="/privacy" style={{ color: '#7c3aed', fontWeight: 600 }}>
+                    {t('privacy_policy_link') || 'Privacy Policy'}
+                  </a>.
+                </p>
               </div>
             )}
 

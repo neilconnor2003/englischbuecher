@@ -35,6 +35,15 @@ const toNumber = (v) => {
  * - showActions: boolean (default true)
  * - className: optional outer class
  */
+// ── Build optimised WebP image URL via /api/image resize endpoint ──
+// Falls back to original URL if it's already absolute (external CDN etc.)
+const optimisedImg = (url, width = 300) => {
+  if (!url) return 'https://via.placeholder.com/300x400?text=Book';
+  if (!url.startsWith('/uploads/')) return url; // already absolute/external
+  return `${config.API_URL}/api/image?src=${encodeURIComponent(url)}&w=${width}&q=80`;
+};
+
+
 const BookCard = ({ book, variant = 'default', showActions = true, className = '' }) => {
   const { t, i18n } = useTranslation();
   const de = i18n.resolvedLanguage === 'de';
@@ -123,7 +132,7 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
       const clientBookPayload = {
         title_en: book.title_en || title,
         title_de: book.title_de || null,
-        image: book.image || 'https://via.placeholder.com/300x400?text=Book',
+        image: optimisedImg(book.image),
         slug: book.slug || book.id?.toString(),
         stock: typeof book.stock === 'number' ? book.stock : Infinity,
         price,
@@ -206,7 +215,7 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
         {/* ── Cover with text overlay ── */}
         <div className="book-cover">
           <img
-            src={book.image || 'https://via.placeholder.com/300x400?text=Book'}
+            src={optimisedImg(book.image, 300)}
             alt={title}
             loading="lazy"
             className="book-cover-img"

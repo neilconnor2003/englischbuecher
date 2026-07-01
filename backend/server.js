@@ -1,11 +1,15 @@
 // backend/server.js
 require('dotenv').config();
 
-
-//console.log('DB_USER:', process.env.DB_USER);
-//console.log('DB_HOST:', process.env.DB_HOST);
-
-
+// ── Sentry error monitoring (v8 API — no Handlers.requestHandler needed) ──
+const Sentry = require('@sentry/node');
+Sentry.init({
+  dsn: process.env.SENTRY_DSN || 'https://3b8df48b88a1f4e50a5bc9afb5317ff9@o4511659973214208.ingest.de.sentry.io/4511659993071696',
+  environment: process.env.NODE_ENV || 'production',
+  tracesSampleRate: 0.1,
+});
+// In Sentry v8, init() automatically instruments Express.
+// Do NOT call Sentry.Handlers.requestHandler() — it no longer exists.
 
 const express = require('express');
 const mysql = require('mysql2/promise'); // ← /promise
@@ -1711,6 +1715,46 @@ const computeWorkId = (titleEn, titleDe, author) => {
     }
 
     try {
+      // ── Check if book already exists in stock ──────────────────
+      // Match by ISBN13, ISBN10, or normalised title (any provided)
+      const stockConditions = [];
+      const stockParams = [];
+      if (isbn13?.trim()) { stockConditions.push('isbn13 = ?'); stockParams.push(isbn13.trim()); }
+      if (isbn10?.trim()) { stockConditions.push('isbn10 = ?'); stockParams.push(isbn10.trim()); }
+      if (title?.trim()) {
+        stockConditions.push('LOWER(REPLACE(title_en, " ", "")) = LOWER(REPLACE(?, " ", ""))');
+        stockParams.push(title.trim());
+      }
+
+      if (stockConditions.length > 0) {
+        const [inStock] = await db.execute(
+          `SELECT id, slug, isbn13, isbn10, title_en, title_de, price, stock
+           FROM books
+           WHERE stock > 0 AND is_available = 1
+             AND (${stockConditions.join(' OR ')})
+           LIMIT 1`,
+          stockParams
+        );
+
+        if (inStock.length > 0) {
+          const book = inStock[0];
+          const isbn = book.isbn13 || book.isbn10 || '';
+          const bookUrl = `/book/${book.slug}${isbn ? '-' + isbn : ''}-${book.id}`;
+          return res.json({
+            success: false,
+            alreadyInStock: true,
+            book: {
+              id: book.id,
+              title_en: book.title_en,
+              title_de: book.title_de,
+              price: book.price,
+              stock: book.stock,
+              url: bookUrl,
+            }
+          });
+        }
+      }
+
       // Optional: dedupe (same user/email pending request for same book)
       const [dups] = await db.execute(
         `SELECT id FROM book_requests
@@ -2210,7 +2254,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
         `;
 
         await transporter.sendMail({
-          from: process.env.SMTP_USER,
+          from: `"EnglischBücher" <${process.env.SMTP_USER}>`,
           to: email,
           subject,
           html,
@@ -2505,7 +2549,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
       // Fallback: just pick the author with the most books if no orders yet
       const [fallback] = await db.query(`
-      SELECT a.id, a.name, a.bio, a.bio_de, a.photo, COUNT(b.id) as book_count
+      SELECT a.id, a.name, a.slug, a.bio, a.bio_de, a.photo, COUNT(b.id) as book_count
       FROM authors a
       JOIN book_authors ba ON ba.author_id = a.id
       JOIN books b ON b.id = ba.book_id
@@ -2745,7 +2789,7 @@ ${bookList}`,
 
         try {
           await transporter.sendMail({
-            from: process.env.SMTP_USER,
+            from: `"EnglischBücher" <${process.env.SMTP_USER}>`,
             to: row.email,
             subject,
             html,
@@ -3968,11 +4012,15 @@ ${bookList}`,
   // === CATEGORY APIs (UPDATED WITH ICON) ===
   app.get('/api/categories', async (req, res) => {
     try {
+      // Admin panel passes ?all=1 to see hidden categories too
+      const showAll = req.query.all === '1';
+      const whereClause = showAll ? '' : 'WHERE is_visible = 1';
       const [rows] = await db.execute(`
-      SELECT id, name_en, name_de, slug, icon_path, parent_id, is_visible, updated_at 
-      FROM categories 
-      ORDER BY parent_id, id
-    `);
+        SELECT id, name_en, name_de, slug, icon_path, parent_id, is_visible, updated_at
+        FROM categories
+        ${whereClause}
+        ORDER BY parent_id, id
+      `);
       res.json(rows);
     } catch (err) {
       console.error('GET /api/categories error:', err);
@@ -3991,17 +4039,17 @@ ${bookList}`,
   });
 
   app.post('/api/categories', uploadCategoryIcon.single('icon'), async (req, res) => {
-    const { name_en, name_de, slug } = req.body;
+    const { name_en, name_de, slug, parent_id } = req.body;
     const icon_path = req.file ? `/uploads/categories/${req.file.filename}` : null;
-
     const finalSlug = slug || name_en?.toLowerCase().replace(/\s+/g, '-');
+    const parentId = parent_id ? parseInt(parent_id) : null;
 
     try {
       const [result] = await db.execute(
-        'INSERT INTO categories (name_en, name_de, slug, icon_path) VALUES (?, ?, ?, ?)',
-        [name_en || 'Untitled', name_de || 'Unbenannt', finalSlug, icon_path]
+        'INSERT INTO categories (name_en, name_de, slug, icon_path, parent_id) VALUES (?, ?, ?, ?, ?)',
+        [name_en || 'Untitled', name_de || 'Unbenannt', finalSlug, icon_path, parentId]
       );
-      res.json({ id: result.insertId, name_en, name_de, slug: finalSlug, icon_path });
+      res.json({ id: result.insertId, name_en, name_de, slug: finalSlug, icon_path, parent_id: parentId });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -4014,7 +4062,7 @@ ${bookList}`,
   ]), async (req, res) => {
 
     const { id } = req.params;
-    const { name_en, name_de, slug, is_visible } = req.body;
+    const { name_en, name_de, slug, is_visible, parent_id } = req.body;
 
     // ✅ accept either field name
     const file =
@@ -4030,6 +4078,8 @@ ${bookList}`,
     if (slug !== undefined) updates.slug = slug.trim() || (name_en ? name_en.toLowerCase().replace(/\s+/g, '-') : undefined);
     if (is_visible !== undefined) updates.is_visible = String(is_visible) === '1' ? 1 : 0;
     if (icon_path) updates.icon_path = icon_path;
+    // Allow setting/clearing parent_id (empty string = root category)
+    if (parent_id !== undefined) updates.parent_id = parent_id ? parseInt(parent_id) : null;
 
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: 'No data to update' });
@@ -5029,7 +5079,7 @@ ${bookList}`,
       `;
 
         try {
-          await transporter.sendMail({ from: process.env.SMTP_USER, to: sub.email, subject, html });
+          await transporter.sendMail({ from: `"EnglischBücher" <${process.env.SMTP_USER}>`, to: sub.email, subject, html });
           await db.execute(`
           INSERT INTO sent_emails (to_email, subject, html, status, type, created_at)
           VALUES (?, ?, ?, 'sent', 'RestockNotification', NOW())
@@ -6681,6 +6731,80 @@ WHERE ci.user_id = ?
   // === START SERVER ===
   const PORT = process.env.PORT || 3001;
 
+
+  // ── GET /api/image — serve resized/optimised images (WebP) ───
+  app.get('/api/image', async (req, res) => {
+    try {
+      const src = String(req.query.src || '');
+      const width = Math.min(Math.max(parseInt(req.query.w) || 400, 50), 1200);
+      const quality = Math.min(Math.max(parseInt(req.query.q) || 80, 20), 100);
+      if (!src.startsWith('/uploads/')) return res.status(400).json({ error: 'Invalid src' });
+      const filePath = path.join(__dirname, src);
+      if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Not found' });
+      const cacheDir = path.join(__dirname, 'uploads', '_cache');
+      fs.mkdirSync(cacheDir, { recursive: true });
+      const cacheKey = src.replace(/[\/]/g, '_') + `_w${width}_q${quality}.webp`;
+      const cachePath = path.join(cacheDir, cacheKey);
+      let imageBuffer;
+      if (fs.existsSync(cachePath)) {
+        imageBuffer = fs.readFileSync(cachePath);
+      } else {
+        let sharp;
+        try { sharp = require('sharp'); } catch { return res.sendFile(filePath); }
+        imageBuffer = await sharp(filePath).resize(width, null, { withoutEnlargement: true }).webp({ quality }).toBuffer();
+        fs.writeFileSync(cachePath, imageBuffer);
+      }
+      res.set({ 'Content-Type': 'image/webp', 'Cache-Control': 'public, max-age=604800', 'Vary': 'Accept' });
+      res.send(imageBuffer);
+    } catch (err) {
+      console.error('Image resize error:', err.message);
+      res.status(500).json({ error: 'Image processing failed' });
+    }
+  });
+
+  // ── Newsletter campaign routes ────────────────────────────────
+  app.get('/api/admin/newsletter/subscribers', authMiddleware, async (req, res) => {
+    if (!req.user || req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+    try {
+      const [[{ total }]] = await db.query('SELECT COUNT(*) as total FROM newsletter_subscribers WHERE is_active = 1');
+      const [byLang] = await db.query('SELECT language, COUNT(*) as count FROM newsletter_subscribers WHERE is_active = 1 GROUP BY language');
+      res.json({ total, byLanguage: byLang });
+    } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  });
+
+  app.post('/api/admin/newsletter/send', authMiddleware, async (req, res) => {
+    if (!req.user || req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+    const { subject_en, subject_de, body_en, body_de, language_filter } = req.body;
+    if (!subject_en || !body_en) return res.status(400).json({ error: 'subject_en and body_en required' });
+    try {
+      const { buildEmail, SENDER_NAME } = require('./utils/emailTemplate');
+      let query = 'SELECT email, language, unsubscribe_token FROM newsletter_subscribers WHERE is_active = 1';
+      const params = [];
+      if (language_filter && ['en','de'].includes(language_filter)) { query += ' AND language = ?'; params.push(language_filter); }
+      const [subscribers] = await db.query(query, params);
+      if (!subscribers.length) return res.json({ success: true, sent: 0, failed: 0 });
+      let sent = 0, failed = 0;
+      const apiOrigin = `${req.protocol}://${req.get('host')}`;
+      for (const sub of subscribers) {
+        const isDe = sub.language === 'de';
+        const subject = isDe ? (subject_de || subject_en) : subject_en;
+        const body = isDe ? (body_de || body_en) : body_en;
+        const unsubUrl = `${apiOrigin}/api/newsletter/unsubscribe?token=${sub.unsubscribe_token}`;
+        const bodyHtml = `<div style="font-size:15px;color:#444;line-height:1.7;">${body.replace(/\n/g,'<br>')}</div>
+          <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
+            <a href="${unsubUrl}" style="color:#9ca3af;">${isDe?'Abbestellen':'Unsubscribe'}</a></p>`;
+        const html = buildEmail({ lang: sub.language, title: subject, headerTitle: subject, headerEmoji: '📚', bodyHtml });
+        try {
+          await transporter.sendMail({ from: `"${SENDER_NAME}" <${process.env.SMTP_USER}>`, to: sub.email, subject, html });
+          await db.query(`INSERT INTO sent_emails (to_email,subject,html,status,type,created_at) VALUES (?,?,?,'sent','Newsletter',NOW())`, [sub.email, subject, html]).catch(()=>{});
+          sent++;
+        } catch (mailErr) { console.error(`Campaign fail ${sub.email}:`, mailErr.message); failed++; }
+        await new Promise(r => setTimeout(r, 100));
+      }
+      res.json({ success: true, sent, failed, total: subscribers.length });
+    } catch (err) { console.error('Campaign error:', err); res.status(500).json({ error: 'Server error' }); }
+  });
+
   // ✅ 0) Health endpoint BEFORE any SPA/static fallback
   app.get("/health", (req, res) => {
     res.json({
@@ -6695,55 +6819,73 @@ WHERE ci.user_id = ?
       const baseUrl = 'https://englischbuecher.de';
 
       const [books] = await db.execute(`
-      SELECT slug, created_at
-      FROM books
-      WHERE stock > 0
-    `);
+        SELECT id, slug, isbn13, isbn10, title_en, created_at
+        FROM books
+        WHERE stock > 0 AND is_available = 1
+      `);
+
+      const [categories] = await db.execute(`
+        SELECT slug FROM categories WHERE is_visible = 1 AND parent_id IS NULL
+      `);
+
+      const [authors] = await db.execute(`
+        SELECT slug FROM authors WHERE slug IS NOT NULL AND slug != ''
+      `);
 
       const urls = [];
 
+      // Static pages — highest priority
       const staticPages = [
-        '',
-        '/about',
-        '/contact',
-        '/faq',
-        '/imprint',
-        '/privacy',
-        '/terms',
-        '/shipping',
-        '/returns',
-        '/revocation',
-        '/books',
-        '/request-book',
+        { path: '', priority: '1.0', changefreq: 'weekly' },
+        { path: '/books', priority: '0.9', changefreq: 'daily' },
+        { path: '/about', priority: '0.7', changefreq: 'monthly' },
+        { path: '/contact', priority: '0.6', changefreq: 'monthly' },
+        { path: '/faq', priority: '0.6', changefreq: 'monthly' },
+        { path: '/request-book', priority: '0.6', changefreq: 'monthly' },
+        { path: '/imprint', priority: '0.3', changefreq: 'yearly' },
+        { path: '/privacy', priority: '0.3', changefreq: 'yearly' },
+        { path: '/terms', priority: '0.3', changefreq: 'yearly' },
+        { path: '/shipping', priority: '0.4', changefreq: 'monthly' },
+        { path: '/returns', priority: '0.4', changefreq: 'monthly' },
+        { path: '/revocation', priority: '0.3', changefreq: 'yearly' },
       ];
 
-      staticPages.forEach((path) => {
-        urls.push(`
-        <url>
-          <loc>${baseUrl}${path}</loc>
-          <changefreq>monthly</changefreq>
-          <priority>0.8</priority>
-        </url>
-      `);
+      staticPages.forEach(({ path, priority, changefreq }) => {
+        urls.push(`  <url>
+    <loc>${baseUrl}${path}</loc>
+    <changefreq>${changefreq}</changefreq>
+    <priority>${priority}</priority>
+  </url>`);
       });
 
+      // Book pages — must match generateBookUrl format: /book/{slug}-{isbn}-{id}
       books.forEach((book) => {
-        urls.push(`
-        <url>
-          <loc>${baseUrl}/book/${book.slug}</loc>
-          <lastmod>${new Date(book.created_at).toISOString()}</lastmod>
-          <changefreq>weekly</changefreq>
-          <priority>0.9</priority>
-        </url>
-      `);
+        const isbn = book.isbn13 || book.isbn10 || '';
+        const bookPath = `/book/${book.slug}${isbn ? '-' + isbn : ''}-${book.id}`;
+        urls.push(`  <url>
+    <loc>${baseUrl}${bookPath}</loc>
+    <lastmod>${new Date(book.created_at).toISOString().split('T')[0]}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>`);
+      });
+
+      // Author pages
+      authors.forEach(({ slug }) => {
+        urls.push(`  <url>
+    <loc>${baseUrl}/author/${slug}</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>`);
       });
 
       const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.join('')}
+${urls.join('\n')}
 </urlset>`;
 
       res.header('Content-Type', 'application/xml');
+      res.header('Cache-Control', 'public, max-age=3600'); // cache 1 hour
       res.send(sitemap);
     } catch (err) {
       console.error('Sitemap error:', err);

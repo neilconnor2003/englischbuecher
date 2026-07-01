@@ -51,8 +51,8 @@
   "footer.terms": "AGB",
   "footer.revocation": "Widerrufsbelehrung",
   "footer.shipping": "Versand & Zahlung",
-  "footer.cookie_settings": "Cookie-Einstellungen",
   "footer.returns": "Rücksendungen",
+  "footer.cookie_settings": "Cookie-Einstellungen",
   "by_author": "von",
   "in_stock": "Auf Lager",
   "left": "verbleibend",
@@ -616,5 +616,15 @@
   "address_label_home": "Zuhause",
   "address_label_work": "Arbeit",
   "address_label_other": "Sonstige",
-  "legal_updated": "Stand: Juni 2026"
+  "legal_updated": "Stand: Juni 2026",
+  "privacy_cookies": "Datenschutz & Cookies",
+  "privacy_cookies_desc": "Verwalte, wie wir Cookies auf diesem Gerät verwenden. Diese Einstellung gilt nur für deinen aktuellen Browser.",
+  "cookie_essential": "Essenzielle Cookies",
+  "cookie_essential_desc": "Erforderlich für Login, Warenkorb und grundlegende Funktionen der Website. Kann nicht deaktiviert werden.",
+  "cookie_analytics": "Analyse-Cookies",
+  "cookie_analytics_desc": "Google Analytics und Microsoft Clarity helfen uns zu verstehen, wie Besucher unsere Website nutzen.",
+  "always_on": "Immer aktiv",
+  "cookie_prefs_updated": "Cookie-Einstellungen aktualisiert",
+  "privacy_full_policy": "Lies unsere vollständige",
+  "privacy_policy_link": "Datenschutzerklärung"
 }

@@ -126,8 +126,8 @@
   "footer.terms": "Terms of Service",
   "footer.revocation": "Right of Withdrawal",
   "footer.shipping": "Shipping & Payment",
-  "footer.cookie_settings": "Cookie Settings",
   "footer.returns": "Returns",
+  "footer.cookie_settings": "Cookie Settings",
   "personal_data": "Personal Data",
   "shipping_address": "Shipping Address",
   "no_address": "No address saved",
@@ -640,5 +640,15 @@
   "address_label_home": "Home",
   "address_label_work": "Work",
   "address_label_other": "Other",
-  "legal_updated": "Last updated: June 2026"
+  "legal_updated": "Last updated: June 2026",
+  "privacy_cookies": "Privacy & Cookies",
+  "privacy_cookies_desc": "Manage how we use cookies on this device. This setting only applies to your current browser.",
+  "cookie_essential": "Essential cookies",
+  "cookie_essential_desc": "Required for login, your cart, and core site functions. Cannot be turned off.",
+  "cookie_analytics": "Analytics cookies",
+  "cookie_analytics_desc": "Google Analytics and Microsoft Clarity help us understand how visitors use our website.",
+  "always_on": "Always on",
+  "cookie_prefs_updated": "Cookie preferences updated",
+  "privacy_full_policy": "Read our full",
+  "privacy_policy_link": "Privacy Policy"
 }

@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { Search } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import BookCard from '../../components/Book/BookCard';
 import config from '../../config';
 import { useTranslation } from 'react-i18next';
@@ -373,8 +374,32 @@ function Books() {
 
 
 
+  const pageTitle = q
+    ? `${t('search_results_for')} "${q}" | EnglischBuecher`
+    : `${t('all_books')} | EnglischBuecher`;
+  const pageDescription = q
+    ? (i18n.resolvedLanguage === 'de'
+        ? `Suchergebnisse für "${q}" — englische Bücher bei EnglischBuecher. Schnelle Lieferung in Deutschland.`
+        : `Search results for "${q}" — English books at EnglischBuecher. Fast delivery within Germany.`)
+    : (i18n.resolvedLanguage === 'de'
+        ? 'Stöbere durch unsere komplette Auswahl an englischen Büchern — Klassiker, Bestseller und Neuerscheinungen, schnell geliefert in Deutschland.'
+        : 'Browse our full selection of English books — classics, bestsellers, and new arrivals, delivered fast across Germany.');
+
   return (
     <div className="books-listing-page">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <link rel="canonical" href={`${window.location.origin}/books${q ? `?q=${encodeURIComponent(q)}` : ''}`} />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:site_name" content="EnglischBuecher" />
+        {/* Search results pages shouldn't be indexed individually — avoids
+            thin/duplicate-content penalties from infinite filter combos */}
+        {q && <meta name="robots" content="noindex, follow" />}
+      </Helmet>
+
       <div className="container">
         <h1 className="page-title">
           <span className="page-title-icon">📚</span>

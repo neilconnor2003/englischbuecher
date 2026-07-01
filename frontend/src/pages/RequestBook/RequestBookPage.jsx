@@ -15,6 +15,7 @@ export default function RequestBookPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [inStockBook, setInStockBook] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -65,7 +66,7 @@ export default function RequestBookPage() {
     }
     setSubmitting(true);
     try {
-      await axios.post(`${config.API_URL}/api/book-requests`, {
+      const response = await axios.post(`${config.API_URL}/api/book-requests`, {
         isbn13: form.isbn13.trim() || null,
         isbn10: form.isbn10.trim() || null,
         title:  form.title.trim()  || null,
@@ -75,7 +76,11 @@ export default function RequestBookPage() {
         requester_name:  user ? null : form.requester_name.trim(),
         requester_email: user ? null : form.requester_email.trim(),
       });
-      setSuccess(true);
+      if (response.data.alreadyInStock) {
+        setInStockBook(response.data.book);
+      } else {
+        setSuccess(true);
+      }
     } catch { toast.error(t('request.submit_failed') || 'Submission failed. Please try again.'); }
     finally { setSubmitting(false); }
   };
@@ -114,8 +119,34 @@ export default function RequestBookPage() {
 
           {/* ── RIGHT: form ── */}
           <div className="request-box">
-            {success ? (
+            {inStockBook ? (
               <div className="request-success">
+                <div style={{ fontSize: 44, marginBottom: 12 }}>📚</div>
+                <h2 className="request-success-title" style={{ color: '#7c3aed' }}>
+                  {isDe ? 'Dieses Buch ist verfügbar!' : 'This book is already available!'}
+                </h2>
+                <p className="request-success-desc">
+                  {isDe
+                    ? `"${inStockBook.title_de || inStockBook.title_en}" ist bereits in unserem Sortiment und auf Lager.`
+                    : `"${inStockBook.title_en}" is already in our catalogue and in stock.`}
+                  {' '}
+                  {isDe
+                    ? `Noch ${inStockBook.stock} Exemplar${inStockBook.stock > 1 ? 'e' : ''} verfügbar.`
+                    : `${inStockBook.stock} cop${inStockBook.stock > 1 ? 'ies' : 'y'} available.`}
+                </p>
+                <p style={{ fontWeight: 700, color: '#7c3aed', fontSize: 18, margin: '0 0 20px' }}>
+                  €{Number(inStockBook.price).toFixed(2)}
+                </p>
+                <a href={inStockBook.url} className="rbook-submit" style={{ textDecoration: 'none', display: 'inline-flex', justifyContent: 'center' }}>
+                  {isDe ? 'Jetzt ansehen →' : 'View book →'}
+                </a>
+                <br /><br />
+                <button className="rbook-submit" style={{ background: '#f3f4f6', color: '#374151', marginTop: 8 }}
+                  onClick={() => { setInStockBook(null); setForm({ requester_name:'', requester_email:'', isbn13:'', isbn10:'', title:'', author:'', publisher:'', notes:'' }); }}>
+                  {isDe ? 'Anderes Buch anfragen' : 'Request a different book'}
+                </button>
+              </div>
+            ) : success ? (              <div className="request-success">
                 <CheckCircle size={48} className="request-success-icon" />
                 <h2 className="request-success-title">
                   {isDe ? 'Anfrage eingegangen!' : 'Request received!'}
@@ -127,7 +158,7 @@ export default function RequestBookPage() {
                   {isDe ? 'Weiteres Buch anfragen' : 'Request another book'}
                 </button>
               </div>
-            ) : (
+            ) : (!inStockBook && (
               <form onSubmit={onSubmit} className="request-form" noValidate>
                 {!user && (
                   <>
@@ -204,7 +235,7 @@ export default function RequestBookPage() {
                     : t('request.submit')}
                 </button>
               </form>
-            )}
+            ))}
           </div>
         </div>
       </div>

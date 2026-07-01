@@ -1,7 +1,7 @@
 // frontend/src/admin/pages/CategoriesDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import {
-  useGetCategoriesQuery,
+  useGetAllCategoriesQuery,
   useAddCategoryMutation,
   useUpdateCategoryMutation,
   useDeleteCategoryMutation
@@ -128,7 +128,7 @@ const SortableCategoryItem = ({ category, level = 0, isExpanded, onToggle, onEdi
 };
 
 const CategoriesDashboard = () => {
-  const { data = { hierarchy: [] }, isLoading, refetch } = useGetCategoriesQuery();
+  const { data = { hierarchy: [], flat: [] }, isLoading, refetch } = useGetAllCategoriesQuery();
   const [addCategory] = useAddCategoryMutation();
   const [updateCategory] = useUpdateCategoryMutation();
   const [deleteCategory] = useDeleteCategoryMutation();

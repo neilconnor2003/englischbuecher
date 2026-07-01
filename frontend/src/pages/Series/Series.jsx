@@ -258,7 +258,27 @@ function Series() {
             <Helmet>
                 <title>{seoTitle}</title>
                 <meta name="description" content={seoDescription} />
-                <link rel="canonical" href={`${window.location.origin}/series/${series_slug}`} />
+                <link rel="canonical" href={`https://englischbuecher.de/series/${series_slug}`} />
+
+                {/* Open Graph */}
+                <meta property="og:type" content="book.series" />
+                <meta property="og:title" content={seoTitle} />
+                <meta property="og:description" content={seoDescription} />
+                <meta property="og:url" content={`https://englischbuecher.de/series/${series_slug}`} />
+                <meta property="og:site_name" content="EnglischBuecher" />
+                {series.cover_image && <meta property="og:image" content={series.cover_image} />}
+
+                {/* BookSeries structured data */}
+                <script type="application/ld+json">
+                  {JSON.stringify({
+                    '@context': 'https://schema.org',
+                    '@type': 'BookSeries',
+                    name: isDE ? (series.name_de || series.name_en) : series.name_en,
+                    description: seoDescription,
+                    url: `https://englischbuecher.de/series/${series_slug}`,
+                    numberOfItems: books?.length || 0,
+                  })}
+                </script>
             </Helmet>
 
             <div className="series-page">
@@ -584,6 +604,23 @@ function Series() {
                             />
                         </section>
                     )}
+
+                    {/* SEO BLOCK */}
+                    <section className="series-seo-section">
+                        <div className="series-seo-card">
+                            <h2 className="series-section-title small">
+                                {isDE
+                                    ? `${displaySeriesName} Reihenfolge`
+                                    : `${displaySeriesName} reading order`}
+                            </h2>
+
+                            <p>
+                                {isDE
+                                    ? `Auf dieser Seite findest du alle aktuell verfügbaren Bücher der Reihe ${displaySeriesName} in der richtigen Reihenfolge. Starte mit Band 1 oder springe direkt zu dem Band, den du gerade brauchst.`
+                                    : `This page shows all currently available books in the ${displaySeriesName} series in the correct order. Start with Book 1 or jump directly to the volume you need.`}
+                            </p>
+                        </div>
+                    </section>
                 </div>
             </div>
         </>
