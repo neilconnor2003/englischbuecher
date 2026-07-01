@@ -485,7 +485,7 @@ function BookDetails() {
           <div className="book-grid">
             <div className="image-section">
               <div className="main-image-wrapper">
-                <img src={mainImage || '/book-placeholder.png'} alt={title} className="main-image" />
+                <img src={optimisedImg(mainImage, 500)} alt={title} className="main-image" />
                 {book.stock === 0 && <div className="sold-out-badge">Sold Out</div>}
               </div>
               {gallery.length > 1 && (

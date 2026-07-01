@@ -94,16 +94,47 @@ const AuthorDetails = () => {
   return (
     <>
       <Helmet>
-        <title>
-          {author.name} – {t('author.title', 'Author')} | EnglischBuecher
-        </title>
-
+        <title>{author.name} – {t('author.title', 'Author')} | EnglischBuecher</title>
         <meta
           name="description"
-          content={`Books and biography of ${author.name}. Browse all books by ${author.name}.`}
+          content={`${author.bio ? author.bio.substring(0, 155) : `Books and biography of ${author.name}. Browse all English books by ${author.name} available in Germany.`}`}
         />
-        <link rel="canonical" href={`${window.location.origin}/author/${slug}`} />
+        <link rel="canonical" href={`https://englischbuecher.de/author/${slug}`} />
+
+        {/* Open Graph */}
+        <meta property="og:type" content="profile" />
+        <meta property="og:title" content={`${author.name} | EnglischBuecher`} />
+        <meta property="og:description" content={author.bio ? author.bio.substring(0, 200) : `Browse all books by ${author.name}`} />
         {author.photo && <meta property="og:image" content={author.photo} />}
+        <meta property="og:url" content={`https://englischbuecher.de/author/${slug}`} />
+        <meta property="og:site_name" content="EnglischBuecher" />
+
+        {/* Person + ItemList structured data */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@graph': [
+              {
+                '@type': 'Person',
+                name: author.name,
+                ...(author.photo ? { image: author.photo } : {}),
+                ...(author.bio ? { description: author.bio.substring(0, 500) } : {}),
+                url: `https://englischbuecher.de/author/${slug}`,
+              },
+              ...(books.length > 0 ? [{
+                '@type': 'ItemList',
+                name: `Books by ${author.name}`,
+                numberOfItems: books.length,
+                itemListElement: books.slice(0, 10).map((book, i) => ({
+                  '@type': 'ListItem',
+                  position: i + 1,
+                  name: book.title_en || book.title_de,
+                  url: `https://englischbuecher.de/book/${book.slug}-${book.isbn13 || book.isbn10 || ''}-${book.id}`,
+                })),
+              }] : []),
+            ],
+          })}
+        </script>
       </Helmet>
 
       <div className="author-details-page">

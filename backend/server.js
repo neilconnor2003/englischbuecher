@@ -1,7 +1,15 @@
 // backend/server.js
 require('dotenv').config();
 
+// ── Sentry error monitoring (v8 API — no Handlers.requestHandler needed) ──
 const Sentry = require('@sentry/node');
+Sentry.init({
+  dsn: process.env.SENTRY_DSN || 'https://3b8df48b88a1f4e50a5bc9afb5317ff9@o4511659973214208.ingest.de.sentry.io/4511659993071696',
+  environment: process.env.NODE_ENV || 'production',
+  tracesSampleRate: 0.1,
+});
+// In Sentry v8, init() automatically instruments Express.
+// Do NOT call Sentry.Handlers.requestHandler() — it no longer exists.
 
 const express = require('express');
 const mysql = require('mysql2/promise'); // ← /promise
@@ -49,15 +57,8 @@ const transporter = nodemailer.createTransport({
 
 const app = express();
 
-// ── Sentry error monitoring ──────────────────────────────────
-Sentry.init({
-  dsn: process.env.SENTRY_DSN || 'https://3b8df48b88a1f4e50a5bc9afb5317ff9@o4511659973214208.ingest.de.sentry.io/4511659993071696',
-  environment: process.env.NODE_ENV || 'production',
-  tracesSampleRate: 0.1,
-});
-// Must be first middleware
-app.use(Sentry.Handlers.requestHandler());
 
+// If you deploy behind a proxy (nginx, Render, Fly.io, etc.) this makes req.ip + XFF work
 app.set('trust proxy', true);
 
 
@@ -6864,9 +6865,6 @@ ${urls.join('\n')}
   //  app.get(/^\/(?!api|uploads|webhook|auth|health).*/, (req, res) => {
   //    res.sendFile(path.join(distPath, 'index.html'));
   //  });
-
-  // ── Sentry error handler (must be after all routes) ──────────
-  app.use(Sentry.Handlers.errorHandler());
 
   app.listen(PORT, '0.0.0.0', () => {
     //console.log(`Server running on port ${PORT}`);
