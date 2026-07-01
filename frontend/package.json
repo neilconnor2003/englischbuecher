@@ -12,6 +12,7 @@
     "@headlessui/react": "^2.0.0",
     "@paypal/react-paypal-js": "^8.9.2",
     "@reduxjs/toolkit": "^2.9.2",
+    "@sentry/react": "^10.63.0",
     "@stripe/react-stripe-js": "^2.9.0",
     "@stripe/stripe-js": "^2.4.0",
     "@testing-library/jest-dom": "^6.9.1",
