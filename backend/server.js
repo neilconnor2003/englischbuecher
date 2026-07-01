@@ -2304,7 +2304,8 @@ const computeWorkId = (titleEn, titleDe, author) => {
     try {
       const [rows] = await db.query(`
         SELECT r.id, r.rating, r.review_text, r.reviewer_name, r.created_at,
-               b.id as book_id, b.title_en, b.title_de, b.slug, b.image, b.author
+               b.id as book_id, b.title_en, b.title_de, b.slug, b.image, b.author,
+               b.isbn13, b.isbn10
         FROM reviews r
         JOIN books b ON b.id = r.book_id
         WHERE r.rating >= 4

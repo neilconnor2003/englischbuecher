@@ -456,7 +456,7 @@ function WhatReadersSay({ de }) {
         <div className="testi-grid">
           {reviews.slice(0, 6).map(r => {
             const title = de ? (r.title_de || r.title_en) : (r.title_en || r.title_de);
-            const to = generateBookUrl({ id: r.book_id, slug: r.slug, title_en: r.title_en, title_de: r.title_de });
+            const to = generateBookUrl({ id: r.book_id, slug: r.slug, title_en: r.title_en, title_de: r.title_de, isbn13: r.isbn13, isbn10: r.isbn10 });
             return (
               <Link to={to} key={r.id} className="testi-card">
                 <div className="testi-stars">

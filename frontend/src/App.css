@@ -43,3 +43,10 @@
     padding-left: 256px !important;
   }
 }
+
+/* ── Prevent double scrollbar (Tailwind base + child overflow:auto) ── */
+html,
+body {
+  overflow-x: hidden;
+  scrollbar-gutter: auto;
+}
