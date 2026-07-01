@@ -2254,7 +2254,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
         `;
 
         await transporter.sendMail({
-          from: process.env.SMTP_USER,
+          from: `"EnglischBücher" <${process.env.SMTP_USER}>`,
           to: email,
           subject,
           html,
@@ -2549,7 +2549,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
       // Fallback: just pick the author with the most books if no orders yet
       const [fallback] = await db.query(`
-      SELECT a.id, a.name, a.bio, a.bio_de, a.photo, COUNT(b.id) as book_count
+      SELECT a.id, a.name, a.slug, a.bio, a.bio_de, a.photo, COUNT(b.id) as book_count
       FROM authors a
       JOIN book_authors ba ON ba.author_id = a.id
       JOIN books b ON b.id = ba.book_id
@@ -5079,7 +5079,7 @@ ${bookList}`,
       `;
 
         try {
-          await transporter.sendMail({ from: process.env.SMTP_USER, to: sub.email, subject, html });
+          await transporter.sendMail({ from: `"EnglischBücher" <${process.env.SMTP_USER}>`, to: sub.email, subject, html });
           await db.execute(`
           INSERT INTO sent_emails (to_email, subject, html, status, type, created_at)
           VALUES (?, ?, ?, 'sent', 'RestockNotification', NOW())

@@ -362,7 +362,7 @@ function AuthorSpotlight({ de }) {
   const [authorBooks, setAuthorBooks] = useState([]);
 
   useEffect(() => {
-    axios.get('/api/authors/featured')
+    axios.get(`${config.API_URL}/api/authors/featured`)
       .then(res => {
         if (res.data && res.data.id) {
           setAuthor(res.data);
@@ -418,11 +418,13 @@ function AuthorSpotlight({ de }) {
             <Link to={`/books?author=${encodeURIComponent(author.name)}`} className="author-spot-btn">
               {de ? `Alle Bücher von ${author.name} →` : `View all books by ${author.name} →`}
             </Link>
-            {author.slug && (
-              <Link to={`/author/${author.slug}`} className="author-spot-btn" style={{ background: 'none', border: '1.5px solid #c4b5fd', color: '#7c3aed', marginTop: 8 }}>
-                {de ? `Mehr über ${author.name} →` : `Meet the author →`}
-              </Link>
-            )}
+            <Link
+              to={author.slug ? `/author/${author.slug}` : `/books?author=${encodeURIComponent(author.name)}`}
+              className="author-spot-btn"
+              style={{ background: 'none', border: '1.5px solid #c4b5fd', color: '#7c3aed', marginTop: 8, display: 'inline-flex' }}
+            >
+              {de ? `Mehr über ${author.name} →` : `Meet the author →`}
+            </Link>
           </div>
         </div>
       </div>

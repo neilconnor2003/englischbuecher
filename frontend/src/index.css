@@ -2,6 +2,21 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+/* ── Prevent double scrollbar from Tailwind base ──────────────
+   Tailwind Preflight sets html { overflow-y: scroll } or
+   scrollbar-gutter: stable which reserves a scrollbar gutter
+   even when no scroll is needed, creating a phantom second bar.
+   This override must come AFTER the Tailwind imports.          */
+html {
+  overflow-x: hidden;
+  overflow-y: unset;
+  scrollbar-gutter: auto;
+}
+body {
+  overflow-x: hidden;
+  overflow-y: unset;
+}
+
 /* Global half-star support for all Rate components */
 .ant-rate-star-half .ant-rate-star-first {
   color: #9333ea !important;
