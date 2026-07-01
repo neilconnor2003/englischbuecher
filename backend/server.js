@@ -2304,8 +2304,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
     try {
       const [rows] = await db.query(`
         SELECT r.id, r.rating, r.review_text, r.reviewer_name, r.created_at,
-               b.id as book_id, b.title_en, b.title_de, b.slug, b.image, b.author,
-               b.isbn13, b.isbn10
+               b.id as book_id, b.title_en, b.title_de, b.slug, b.image, b.author
         FROM reviews r
         JOIN books b ON b.id = r.book_id
         WHERE r.rating >= 4
@@ -6681,6 +6680,80 @@ WHERE ci.user_id = ?
 
   // === START SERVER ===
   const PORT = process.env.PORT || 3001;
+
+
+  // ── GET /api/image — serve resized/optimised images (WebP) ───
+  app.get('/api/image', async (req, res) => {
+    try {
+      const src = String(req.query.src || '');
+      const width = Math.min(Math.max(parseInt(req.query.w) || 400, 50), 1200);
+      const quality = Math.min(Math.max(parseInt(req.query.q) || 80, 20), 100);
+      if (!src.startsWith('/uploads/')) return res.status(400).json({ error: 'Invalid src' });
+      const filePath = path.join(__dirname, src);
+      if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Not found' });
+      const cacheDir = path.join(__dirname, 'uploads', '_cache');
+      fs.mkdirSync(cacheDir, { recursive: true });
+      const cacheKey = src.replace(/[\/]/g, '_') + `_w${width}_q${quality}.webp`;
+      const cachePath = path.join(cacheDir, cacheKey);
+      let imageBuffer;
+      if (fs.existsSync(cachePath)) {
+        imageBuffer = fs.readFileSync(cachePath);
+      } else {
+        let sharp;
+        try { sharp = require('sharp'); } catch { return res.sendFile(filePath); }
+        imageBuffer = await sharp(filePath).resize(width, null, { withoutEnlargement: true }).webp({ quality }).toBuffer();
+        fs.writeFileSync(cachePath, imageBuffer);
+      }
+      res.set({ 'Content-Type': 'image/webp', 'Cache-Control': 'public, max-age=604800', 'Vary': 'Accept' });
+      res.send(imageBuffer);
+    } catch (err) {
+      console.error('Image resize error:', err.message);
+      res.status(500).json({ error: 'Image processing failed' });
+    }
+  });
+
+  // ── Newsletter campaign routes ────────────────────────────────
+  app.get('/api/admin/newsletter/subscribers', authMiddleware, async (req, res) => {
+    if (!req.user || req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+    try {
+      const [[{ total }]] = await db.query('SELECT COUNT(*) as total FROM newsletter_subscribers WHERE is_active = 1');
+      const [byLang] = await db.query('SELECT language, COUNT(*) as count FROM newsletter_subscribers WHERE is_active = 1 GROUP BY language');
+      res.json({ total, byLanguage: byLang });
+    } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  });
+
+  app.post('/api/admin/newsletter/send', authMiddleware, async (req, res) => {
+    if (!req.user || req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+    const { subject_en, subject_de, body_en, body_de, language_filter } = req.body;
+    if (!subject_en || !body_en) return res.status(400).json({ error: 'subject_en and body_en required' });
+    try {
+      const { buildEmail, SENDER_NAME } = require('./utils/emailTemplate');
+      let query = 'SELECT email, language, unsubscribe_token FROM newsletter_subscribers WHERE is_active = 1';
+      const params = [];
+      if (language_filter && ['en','de'].includes(language_filter)) { query += ' AND language = ?'; params.push(language_filter); }
+      const [subscribers] = await db.query(query, params);
+      if (!subscribers.length) return res.json({ success: true, sent: 0, failed: 0 });
+      let sent = 0, failed = 0;
+      const apiOrigin = `${req.protocol}://${req.get('host')}`;
+      for (const sub of subscribers) {
+        const isDe = sub.language === 'de';
+        const subject = isDe ? (subject_de || subject_en) : subject_en;
+        const body = isDe ? (body_de || body_en) : body_en;
+        const unsubUrl = `${apiOrigin}/api/newsletter/unsubscribe?token=${sub.unsubscribe_token}`;
+        const bodyHtml = `<div style="font-size:15px;color:#444;line-height:1.7;">${body.replace(/\n/g,'<br>')}</div>
+          <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
+            <a href="${unsubUrl}" style="color:#9ca3af;">${isDe?'Abbestellen':'Unsubscribe'}</a></p>`;
+        const html = buildEmail({ lang: sub.language, title: subject, headerTitle: subject, headerEmoji: '📚', bodyHtml });
+        try {
+          await transporter.sendMail({ from: `"${SENDER_NAME}" <${process.env.SMTP_USER}>`, to: sub.email, subject, html });
+          await db.query(`INSERT INTO sent_emails (to_email,subject,html,status,type,created_at) VALUES (?,?,?,'sent','Newsletter',NOW())`, [sub.email, subject, html]).catch(()=>{});
+          sent++;
+        } catch (mailErr) { console.error(`Campaign fail ${sub.email}:`, mailErr.message); failed++; }
+        await new Promise(r => setTimeout(r, 100));
+      }
+      res.json({ success: true, sent, failed, total: subscribers.length });
+    } catch (err) { console.error('Campaign error:', err); res.status(500).json({ error: 'Server error' }); }
+  });
 
   // ✅ 0) Health endpoint BEFORE any SPA/static fallback
   app.get("/health", (req, res) => {

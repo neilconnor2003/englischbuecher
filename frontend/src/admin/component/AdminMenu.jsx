@@ -18,7 +18,8 @@ import {
   Percent,
   StoreIcon,
   File,
-  Cookie
+  Cookie,
+  Send
 } from 'lucide-react';
 
 const AdminMenu = () => {
@@ -39,6 +40,7 @@ const AdminMenu = () => {
     { name: 'Discounts', path: 'discounts', icon: <Percent className="w-5 h-5" /> },
     { name: 'Wallets', path: 'wallet', icon: <Euro className="w-5 h-5" /> },
     { name: 'Email Logs', path: 'email-logs', icon: <Mail className="w-5 h-5" /> },
+    { name: 'Newsletter', path: 'newsletter-campaign', icon: <Send className="w-5 h-5" /> },
     { name: 'Cookie Consent', path: 'cookie-consent', icon: <Cookie className="w-5 h-5" /> },
     { name: 'Upload Excel Books', path: 'excel-books', icon: <File className="w-5 h-5" /> },
     { name: 'Update Stocks', path: 'stock', icon: <StoreIcon className="w-5 h-5" /> },

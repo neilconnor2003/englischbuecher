@@ -44,9 +44,16 @@
   }
 }
 
-/* ── Prevent double scrollbar (Tailwind base + child overflow:auto) ── */
-html,
+/* ── Fix double scrollbar ── */
+/* The second scrollbar appears because Tailwind's base CSS reserves
+   scrollbar space on <body> (scrollbar-gutter: stable in some builds),
+   and .home-page-v2 min-height: 100vh adds another. Overriding here
+   removes the phantom reserved space. */
+html {
+  overflow-x: hidden;
+}
+
 body {
   overflow-x: hidden;
-  scrollbar-gutter: auto;
+  scrollbar-gutter: auto !important;
 }
