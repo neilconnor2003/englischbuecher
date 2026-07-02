@@ -1938,3 +1938,34 @@
     width: 100%;
   }
 }
+/* ── Review card: reviewer identity (photo + name + stars) ── */
+.testi-reviewer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.testi-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ede9fe;
+  flex-shrink: 0;
+}
+
+.testi-avatar-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed, #5e42d6);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  flex-shrink: 0;
+  border: 2px solid #ede9fe;
+}

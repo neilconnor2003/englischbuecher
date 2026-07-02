@@ -3,6 +3,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGetAboutQuery } from '../../admin/features/about/aboutApiSlice';
 import './About.css';
+import { Helmet } from 'react-helmet-async';
 
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -10,6 +11,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
 const About = () => {
   //const { t } = useTranslation();
   const { t, i18n } = useTranslation();
+  const isDe = i18n.language === 'de';
   const lang = i18n.language;
 
   const { data: about = {}, isLoading } = useGetAboutQuery();
@@ -30,6 +32,16 @@ const About = () => {
 
   return (
     <div className="about-page">
+
+      <Helmet>
+        <title>{isDe ? 'Über uns | EnglischBuecher' : 'About Us | EnglischBuecher'}</title>
+        <meta name="description" content={isDe ? 'Erfahre mehr über EnglischBuecher — Deutschlands Online-Shop für englische Bücher. Schnelle Lieferung, große Auswahl.' : 'Learn about EnglischBuecher — Germany\'s online English bookshop. Fast delivery, wide selection, and a passion for English literature.'} />
+        <link rel="canonical" href="https://englischbuecher.de/about" />
+        <meta property="og:title" content={isDe ? 'Über uns | EnglischBuecher' : 'About Us | EnglischBuecher'} />
+        <meta property="og:description" content={isDe ? 'Erfahre mehr über EnglischBuecher — Deutschlands Online-Shop für englische Bücher. Schnelle Lieferung, große Auswahl.' : 'Learn about EnglischBuecher — Germany\'s online English bookshop. Fast delivery, wide selection, and a passion for English literature.'} />
+        <meta property="og:url" content="https://englischbuecher.de/about" />
+        <meta property="og:site_name" content="EnglischBuecher" />
+      </Helmet>
       <div className="about-hero" style={{ backgroundImage: `linear-gradient(rgba(0,0,0,.4), rgba(0,0,0,.6)), url(${heroImage || '/assets/about-hero.jpg'})` }}>
         <div className="hero-content">
           <h1>{lang === 'de' ? about.title_de : about.title_en || t('about.title')}</h1>

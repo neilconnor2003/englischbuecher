@@ -466,16 +466,35 @@ function WhatReadersSay({ de }) {
             const to = generateBookUrl({ id: r.book_id, slug: r.slug, title_en: r.title_en, title_de: r.title_de, isbn13: r.isbn13, isbn10: r.isbn10 });
             return (
               <Link to={to} key={r.id} className="testi-card">
-                <div className="testi-stars">
-                  {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                {/* Reviewer identity — photo + name at the top */}
+                <div className="testi-reviewer">
+                  {r.reviewer_photo ? (
+                    <img
+                      src={r.reviewer_photo.startsWith('/uploads') ? `${config.API_URL}${r.reviewer_photo}` : r.reviewer_photo}
+                      alt={r.reviewer_name || ''}
+                      className="testi-avatar"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="testi-avatar-placeholder">
+                      {(r.reviewer_name || '?')[0].toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <span className="testi-name">{r.reviewer_name || (de ? 'Anonym' : 'Anonymous')}</span>
+                    <div className="testi-stars">
+                      {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                    </div>
+                  </div>
                 </div>
+
                 <p className="testi-text">
                   "{r.review_text.length > 140 ? r.review_text.slice(0, 140) + '…' : r.review_text}"
                 </p>
+
                 <div className="testi-footer">
                   {r.image && <img src={r.image} alt={title} className="testi-cover" loading="lazy" />}
                   <div className="testi-meta">
-                    <span className="testi-name">{r.reviewer_name || (de ? 'Anonym' : 'Anonymous')}</span>
                     <span className="testi-book">{title}</span>
                   </div>
                 </div>
