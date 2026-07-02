@@ -36,7 +36,8 @@
   background: var(--white);
   min-height: 100vh;
   font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, sans-serif;
-  overflow-x: hidden;
+  /* overflow-x: hidden removed — causes iOS Safari scroll trap when combined
+     with height: 100vh on child elements. html/body in index.css handles this. */
 }
 
 .home-page-v2 .container {
