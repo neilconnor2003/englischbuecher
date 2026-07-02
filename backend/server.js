@@ -2531,6 +2531,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
       SELECT
         a.id,
         a.name,
+        a.slug,
         a.bio,
         a.bio_de,
         a.photo,
