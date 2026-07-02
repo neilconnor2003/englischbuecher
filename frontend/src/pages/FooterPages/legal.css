@@ -50,12 +50,12 @@
   border-bottom: 1px solid #f3f0ff;
 }
 
-.legal-container h2:first-of-type { margin-top: 8px; }
+.legal-container h2:first-of-type { margin-top: 58px; }
 
 /* Tighter paragraph spacing inside CMS-rendered HTML sections */
 .legal-container section p { margin: 0 0 8px; }
 .legal-container section p:last-child { margin-bottom: 0; }
-.legal-container section div > p { margin: 0 0 8px; }
+.legal-container section div > p { margin: 0 0 2px; }
 .legal-container section div > p:last-child { margin-bottom: 0; }
 /* Remove extra space from nested elements in rich text */
 .legal-container section div > p + p { margin-top: 0; }
