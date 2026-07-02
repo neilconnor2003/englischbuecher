@@ -9,6 +9,7 @@ const StockManager = () => {
   // ✅ filter state
   const [filters, setFilters] = useState({
     isbn: '',
+    title: '',
     binding: '',
     edition: '',
   });
@@ -87,25 +88,30 @@ const StockManager = () => {
   // ✅ filtered books
   const filteredBooks = useMemo(() => {
     const isbnFilter = filters.isbn.trim().toLowerCase();
+    const titleFilter = filters.title.trim().toLowerCase();
     const bindingFilter = filters.binding.trim().toLowerCase();
     const editionFilter = filters.edition.trim().toLowerCase();
 
     return books.filter(book => {
       const isbnValue = String(getDisplayIsbn(book)).toLowerCase();
+      const titleEn = String(book.title_en || '').toLowerCase();
+      const titleDe = String(book.title_de || '').toLowerCase();
       const bindingValue = String(book.binding || '').toLowerCase();
       const editionValue = String(book.edition || '').toLowerCase();
 
       const matchesIsbn = !isbnFilter || isbnValue.includes(isbnFilter);
+      const matchesTitle = !titleFilter || titleEn.includes(titleFilter) || titleDe.includes(titleFilter);
       const matchesBinding = !bindingFilter || bindingValue.includes(bindingFilter);
       const matchesEdition = !editionFilter || editionValue.includes(editionFilter);
 
-      return matchesIsbn && matchesBinding && matchesEdition;
+      return matchesIsbn && matchesTitle && matchesBinding && matchesEdition;
     });
   }, [books, filters]);
 
   const clearFilters = () => {
     setFilters({
       isbn: '',
+      title: '',
       binding: '',
       edition: '',
     });
@@ -120,6 +126,22 @@ const StockManager = () => {
       {/* ✅ FILTER BAR */}
       <div className="bg-white shadow-xl rounded-2xl p-6 mb-6">
         <div className="flex flex-col lg:flex-row lg:items-end gap-4">
+          {/* Title search */}
+          <div className="flex-1">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Search by Title (EN or DE)
+            </label>
+            <input
+              type="text"
+              value={filters.title}
+              onChange={(e) =>
+                setFilters(prev => ({ ...prev, title: e.target.value }))
+              }
+              placeholder="Search title..."
+              className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+          </div>
+
           {/* ISBN */}
           <div className="flex-1">
             <label className="block text-sm font-semibold text-gray-700 mb-2">

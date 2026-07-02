@@ -2348,9 +2348,12 @@ const computeWorkId = (titleEn, titleDe, author) => {
     try {
       const [rows] = await db.query(`
         SELECT r.id, r.rating, r.review_text, r.reviewer_name, r.created_at,
-               b.id as book_id, b.title_en, b.title_de, b.slug, b.image, b.author
+               b.id as book_id, b.title_en, b.title_de, b.slug, b.image, b.author,
+               b.isbn13, b.isbn10,
+               u.photo_url as reviewer_photo, u.custom_pic
         FROM reviews r
         JOIN books b ON b.id = r.book_id
+        LEFT JOIN users u ON u.id = r.user_id
         WHERE r.rating >= 4
           AND CHAR_LENGTH(r.review_text) >= 10
         ORDER BY r.created_at DESC
