@@ -44,18 +44,31 @@
   font-size: 1.25rem;
   font-weight: 700;
   font-style: italic;
-  margin: 48px 0 14px;
+  margin: 60px 0 16px;
   color: #7c3aed;
-  padding-bottom: 8px;
+  padding-bottom: 10px;
   border-bottom: 1px solid #f3f0ff;
 }
 
 .legal-container h2:first-of-type { margin-top: 8px; }
 
+.legal-container section {
+  padding-bottom: 12px;
+}
+
+.legal-container ul,
+.legal-container ol {
+  margin-bottom: 22px;
+}
+.legal-container li {
+  margin-bottom: 10px;
+  line-height: 1.75;
+}
+
 .legal-container p {
   font-size: 14.5px;
   color: #4b5563;
-  margin: 0 0 18px;
+  margin: 0 0 22px;
 }
 
 .legal-container strong { color: #1a1a2e; }

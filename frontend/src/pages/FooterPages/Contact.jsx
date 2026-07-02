@@ -4,10 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { useGetContactQuery } from '../../admin/features/contact/contactApiSlice';
 import './Contact.css';
 import { AuthContext } from '../../context/AuthContext';
+import { Helmet } from 'react-helmet-async';
 
 const Contact = () => {
   //const { t } = useTranslation();
   const { t, i18n } = useTranslation();
+  const isDe = i18n.language === 'de';
   const lang = i18n.language;
 
   const { data: contact = {}, isLoading: loadingContact } = useGetContactQuery();
@@ -65,6 +67,16 @@ const Contact = () => {
 
   return (
     <div className="contact-page">
+
+      <Helmet>
+        <title>{isDe ? 'Kontakt | EnglischBuecher' : 'Contact Us | EnglischBuecher'}</title>
+        <meta name="description" content={isDe ? 'Kontaktiere EnglischBuecher. Wir helfen dir gerne bei deiner Bestellung oder Buchfragen.' : 'Get in touch with EnglischBuecher. We\'re happy to help with your order, book requests, or any questions.'} />
+        <link rel="canonical" href="https://englischbuecher.de/contact" />
+        <meta property="og:title" content={isDe ? 'Kontakt | EnglischBuecher' : 'Contact Us | EnglischBuecher'} />
+        <meta property="og:description" content={isDe ? 'Kontaktiere EnglischBuecher. Wir helfen dir gerne bei deiner Bestellung oder Buchfragen.' : 'Get in touch with EnglischBuecher. We\'re happy to help with your order, book requests, or any questions.'} />
+        <meta property="og:url" content="https://englischbuecher.de/contact" />
+        <meta property="og:site_name" content="EnglischBuecher" />
+      </Helmet>
       <div className="contact-hero" style={{ backgroundImage: `linear-gradient(rgba(0,0,0,.5), rgba(0,0,0,.7)), url(${heroImage})` }}>
         <div className="hero-content">
           <h1>{lang === 'de' ? contact.title_de : contact.title_en || t('contact.title')}</h1>

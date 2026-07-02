@@ -263,7 +263,8 @@ async function getCategoryDescendantIds(db, rootId) {
 function slugifyTitle(s = '') {
   return String(s).toLowerCase().trim()
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
+    .replace(/(^-|-$)/g, '')
+    .substring(0, 100); // slug column is VARCHAR(255); cap at 100 chars for clean URLs
 }
 
 async function fulfillRequestsForBook(db, transporter, book, req) {
