@@ -266,14 +266,14 @@ function Series() {
                 <meta property="og:description" content={seoDescription} />
                 <meta property="og:url" content={`https://englischbuecher.de/series/${series_slug}`} />
                 <meta property="og:site_name" content="EnglischBuecher" />
-                {series.cover_image && <meta property="og:image" content={series.cover_image} />}
+                {seriesDetailBook?.image && <meta property="og:image" content={seriesDetailBook.image} />}
 
                 {/* BookSeries structured data */}
                 <script type="application/ld+json">
                   {JSON.stringify({
                     '@context': 'https://schema.org',
                     '@type': 'BookSeries',
-                    name: isDE ? (series.name_de || series.name_en) : series.name_en,
+                    name: displaySeriesName,
                     description: seoDescription,
                     url: `https://englischbuecher.de/series/${series_slug}`,
                     numberOfItems: books?.length || 0,
