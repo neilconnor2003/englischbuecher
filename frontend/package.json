@@ -64,6 +64,7 @@
     ]
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@svgr/plugin-svgo": "^8.1.0",
     "@vitejs/plugin-react": "^5.1.0",
     "autoprefixer": "^10.4.21",
