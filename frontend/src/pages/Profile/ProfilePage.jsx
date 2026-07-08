@@ -86,6 +86,8 @@ const ProfilePage = () => {
   const [pwSuccess, setPwSuccess]     = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [cookieAnalytics, setCookieAnalytics] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading]     = useState(false);
   const PAGE_SIZE = 8;
 
   // ── redirect ──
@@ -290,6 +292,7 @@ const ProfilePage = () => {
 
   // ── render ──
   return (
+    <>
     <div className="prof-page">
       <div className="prof-container">
 
@@ -773,20 +776,7 @@ const ProfilePage = () => {
                   </p>
                   <button
                     className="prof-btn-danger"
-                    onClick={async () => {
-                      const confirmed = window.confirm(
-                        t('delete_account_confirm') ||
-                        'Are you sure you want to delete your account? This cannot be undone.'
-                      );
-                      if (!confirmed) return;
-                      try {
-                        await API.delete('/user/profile');
-                        logout();
-                        window.location.href = '/';
-                      } catch {
-                        toast.error(t('delete_account_failed') || 'Failed to delete account. Please try again.');
-                      }
-                    }}
+                    onClick={() => setShowDeleteModal(true)}
                   >
                     {t('delete_account') || 'Delete Account'}
                   </button>
@@ -798,6 +788,119 @@ const ProfilePage = () => {
         </div>
       </div>
     </div>
+
+      {/* ── Delete Account Confirmation Modal ── */}
+      {showDeleteModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.45)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '20px',
+        }}
+          onClick={() => !deleteLoading && setShowDeleteModal(false)}
+        >
+          <div style={{
+            background: '#fff',
+            borderRadius: 20,
+            border: '1px solid #ede9fe',
+            boxShadow: '0 24px 60px rgba(124,58,237,0.18)',
+            maxWidth: 440,
+            width: '100%',
+            padding: '36px 32px',
+            textAlign: 'center',
+            animation: 'fadeIn 0.2s ease',
+          }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Icon */}
+            <div style={{
+              width: 56, height: 56,
+              background: '#fef2f2',
+              borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 20px',
+              border: '1px solid #fecaca',
+            }}>
+              <AlertCircle size={28} color="#dc2626" />
+            </div>
+
+            {/* Title */}
+            <h2 style={{
+              fontFamily: "'Fraunces', Georgia, serif",
+              fontSize: '1.5rem',
+              fontWeight: 900,
+              fontStyle: 'italic',
+              color: '#1a1a2e',
+              margin: '0 0 12px',
+            }}>
+              {t('delete_account') || 'Delete Account'}
+            </h2>
+
+            {/* Description */}
+            <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.7, margin: '0 0 28px' }}>
+              {t('delete_account_confirm') ||
+                'Are you sure you want to delete your account? All your data will be permanently removed. This cannot be undone.'}
+            </p>
+
+            {/* Buttons */}
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleteLoading}
+                style={{
+                  flex: 1,
+                  padding: '12px 20px',
+                  borderRadius: 12,
+                  border: '1.5px solid #ede9fe',
+                  background: '#faf5ff',
+                  color: '#7c3aed',
+                  fontWeight: 600,
+                  fontSize: 14,
+                  cursor: 'pointer',
+                }}
+              >
+                {t('cancel') || 'Cancel'}
+              </button>
+              <button
+                onClick={async () => {
+                  setDeleteLoading(true);
+                  try {
+                    await API.delete('/user/profile');
+                    logout();
+                    window.location.href = '/';
+                  } catch {
+                    setDeleteLoading(false);
+                    setShowDeleteModal(false);
+                    toast.error(t('delete_account_failed') || 'Failed to delete account. Please try again.');
+                  }
+                }}
+                disabled={deleteLoading}
+                style={{
+                  flex: 1,
+                  padding: '12px 20px',
+                  borderRadius: 12,
+                  border: 'none',
+                  background: deleteLoading ? '#fca5a5' : '#dc2626',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  cursor: deleteLoading ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                }}
+              >
+                {deleteLoading
+                  ? <><span className="prof-spinner-sm" style={{ borderColor: '#fff', borderTopColor: 'transparent' }} /> {t('deleting') || 'Deleting…'}</>
+                  : t('delete_account') || 'Delete Account'
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
