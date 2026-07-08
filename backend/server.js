@@ -5112,7 +5112,7 @@ ${bookList}`,
   // Logged-in users only — guests use localStorage on the frontend.
   app.get('/api/users/me/recently-viewed', authMiddleware, async (req, res) => {
     try {
-      const limit = Math.min(Math.max(Number(req.query.limit) || 8, 1), 20);
+      const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 8, 1), 20);
       const [rows] = await db.execute(`
       SELECT b.id, b.title_en, b.title_de, b.author, b.slug, b.image,
              b.price, b.original_price, b.rating, b.review_count,
