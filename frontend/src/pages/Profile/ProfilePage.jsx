@@ -762,6 +762,35 @@ const ProfilePage = () => {
                     </button>
                   </div>
                 )}
+
+                {/* ── Danger zone: Delete account ── */}
+                <div style={{ marginTop: 40, borderTop: '1px solid #fee2e2', paddingTop: 24 }}>
+                  <h3 className="prof-section-sub" style={{ color: '#dc2626' }}>
+                    <AlertCircle size={15} /> {t('delete_account') || 'Delete Account'}
+                  </h3>
+                  <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 16, lineHeight: 1.6 }}>
+                    {t('delete_account_desc') || 'Permanently delete your account and all associated data. This action cannot be undone.'}
+                  </p>
+                  <button
+                    className="prof-btn-danger"
+                    onClick={async () => {
+                      const confirmed = window.confirm(
+                        t('delete_account_confirm') ||
+                        'Are you sure you want to delete your account? This cannot be undone.'
+                      );
+                      if (!confirmed) return;
+                      try {
+                        await API.delete('/user/profile');
+                        logout();
+                        window.location.href = '/';
+                      } catch {
+                        toast.error(t('delete_account_failed') || 'Failed to delete account. Please try again.');
+                      }
+                    }}
+                  >
+                    {t('delete_account') || 'Delete Account'}
+                  </button>
+                </div>
               </div>
             )}
 

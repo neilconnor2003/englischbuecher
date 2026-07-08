@@ -626,5 +626,8 @@
   "always_on": "Immer aktiv",
   "cookie_prefs_updated": "Cookie-Einstellungen aktualisiert",
   "privacy_full_policy": "Lies unsere vollständige",
-  "privacy_policy_link": "Datenschutzerklärung"
+  "privacy_policy_link": "Datenschutzerklärung",
+  "delete_account_desc": "Lösche dein Konto und alle zugehörigen Daten dauerhaft. Diese Aktion kann nicht rückgängig gemacht werden.",
+  "delete_account_confirm": "Bist du sicher, dass du dein Konto löschen möchtest? Alle deine Daten werden dauerhaft entfernt. Dies kann nicht rückgängig gemacht werden.",
+  "delete_account_failed": "Konto konnte nicht gelöscht werden. Bitte versuche es erneut oder kontaktiere den Support."
 }
