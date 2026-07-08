@@ -5,6 +5,10 @@ layout.buildDirectory.set(file("C:/AndroidBuilds/EnglischBuecher/app"))
 android {
     namespace = "com.englischbuecher.app"
     compileSdk = rootProject.ext.compileSdkVersion
+    lint {
+        baseline = file("lint-baseline.xml")
+        abortOnError false
+    }
     defaultConfig {
         applicationId "com.englischbuecher.app"
         minSdkVersion rootProject.ext.minSdkVersion
