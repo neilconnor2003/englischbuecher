@@ -301,7 +301,7 @@ const ProfilePage = () => {
           <div className="prof-avatar-wrap">
             {photoSrc
               ? <img src={photoSrc} alt="" className="prof-avatar" onError={e => e.target.style.display='none'} />
-              : <div className="prof-avatar prof-avatar-initials">{authUser.initials || (authUser.first_name?.[0] || '?')}</div>
+              : <div className="prof-avatar prof-avatar-initials">{authUser?.initials || (authUser?.first_name?.[0]?.toUpperCase() || '?')}</div>
             }
             <button className="prof-avatar-edit" onClick={() => fileRef.current?.click()} title={t('change_photo') || 'Change photo'}>
               <Camera size={14} />
@@ -309,8 +309,8 @@ const ProfilePage = () => {
             <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoUpload} />
           </div>
           <div className="prof-hero-info">
-            <h1 className="prof-name">{authUser.first_name} {authUser.last_name}</h1>
-            <p className="prof-email"><Mail size={14} /> {authUser.email}</p>
+            <h1 className="prof-name">{authUser?.first_name} {authUser?.last_name}</h1>
+            <p className="prof-email"><Mail size={14} /> {authUser?.email}</p>
             <div className="prof-meta">
               <span className="prof-badge"><Globe size={12} /> {authUser.language === 'de' ? 'Deutsch' : 'English'}</span>
               <span className="prof-badge">👤 {t('member_since') || 'Member since'} {memberDate}</span>
