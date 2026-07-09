@@ -7,6 +7,7 @@ import {
   ShoppingOutlined,
   PrinterOutlined,
 } from '@ant-design/icons';
+import { ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import './OrderSuccessPage.css';
@@ -59,6 +60,11 @@ const OrderSuccessPage = () => {
   return (
     <div className="success-page">
       <div className="success-container">
+
+        {/* Back button — important for app navigation */}
+        <button className="success-back-btn" onClick={() => navigate(-1)}>
+          <ArrowLeft size={14} /> {t('back') || 'Back'}
+        </button>
         <Result
           status="success"
           icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
