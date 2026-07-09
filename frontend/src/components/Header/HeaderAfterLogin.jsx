@@ -117,12 +117,14 @@ function HeaderAfterLogin() {
     try { await logout(); } finally { setIsLoggingOut(false); }
   };
 
-  const initials = (user?.displayName || 'U')
-    .split(' ')
+  const initials = (user?.displayName || user?.first_name || 'U')
+    .trim()
+    .split(/\s+/)
+    .filter(s => s.length > 0)
     .map(s => s[0])
     .join('')
     .slice(0, 2)
-    .toUpperCase();
+    .toUpperCase() || '?';
 
   // ✅ Account dropdown items (used by desktop avatar AND mobile 👤)
   const profileMenuItems = [
