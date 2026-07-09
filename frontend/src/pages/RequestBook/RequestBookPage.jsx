@@ -1,16 +1,18 @@
 // frontend/src/pages/RequestBook/RequestBookPage.jsx
 import React, { useContext, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
 import config from '../../config';
 import { toast } from 'react-toastify';
-import { Search, BookOpen, CheckCircle, Loader } from 'lucide-react';
+import { Search, BookOpen, CheckCircle, Loader, ArrowLeft } from 'lucide-react';
 import './request-book.css';
 
 export default function RequestBookPage() {
   const { t, i18n } = useTranslation();
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const isDe = i18n.resolvedLanguage === 'de';
 
   const [submitting, setSubmitting] = useState(false);
@@ -88,6 +90,9 @@ export default function RequestBookPage() {
   return (
     <div className="request-book-page">
       <div className="request-container">
+        <button className="rbook-back-btn" onClick={() => navigate(-1)}>
+          <ArrowLeft size={14} /> {t('back') || 'Back'}
+        </button>
         <div className="request-layout">
 
           {/* ── LEFT: info panel ── */}

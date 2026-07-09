@@ -348,3 +348,20 @@
 @media (max-width: 600px) {
   .rbook-row { grid-template-columns: 1fr; }
 }
+.rbook-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1.5px solid #ede9fe;
+  color: #7c3aed;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: background 0.15s;
+  font-family: 'Inter', sans-serif;
+}
+.rbook-back-btn:hover { background: #faf5ff; }
