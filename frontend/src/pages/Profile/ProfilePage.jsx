@@ -290,6 +290,15 @@ const ProfilePage = () => {
     return <div className="prof-loading"><div className="prof-spinner-lg" /></div>;
   }
 
+  // authUser becomes null once auth resolves to "not logged in", right before
+  // the redirect effect above navigates to /login. Without this guard, React
+  // still renders one frame with authUser === null, and any unguarded
+  // authUser.* access (initials, language, first_name, etc.) throws
+  // "Cannot read properties of null" — this is the source of the Sentry errors.
+  if (authUser === null) {
+    return <div className="prof-loading"><div className="prof-spinner-lg" /></div>;
+  }
+
   // ── render ──
   return (
     <>
