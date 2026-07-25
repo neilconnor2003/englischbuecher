@@ -68,19 +68,22 @@ module.exports = async (user, amount, reason = 'Admin credit', balance = null) =
       bodyHtml,
     });
 
+    const fromAddress = `"${SENDER_NAME}" <${process.env.SMTP_USER}>`;
+
     await transporter.sendMail({
-      from: `"${SENDER_NAME}" <${process.env.SMTP_USER}>`,
+      from: fromAddress,
       to: user.email,
       subject,
       html: htmlBody,
     });
 
-    await logEmail({ to: user.email, subject, html: htmlBody, status: 'sent', type: 'WalletCredit' });
+    await logEmail({ to: user.email, from: fromAddress, subject, html: htmlBody, status: 'sent', type: 'WalletCredit' });
 
   } catch (err) {
     console.error('WALLET EMAIL ERROR:', err);
     await logEmail({
       to: user?.email || null,
+      from: `"${SENDER_NAME}" <${process.env.SMTP_USER}>`,
       subject: subject || 'Wallet email',
       html: htmlBody,
       status: 'failed',

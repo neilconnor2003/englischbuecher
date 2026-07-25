@@ -1,4 +1,3 @@
-
 // backend/utils/emailLogger.js
 
 /*const mysql = require('mysql2/promise');
@@ -49,15 +48,15 @@ function getPool() {
   return pool;
 }
 
-async function logEmail({ to, subject, html, status, error = null, type = null }) {
+async function logEmail({ to, from = null, subject, html, status, error = null, type = null }) {
   try {
     const pool = getPool();
 
     const [result] = await pool.execute(
       `INSERT INTO sent_emails 
-       (to_email, subject, html, status, error, type, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, NOW())`,
-      [to, subject, html, status, error, type]
+       (to_email, from_email, subject, html, status, error, type, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [to, from, subject, html, status, error, type]
     );
 
     console.log('✅ EMAIL LOGGER INSERT RESULT:', result);

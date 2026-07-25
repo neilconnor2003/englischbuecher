@@ -126,6 +126,7 @@ export default function EmailLogsPage() {
                         <thead className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
                             <tr>
                                 <th className="p-4 text-left">To</th>
+                                <th className="p-4 text-left">From</th>
                                 <th className="p-4 text-left">Subject</th>
                                 <th className="p-4 text-left">Type</th>
                                 <th className="p-4 text-left">Status</th>
@@ -137,11 +138,11 @@ export default function EmailLogsPage() {
                         <tbody className="divide-y">
                             {loading ? (
                                 <tr>
-                                    <td colSpan="6" className="text-center p-6">Loading...</td>
+                                    <td colSpan="7" className="text-center p-6">Loading...</td>
                                 </tr>
                             ) : rows.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="text-center p-6 text-gray-500">
+                                    <td colSpan="7" className="text-center p-6 text-gray-500">
                                         No emails found
                                     </td>
                                 </tr>
@@ -149,6 +150,7 @@ export default function EmailLogsPage() {
                                 rows.map(row => (
                                     <tr key={row.id} className="hover:bg-purple-50">
                                         <td className="p-4">{row.to_email}</td>
+                                        <td className="p-4 text-xs text-gray-500">{row.from_email || '—'}</td>
                                         <td className="p-4">{row.subject}</td>
                                         <td className="p-4">{row.type}</td>
 
@@ -203,6 +205,7 @@ export default function EmailLogsPage() {
                         </h2>
 
                         <p><strong>To:</strong> {selected.to_email}</p>
+                        <p><strong>From:</strong> {selected.from_email || '—'}</p>
                         <p><strong>Subject:</strong> {selected.subject}</p>
                         <p><strong>Type:</strong> {selected.type}</p>
                         <p><strong>Status:</strong> {selected.status}</p>

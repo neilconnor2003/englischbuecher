@@ -260,8 +260,10 @@ module.exports = async (order, user, lang = 'de') => {
       bodyHtml,
     });
 
+    const fromAddress = `"${SENDER_NAME}" <${process.env.SMTP_USER}>`;
+
     await transporter.sendMail({
-      from: `"${SENDER_NAME}" <${process.env.SMTP_USER}>`,
+      from: fromAddress,
       to: user.email,
       subject,
       html: htmlBody,
@@ -270,12 +272,13 @@ module.exports = async (order, user, lang = 'de') => {
       ],
     });
 
-    await logEmail({ to: user.email, subject, html: htmlBody, status: 'sent', type: 'Invoice' });
+    await logEmail({ to: user.email, from: fromAddress, subject, html: htmlBody, status: 'sent', type: 'Invoice' });
 
   } catch (err) {
     console.error('INVOICE EMAIL ERROR:', err);
     await logEmail({
       to: user?.email || null,
+      from: `"${SENDER_NAME}" <${process.env.SMTP_USER}>`,
       subject: subject || `Invoice #${order?.id}`,
       html: htmlBody,
       status: 'failed',
