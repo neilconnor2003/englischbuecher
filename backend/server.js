@@ -5801,10 +5801,18 @@ WHERE ci.user_id = ?
 
   // Update the amount of the existing PaymentIntent (subtotal + shipping)
   // POST /api/orders/update-payment-intent-amount
-  // Body: { clientSecret, amount_cents }
+  // Body: { clientSecret, amount_cents, discount_code?, discount_amount?, wallet_used? }
   app.post('/api/orders/update-payment-intent-amount', async (req, res) => {
     try {
-      const { clientSecret, amount_cents, shipping_provider, shipping_service } = req.body || {};
+      const {
+        clientSecret,
+        amount_cents,
+        shipping_provider,
+        shipping_service,
+        discount_code,
+        discount_amount,
+        wallet_used,
+      } = req.body || {};
       if (!clientSecret || !Number.isFinite(Number(amount_cents)) || amount_cents <= 0) {
         return res.status(400).json({ error: 'bad_request' });
       }
@@ -5814,9 +5822,17 @@ WHERE ci.user_id = ?
       const updatePayload = {
         amount: Number(amount_cents),
         // ✅ set only the keys you care about (Stripe supports updating metadata) [1](https://boehringer.sharepoint.com/sites/z365apollocontrolcenter/SitePages/Notebook---Topic-Classification-with-Large-Language-Models-(LLMs).aspx?web=1)
+        // Stripe metadata values must be strings — discount_code/discount_amount/
+        // wallet_used are read back out in finalize-from-payment-intent for
+        // redirect-based payment methods (PayPal, Klarna, giropay, etc.), which
+        // never hit the direct /api/orders route where these were previously
+        // only sent.
         metadata: {
           ...(shipping_provider ? { shipping_provider: String(shipping_provider) } : {}),
           ...(shipping_service ? { shipping_service: String(shipping_service) } : {}),
+          ...(discount_code ? { discount_code: String(discount_code) } : {}),
+          ...(Number(discount_amount) > 0 ? { discount_amount: String(Number(discount_amount)) } : {}),
+          ...(Number(wallet_used) > 0 ? { wallet_used: String(Number(wallet_used)) } : {}),
         },
       };
 

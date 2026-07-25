@@ -795,6 +795,15 @@ module.exports = (db, transporter) => {
       const shipping_service =
         pi.metadata?.shipping_service || null;
 
+      // Previously this data only ever flowed through the direct card-payment
+      // route — redirect-based methods (PayPal, Klarna, giropay, etc.) land
+      // here instead and had no way to know a coupon or wallet credit was
+      // used at all, so orders paid this way silently lost both. Now that
+      // update-payment-intent-amount writes them into the PI's metadata
+      // before any redirect happens, we can read them back out here.
+      const couponCode = pi.metadata?.discount_code || null;
+      const couponDiscount = Number(pi.metadata?.discount_amount || 0);
+      const walletUsed = Number(pi.metadata?.wallet_used || 0);
 
       if (!pi || pi.status !== 'succeeded') {
         return res.status(400).json({ error: 'Payment not succeeded' });
@@ -820,9 +829,13 @@ module.exports = (db, transporter) => {
         return res.status(400).json({ error: 'No cart metadata on PaymentIntent' });
       }
 
-      // 4) Build order items from DB and compute total
+      // 4) Build order items from DB and validate stock.
+      // itemsSubtotal is the sum of book prices only — it does NOT include
+      // shipping, and is NOT what the customer was actually charged. The
+      // real charged amount is pi.amount (Stripe/PayPal's own record), which
+      // is what we use as the order total below.
       const orderItems = [];
-      let totalPrice = 0;
+      let itemsSubtotal = 0;
 
       for (const it of items) {
         const bookId = Number(it.id);
@@ -838,7 +851,7 @@ module.exports = (db, transporter) => {
         if (!book) return res.status(404).json({ error: `Book ${bookId} not found` });
         if (book.stock < qty) return res.status(409).json({ error: `Only ${book.stock} left for book ${bookId}` });
 
-        totalPrice += Number(book.price) * qty;
+        itemsSubtotal += Number(book.price) * qty;
         orderItems.push({
           bookId: book.id,
           title_en: book.title_en,
@@ -847,6 +860,14 @@ module.exports = (db, transporter) => {
           quantity: qty,
         });
       }
+
+      // The order total is the actual amount charged via Stripe/PayPal —
+      // this already correctly reflects shipping, coupon, and wallet
+      // reduction, since it's what the PaymentIntent amount was updated to
+      // right before payment. Previously this route used itemsSubtotal
+      // (book prices only) as the order total, which silently dropped
+      // shipping cost from every redirect-paid order's recorded total.
+      const totalPrice = Number((pi.amount / 100).toFixed(2));
 
       // 5) Build a paymentResult payload for persistence
       const paymentResult = {
@@ -892,7 +913,7 @@ module.exports = (db, transporter) => {
             JSON.stringify(shippingAddress || {}),
             (pi.payment_method_types && pi.payment_method_types[0]) || 'paypal',
             JSON.stringify(paymentResult),
-            Number(totalPrice.toFixed(2)),
+            totalPrice,
             1,
             new Date(),
             'processing',
@@ -901,14 +922,43 @@ module.exports = (db, transporter) => {
             shipping_provider,
             shipping_service,
 
-            null, // coupon not available via webhook path
-            0,
-            0,
+            couponCode,
+            couponDiscount,
+            walletUsed,
           ]
         );
 
 
         const orderId = insert.insertId;
+
+        // Debit the wallet — this was missing entirely on this path before.
+        // The customer's PayPal/redirect charge was already reduced by
+        // walletUsed (that's baked into pi.amount), but nothing was ever
+        // deducting it from their wallet balance server-side, so they kept
+        // the full balance despite having visibly "spent" it at checkout.
+        if (userId && walletUsed > 0) {
+          await conn.execute(`SELECT id FROM users WHERE id = ? FOR UPDATE`, [userId]);
+
+          const [[balRow]] = await conn.query(`
+            SELECT
+            COALESCE(SUM(CASE WHEN type='CREDIT' THEN amount ELSE 0 END), 0) -
+            COALESCE(SUM(CASE WHEN type='DEBIT'  THEN amount ELSE 0 END), 0)
+            AS balance
+            FROM wallet_transactions
+            WHERE user_id = ?
+          `, [userId]);
+
+          const currentBalance = Number(balRow?.balance || 0);
+
+          if (walletUsed > currentBalance + 1e-9) {
+            throw new Error(`Insufficient wallet balance (have €${currentBalance.toFixed(2)})`);
+          }
+
+          await conn.execute(`
+            INSERT INTO wallet_transactions (user_id, amount, type, reason)
+            VALUES (?, ?, 'DEBIT', ?)
+          `, [userId, walletUsed, 'Used in order #' + orderId]);
+        }
 
         // Adjust inventory
         for (const it of orderItems) {
@@ -952,17 +1002,22 @@ module.exports = (db, transporter) => {
           shipping_address: shippingAddress || {},
           payment_method: (pi.payment_method_types && pi.payment_method_types[0]) || 'paypal',
           payment_result: paymentResult,
-          total: Number(totalPrice.toFixed(2)),
+          total: totalPrice,
           is_paid: 1,
           paid_at: new Date(),
           created_at: new Date(),
           status: 'processing',
+          // Note: shipping_amount_eur isn't separately reconstructable from
+          // PI metadata the way coupon/wallet now are, so this stays 0 for
+          // now — the invoice's grand total is still correct (it comes from
+          // the real charged amount), it just won't show a separate
+          // shipping line for these orders. Flagging as a follow-up.
           shipping_amount_eur: 0,
           shipping_provider: shipping_provider || null,
           shipping_service: shipping_service || null,
-          coupon_code: null,
-          coupon_discount: 0,
-          wallet_used: 0,
+          coupon_code: couponCode,
+          coupon_discount: couponDiscount,
+          wallet_used: walletUsed,
         };
 
         let finalizeUser = null;
