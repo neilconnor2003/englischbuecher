@@ -28,3 +28,6 @@ frontend/build
 tree.txt
 Logo/
 
+# Visual Studio local workspace cache
+.vs/
+.git-broken/
