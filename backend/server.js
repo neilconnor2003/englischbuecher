@@ -838,7 +838,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
       const [rows] = await db.query(
         `
-      SELECT id, to_email, subject, status, error, type, created_at
+      SELECT id, to_email, from_email, subject, status, error, type, created_at
       FROM sent_emails
       ${whereSql}
       ORDER BY created_at DESC
@@ -878,7 +878,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
       const [rows] = await db.query(
         `
-      SELECT id, to_email, subject, html, status, error, type, created_at
+      SELECT id, to_email, from_email, subject, html, status, error, type, created_at
       FROM sent_emails
       WHERE id = ?
       LIMIT 1
@@ -2254,8 +2254,10 @@ const computeWorkId = (titleEn, titleDe, author) => {
           </div>
         `;
 
+        const fromAddress = `"EnglischBücher" <${process.env.SMTP_USER}>`;
+
         await transporter.sendMail({
-          from: `"EnglischBücher" <${process.env.SMTP_USER}>`,
+          from: fromAddress,
           to: email,
           subject,
           html,
@@ -2264,17 +2266,17 @@ const computeWorkId = (titleEn, titleDe, author) => {
         // Log to sent_emails so admins can see this in the existing
         // email logs view, same pattern as review-request emails.
         await db.query(`
-          INSERT INTO sent_emails (to_email, subject, html, status, type, created_at)
-          VALUES (?, ?, ?, 'sent', 'Newsletter', NOW())
-        `, [email, subject, html]).catch(() => { });
+          INSERT INTO sent_emails (to_email, from_email, subject, html, status, type, created_at)
+          VALUES (?, ?, ?, ?, 'sent', 'Newsletter', NOW())
+        `, [email, fromAddress, subject, html]).catch(() => { });
       } catch (mailErr) {
         console.error('Newsletter welcome email failed:', mailErr.message);
 
         // Log the failure too, so admins can see bounces/errors, not just successes
         await db.query(`
-          INSERT INTO sent_emails (to_email, subject, html, status, error, type, created_at)
-          VALUES (?, ?, ?, 'failed', ?, 'Newsletter', NOW())
-        `, [email, subject, html, mailErr.message]).catch(() => { });
+          INSERT INTO sent_emails (to_email, from_email, subject, html, status, error, type, created_at)
+          VALUES (?, ?, ?, ?, 'failed', ?, 'Newsletter', NOW())
+        `, [email, `"EnglischBücher" <${process.env.SMTP_USER}>`, subject, html, mailErr.message]).catch(() => { });
       }
 
       res.json({ success: true });
@@ -2792,9 +2794,11 @@ ${bookList}`,
           </div>
         `;
 
+        const fromAddress = `"EnglischBücher" <${process.env.SMTP_USER}>`;
+
         try {
           await transporter.sendMail({
-            from: `"EnglischBücher" <${process.env.SMTP_USER}>`,
+            from: fromAddress,
             to: row.email,
             subject,
             html,
@@ -2822,9 +2826,9 @@ ${bookList}`,
 
           // Log to your existing sent_emails table for visibility in admin
           await db.query(`
-            INSERT INTO sent_emails (to_email, subject, html, status, type, created_at)
-            VALUES (?, ?, ?, 'sent', 'ReviewRequest', NOW())
-          `, [row.email, subject, html]).catch(() => { });
+            INSERT INTO sent_emails (to_email, from_email, subject, html, status, type, created_at)
+            VALUES (?, ?, ?, ?, 'sent', 'ReviewRequest', NOW())
+          `, [row.email, fromAddress, subject, html]).catch(() => { });
 
           console.log(`[ReviewRequests] Sent email ${sentCount}/4 to ${row.email} for book ${row.book_id}`);
         } catch (sendErr) {
@@ -5083,18 +5087,19 @@ ${bookList}`,
         </div>
       `;
 
+        const fromAddress = `"EnglischBücher" <${process.env.SMTP_USER}>`;
         try {
-          await transporter.sendMail({ from: `"EnglischBücher" <${process.env.SMTP_USER}>`, to: sub.email, subject, html });
+          await transporter.sendMail({ from: fromAddress, to: sub.email, subject, html });
           await db.execute(`
-          INSERT INTO sent_emails (to_email, subject, html, status, type, created_at)
-          VALUES (?, ?, ?, 'sent', 'RestockNotification', NOW())
-        `, [sub.email, subject, html]).catch(() => { });
+          INSERT INTO sent_emails (to_email, from_email, subject, html, status, type, created_at)
+          VALUES (?, ?, ?, ?, 'sent', 'RestockNotification', NOW())
+        `, [sub.email, fromAddress, subject, html]).catch(() => { });
         } catch (mailErr) {
           console.error(`Restock email failed for ${sub.email}:`, mailErr.message);
           await db.execute(`
-          INSERT INTO sent_emails (to_email, subject, html, status, error, type, created_at)
-          VALUES (?, ?, ?, 'failed', ?, 'RestockNotification', NOW())
-        `, [sub.email, subject, html, mailErr.message]).catch(() => { });
+          INSERT INTO sent_emails (to_email, from_email, subject, html, status, error, type, created_at)
+          VALUES (?, ?, ?, ?, 'failed', ?, 'RestockNotification', NOW())
+        `, [sub.email, fromAddress, subject, html, mailErr.message]).catch(() => { });
         }
 
         // Mark notified regardless of email success, so we don't retry-spam
@@ -6799,9 +6804,10 @@ WHERE ci.user_id = ?
           <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
             <a href="${unsubUrl}" style="color:#9ca3af;">${isDe?'Abbestellen':'Unsubscribe'}</a></p>`;
         const html = buildEmail({ lang: sub.language, title: subject, headerTitle: subject, headerEmoji: '📚', bodyHtml });
+        const fromAddress = `"${SENDER_NAME}" <${process.env.SMTP_USER}>`;
         try {
-          await transporter.sendMail({ from: `"${SENDER_NAME}" <${process.env.SMTP_USER}>`, to: sub.email, subject, html });
-          await db.query(`INSERT INTO sent_emails (to_email,subject,html,status,type,created_at) VALUES (?,?,?,'sent','Newsletter',NOW())`, [sub.email, subject, html]).catch(()=>{});
+          await transporter.sendMail({ from: fromAddress, to: sub.email, subject, html });
+          await db.query(`INSERT INTO sent_emails (to_email,from_email,subject,html,status,type,created_at) VALUES (?,?,?,?,'sent','Newsletter',NOW())`, [sub.email, fromAddress, subject, html]).catch(()=>{});
           sent++;
         } catch (mailErr) { console.error(`Campaign fail ${sub.email}:`, mailErr.message); failed++; }
         await new Promise(r => setTimeout(r, 100));

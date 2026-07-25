@@ -88,6 +88,7 @@ module.exports = function (db, transporter) {  // ← ACCEPT transporter
 
         await logEmail({
           to: email,
+          from: `"EnglischBücher" <${process.env.SMTP_USER}>`,
           subject: mailMeta.subject,
           html: mailMeta.html,
           status: 'sent',
@@ -99,6 +100,7 @@ module.exports = function (db, transporter) {  // ← ACCEPT transporter
 
         await logEmail({
           to: email,
+          from: `"EnglischBücher" <${process.env.SMTP_USER}>`,
           subject: emailErr.emailMeta?.subject || (
             language === 'de'
               ? 'Fast geschafft – bestätige deine E-Mail'
@@ -245,6 +247,7 @@ module.exports = function (db, transporter) {  // ← ACCEPT transporter
 
         await logEmail({
           to: email,
+          from: `"EnglischBücher" <${process.env.SMTP_USER}>`,
           subject: mailMeta.subject,
           html: mailMeta.html,
           status: 'sent',
@@ -256,6 +259,7 @@ module.exports = function (db, transporter) {  // ← ACCEPT transporter
 
         await logEmail({
           to: email,
+          from: `"EnglischBücher" <${process.env.SMTP_USER}>`,
           subject: emailErr.emailMeta?.subject || (
             (user.language || 'de') === 'de'
               ? 'Passwort zurücksetzen'
@@ -344,6 +348,7 @@ module.exports = function (db, transporter) {  // ← ACCEPT transporter
 
         await logEmail({
           to: email,
+          from: `"EnglischBücher" <${process.env.SMTP_USER}>`,
           subject: 'Fast geschafft – bestätige deine E-Mail',
           //html: null,
           html: mailMeta.html,
@@ -356,6 +361,7 @@ module.exports = function (db, transporter) {  // ← ACCEPT transporter
 
         await logEmail({
           to: email,
+          from: `"EnglischBücher" <${process.env.SMTP_USER}>`,
           subject: 'Fast geschafft – bestätige deine E-Mail',
           //html: null,
           html: emailErr.emailMeta?.html || null,

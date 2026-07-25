@@ -22,6 +22,7 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  Tag,
 } from "lucide-react";
 import {
   useGetOrdersQuery,
@@ -372,6 +373,17 @@ const OrdersDashboard = () => {
                       <p className="flex items-center gap-1 font-bold text-green-600">
                         <DollarSign className="w-4 h-4" /> {order.total.toFixed(2)}
                       </p>
+                      {order.coupon_code && (
+                        <p className="flex items-center gap-1">
+                          <Tag className="w-3 h-3 text-purple-500" />
+                          <span className="px-2 py-0.5 text-xs font-bold bg-purple-100 text-purple-700 rounded-full">
+                            {order.coupon_code}
+                          </span>
+                          {Number(order.coupon_discount) > 0 && (
+                            <span className="text-xs text-green-600">-€{Number(order.coupon_discount).toFixed(2)}</span>
+                          )}
+                        </p>
+                      )}
                       <p className="flex items-center gap-1 text-gray-600">
                         <Calendar className="w-4 h-4" /> {format(new Date(order.created_at), 'MMM d, yyyy')}
                       </p>
@@ -464,7 +476,16 @@ const OrdersDashboard = () => {
                           <p className="text-xs text-gray-500">{order.user?.email || 'N/A'}</p>
                         </div>
                       </td>
-                      <td className="p-4 font-bold text-green-600">${order.total.toFixed(2)}</td>
+                      <td className="p-4 font-bold text-green-600">
+                        €{order.total.toFixed(2)}
+                        {order.coupon_code && (
+                          <div className="mt-1">
+                            <span className="px-2 py-0.5 text-xs font-bold bg-purple-100 text-purple-700 rounded-full">
+                              {order.coupon_code}
+                            </span>
+                          </div>
+                        )}
+                      </td>
                       <td className="p-4">
                         <span className={`px-3 py-1 text-xs rounded-full font-bold flex items-center gap-1 w-fit ${statusConfig[order.status]?.color}`}>
                           <StatusIcon className="w-3 h-3" />
