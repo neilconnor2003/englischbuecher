@@ -19,3 +19,6 @@ npm-debug.log*
 
 # Database credentials (if any)
 *.sql
+
+# Visual Studio local workspace cache
+.vs/
