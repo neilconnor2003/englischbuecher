@@ -787,7 +787,21 @@ module.exports = (db, transporter) => {
 
     try {
       // 1) Get the PI from Stripe
-      const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+      const pi = await stripe.paymentIntents.retrieve(paymentIntentId, {
+        expand: ['payment_method'],
+      });
+
+      // pi.payment_method_types is the list of METHODS ALLOWED on this intent
+      // (card, paypal, klarna, etc. — whatever automatic_payment_methods
+      // enabled), not the one actually used — Stripe returns it with 'card'
+      // listed first almost always, which is why every order through this
+      // route was showing "card" even when the customer paid with PayPal.
+      // pi.payment_method (expanded above) is the PaymentMethod object that
+      // was actually charged, and its .type is the real answer.
+      const actualPaymentMethod =
+        pi.payment_method?.type ||
+        (pi.payment_method_types && pi.payment_method_types[0]) ||
+        'unknown';
 
       const shipping_provider =
         pi.metadata?.shipping_provider || null;
@@ -911,7 +925,7 @@ module.exports = (db, transporter) => {
             userId,
             JSON.stringify(orderItems),
             JSON.stringify(shippingAddress || {}),
-            (pi.payment_method_types && pi.payment_method_types[0]) || 'paypal',
+            actualPaymentMethod,
             JSON.stringify(paymentResult),
             totalPrice,
             1,
@@ -1000,7 +1014,7 @@ module.exports = (db, transporter) => {
           user_id: userId,
           order_items: orderItems,
           shipping_address: shippingAddress || {},
-          payment_method: (pi.payment_method_types && pi.payment_method_types[0]) || 'paypal',
+          payment_method: actualPaymentMethod,
           payment_result: paymentResult,
           total: totalPrice,
           is_paid: 1,

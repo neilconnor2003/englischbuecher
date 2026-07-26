@@ -358,7 +358,10 @@ const CheckoutPage = ({ clientSecret }) => {
       const discount_code = appliedDiscount?.code || null;
       const discount_amount = appliedDiscount
         ? (appliedDiscount.type === 'FREE_SHIPPING'
-            ? Number(effectiveShipping.toFixed(2))
+            // effectiveShipping is always 0 once this coupon type is applied
+            // (that's what makes shipping free) — the actual amount saved is
+            // the shipping cost it waived, i.e. the pre-discount shippingAmount.
+            ? Number((shippingAmount || 0).toFixed(2))
             : appliedDiscount.type === 'PERCENTAGE'
               ? Number((subtotal * (appliedDiscount.value / 100)).toFixed(2))
               : Number((appliedDiscount.value || 0).toFixed(2)))
@@ -501,7 +504,10 @@ const CheckoutPage = ({ clientSecret }) => {
         discount_type: appliedDiscount?.type || null,
         discount_amount: appliedDiscount
           ? (appliedDiscount.type === 'FREE_SHIPPING'
-              ? Number(effectiveShipping.toFixed(2))
+              // Same fix as above: effectiveShipping is always 0 once this
+              // coupon is applied — the real "amount saved" is the
+              // pre-discount shipping cost it waived.
+              ? Number((shippingAmount || 0).toFixed(2))
               : appliedDiscount.type === 'PERCENTAGE'
                 ? Number((subtotal * (appliedDiscount.value / 100)).toFixed(2))
                 : Number((appliedDiscount.value || 0).toFixed(2)))
