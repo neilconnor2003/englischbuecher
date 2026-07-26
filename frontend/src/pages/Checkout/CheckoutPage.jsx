@@ -350,10 +350,35 @@ const CheckoutPage = ({ clientSecret }) => {
       const shipping_provider = 'DPD';
       const shipping_service  = 'Standard';
 
+      // Same computation used for the direct-payment order body below —
+      // duplicated here because redirect-based methods (PayPal, Klarna,
+      // giropay, etc.) never reach that code path at all: the browser
+      // navigates away before it runs. Without this, the coupon and wallet
+      // usage were silently lost for any order paid via redirect.
+      const discount_code = appliedDiscount?.code || null;
+      const discount_amount = appliedDiscount
+        ? (appliedDiscount.type === 'FREE_SHIPPING'
+            // effectiveShipping is always 0 once this coupon type is applied
+            // (that's what makes shipping free) — the actual amount saved is
+            // the shipping cost it waived, i.e. the pre-discount shippingAmount.
+            ? Number((shippingAmount || 0).toFixed(2))
+            : appliedDiscount.type === 'PERCENTAGE'
+              ? Number((subtotal * (appliedDiscount.value / 100)).toFixed(2))
+              : Number((appliedDiscount.value || 0).toFixed(2)))
+        : 0;
+
       try {
         await axios.post(
           `${API_BASE}/orders/update-payment-intent-amount`,
-          { clientSecret, amount_cents, shipping_provider, shipping_service },
+          {
+            clientSecret,
+            amount_cents,
+            shipping_provider,
+            shipping_service,
+            discount_code,
+            discount_amount,
+            wallet_used: walletUsed,
+          },
           { withCredentials: true }
         );
       } catch (e) {
@@ -479,7 +504,10 @@ const CheckoutPage = ({ clientSecret }) => {
         discount_type: appliedDiscount?.type || null,
         discount_amount: appliedDiscount
           ? (appliedDiscount.type === 'FREE_SHIPPING'
-              ? Number(effectiveShipping.toFixed(2))
+              // Same fix as above: effectiveShipping is always 0 once this
+              // coupon is applied — the real "amount saved" is the
+              // pre-discount shipping cost it waived.
+              ? Number((shippingAmount || 0).toFixed(2))
               : appliedDiscount.type === 'PERCENTAGE'
                 ? Number((subtotal * (appliedDiscount.value / 100)).toFixed(2))
                 : Number((appliedDiscount.value || 0).toFixed(2)))
