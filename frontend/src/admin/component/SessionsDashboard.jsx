@@ -19,11 +19,13 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
+import BrandModal from '../../components/common/BrandModal';
 
 const SessionsDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const [viewMode, setViewMode] = useState('table'); // 'card' or 'table'
+  const [confirmDialog, setConfirmDialog] = useState(null); // { message, onConfirm } | null
   const limit = 10;
 
   // === ALL HOOKS AT TOP — NO CONDITIONS ===
@@ -86,13 +88,17 @@ const SessionsDashboard = () => {
 
   // === CALLBACKS (MEMOIZED) ===
   const handleDelete = useCallback(async (sessionId) => {
-    if (window.confirm('Delete this session? User will be logged out.')) {
-      try {
-        await deleteSession(sessionId).unwrap();
-      } catch (err) {
-        alert('Failed to delete session');
-      }
-    }
+    setConfirmDialog({
+      message: 'Delete this session? User will be logged out.',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await deleteSession(sessionId).unwrap();
+        } catch (err) {
+          alert('Failed to delete session');
+        }
+      },
+    });
   }, [deleteSession]);
 
   const handlePageChange = useCallback((newPage) => {
@@ -315,6 +321,17 @@ const SessionsDashboard = () => {
           </button>
         </div>
       )}
+
+      <BrandModal
+        open={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        icon={AlertCircle}
+        accent="danger"
+        title="Are you sure?"
+        message={confirmDialog?.message}
+        primaryLabel="Delete"
+        onPrimary={confirmDialog?.onConfirm}
+      />
     </div>
   );
 };

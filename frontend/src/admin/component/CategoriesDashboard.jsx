@@ -6,7 +6,8 @@ import {
   useUpdateCategoryMutation,
   useDeleteCategoryMutation
 } from '../features/book/bookApiSlice';
-import { Upload, Image, Trash2, Edit, Download, Plus, Eye, EyeOff, GripVertical, ChevronDown, ChevronRight } from 'lucide-react';
+import { Upload, Image, Trash2, Edit, Download, Plus, Eye, EyeOff, GripVertical, ChevronDown, ChevronRight, AlertCircle } from 'lucide-react';
+import BrandModal from '../../components/common/BrandModal';
 import config from '@config';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -136,6 +137,7 @@ const CategoriesDashboard = () => {
   const [expanded, setExpanded] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null); // { message, onConfirm } | null
   const [flatWithLevel, setFlatWithLevel] = useState([]);
 
   const [formData, setFormData] = useState({
@@ -241,10 +243,14 @@ const CategoriesDashboard = () => {
   };
 
   const handleDelete = async (cat) => {
-    if (window.confirm(`Delete "${cat.name_en}" and all subcategories?`)) {
-      await deleteCategory(cat.id).unwrap();
-      refetch();
-    }
+    setConfirmDialog({
+      message: `Delete "${cat.name_en}" and all subcategories?`,
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        await deleteCategory(cat.id).unwrap();
+        refetch();
+      },
+    });
   };
 
   const handleExportCSV = () => {
@@ -393,6 +399,17 @@ const CategoriesDashboard = () => {
           </div>
         </div>
       )}
+
+      <BrandModal
+        open={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        icon={AlertCircle}
+        accent="danger"
+        title="Are you sure?"
+        message={confirmDialog?.message}
+        primaryLabel="Delete"
+        onPrimary={confirmDialog?.onConfirm}
+      />
     </div>
   );
 };

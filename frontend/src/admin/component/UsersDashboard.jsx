@@ -26,9 +26,11 @@ import {
   UserCheck,
   UserX,
   Clock,
+  AlertCircle,
 } from 'lucide-react';
 import { ACTIVE_SENTINEL } from '@/constants.js';
 import { format } from 'date-fns';
+import BrandModal from '../../components/common/BrandModal';
 
 const roleConfig = {
   admin: { color: 'bg-purple-100 text-purple-800', icon: UserCheck },
@@ -40,6 +42,7 @@ const UsersDashboard = () => {
   const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null); // { message, onConfirm } | null
   const [selectedUserForAudit, setSelectedUserForAudit] = useState(null);
   const [viewMode, setViewMode] = useState('table'); // 'card' or 'table'
   const limit = 10;
@@ -94,20 +97,28 @@ const UsersDashboard = () => {
   };
 
   const handleDelete = async (userId) => {
-    if (window.confirm('Delete this user?')) {
-      await deleteUser(userId);
-    }
+    setConfirmDialog({
+      message: 'Delete this user?',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        await deleteUser(userId);
+      },
+    });
   };
 
   const handleReactivate = async (userId) => {
-    if (window.confirm('Reactivate this user?')) {
-      try {
-        await reactivateUser(userId).unwrap();
-        alert('User reactivated successfully');
-      } catch (err) {
-        alert('Failed to reactivate: ' + (err?.data?.error || 'Server error'));
-      }
-    }
+    setConfirmDialog({
+      message: 'Reactivate this user?',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await reactivateUser(userId).unwrap();
+          alert('User reactivated successfully');
+        } catch (err) {
+          alert('Failed to reactivate: ' + (err?.data?.error || 'Server error'));
+        }
+      },
+    });
   };
 
   const handleSave = async (userData) => {
@@ -497,6 +508,17 @@ const UsersDashboard = () => {
           </div>
         </div>
       )}
+
+      <BrandModal
+        open={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        icon={AlertCircle}
+        accent="danger"
+        title="Are you sure?"
+        message={confirmDialog?.message}
+        primaryLabel="Confirm"
+        onPrimary={confirmDialog?.onConfirm}
+      />
     </div>
   );
 };

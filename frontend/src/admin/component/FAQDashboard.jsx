@@ -1,5 +1,7 @@
 // frontend/src/admin/components/FAQDashboard.jsx
 import React, { useState, useEffect } from 'react';
+import { AlertCircle } from 'lucide-react';
+import BrandModal from '../../components/common/BrandModal';
 import {
   useGetAdminFaqsQuery,
   useAddFaqMutation,
@@ -16,6 +18,7 @@ const FAQDashboard = () => {
   // Local state for instant UI + debounced save
   const [localFaqs, setLocalFaqs] = useState([]);
   const [savingId, setSavingId] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null); // { message, onConfirm } | null
 
   useEffect(() => {
     setLocalFaqs(faqs);
@@ -73,9 +76,14 @@ const FAQDashboard = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Diese FAQ wirklich löschen?')) return;
-    await deleteFaq(id);
-    refetch();
+    setConfirmDialog({
+      message: 'Diese FAQ wirklich löschen?',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        await deleteFaq(id);
+        refetch();
+      },
+    });
   };
 
   if (isLoading) return <div className="p-20 text-center">Lade...</div>;
@@ -163,6 +171,18 @@ const FAQDashboard = () => {
           ))}
         </div>
       )}
+
+      <BrandModal
+        open={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        icon={AlertCircle}
+        accent="danger"
+        title="Sind Sie sicher?"
+        message={confirmDialog?.message}
+        primaryLabel="Löschen"
+        secondaryLabel="Abbrechen"
+        onPrimary={confirmDialog?.onConfirm}
+      />
     </div>
   );
 };

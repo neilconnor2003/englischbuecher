@@ -1,10 +1,12 @@
 
 import React, { useEffect, useState } from 'react';
-import { Button, Form, Input, Modal, Spin, Tooltip, message } from 'antd';
+import { Button, Spin, Tooltip, message } from 'antd';
 import { EnvironmentOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { MapPin } from 'lucide-react';
 import axios from 'axios';
 import config from '../../config';
 import { setDeliveryContext } from '../../utils/deliveryContext';
+import BrandModal, { brandInputStyle, brandLabelStyle } from '../common/BrandModal';
 
 /**
  * Props:
@@ -16,6 +18,12 @@ export default function ShippoEstimator({ items = [], t, i18n }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [quote, setQuote] = useState(null);
+
+  // Local form fields for the "change delivery location" modal — replaces
+  // antd's Form.useForm(), which the previous version relied on.
+  const [formPostal, setFormPostal] = useState('');
+  const [formCity, setFormCity] = useState('');
+  const [formError, setFormError] = useState('');
 
   // restore
   useEffect(() => {
@@ -87,7 +95,16 @@ export default function ShippoEstimator({ items = [], t, i18n }) {
           {t?.('deliver_to') || 'Deliver to'}{' '}
           <strong>{dest.postal ? `${dest.postal} (DE)` : 'DE'}</strong>
         </span>
-        <Button type="link" size="small" onClick={() => setOpen(true)}>
+        <Button
+          type="link"
+          size="small"
+          onClick={() => {
+            setFormPostal(dest.postal || '');
+            setFormCity(dest.city || '');
+            setFormError('');
+            setOpen(true);
+          }}
+        >
           {t?.('change') || 'Change'}
         </Button>
       </div>
@@ -139,64 +156,55 @@ export default function ShippoEstimator({ items = [], t, i18n }) {
         </div>
       )}
 
-      <Modal
+      <BrandModal
         open={open}
-        onCancel={() => setOpen(false)}
-        footer={null}
+        onClose={() => setOpen(false)}
+        icon={MapPin}
+        accent="default"
         title={t?.('delivery_location') || 'Delivery location'}
+        primaryLabel={t?.('save') || 'Save'}
+        onPrimary={() => {
+          const postal = formPostal.trim();
+          if (!postal) {
+            setFormError(t?.('required') || 'Required');
+            return;
+          }
+          const next = { country: 'DE', postal, city: formCity.trim() };
+
+          setDest(next);
+          try { localStorage.setItem('ship_dest', JSON.stringify(next)); } catch { }
+
+          // also sync the shared context used by Cart/Checkout
+          setDeliveryContext({
+            shippingMode: 'delivery',
+            postalCode: next.postal,
+            city: next.city,
+          });
+
+          setOpen(false);
+        }}
       >
-        <Form
-          layout="vertical"
-          initialValues={{ postal: dest.postal || '', city: dest.city || '' }}
-          /*onFinish={(vals) => {
-            const next = {
-              country: 'DE',
-              postal: (vals.postal || '').trim(),
-              city: (vals.city || '').trim()
-            };
-            setDest(next);
-            try { localStorage.setItem('ship_dest', JSON.stringify(next)); } catch { }
-            setOpen(false);
-          }}*/
-
-          onFinish={(vals) => {
-            const next = {
-              country: 'DE',
-              postal: (vals.postal || '').trim(),
-              city: (vals.city || '').trim()
-            };
-
-            setDest(next);
-
-            // keep old behavior
-            try { localStorage.setItem('ship_dest', JSON.stringify(next)); } catch { }
-
-            // NEW: also sync the shared context used by Cart/Checkout
-            setDeliveryContext({
-              shippingMode: 'delivery',
-              postalCode: next.postal,
-              city: next.city
-            });
-
-            setOpen(false);
-          }}
-
-        >
-          <Form.Item
-            label={t?.('postal_code') || 'Postal code'}
-            name="postal"
-            rules={[{ required: true, message: t?.('required') || 'Required' }]}
-          >
-            <Input autoFocus />
-          </Form.Item>
-          <Form.Item label={t?.('city') || 'City'} name="city">
-            <Input />
-          </Form.Item>
-          <Button type="primary" htmlType="submit" block>
-            {t?.('save') || 'Save'}
-          </Button>
-        </Form>
-      </Modal>
+        <div style={{ marginBottom: 16 }}>
+          <label style={brandLabelStyle}>{t?.('postal_code') || 'Postal code'}</label>
+          <input
+            autoFocus
+            style={brandInputStyle}
+            value={formPostal}
+            onChange={(e) => { setFormPostal(e.target.value); if (formError) setFormError(''); }}
+          />
+          {formError && (
+            <div style={{ color: '#dc2626', fontSize: 13, marginTop: 6 }}>{formError}</div>
+          )}
+        </div>
+        <div>
+          <label style={brandLabelStyle}>{t?.('city') || 'City'}</label>
+          <input
+            style={brandInputStyle}
+            value={formCity}
+            onChange={(e) => setFormCity(e.target.value)}
+          />
+        </div>
+      </BrandModal>
     </div>
   );
 }

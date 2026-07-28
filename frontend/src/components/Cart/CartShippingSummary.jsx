@@ -1,11 +1,13 @@
 
 // frontend/src/components/Cart/CartShippingSummary.jsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Tooltip, Spin, Button, Modal, Form, Input, message } from 'antd';
+import { Tooltip, Spin, Button, message } from 'antd';
 import { InfoCircleOutlined, EnvironmentOutlined } from '@ant-design/icons';
+import { MapPin } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import config from '../../config';
+import BrandModal, { brandInputStyle, brandLabelStyle } from '../common/BrandModal';
 
 // Small debounce helper (no external deps)
 function simpleDebounce(fn, delay = 350) {
@@ -25,6 +27,12 @@ export default function CartShippingSummary({ t, i18n, onShippingChange }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [quote, setQuote] = useState(null);
+
+  // Local form fields for the "change delivery location" modal — replaces
+  // antd's Form.useForm(), which the previous version relied on.
+  const [formPostal, setFormPostal] = useState('');
+  const [formCity, setFormCity] = useState('');
+  const [formError, setFormError] = useState('');
 
   // restore last destination
   useEffect(() => {
@@ -244,7 +252,16 @@ export default function CartShippingSummary({ t, i18n, onShippingChange }) {
           {t?.('deliver_to') || 'Deliver to'}{' '}
           <strong>{dest.postal ? `${dest.postal} (DE)` : 'DE'}</strong>
         </span>
-        <Button type="link" size="small" onClick={() => setOpen(true)}>
+        <Button
+          type="link"
+          size="small"
+          onClick={() => {
+            setFormPostal(dest.postal || '');
+            setFormCity(dest.city || '');
+            setFormError('');
+            setOpen(true);
+          }}
+        >
           {t?.('change') || 'Change'}
         </Button>
       </div>
@@ -301,41 +318,46 @@ export default function CartShippingSummary({ t, i18n, onShippingChange }) {
       )}
 
       {/* Change address modal */}
-      <Modal
+      <BrandModal
         open={open}
-        onCancel={() => setOpen(false)}
-        footer={null}
+        onClose={() => setOpen(false)}
+        icon={MapPin}
+        accent="default"
         title={t?.('delivery_location') || 'Delivery location'}
+        primaryLabel={t?.('save') || 'Save'}
+        onPrimary={() => {
+          const postal = formPostal.trim();
+          if (!postal) {
+            setFormError(t?.('required') || 'Required');
+            return;
+          }
+          const next = { country: 'DE', postal, city: formCity.trim() };
+          setDest(next);
+          try { localStorage.setItem('ship_dest', JSON.stringify(next)); } catch { }
+          setOpen(false);
+        }}
       >
-        <Form
-          layout="vertical"
-          initialValues={{ postal: dest.postal || '', city: dest.city || '' }}
-          onFinish={(vals) => {
-            const next = {
-              country: 'DE',
-              postal: (vals.postal || '').trim(),
-              city: (vals.city || '').trim()
-            };
-            setDest(next);
-            try { localStorage.setItem('ship_dest', JSON.stringify(next)); } catch { }
-            setOpen(false);
-          }}
-        >
-          <Form.Item
-            label={t?.('postal_code') || 'Postal code'}
-            name="postal"
-            rules={[{ required: true, message: t?.('required') || 'Required' }]}
-          >
-            <Input autoFocus />
-          </Form.Item>
-          <Form.Item label={t?.('city') || 'City'} name="city">
-            <Input />
-          </Form.Item>
-          <Button type="primary" htmlType="submit" block>
-            {t?.('save') || 'Save'}
-          </Button>
-        </Form>
-      </Modal>
+        <div style={{ marginBottom: 16 }}>
+          <label style={brandLabelStyle}>{t?.('postal_code') || 'Postal code'}</label>
+          <input
+            autoFocus
+            style={brandInputStyle}
+            value={formPostal}
+            onChange={(e) => { setFormPostal(e.target.value); if (formError) setFormError(''); }}
+          />
+          {formError && (
+            <div style={{ color: '#dc2626', fontSize: 13, marginTop: 6 }}>{formError}</div>
+          )}
+        </div>
+        <div>
+          <label style={brandLabelStyle}>{t?.('city') || 'City'}</label>
+          <input
+            style={brandInputStyle}
+            value={formCity}
+            onChange={(e) => setFormCity(e.target.value)}
+          />
+        </div>
+      </BrandModal>
     </div>
   );
 }

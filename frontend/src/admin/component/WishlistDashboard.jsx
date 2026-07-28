@@ -8,15 +8,17 @@ import {
 import {
   Heart, Search, Download, Grid, Table,
   ChevronLeft, ChevronRight, Trash2, RefreshCw,
-  FileText, Clock, User, Book
+  FileText, Clock, User, Book, AlertCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
+import BrandModal from '../../components/common/BrandModal';
 
 const WishlistDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const [viewMode, setViewMode] = useState('table');
   const [selectedItemForAudit, setSelectedItemForAudit] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null); // { message, onConfirm } | null
   const limit = 10;
 
   const { data, isLoading, isFetching, error } = useGetWishlistsQuery({
@@ -50,15 +52,25 @@ const WishlistDashboard = () => {
   }
 
   const handleRemove = async (wishlistId) => {
-    if (window.confirm('Remove this book from user\'s wishlist?')) {
-      await removeFromWishlist(wishlistId);
-    }
+    setConfirmDialog({
+      message: "Remove this book from user's wishlist?",
+      accent: 'danger',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        await removeFromWishlist(wishlistId);
+      },
+    });
   };
 
   const handleRestore = async (wishlistId) => {
-    if (window.confirm('Restore this item to wishlist?')) {
-      await restoreItem(wishlistId);
-    }
+    setConfirmDialog({
+      message: 'Restore this item to wishlist?',
+      accent: 'default',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        await restoreItem(wishlistId);
+      },
+    });
   };
 
   const exportCSV = () => {
@@ -308,6 +320,17 @@ const WishlistDashboard = () => {
           </div>
         </div>
       )}
+
+      <BrandModal
+        open={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        icon={AlertCircle}
+        accent={confirmDialog?.accent || 'danger'}
+        title="Are you sure?"
+        message={confirmDialog?.message}
+        primaryLabel={confirmDialog?.accent === 'default' ? 'Restore' : 'Remove'}
+        onPrimary={confirmDialog?.onConfirm}
+      />
     </div>
   );
 };
