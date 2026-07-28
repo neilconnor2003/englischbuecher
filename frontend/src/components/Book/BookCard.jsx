@@ -92,7 +92,7 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
 
     if (isInCart) {
       if (goToCheckout) {
-        navigate('/checkout');
+        navigate(user && user.id ? '/checkout' : '/login?redirect=/checkout');
       } else {
         message.info(t('already_in_cart') || 'Dieses Buch ist bereits im Warenkorb');
       }
@@ -147,7 +147,12 @@ const BookCard = ({ book, variant = 'default', showActions = true, className = '
       }));
 
       if (goToCheckout) {
-        navigate('/checkout');
+        // Guests can't set up payment (that needs an authenticated session),
+        // so sending them straight to /checkout was surfacing a raw
+        // "Payment setup failed" error. Send them to login first — their
+        // cart item (added above) already persists in localStorage and
+        // gets merged into the server cart automatically once they log in.
+        navigate('/login?redirect=/checkout');
       } else {
         message.success(`${title} ${t('added_to_cart') || 'zum Warenkorb hinzugefügt'}`);
       }

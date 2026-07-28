@@ -14,6 +14,7 @@ import './BookDetails.css';
 import { useDispatch, useSelector } from 'react-redux';
 import { mergeServerCart } from '../../features/cart/cartSlice';
 import { replaceWithServerCart } from '../../features/cart/cartSlice';
+import { addItem } from '../../features/cart/cartSlice';
 import { toggleWishlist, fetchWishlist } from '../../features/wishlist/wishlistSlice';
 import { AuthContext } from '../../context/AuthContext';
 import BookCard from '../../components/Book/BookCard';
@@ -293,6 +294,45 @@ function BookDetails() {
   const handleCartAction = async (goToCheckout = false) => {
     if (!book || adding || book.stock === 0) return;
     setAdding(true);
+
+    // Guests: use the same local (Redux + localStorage) cart BookCard.jsx
+    // already uses elsewhere on the site. Previously this page always
+    // called the authenticated /api/cart/add endpoint regardless of login
+    // state, which silently failed with a 401 for guests — this brings it
+    // in line with the rest of the site instead of being a dead end here.
+    if (!user || !user.id) {
+      try {
+        if (!isInCart) {
+          dispatch(addItem({
+            bookId: book.id,
+            quantity,
+            book: {
+              title_en: book.title_en || title,
+              title_de: book.title_de || null,
+              image: optimisedImg(mainImage || book.image),
+              slug: book.slug || book.id?.toString(),
+              stock: typeof book.stock === 'number' ? book.stock : Infinity,
+              price: book.price,
+              original_price: book.original_price,
+              sale_price: book.sale_price ?? null,
+            },
+          }));
+        }
+        if (goToCheckout) {
+          // Guests can't set up payment (needs an authenticated session) —
+          // send them to login first, carrying them on to checkout after.
+          // Their cart item persists in localStorage and merges into the
+          // server cart automatically once they log in.
+          navigate('/login?redirect=/checkout');
+        } else {
+          toast.success(t('added_to_cart') || 'Added to cart');
+        }
+      } finally {
+        setAdding(false);
+      }
+      return;
+    }
+
     try {
       if (!isInCart) {
         await axios.post(`${config.API_URL}/api/cart/add`, { bookId: book.id, quantity }, { withCredentials: true });
