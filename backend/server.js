@@ -838,7 +838,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
       const [rows] = await db.query(
         `
-      SELECT id, to_email, from_email, subject, status, error, type, created_at
+      SELECT id, to_email, subject, status, error, type, created_at
       FROM sent_emails
       ${whereSql}
       ORDER BY created_at DESC
@@ -878,7 +878,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
 
       const [rows] = await db.query(
         `
-      SELECT id, to_email, from_email, subject, html, status, error, type, created_at
+      SELECT id, to_email, subject, html, status, error, type, created_at
       FROM sent_emails
       WHERE id = ?
       LIMIT 1
@@ -2254,10 +2254,8 @@ const computeWorkId = (titleEn, titleDe, author) => {
           </div>
         `;
 
-        const fromAddress = `"EnglischBücher" <${process.env.SMTP_USER}>`;
-
         await transporter.sendMail({
-          from: fromAddress,
+          from: `"EnglischBücher" <${process.env.SMTP_USER}>`,
           to: email,
           subject,
           html,
@@ -2266,17 +2264,17 @@ const computeWorkId = (titleEn, titleDe, author) => {
         // Log to sent_emails so admins can see this in the existing
         // email logs view, same pattern as review-request emails.
         await db.query(`
-          INSERT INTO sent_emails (to_email, from_email, subject, html, status, type, created_at)
-          VALUES (?, ?, ?, ?, 'sent', 'Newsletter', NOW())
-        `, [email, fromAddress, subject, html]).catch(() => { });
+          INSERT INTO sent_emails (to_email, subject, html, status, type, created_at)
+          VALUES (?, ?, ?, 'sent', 'Newsletter', NOW())
+        `, [email, subject, html]).catch(() => { });
       } catch (mailErr) {
         console.error('Newsletter welcome email failed:', mailErr.message);
 
         // Log the failure too, so admins can see bounces/errors, not just successes
         await db.query(`
-          INSERT INTO sent_emails (to_email, from_email, subject, html, status, error, type, created_at)
-          VALUES (?, ?, ?, ?, 'failed', ?, 'Newsletter', NOW())
-        `, [email, `"EnglischBücher" <${process.env.SMTP_USER}>`, subject, html, mailErr.message]).catch(() => { });
+          INSERT INTO sent_emails (to_email, subject, html, status, error, type, created_at)
+          VALUES (?, ?, ?, 'failed', ?, 'Newsletter', NOW())
+        `, [email, subject, html, mailErr.message]).catch(() => { });
       }
 
       res.json({ success: true });
@@ -2609,6 +2607,21 @@ const computeWorkId = (titleEn, titleDe, author) => {
   async function pickBookOfWeek() {
     console.log('[BookOfWeek] Starting weekly pick…');
     try {
+      // Without this exclusion, the same ~60 newest books get sent to
+      // Claude every single week with the same prompt, so it reasonably
+      // picks the same "most relevant" one every time — nothing tells it
+      // not to repeat. book_of_week_history tracks the last several picks
+      // so we can exclude them from the pool and force rotation.
+      const [recentPicks] = await db.query(`
+        SELECT book_id FROM book_of_week_history
+        ORDER BY picked_at DESC
+        LIMIT 8
+      `).catch(() => [[]]);
+      const recentIds = (recentPicks || []).map(r => r.book_id);
+      const excludeClause = recentIds.length
+        ? `AND b.id NOT IN (${recentIds.map(() => '?').join(',')})`
+        : '';
+
       const [candidates] = await db.query(`
         SELECT b.id, b.title_en, b.title_de, b.publish_date,
                a.name AS author_name
@@ -2616,13 +2629,14 @@ const computeWorkId = (titleEn, titleDe, author) => {
         LEFT JOIN authors a ON b.author_id = a.id
         WHERE b.stock > 0
           AND b.image IS NOT NULL AND b.image != ''
+          ${excludeClause}
         ORDER BY b.publish_date DESC
         LIMIT 60
-      `);
+      `, recentIds);
 
       if (!candidates.length) {
         console.log('[BookOfWeek] No candidates, skipping.');
-        return;
+        return { success: false, reason: 'No candidates matched the query (after exclusions).' };
       }
 
       const bookList = candidates
@@ -2632,7 +2646,7 @@ const computeWorkId = (titleEn, titleDe, author) => {
         .join('\n');
 
       const message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-5',
         max_tokens: 100,
         messages: [{
           role: 'user',
@@ -2651,24 +2665,35 @@ ${bookList}`,
       const idMatch = responseText.match(/\d+/);
       if (!idMatch) {
         console.error('[BookOfWeek] Unexpected Claude response:', responseText);
-        return;
+        return { success: false, reason: `Claude returned an unparseable response: "${responseText}"` };
       }
 
       const pickedId = parseInt(idMatch[0], 10);
       const isValid = candidates.some(b => b.id === pickedId);
       if (!isValid) {
         console.error(`[BookOfWeek] Claude returned invalid ID ${pickedId}`);
-        return;
+        // This was the actual bug: previously the function just returned
+        // here with nothing updated, and run-now's endpoint would then
+        // re-read whatever book was STILL flagged from a previous run and
+        // report it as if it were a fresh success. Now it's explicit.
+        return {
+          success: false,
+          reason: `Claude returned ID ${pickedId}, which was not in the ${candidates.length}-book candidate list sent to it (raw response: "${responseText}").`,
+        };
       }
 
       await db.query('UPDATE books SET is_book_of_week = 0 WHERE is_book_of_week = 1');
       await db.query('UPDATE books SET is_book_of_week = 1 WHERE id = ?', [pickedId]);
+      await db.query('INSERT INTO book_of_week_history (book_id, picked_at) VALUES (?, NOW())', [pickedId])
+        .catch(err => console.error('[BookOfWeek] Failed to log history (non-fatal):', err.message));
 
       const picked = candidates.find(b => b.id === pickedId);
       console.log(`[BookOfWeek] ✅ Picked: "${picked.title_en || picked.title_de}" (ID: ${pickedId})`);
+      return { success: true, id: pickedId, title: picked.title_en || picked.title_de };
 
     } catch (err) {
       console.error('[BookOfWeek] Error:', err.message);
+      return { success: false, reason: err.message };
     }
   }
 
@@ -2687,6 +2712,77 @@ ${bookList}`,
     .catch(err => console.error('[BookOfWeek] Startup check failed:', err.message));
 
   // ── END BOOK OF THE WEEK CRON ─────────────────────────
+
+  // ── BOOK OF THE WEEK: manual trigger (admin only) ──────
+  // Runs pickBookOfWeek() on demand and returns the actual
+  // outcome in the response, instead of only logging to the
+  // server console. Useful for testing without waiting for
+  // the Monday 06:00 cron tick, and for confirming the
+  // ANTHROPIC_API_KEY is actually valid on this deployment.
+  app.post('/api/admin/book-of-week/run-now', async (req, res) => {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    try {
+      const result = await pickBookOfWeek();
+      if (!result || !result.success) {
+        return res.status(500).json({
+          ok: false,
+          error: result?.reason || 'pickBookOfWeek failed for an unknown reason — check server logs for the [BookOfWeek] error line.',
+        });
+      }
+      return res.json({ ok: true, picked: result.title, id: result.id });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // ── BOOK OF THE WEEK: diagnostic (admin only) ──────────
+  // Shows exactly what the exclusion logic sees, without calling
+  // Claude — no API cost, instant. Use this to check whether
+  // book_of_week_history is actually being read correctly by
+  // this running process before troubleshooting anything else.
+  app.get('/api/admin/book-of-week/debug', async (req, res) => {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    try {
+      const [historyRows] = await db.query(`
+        SELECT id, book_id, picked_at FROM book_of_week_history
+        ORDER BY picked_at DESC
+        LIMIT 8
+      `);
+      const recentIds = (historyRows || []).map(r => r.book_id);
+      const excludeClause = recentIds.length
+        ? `AND b.id NOT IN (${recentIds.map(() => '?').join(',')})`
+        : '';
+      const [candidates] = await db.query(`
+        SELECT b.id, b.title_en, b.title_de
+        FROM books b
+        LEFT JOIN authors a ON b.author_id = a.id
+        WHERE b.stock > 0
+          AND b.image IS NOT NULL AND b.image != ''
+          ${excludeClause}
+        ORDER BY b.publish_date DESC
+        LIMIT 60
+      `, recentIds);
+
+      const [[currentDb]] = await db.query('SELECT DATABASE() AS db_name');
+
+      return res.json({
+        connected_database: currentDb.db_name,
+        history_rows_found: historyRows.length,
+        history_rows: historyRows,
+        recentIds_computed: recentIds,
+        candidate_pool_size: candidates.length,
+        is_book_49_in_candidate_pool: candidates.some(c => c.id === 49),
+        candidate_ids: candidates.map(c => c.id),
+      });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
 
   // ── REVIEW REQUEST EMAIL CRON ─────────────────────────────
   // Runs daily at 10:00 Berlin time.
@@ -2794,11 +2890,9 @@ ${bookList}`,
           </div>
         `;
 
-        const fromAddress = `"EnglischBücher" <${process.env.SMTP_USER}>`;
-
         try {
           await transporter.sendMail({
-            from: fromAddress,
+            from: `"EnglischBücher" <${process.env.SMTP_USER}>`,
             to: row.email,
             subject,
             html,
@@ -2826,9 +2920,9 @@ ${bookList}`,
 
           // Log to your existing sent_emails table for visibility in admin
           await db.query(`
-            INSERT INTO sent_emails (to_email, from_email, subject, html, status, type, created_at)
-            VALUES (?, ?, ?, ?, 'sent', 'ReviewRequest', NOW())
-          `, [row.email, fromAddress, subject, html]).catch(() => { });
+            INSERT INTO sent_emails (to_email, subject, html, status, type, created_at)
+            VALUES (?, ?, ?, 'sent', 'ReviewRequest', NOW())
+          `, [row.email, subject, html]).catch(() => { });
 
           console.log(`[ReviewRequests] Sent email ${sentCount}/4 to ${row.email} for book ${row.book_id}`);
         } catch (sendErr) {
@@ -5087,19 +5181,18 @@ ${bookList}`,
         </div>
       `;
 
-        const fromAddress = `"EnglischBücher" <${process.env.SMTP_USER}>`;
         try {
-          await transporter.sendMail({ from: fromAddress, to: sub.email, subject, html });
+          await transporter.sendMail({ from: `"EnglischBücher" <${process.env.SMTP_USER}>`, to: sub.email, subject, html });
           await db.execute(`
-          INSERT INTO sent_emails (to_email, from_email, subject, html, status, type, created_at)
-          VALUES (?, ?, ?, ?, 'sent', 'RestockNotification', NOW())
-        `, [sub.email, fromAddress, subject, html]).catch(() => { });
+          INSERT INTO sent_emails (to_email, subject, html, status, type, created_at)
+          VALUES (?, ?, ?, 'sent', 'RestockNotification', NOW())
+        `, [sub.email, subject, html]).catch(() => { });
         } catch (mailErr) {
           console.error(`Restock email failed for ${sub.email}:`, mailErr.message);
           await db.execute(`
-          INSERT INTO sent_emails (to_email, from_email, subject, html, status, error, type, created_at)
-          VALUES (?, ?, ?, ?, 'failed', ?, 'RestockNotification', NOW())
-        `, [sub.email, fromAddress, subject, html, mailErr.message]).catch(() => { });
+          INSERT INTO sent_emails (to_email, subject, html, status, error, type, created_at)
+          VALUES (?, ?, ?, 'failed', ?, 'RestockNotification', NOW())
+        `, [sub.email, subject, html, mailErr.message]).catch(() => { });
         }
 
         // Mark notified regardless of email success, so we don't retry-spam
@@ -5801,18 +5894,10 @@ WHERE ci.user_id = ?
 
   // Update the amount of the existing PaymentIntent (subtotal + shipping)
   // POST /api/orders/update-payment-intent-amount
-  // Body: { clientSecret, amount_cents, discount_code?, discount_amount?, wallet_used? }
+  // Body: { clientSecret, amount_cents }
   app.post('/api/orders/update-payment-intent-amount', async (req, res) => {
     try {
-      const {
-        clientSecret,
-        amount_cents,
-        shipping_provider,
-        shipping_service,
-        discount_code,
-        discount_amount,
-        wallet_used,
-      } = req.body || {};
+      const { clientSecret, amount_cents, shipping_provider, shipping_service } = req.body || {};
       if (!clientSecret || !Number.isFinite(Number(amount_cents)) || amount_cents <= 0) {
         return res.status(400).json({ error: 'bad_request' });
       }
@@ -5822,17 +5907,9 @@ WHERE ci.user_id = ?
       const updatePayload = {
         amount: Number(amount_cents),
         // ✅ set only the keys you care about (Stripe supports updating metadata) [1](https://boehringer.sharepoint.com/sites/z365apollocontrolcenter/SitePages/Notebook---Topic-Classification-with-Large-Language-Models-(LLMs).aspx?web=1)
-        // Stripe metadata values must be strings — discount_code/discount_amount/
-        // wallet_used are read back out in finalize-from-payment-intent for
-        // redirect-based payment methods (PayPal, Klarna, giropay, etc.), which
-        // never hit the direct /api/orders route where these were previously
-        // only sent.
         metadata: {
           ...(shipping_provider ? { shipping_provider: String(shipping_provider) } : {}),
           ...(shipping_service ? { shipping_service: String(shipping_service) } : {}),
-          ...(discount_code ? { discount_code: String(discount_code) } : {}),
-          ...(Number(discount_amount) > 0 ? { discount_amount: String(Number(discount_amount)) } : {}),
-          ...(Number(wallet_used) > 0 ? { wallet_used: String(Number(wallet_used)) } : {}),
         },
       };
 
@@ -6820,10 +6897,9 @@ WHERE ci.user_id = ?
           <p style="color:#9ca3af;font-size:12px;text-align:center;margin:24px 0 0;border-top:1px solid #f3f4f6;padding-top:16px;">
             <a href="${unsubUrl}" style="color:#9ca3af;">${isDe?'Abbestellen':'Unsubscribe'}</a></p>`;
         const html = buildEmail({ lang: sub.language, title: subject, headerTitle: subject, headerEmoji: '📚', bodyHtml });
-        const fromAddress = `"${SENDER_NAME}" <${process.env.SMTP_USER}>`;
         try {
-          await transporter.sendMail({ from: fromAddress, to: sub.email, subject, html });
-          await db.query(`INSERT INTO sent_emails (to_email,from_email,subject,html,status,type,created_at) VALUES (?,?,?,?,'sent','Newsletter',NOW())`, [sub.email, fromAddress, subject, html]).catch(()=>{});
+          await transporter.sendMail({ from: `"${SENDER_NAME}" <${process.env.SMTP_USER}>`, to: sub.email, subject, html });
+          await db.query(`INSERT INTO sent_emails (to_email,subject,html,status,type,created_at) VALUES (?,?,?,'sent','Newsletter',NOW())`, [sub.email, subject, html]).catch(()=>{});
           sent++;
         } catch (mailErr) { console.error(`Campaign fail ${sub.email}:`, mailErr.message); failed++; }
         await new Promise(r => setTimeout(r, 100));

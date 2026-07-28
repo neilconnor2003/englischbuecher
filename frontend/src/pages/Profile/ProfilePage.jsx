@@ -15,6 +15,7 @@ import {
   Save, X, Eye, ShieldCheck, Cookie
 } from 'lucide-react';
 import './ProfilePage.css';
+import BrandModal from '../../components/common/BrandModal';
 
 const API = axios.create({ baseURL: `${config.API_URL}/api`, withCredentials: true });
 
@@ -69,6 +70,7 @@ const ProfilePage = () => {
   const [activeTab, setActiveTab]     = useState('info');
   const [orders, setOrders]           = useState([]);
   const [orderLoading, setOrderLoading] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState(null); // { message, onConfirm } | null — used for address deletion
   const [walletBalance, setWalletBalance] = useState(0);
   const [walletTx, setWalletTx]       = useState([]);
   const [reviews, setReviews]         = useState([]);
@@ -195,13 +197,18 @@ const ProfilePage = () => {
   };
 
   const handleDeleteAddress = async (id) => {
-    if (!window.confirm(t('confirm_delete_address') || 'Delete this address?')) return;
-    try {
-      await API.delete(`/user/addresses/${id}`);
-      const { data } = await API.get('/user/addresses');
-      setAddresses(data || []);
-      toast.success(t('address_deleted') || 'Address deleted');
-    } catch { toast.error(t('update_failed') || 'Failed'); }
+    setConfirmDialog({
+      message: t('confirm_delete_address') || 'Delete this address?',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await API.delete(`/user/addresses/${id}`);
+          const { data } = await API.get('/user/addresses');
+          setAddresses(data || []);
+          toast.success(t('address_deleted') || 'Address deleted');
+        } catch { toast.error(t('update_failed') || 'Failed'); }
+      },
+    });
   };
 
   const handleSetDefault = async (id) => {
@@ -909,6 +916,17 @@ const ProfilePage = () => {
           </div>
         </div>
       )}
+
+      <BrandModal
+        open={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        icon={MapPin}
+        accent="danger"
+        title={t('confirm') || 'Are you sure?'}
+        message={confirmDialog?.message}
+        primaryLabel={t('delete') || 'Delete'}
+        onPrimary={confirmDialog?.onConfirm}
+      />
     </>
   );
 };

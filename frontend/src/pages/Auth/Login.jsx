@@ -1,18 +1,32 @@
 // frontend/src/pages/Auth/Login.jsx
 import React, { useState, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../../context/AuthContext';
 import config from '../../config';
 import { Mail, Lock, AlertCircle } from 'lucide-react';
 import './Login.css';
 
+// Only allow same-origin, relative paths (e.g. "/checkout") as a redirect
+// target. Rejects anything that looks like an absolute/external URL
+// (http(s)://, protocol-relative //) so a crafted ?redirect= link can't
+// send a logged-in user somewhere off-site.
+function getSafeRedirect(search) {
+  const params = new URLSearchParams(search);
+  const target = params.get('redirect');
+  if (!target) return '/';
+  if (!target.startsWith('/') || target.startsWith('//')) return '/';
+  return target;
+}
+
 function Login() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { checkAuth } = useContext(AuthContext);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const redirectTo = getSafeRedirect(location.search);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,7 +54,7 @@ function Login() {
 
       if (res.ok && json.success) {
         await checkAuth();
-        window.location.href = '/';
+        window.location.href = redirectTo;
       } else {
         if (json.error?.includes('unverified')) {
           setError(
@@ -90,7 +104,7 @@ function Login() {
         window.removeEventListener('message', handleMessage);
         clearInterval(checkClosed);
         await checkAuth();
-        window.location.href = '/';
+        window.location.href = redirectTo;
       }
     };
     window.addEventListener('message', handleMessage);
@@ -101,7 +115,7 @@ function Login() {
         window.removeEventListener('message', handleMessage);
         fetch(`${config.API_URL}/api/current-user`, { credentials: 'include' })
           .then(r => r.json())
-          .then(async data => { if (data?.id) { await checkAuth(); window.location.href = '/'; } })
+          .then(async data => { if (data?.id) { await checkAuth(); window.location.href = redirectTo; } })
           .catch(() => {});
       }
     }, 500);

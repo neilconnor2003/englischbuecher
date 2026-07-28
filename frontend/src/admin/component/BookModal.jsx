@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { useForm } from 'react-hook-form';
-import { X, Trash2, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { X, Trash2, Image as ImageIcon, Loader2, AlertCircle } from 'lucide-react';
+import BrandModal from '../../components/common/BrandModal';
 import { useGetCategoriesQuery } from '../features/book/bookApiSlice';
 import axios from 'axios';
 import config from '@config';
@@ -199,6 +200,7 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
   const [isUploading, setIsUploading] = useState(false);
   const [isSavingCover, setIsSavingCover] = useState(false);
   const [fetchedBookData, setFetchedBookData] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null); // { message, onConfirm } | null
 
   const {
     register,
@@ -852,27 +854,30 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
       return;
     }
 
-    const ok = window.confirm('Delete this image permanently (DB + server file)?');
-    if (!ok) return;
+    setConfirmDialog({
+      message: 'Delete this image permanently (DB + server file)?',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          const res = await axios.post(
+            `${config.API_URL}/api/books/${book.id}/delete-image`,
+            { imageUrl: url },
+            { withCredentials: true }
+          );
 
-    try {
-      const res = await axios.post(
-        `${config.API_URL}/api/books/${book.id}/delete-image`,
-        { imageUrl: url },
-        { withCredentials: true } // important if your auth uses session cookies
-      );
-
-      setMainImage(res.data.image || '');
-      setGalleryImages(res.data.images || []);
-    } catch (err) {
-      const msg =
-        err?.response?.data?.error ||
-        err?.response?.data?.details ||
-        err.message ||
-        'Delete failed';
-      console.error('Delete failed:', err?.response?.data || err);
-      alert('Delete failed: ' + msg);
-    }
+          setMainImage(res.data.image || '');
+          setGalleryImages(res.data.images || []);
+        } catch (err) {
+          const msg =
+            err?.response?.data?.error ||
+            err?.response?.data?.details ||
+            err.message ||
+            'Delete failed';
+          console.error('Delete failed:', err?.response?.data || err);
+          alert('Delete failed: ' + msg);
+        }
+      },
+    });
   };
 
   const setAsMain = (url) => setMainImage(url);
@@ -1278,6 +1283,17 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
         onDetected={(isbn) => {
           handleFetchISBNFromScanned(isbn);
         }}
+      />
+
+      <BrandModal
+        open={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        icon={AlertCircle}
+        accent="danger"
+        title="Are you sure?"
+        message={confirmDialog?.message}
+        primaryLabel="Delete"
+        onPrimary={confirmDialog?.onConfirm}
       />
 
     </Transition>
