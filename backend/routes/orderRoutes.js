@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const Stripe = require('stripe');
 const axios = require('axios');
+const crypto = require('crypto');
 
 
 const requireAuth = (req, res, next) => {
@@ -23,7 +24,61 @@ function buildBookUrl(book) {
   return `/book/${slug}${isbn ? '-' + isbn : ''}${idPart}`;
 }
 
-// Notifies the shop owner by email the moment a new order comes in
+// Called whenever a PayPal/redirect payment has ALREADY succeeded (money
+// moved) but we can't actually create the order for it — most commonly:
+// two customers buy the last copy of a low-stock book within moments of
+// each other. Both payments succeed independently (PayPal has no idea
+// about your stock levels); only one order can be created; the other
+// customer would otherwise be left having paid for nothing, silently,
+// with no order and no invoice email — exactly what was reported.
+//
+// This refunds them automatically and alerts the shop owner, so the
+// failure is visible and the customer isn't just quietly out the money.
+// Returns { refunded: boolean, refundError?: string } so the caller can
+// include the true outcome in the response instead of always claiming
+// a refund succeeded.
+async function refundAndAlertOnFailedOrder({ stripe, transporter, db, pi, reason }) {
+  let refunded = false;
+  let refundError = null;
+
+  try {
+    await stripe.refunds.create({ payment_intent: pi.id });
+    refunded = true;
+  } catch (err) {
+    refundError = err.message;
+    console.error(`[refundAndAlertOnFailedOrder] Refund FAILED for PI ${pi.id}:`, err.message);
+  }
+
+  try {
+    const fromAddress = `"EnglischBücher Orders" <${process.env.SMTP_USER}>`;
+    const toEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'neilconnor2003@gmail.com';
+    const amount = ((pi.amount || 0) / 100).toFixed(2);
+    const subject = refunded
+      ? `⚠️ Order failed after payment — refunded automatically (€${amount})`
+      : `🚨 Order failed after payment — REFUND FAILED, needs manual action (€${amount})`;
+    const html = `
+      <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #ede9fe;border-radius:12px;">
+        <h2 style="color:#dc2626;">Order could not be created after a successful payment</h2>
+        <p><strong>PaymentIntent:</strong> ${pi.id}</p>
+        <p><strong>Amount:</strong> €${amount}</p>
+        <p><strong>Reason:</strong> ${reason}</p>
+        <p><strong>Refund status:</strong> ${refunded ? '✅ Refunded automatically' : `❌ FAILED — ${refundError} — refund this manually in the Stripe dashboard.`}</p>
+      </div>
+    `;
+    await transporter.sendMail({ from: fromAddress, to: toEmail, subject, html });
+    if (db) {
+      await db.execute(`
+        INSERT INTO sent_emails (to_email, from_email, subject, html, status, type, created_at)
+        VALUES (?, ?, ?, ?, 'sent', 'OrderFailedAlert', NOW())
+      `, [toEmail, fromAddress, subject, html]).catch(() => {});
+    }
+  } catch (err) {
+    console.error('[refundAndAlertOnFailedOrder] Alert email failed:', err.message);
+  }
+
+  return { refunded, refundError };
+}
+
 // (separate from the customer-facing invoice email below). Best-effort:
 // never throws, so a failed notification can't block order creation.
 // Set ADMIN_NOTIFICATION_EMAIL in .env; falls back to the contact-form
@@ -347,26 +402,101 @@ module.exports = (db, transporter) => {
       const amount = Math.round(totalPrice * 100);
       if (amount < 50) return res.status(400).json({ error: 'Minimum €0.50' });
 
-      for (const i of items) {
-        const [[row]] = await db.execute('SELECT stock FROM books WHERE id = ?', [i.bookId]);
-        if (!row || row.stock < i.quantity) {
-          return res.status(409).json({ error: `Only ${row?.stock ?? 0} left for book ${i.bookId}` });
-        }
-      }
+      // --- Reserve stock for this checkout attempt ---
+      // Previously this only did a plain SELECT with no locking, so two
+      // near-simultaneous checkouts for the same low-stock book could both
+      // pass this check, both get charged, and only one could actually get
+      // an order — the other lost their money with nothing to show for it.
+      //
+      // Now: lock each book's row (SELECT ... FOR UPDATE) so a concurrent
+      // checkout for the same book is forced to wait its turn rather than
+      // racing; compute *effective* stock (real stock minus other active,
+      // non-expired reservations); and if there's enough, claim it for this
+      // attempt with a 15-minute hold before any payment is even started.
+      const RESERVATION_TTL_MINUTES = 15;
+      const reservationId = crypto.randomUUID();
+      const unavailable = [];
 
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount,
-        currency: 'eur',
-        //automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
-        automatic_payment_methods: { enabled: true, allow_redirects: 'always' },
-        metadata: {
-          userId: req.user?.id || 'guest',
-          cart: JSON.stringify(items.map(i => ({ id: i.bookId, qty: i.quantity }))),
-          // ✅ PERSIST SHIPPING FOR PAYPAL
-          shipping_provider: shipping_provider || '',
-          shipping_service: shipping_service || '',
-        },
-      });
+      const resConn = await db.getConnection();
+      try {
+        await resConn.beginTransaction();
+
+        for (const i of items) {
+          const [[book]] = await resConn.execute(
+            'SELECT id, title_en, title_de, stock FROM books WHERE id = ? FOR UPDATE',
+            [i.bookId]
+          );
+          if (!book) {
+            unavailable.push({ bookId: i.bookId, title_en: null, title_de: null, available: 0 });
+            continue;
+          }
+
+          const [[reservedRow]] = await resConn.execute(
+            `SELECT COALESCE(SUM(quantity), 0) AS reserved
+             FROM stock_reservations
+             WHERE book_id = ? AND expires_at > NOW()`,
+            [i.bookId]
+          );
+          const effectiveStock = book.stock - Number(reservedRow.reserved);
+
+          if (effectiveStock < i.quantity) {
+            unavailable.push({
+              bookId: i.bookId,
+              title_en: book.title_en || null,
+              title_de: book.title_de || null,
+              available: Math.max(0, effectiveStock),
+            });
+          }
+        }
+
+        if (unavailable.length > 0) {
+          await resConn.rollback();
+          return res.status(409).json({
+            error: 'out_of_stock',
+            items: unavailable,
+          });
+        }
+
+        const expiresAt = new Date(Date.now() + RESERVATION_TTL_MINUTES * 60 * 1000);
+        for (const i of items) {
+          await resConn.execute(
+            `INSERT INTO stock_reservations (book_id, quantity, reservation_id, expires_at)
+             VALUES (?, ?, ?, ?)`,
+            [i.bookId, i.quantity, reservationId, expiresAt]
+          );
+        }
+
+        await resConn.commit();
+      } catch (err) {
+        await resConn.rollback();
+        throw err;
+      } finally {
+        resConn.release();
+      }
+      // --- End reservation ---
+
+      let paymentIntent;
+      try {
+        paymentIntent = await stripe.paymentIntents.create({
+          amount,
+          currency: 'eur',
+          //automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+          automatic_payment_methods: { enabled: true, allow_redirects: 'always' },
+          metadata: {
+            userId: req.user?.id || 'guest',
+            cart: JSON.stringify(items.map(i => ({ id: i.bookId, qty: i.quantity }))),
+            // ✅ PERSIST SHIPPING FOR PAYPAL
+            shipping_provider: shipping_provider || '',
+            shipping_service: shipping_service || '',
+            reservation_id: reservationId,
+          },
+        });
+      } catch (err) {
+        // Stripe failed — release the stock hold immediately instead of
+        // letting it sit for 15 minutes for a payment that will never happen.
+        await db.execute('DELETE FROM stock_reservations WHERE reservation_id = ?', [reservationId]).catch(() => {});
+        throw err;
+      }
 
       return res.json({
         clientSecret: paymentIntent.client_secret,
@@ -625,6 +755,18 @@ module.exports = (db, transporter) => {
         [isPaid ? 'processing' : 'pending', orderId]
       );
 
+      // Release the stock reservation from create-payment-intent — stock is
+      // now permanently decremented above. Best-effort: if this fails for
+      // any reason, the reservation just expires on its own within 15
+      // minutes, so it's not worth failing an otherwise-successful order.
+      try {
+        const pi = await stripe.paymentIntents.retrieve(paymentResult.id);
+        const reservationId = pi?.metadata?.reservation_id;
+        if (reservationId) {
+          await conn.execute('DELETE FROM stock_reservations WHERE reservation_id = ?', [reservationId]);
+        }
+      } catch (_) { }
+
       // 4) Clear cart for logged-in users (same as your code)
       if (userId) {
         const safeWalletUse = Math.max(0, Number(wallet_used || 0));
@@ -818,6 +960,12 @@ module.exports = (db, transporter) => {
       const couponCode = pi.metadata?.discount_code || null;
       const couponDiscount = Number(pi.metadata?.discount_amount || 0);
       const walletUsed = Number(pi.metadata?.wallet_used || 0);
+      // Present on every PaymentIntent created after the stock-reservation
+      // fix shipped. Older/in-flight PIs created just before deploy won't
+      // have one — reservationId is null for those, and the code below
+      // falls back to the old post-payment check + refund-and-alert safety
+      // net rather than assuming stock was already secured.
+      const reservationId = pi.metadata?.reservation_id || null;
 
       if (!pi || pi.status !== 'succeeded') {
         return res.status(400).json({ error: 'Payment not succeeded' });
@@ -863,7 +1011,23 @@ module.exports = (db, transporter) => {
           [bookId]
         );
         if (!book) return res.status(404).json({ error: `Book ${bookId} not found` });
-        if (book.stock < qty) return res.status(409).json({ error: `Only ${book.stock} left for book ${bookId}` });
+
+        // Stock was already claimed for this exact checkout attempt back
+        // in create-payment-intent, so there's nothing to re-check here —
+        // re-checking raw stock at this point was the original bug (see
+        // reservationId comment above). Only fall back to a fresh check
+        // for older PaymentIntents that predate this fix.
+        if (!reservationId && book.stock < qty) {
+          const { refunded, refundError } = await refundAndAlertOnFailedOrder({
+            stripe, transporter, db, pi,
+            reason: `Only ${book.stock} left of book ${bookId}, needed ${qty} — this PaymentIntent predates the stock-reservation fix, so it had no hold in place.`,
+          });
+          return res.status(409).json({
+            error: `Only ${book.stock} left for book ${bookId}`,
+            refunded,
+            ...(refundError ? { refundError } : {}),
+          });
+        }
 
         itemsSubtotal += Number(book.price) * qty;
         orderItems.push({
@@ -916,11 +1080,12 @@ module.exports = (db, transporter) => {
 
            shipping_provider,
            shipping_service,
+           shipping_amount_eur,
 
            coupon_code,
            coupon_discount,
            wallet_used
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             userId,
             JSON.stringify(orderItems),
@@ -935,6 +1100,9 @@ module.exports = (db, transporter) => {
 
             shipping_provider,
             shipping_service,
+            // Same derivation used in finalizeFullOrder below — see the
+            // comment there for why this is safe/exact for this order type.
+            Math.max(0, Number((totalPrice - itemsSubtotal + walletUsed).toFixed(2))),
 
             couponCode,
             couponDiscount,
@@ -991,6 +1159,13 @@ module.exports = (db, transporter) => {
           [orderId]
         );
 
+        // Release the reservation — stock is now permanently decremented
+        // above, so the temporary hold is no longer needed. Harmless no-op
+        // if reservationId is null (pre-fix PaymentIntent).
+        if (reservationId) {
+          await conn.execute('DELETE FROM stock_reservations WHERE reservation_id = ?', [reservationId]);
+        }
+
         if (userId) {
           await conn.execute('DELETE FROM cart_items WHERE user_id = ?', [userId]);
         }
@@ -1021,12 +1196,19 @@ module.exports = (db, transporter) => {
           paid_at: new Date(),
           created_at: new Date(),
           status: 'processing',
-          // Note: shipping_amount_eur isn't separately reconstructable from
-          // PI metadata the way coupon/wallet now are, so this stays 0 for
-          // now — the invoice's grand total is still correct (it comes from
-          // the real charged amount), it just won't show a separate
-          // shipping line for these orders. Flagging as a follow-up.
-          shipping_amount_eur: 0,
+          // Derived, not stored directly: the PaymentIntent metadata carries
+          // coupon/wallet info now, but not a separate shipping figure, so
+          // we back it out algebraically from the one number we know for
+          // certain — the actual amount charged (totalPrice, from pi.amount).
+          //   charged = itemsSubtotal + shipping - walletUsed
+          //   => shipping = charged - itemsSubtotal + walletUsed
+          // This is exact whenever the coupon (if any) is a FREE_SHIPPING
+          // type or there's no coupon at all — both this order's case and
+          // the common case generally. A PERCENTAGE/fixed-value coupon that
+          // discounts the item subtotal itself (rather than shipping) could
+          // throw this off slightly; flagging in case that turns out to
+          // matter for a specific order.
+          shipping_amount_eur: Math.max(0, Number((totalPrice - itemsSubtotal + walletUsed).toFixed(2))),
           shipping_provider: shipping_provider || null,
           shipping_service: shipping_service || null,
           coupon_code: couponCode,
@@ -1065,9 +1247,21 @@ module.exports = (db, transporter) => {
         return res.status(201).json({ success: true, orderId });
       } catch (err) {
         if (conn) await conn.rollback();
-        const code = /Insufficient stock/.test(err.message) ? 409 : 500;
+        const code = /Insufficient stock|Insufficient wallet/.test(err.message) ? 409 : 500;
         console.error('finalize-from-payment-intent error:', err.message);
-        return res.status(code).json({ error: err.message });
+
+        // By this point pi.status === 'succeeded' was already confirmed
+        // above, so payment has definitely been taken — any failure here
+        // (stock ran out in the atomic UPDATE, wallet balance changed
+        // between page load and payment, or anything else) means the
+        // customer paid for an order that will never exist. Refund them
+        // automatically and alert the shop owner rather than leaving this
+        // silent, which was the actual bug being fixed here.
+        const { refunded, refundError } = await refundAndAlertOnFailedOrder({
+          stripe, transporter, db, pi, reason: err.message,
+        });
+
+        return res.status(code).json({ error: err.message, refunded, ...(refundError ? { refundError } : {}) });
       } finally {
         if (conn) conn.release();
       }

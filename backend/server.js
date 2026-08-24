@@ -6917,6 +6917,179 @@ WHERE ci.user_id = ?
     });
   });
 
+  // ── robots.txt ─────────────────────────────────────────────────────────────
+  // Tells Google (and all crawlers) what they may index, and where the sitemap is.
+  // Without this file, some crawlers assume restricted access.
+  app.get('/robots.txt', (req, res) => {
+    res.type('text/plain');
+    res.send(
+`User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /admin
+Disallow: /books?*format=*
+Disallow: /books?*rating=*
+Disallow: /books?*popularity=*
+Disallow: /books?*category=*
+
+Sitemap: https://api.englischbuecher.de/sitemap.xml`
+    );
+  });
+
+  // ── Legacy URL redirects ────────────────────────────────────────────────────
+  // Google crawled old /privacy-policy path — redirect to current /privacy
+  app.get('/privacy-policy', (req, res) => {
+    res.redirect(301, '/privacy');
+  });
+
+  // Google crawled old book URLs without ISBN/ID suffix (e.g. /book/the-jungle-book)
+  // Redirect them to the current format: /book/slug-isbn13-id
+  app.get('/book/:slug', async (req, res, next) => {
+    const { slug } = req.params;
+
+    // If slug already ends in digits (new format like slug-9781234567890-42), pass through
+    if (/\d{3,}$/.test(slug)) return next();
+
+    try {
+      const [rows] = await db.execute(
+        `SELECT id, slug, isbn13, isbn10 FROM books WHERE slug = ? AND stock > 0 LIMIT 1`,
+        [slug]
+      );
+      if (rows.length === 0) return next();
+
+      const book = rows[0];
+      const isbn = book.isbn13 || book.isbn10 || '';
+      const newUrl = `/book/${book.slug}${isbn ? '-' + isbn : ''}-${book.id}`;
+      return res.redirect(301, newUrl);
+    } catch (err) {
+      return next();
+    }
+  });
+
+  // ── Google Merchant Center product feed (/feed.xml) ────────────────────────
+  // Submit this URL in Google Merchant Center → Products → Feeds
+  // URL: https://api.englischbuecher.de/feed.xml
+  // Format: RSS 2.0 with Google Shopping namespace
+  app.get('/feed.xml', async (req, res) => {
+    try {
+      const frontendUrl = process.env.FRONTEND_URL || 'https://englischbuecher.de';
+      const apiOrigin   = `${req.protocol}://${req.get('host')}`;
+
+      const [books] = await db.execute(`
+        SELECT
+          b.id, b.slug, b.title_en, b.title_de,
+          b.description_en, b.description_de,
+          b.isbn13, b.isbn10,
+          b.price, b.original_price, b.sale_price,
+          b.image, b.stock,
+          b.publisher, b.author,
+          b.format, b.language,
+          b.category_id,
+          c.name_en AS category_name
+        FROM books b
+        LEFT JOIN categories c ON c.id = b.category_id
+        WHERE b.stock > 0
+          AND b.is_available = 1
+          AND b.image IS NOT NULL
+          AND b.image != ''
+          AND b.price > 0
+        ORDER BY b.popularity_score DESC, b.created_at DESC
+      `);
+
+      const items = books.map((book) => {
+        // Build the canonical product page URL
+        const isbn     = book.isbn13 || book.isbn10 || '';
+        const pageUrl  = `${frontendUrl}/book/${book.slug}${isbn ? '-' + isbn : ''}-${book.id}`;
+
+        // Build absolute image URL
+        const imageUrl = book.image?.startsWith('/uploads')
+          ? `${apiOrigin}${book.image}`
+          : book.image;
+
+        // Active selling price — use sale_price if set, otherwise price
+        const sellingPrice = book.sale_price
+          ? parseFloat(book.sale_price).toFixed(2)
+          : parseFloat(book.price).toFixed(2);
+
+        // Description — prefer English, fallback to German, fallback to title
+        const rawDesc = (book.description_en || book.description_de || book.title_en || '').trim();
+        // Strip HTML tags and truncate to 5000 chars (Google limit)
+        const description = rawDesc
+          .replace(/<[^>]*>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .substring(0, 5000);
+
+        // Google product category for books
+        const googleCategory = 'Media > Books > Non-Fiction'  ; // adjust if you have fiction
+
+        // Condition is always new (you sell new books)
+        const condition = 'new';
+
+        // Availability
+        const availability = book.stock > 0 ? 'in stock' : 'out of stock';
+
+        // Brand = publisher if available, else author
+        const brand = (book.publisher || book.author || 'Unknown').substring(0, 70);
+
+        // Unique product ID — prefer ISBN13, then ISBN10, then internal ID
+        const productId = book.isbn13 || book.isbn10 || `EB-${book.id}`;
+
+        // GTIN = ISBN13 (must be exactly 13 digits for Google to accept)
+        const gtin = book.isbn13 && /^\d{13}$/.test(book.isbn13)
+          ? `<g:gtin>${book.isbn13}</g:gtin>`
+          : '';
+
+        // MPN = ISBN10 as manufacturer part number fallback
+        const mpn = !book.isbn13 && book.isbn10
+          ? `<g:mpn>${book.isbn10}</g:mpn>`
+          : '';
+
+        return `
+    <item>
+      <g:id>${productId}</g:id>
+      <g:title><![CDATA[${book.title_en}]]></g:title>
+      <g:description><![CDATA[${description || book.title_en}]]></g:description>
+      <g:link>${pageUrl}</g:link>
+      <g:image_link>${imageUrl}</g:image_link>
+      <g:condition>${condition}</g:condition>
+      <g:availability>${availability}</g:availability>
+      <g:price>${sellingPrice} EUR</g:price>
+      ${book.sale_price ? `<g:sale_price>${parseFloat(book.sale_price).toFixed(2)} EUR</g:sale_price>` : ''}
+      <g:brand><![CDATA[${brand}]]></g:brand>
+      ${gtin}
+      ${mpn}
+      <g:google_product_category>${googleCategory}</g:google_product_category>
+      <g:product_type><![CDATA[${book.category_name || 'Books'}]]></g:product_type>
+      <g:identifier_exists>${book.isbn13 || book.isbn10 ? 'yes' : 'no'}</g:identifier_exists>
+      <g:item_group_id>book-${book.id}</g:item_group_id>
+      <g:language>${(book.language || 'EN').toLowerCase()}</g:language>
+      <g:shipping>
+        <g:country>DE</g:country>
+        <g:price>2.99 EUR</g:price>
+      </g:shipping>
+    </item>`;
+      }).join('\n');
+
+      const feed = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+  <channel>
+    <title>EnglischBuecher.de — English Books in Germany</title>
+    <link>${frontendUrl}</link>
+    <description>English language books available for delivery across Germany</description>
+    ${items}
+  </channel>
+</rss>`;
+
+      res.header('Content-Type', 'application/xml; charset=UTF-8');
+      res.header('Cache-Control', 'public, max-age=3600');
+      res.send(feed);
+    } catch (err) {
+      console.error('Feed error:', err);
+      res.status(500).send('Error generating feed');
+    }
+  });
+
   app.get('/sitemap.xml', async (req, res) => {
     try {
       const baseUrl = 'https://englischbuecher.de';

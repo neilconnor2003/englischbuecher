@@ -1,6 +1,8 @@
 
 // src/pages/Checkout/CheckoutWrapper.jsx
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import CheckoutPage from './CheckoutPage';
@@ -11,6 +13,8 @@ import { toast } from 'react-toastify';
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const CheckoutWrapper = () => {
+  const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const { items = [], totalPrice = 0 } = useSelector((state) => state.cart);
   const [shippingMode, setShippingMode] = useState('delivery');
   const [clientSecret, setClientSecret] = useState('');
@@ -99,7 +103,28 @@ const CheckoutWrapper = () => {
         }
       } catch (err) {
         if (!cancelled) {
-          toast.error('Failed to initialize payment');
+          if (err.response?.status === 409 && err.response?.data?.error === 'out_of_stock') {
+            const unavailable = err.response.data.items || [];
+            const isDe = i18n.language === 'de';
+            const pickTitle = (item) =>
+              (isDe ? item.title_de : item.title_en) ||
+              item.title_en || item.title_de ||
+              t('checkout_generic_sold_out');
+
+            const msg = unavailable.length === 1
+              ? t('checkout_item_sold_out_single', {
+                  title: pickTitle(unavailable[0]),
+                  available: unavailable[0].available,
+                })
+              : t('checkout_item_sold_out_multiple', {
+                  titles: unavailable.map(pickTitle).join(', '),
+                });
+
+            toast.error(msg);
+            navigate('/cart');
+          } else {
+            toast.error('Failed to initialize payment');
+          }
         }
       } finally {
         if (!cancelled) {
