@@ -1,7 +1,7 @@
 
 // frontend/src/pages/Books/Books.jsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation, useNavigationType } from 'react-router-dom';
 import axios from 'axios';
 import { Search } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
@@ -20,6 +20,55 @@ function Books() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
+
+  // --- Scroll position restoration (back-navigation only) ---
+  // ScrollToTop.jsx (the global route-change handler) intentionally does
+  // nothing on back/forward navigation now, expecting the browser's native
+  // scroll restoration to handle it — but this page fetches its book list
+  // async (loading starts true, books start empty), so the page is still
+  // short at the exact moment the browser tries to restore scroll, and it
+  // doesn't retry once the books actually render in. This restores it
+  // manually instead, once loading has actually finished.
+  const location = useLocation();
+  const navigationType = useNavigationType(); // 'PUSH' | 'REPLACE' | 'POP'
+  const scrollKey = `books-scroll:${location.pathname}${location.search}`;
+  const restoredForKeyRef = useRef(null);
+
+  // Continuously remember scroll position while browsing this page, so
+  // whichever way the user leaves (clicking a book, a filter link, etc.)
+  // there's always a fresh position saved to come back to.
+  useEffect(() => {
+    let t;
+    const onScroll = () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        sessionStorage.setItem(scrollKey, String(window.scrollY));
+      }, 150);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      clearTimeout(t);
+    };
+  }, [scrollKey]);
+
+  // Restore it — but only once per arrival via back/forward, and only
+  // after the books have actually finished loading and rendering.
+  useEffect(() => {
+    if (navigationType !== 'POP') return;
+    if (loading) return;
+    if (restoredForKeyRef.current === scrollKey) return;
+    restoredForKeyRef.current = scrollKey;
+
+    const saved = sessionStorage.getItem(scrollKey);
+    if (saved != null) {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: Number(saved), behavior: 'auto' });
+      });
+    }
+  }, [loading, navigationType, scrollKey]);
+  // --- End scroll restoration ---
+
 
   // Filter options from DB (authors, publishers, formats, editions, categories)
   const [filterOptions, setFilterOptions] = useState({

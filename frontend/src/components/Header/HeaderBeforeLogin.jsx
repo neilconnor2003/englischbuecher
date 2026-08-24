@@ -27,6 +27,16 @@ function HeaderBeforeLogin() {
 
   const debounceRef = useRef(null);
   const cancelRef = useRef(null);
+  const mountedRef = useRef(true);
+
+  React.useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (cancelRef.current) cancelRef.current.cancel('Component unmounted');
+    };
+  }, []);
 
   const fetchSuggestions = async (q) => {
     // cancel previous request if still in flight
@@ -56,14 +66,14 @@ function HeaderBeforeLogin() {
           )
         };
       });
-      setOptions(opts);
+      if (mountedRef.current) setOptions(opts);
     } catch (e) {
       if (!axios.isCancel(e)) {
         console.error('header suggestions failed:', e?.message);
-        setOptions([]);
+        if (mountedRef.current) setOptions([]);
       }
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   };
 
@@ -132,6 +142,7 @@ function HeaderBeforeLogin() {
             style={{ width: '100%' }}              // respect container width
             popupMatchSelectWidth={false}          // dropdown wider than input when needed
             loading={loading}
+            virtual={false}
             onKeyDown={(e) => { if (e.key === 'Enter') doSearch(); }}
           />
           <SearchOutlined
