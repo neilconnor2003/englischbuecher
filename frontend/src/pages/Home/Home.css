@@ -32,17 +32,35 @@
 }
 
 /* ── PAGE SHELL ─────────────────────────────────────────── */
-.home-page-v2 {
+/*.home-page-v2 {
   background: var(--white);
   min-height: 100vh;
   font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, sans-serif;
-  overflow-x: hidden;
+  overflow-x: hidden;*/
   /* Setting overflow-x alone makes the browser silently compute
      overflow-y as 'auto' too (a CSS spec quirk: an explicit overflow-x
      forces the other axis out of 'visible'), which turned this into a
      second, nested scrollable container whenever its content was even
      slightly taller than 100vh. Setting this explicitly prevents that. */
-  overflow-y: visible;
+  /*overflow-y: visible;
+}*/
+.home-page-v2 {
+  background: var(--white);
+  min-height: 100vh;
+  font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, sans-serif;
+  overflow-x: hidden;
+  /* Previous attempt used overflow-y: visible, which looked correct and
+     deployed correctly — but per the CSS Overflow spec, ANY axis whose
+     computed value is 'visible' gets silently converted to 'auto' by the
+     browser as soon as the OTHER axis is anything other than 'visible'
+     (here, overflow-x: hidden triggers it). This applies whether 'visible'
+     was explicit or just the default — writing it out doesn't avoid the
+     conversion. That's why every diagnostic kept showing computed
+     overflow-y: auto despite the source file being exactly right.
+     `clip` sidesteps this entirely: it isn't 'visible', so the pairing
+     rule never triggers, and unlike 'auto' it can never produce a
+     scrollbar in the first place — it just crops any overflow instead. */
+  overflow-y: clip;
 }
 
 .home-page-v2 .container {
