@@ -5947,6 +5947,9 @@ WHERE ci.user_id = ?
   const ordersRouter = require('./routes/orderRoutes')(db, transporter);
   app.use('/api/orders', ordersRouter);
 
+  const giftListsRouter = require('./routes/giftListRoutes')(db);
+  app.use('/api/gift-lists', giftListsRouter);
+
   // ✅ DEBUG: list actual registered routes under /api/orders
   app.get('/api/_debug/orders-routes', (req, res) => {
     const list = (ordersRouter.stack || [])

@@ -9,6 +9,7 @@ import CheckoutPage from './CheckoutPage';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
+import { buildGiftClaimsForCheckout } from '../../utils/giftClaims';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -86,6 +87,11 @@ const CheckoutWrapper = () => {
             shipping_provider: shippingMode === 'pickup' ? 'PICKUP' : 'DPD',
             shipping_service: shippingMode === 'pickup' ? 'Click & Collect' : 'Standard',
 
+            // Gift-list claims for this checkout attempt, if any — built
+            // from sessionStorage, capped to what's actually in the cart.
+            // Empty array for every normal checkout with no gift items.
+            giftClaims: buildGiftClaimsForCheckout(items),
+
           },
           //{ withCredentials: true }
 
@@ -121,6 +127,11 @@ const CheckoutWrapper = () => {
                 });
 
             toast.error(msg);
+            navigate('/cart');
+          } else if (err.response?.status === 409 && err.response?.data?.error === 'gift_item_unavailable') {
+            // Someone else claimed this gift item between add-to-cart and
+            // checkout — same idea as out_of_stock, just for gift claims.
+            toast.error(t('gift_item_no_longer_available') || 'Sorry, one of the gift items you selected was just claimed by someone else.');
             navigate('/cart');
           } else {
             toast.error('Failed to initialize payment');
