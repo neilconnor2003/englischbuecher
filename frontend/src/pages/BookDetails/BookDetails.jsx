@@ -5,7 +5,7 @@ import axios from 'axios';
 import {
   ShoppingCart, ArrowLeft, Check, Share2,
   Calendar, BookOpen, Hash, Globe, Building,
-  Weight, Ruler, Award, Layers, Book, MapPin
+  Weight, Ruler, Award, Layers, Book, MapPin, Gift
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
@@ -20,6 +20,7 @@ import { AuthContext } from '../../context/AuthContext';
 import BookCard from '../../components/Book/BookCard';
 import { Heart } from 'lucide-react';
 import { toast } from 'react-toastify';
+import BrandModal, { brandInputStyle, brandLabelStyle } from '../../components/common/BrandModal';
 import { generateBookUrl } from '../../utils/seoUrl';
 import BookReviews from '../../components/Book/BookReviews';
 import BooksSlider from '../../components/BooksSlider/BooksSlider';
@@ -386,6 +387,151 @@ function BookDetails() {
       </button>
     );
   };
+
+  const [giftModalOpen, setGiftModalOpen] = useState(false);
+  const [giftLists, setGiftLists] = useState([]);
+  const [giftListsLoading, setGiftListsLoading] = useState(false);
+  const [selectedGiftListId, setSelectedGiftListId] = useState(null);
+  const [giftQty, setGiftQty] = useState(1);
+  const [addingToGiftList, setAddingToGiftList] = useState(false);
+  const [showNewListField, setShowNewListField] = useState(false);
+  const [newListTitle, setNewListTitle] = useState('');
+
+  const openGiftModal = () => {
+    if (!user) {
+      navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`);
+      return;
+    }
+    setGiftModalOpen(true);
+    setSelectedGiftListId(null);
+    setGiftQty(1);
+    setShowNewListField(false);
+    setNewListTitle('');
+    setGiftListsLoading(true);
+    axios.get(`${config.API_URL}/api/gift-lists`, { withCredentials: true })
+      .then(({ data }) => {
+        setGiftLists(data || []);
+        if (data && data.length > 0) setSelectedGiftListId(data[0].id);
+        else setShowNewListField(true);
+      })
+      .catch(() => toast.error(t('gift_lists_load_failed') || 'Could not load your lists'))
+      .finally(() => setGiftListsLoading(false));
+  };
+
+  const confirmAddToGiftList = async () => {
+    setAddingToGiftList(true);
+    try {
+      let listId = selectedGiftListId;
+      if (showNewListField) {
+        if (!newListTitle.trim()) { setAddingToGiftList(false); return; }
+        const { data } = await axios.post(`${config.API_URL}/api/gift-lists`, {
+          title: newListTitle.trim(),
+        }, { withCredentials: true });
+        listId = data.id;
+      }
+      if (!listId) { setAddingToGiftList(false); return; }
+
+      await axios.post(`${config.API_URL}/api/gift-lists/${listId}/items`, {
+        book_id: book.id,
+        quantity_desired: giftQty,
+      }, { withCredentials: true });
+
+      toast.success(t('added_to_list') || 'Added to list');
+      setGiftModalOpen(false);
+    } catch {
+      toast.error(t('update_failed') || 'Failed');
+    } finally {
+      setAddingToGiftList(false);
+    }
+  };
+
+  const GiftListButton = () => (
+    <>
+      <button onClick={openGiftModal} className="wishlist-btn">
+        <Gift size={18} /> {t('save_to_gift_list') || 'Save to a Gift List'}
+      </button>
+
+      <BrandModal
+        open={giftModalOpen}
+        onClose={() => setGiftModalOpen(false)}
+        icon={Gift}
+        accent="default"
+        title={t('save_to_gift_list') || 'Save to a Gift List'}
+        primaryLabel={t('add') || 'Add'}
+        primaryLoading={addingToGiftList}
+        onPrimary={confirmAddToGiftList}
+      >
+        {giftListsLoading ? (
+          <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>{t('loading') || 'Loading...'}</p>
+        ) : (
+          <>
+            {giftLists.length > 0 && !showNewListField && (
+              <div style={{ marginBottom: 14 }}>
+                <label style={brandLabelStyle}>{t('choose_a_list') || 'Choose a list'}</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
+                  {giftLists.map(l => (
+                    <label key={l.id} style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '9px 12px', borderRadius: 10,
+                      border: `1.5px solid ${selectedGiftListId === l.id ? '#7c3aed' : '#ede9fe'}`,
+                      background: selectedGiftListId === l.id ? '#faf5ff' : '#fff',
+                      cursor: 'pointer', fontSize: 13.5,
+                    }}>
+                      <input
+                        type="radio"
+                        name="giftListPick"
+                        checked={selectedGiftListId === l.id}
+                        onChange={() => setSelectedGiftListId(l.id)}
+                      />
+                      {l.title}
+                    </label>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowNewListField(true)}
+                  style={{ marginTop: 8, background: 'none', border: 'none', color: '#7c3aed', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', padding: 0 }}
+                >
+                  + {t('create_new_list') || 'Create a new list instead'}
+                </button>
+              </div>
+            )}
+
+            {showNewListField && (
+              <div style={{ marginBottom: 14 }}>
+                <label style={brandLabelStyle}>{t('list_title') || 'List title'}</label>
+                <input
+                  autoFocus
+                  style={brandInputStyle}
+                  value={newListTitle}
+                  onChange={e => setNewListTitle(e.target.value)}
+                  placeholder="e.g. My Birthday"
+                />
+                {giftLists.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowNewListField(false)}
+                    style={{ marginTop: 8, background: 'none', border: 'none', color: '#7c3aed', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', padding: 0 }}
+                  >
+                    {t('choose_existing_list') || 'Choose an existing list instead'}
+                  </button>
+                )}
+              </div>
+            )}
+
+            <div>
+              <label style={brandLabelStyle}>{t('quantity') || 'Quantity'}</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <button type="button" onClick={() => setGiftQty(q => Math.max(1, q - 1))} style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid #ede9fe', background: '#faf5ff', color: '#7c3aed', cursor: 'pointer' }}>−</button>
+                <span style={{ minWidth: 20, textAlign: 'center', fontWeight: 700 }}>{giftQty}</span>
+                <button type="button" onClick={() => setGiftQty(q => q + 1)} style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid #ede9fe', background: '#faf5ff', color: '#7c3aed', cursor: 'pointer' }}>+</button>
+              </div>
+            </div>
+          </>
+        )}
+      </BrandModal>
+    </>
+  );
 
   const handleNotifySubmit = async () => {
     if (!book) return;
@@ -770,6 +916,7 @@ function BookDetails() {
 
                 <div className="action-buttons">
                   <WishlistButton book={book} />
+                  <GiftListButton />
                   <button onClick={handleShare} className="share-btn">
                     <Share2 size={18} /> {t('share')}
                   </button>

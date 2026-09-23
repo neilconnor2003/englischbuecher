@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Banner from '../../components/Banner/Banner';
 import config from '@config';
-import { Image, Sparkles } from 'lucide-react';
+import { Image, Sparkles, Gift } from 'lucide-react';
 import { useGetCategoriesQuery } from '../../admin/features/book/bookApiSlice';
 import axios from 'axios';
 import BooksSlider from '../../components/BooksSlider/BooksSlider';
@@ -19,6 +19,29 @@ import { addItem, replaceWithServerCart } from '../../features/cart/cartSlice';
 
 
 // ─── useLazySection (unchanged) ──────────────────────────
+function GiftListPromo({ de }) {
+  return (
+    <section className="gift-promo-section">
+      <div className="container">
+        <div className="gift-promo-card">
+          <div className="gift-promo-icon"><Gift size={30} /></div>
+          <div className="gift-promo-text">
+            <h3>{de ? 'Erstelle eine Geschenkliste' : 'Create a Gift List'}</h3>
+            <p>
+              {de
+                ? 'Für Geburtstage, Feiertage oder einfach so — erstelle eine Liste deiner Lieblingsbücher und teile sie mit Familie und Freunden.'
+                : "For birthdays, holidays, or just because — build a list of books you'd love and share it with friends and family."}
+            </p>
+          </div>
+          <Link to="/lists" className="gift-promo-btn">
+            {de ? 'Liste erstellen' : 'Create a List'}
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function useLazySection() {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
@@ -849,6 +872,9 @@ function Home() {
           </div>
         </div>
       </section>
+
+      {/* ── GIFT LIST PROMO ───────────────────────────── */}
+      <GiftListPromo de={de} />
 
       {/* ── BOOK OF THE WEEK ──────────────────────────── */}
       <BookOfTheWeek de={de} />
