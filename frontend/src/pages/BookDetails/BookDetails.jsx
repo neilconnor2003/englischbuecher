@@ -121,6 +121,20 @@ function BookDetails() {
 
   const [author, setAuthor] = useState(null);
 
+  // Gift-list button state — must live here (before the early returns
+  // below), not next to where GiftListButton is defined further down,
+  // or React sees a different number of hooks between the loading and
+  // loaded renders and crashes (Rules of Hooks).
+  const [giftModalOpen, setGiftModalOpen] = useState(false);
+  const [giftLists, setGiftLists] = useState([]);
+  const [giftListsLoading, setGiftListsLoading] = useState(false);
+  const [selectedGiftListId, setSelectedGiftListId] = useState(null);
+  const [giftQty, setGiftQty] = useState(1);
+  const [addingToGiftList, setAddingToGiftList] = useState(false);
+  const [showNewListField, setShowNewListField] = useState(false);
+  const [newListTitle, setNewListTitle] = useState('');
+
+
   const toSlug = (s = '') =>
     String(s).normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
       .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -387,15 +401,6 @@ function BookDetails() {
       </button>
     );
   };
-
-  const [giftModalOpen, setGiftModalOpen] = useState(false);
-  const [giftLists, setGiftLists] = useState([]);
-  const [giftListsLoading, setGiftListsLoading] = useState(false);
-  const [selectedGiftListId, setSelectedGiftListId] = useState(null);
-  const [giftQty, setGiftQty] = useState(1);
-  const [addingToGiftList, setAddingToGiftList] = useState(false);
-  const [showNewListField, setShowNewListField] = useState(false);
-  const [newListTitle, setNewListTitle] = useState('');
 
   const openGiftModal = () => {
     if (!user) {
