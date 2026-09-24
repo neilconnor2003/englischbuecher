@@ -6,8 +6,9 @@ import axios from 'axios';
 import config from '../../config';
 import { AuthContext } from '../../context/AuthContext';
 import { generateBookUrl } from '../../utils/seoUrl';
-import { ArrowLeft, Gift, Minus, Plus, Search, Share2, Trash2 } from 'lucide-react';
-import BrandModal from '../../components/common/BrandModal';
+import { ArrowLeft, Gift, Minus, Plus, Search, Share2, Trash2, Pencil, Calendar } from 'lucide-react';
+import BrandModal, { brandInputStyle, brandLabelStyle } from '../../components/common/BrandModal';
+import ShareListModal from './ShareListModal';
 import { toast } from 'react-toastify';
 import './GiftLists.css';
 
@@ -28,6 +29,12 @@ export default function GiftListManage() {
 
   const [shareOpen, setShareOpen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState(null);
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editOccasion, setEditOccasion] = useState('');
+  const [editEventDate, setEditEventDate] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!user) { navigate(`/login?redirect=/lists/${id}/manage`); return; }
@@ -111,6 +118,31 @@ export default function GiftListManage() {
 
   const shareUrl = list ? `${window.location.origin}/g/${list.share_slug}` : '';
 
+  const openEditModal = () => {
+    setEditTitle(list.title || '');
+    setEditOccasion(list.occasion || '');
+    setEditEventDate(list.event_date ? list.event_date.slice(0, 10) : '');
+    setEditOpen(true);
+  };
+
+  const saveEdit = async () => {
+    if (!editTitle.trim()) return;
+    setSaving(true);
+    try {
+      await axios.patch(`${config.API_URL}/api/gift-lists/${id}`, {
+        title: editTitle.trim(),
+        occasion: editOccasion.trim() || null,
+        event_date: editEventDate || null,
+      }, { withCredentials: true });
+      setEditOpen(false);
+      load();
+    } catch {
+      toast.error(t('update_failed') || 'Failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) return <div className="gl-page"><div className="gl-loading">{t('loading') || 'Loading...'}</div></div>;
   if (!list) return null;
 
@@ -122,10 +154,28 @@ export default function GiftListManage() {
         </button>
 
         <div className="gl-header-row">
-          <h1 className="gl-title"><Gift size={26} /> {list.title}</h1>
-          <button className="gl-btn-primary" onClick={() => setShareOpen(true)}>
-            <Share2 size={16} /> {t('share') || 'Share'}
-          </button>
+          <div>
+            <h1 className="gl-title"><Gift size={26} /> {list.title}</h1>
+            <div className="gl-manage-meta">
+              {list.occasion && <span className="gl-manage-meta-item">{list.occasion}</span>}
+              {list.event_date && (
+                <span className="gl-manage-meta-item">
+                  <Calendar size={12} /> {new Date(list.event_date).toLocaleDateString()}
+                </span>
+              )}
+              {!list.occasion && !list.event_date && (
+                <span className="gl-manage-meta-item gl-manage-meta-empty">{t('no_occasion_set') || 'No occasion set'}</span>
+              )}
+            </div>
+          </div>
+          <div className="gl-header-actions">
+            <button className="gl-btn-ghost" onClick={openEditModal}>
+              <Pencil size={14} /> {t('edit') || 'Edit'}
+            </button>
+            <button className="gl-btn-primary" onClick={() => setShareOpen(true)}>
+              <Share2 size={16} /> {t('share') || 'Share'}
+            </button>
+          </div>
         </div>
 
         <div className="gl-search-box">
@@ -189,20 +239,36 @@ export default function GiftListManage() {
         )}
       </div>
 
-      <BrandModal
+      <ShareListModal
         open={shareOpen}
         onClose={() => setShareOpen(false)}
-        icon={Share2}
-        accent="default"
-        title={t('share_list') || 'Share this list'}
-        message={shareUrl}
-        primaryLabel={t('copy_link') || 'Copy Link'}
-        onPrimary={() => {
-          navigator.clipboard.writeText(shareUrl);
-          toast.success(t('link_copied') || 'Link copied!');
-          setShareOpen(false);
-        }}
+        url={shareUrl}
+        title={list.title}
       />
+
+      <BrandModal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        icon={Pencil}
+        accent="default"
+        title={t('edit_list') || 'Edit List'}
+        primaryLabel={t('save_changes') || 'Save Changes'}
+        primaryLoading={saving}
+        onPrimary={saveEdit}
+      >
+        <div style={{ marginBottom: 14 }}>
+          <label style={brandLabelStyle}>{t('list_title') || 'List title'}</label>
+          <input style={brandInputStyle} value={editTitle} onChange={e => setEditTitle(e.target.value)} autoFocus />
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={brandLabelStyle}>{t('occasion') || 'Occasion (optional)'}</label>
+          <input style={brandInputStyle} value={editOccasion} onChange={e => setEditOccasion(e.target.value)} placeholder="e.g. Birthday, Wedding" />
+        </div>
+        <div>
+          <label style={brandLabelStyle}>{t('event_date') || 'Event date (optional)'}</label>
+          <input type="date" style={brandInputStyle} value={editEventDate} onChange={e => setEditEventDate(e.target.value)} />
+        </div>
+      </BrandModal>
 
       <BrandModal
         open={!!confirmDialog}

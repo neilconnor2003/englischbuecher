@@ -68,6 +68,25 @@ module.exports = (db) => {
   });
 
   // ── Owner: delete a list ───────────────────────────────────────
+  // ── Owner: edit a list's own details ────────────────────────────
+  router.patch('/:id', requireAuth, async (req, res) => {
+    try {
+      const { title, occasion, event_date } = req.body;
+      if (!title || !title.trim()) return res.status(400).json({ error: 'Title required' });
+
+      const [result] = await db.execute(
+        `UPDATE gift_lists SET title = ?, occasion = ?, event_date = ?
+         WHERE id = ? AND user_id = ?`,
+        [title.trim(), occasion || null, event_date || null, req.params.id, req.user.id]
+      );
+      if (result.affectedRows === 0) return res.status(404).json({ error: 'Not found' });
+      res.json({ success: true });
+    } catch (err) {
+      console.error('PATCH /api/gift-lists/:id error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
   router.delete('/:id', requireAuth, async (req, res) => {
     try {
       const [result] = await db.execute(

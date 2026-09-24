@@ -7,6 +7,7 @@ import config from '../../config';
 import { AuthContext } from '../../context/AuthContext';
 import { Gift, Plus, Share2, Trash2, Calendar, ChevronRight } from 'lucide-react';
 import BrandModal, { brandInputStyle, brandLabelStyle } from '../../components/common/BrandModal';
+import ShareListModal from './ShareListModal';
 import { toast } from 'react-toastify';
 import './GiftLists.css';
 
@@ -180,19 +181,11 @@ export default function MyGiftLists() {
         </div>
       </BrandModal>
 
-      <BrandModal
+      <ShareListModal
         open={!!shareModal}
         onClose={() => setShareModal(null)}
-        icon={Share2}
-        accent="default"
-        title={t('share_list') || 'Share this list'}
-        message={shareModal ? shareUrl(shareModal.share_slug) : ''}
-        primaryLabel={t('copy_link') || 'Copy Link'}
-        onPrimary={() => {
-          navigator.clipboard.writeText(shareUrl(shareModal.share_slug));
-          toast.success(t('link_copied') || 'Link copied!');
-          setShareModal(null);
-        }}
+        url={shareModal ? shareUrl(shareModal.share_slug) : ''}
+        title={shareModal?.title}
       />
 
       <BrandModal

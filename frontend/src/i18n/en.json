@@ -692,5 +692,12 @@
   "choose_a_list": "Choose a list",
   "create_new_list": "Create a new list instead",
   "choose_existing_list": "Choose an existing list instead",
-  "add": "Add"
+  "add": "Add",
+  "share_list_text": "Check out my gift list: {{title}}",
+  "share_list_text_generic": "Check out my gift list",
+  "share_via": "Share via...",
+  "occasion_label": "Occasion",
+  "edit_list": "Edit List",
+  "edit": "Edit",
+  "no_occasion_set": "No occasion set"
 }

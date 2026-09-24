@@ -23,11 +23,70 @@
 .gl-header-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 24px;
 }
+
+.gl-header-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+.gl-manage-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.gl-manage-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--purple, #7C3AED);
+  background: #faf5ff;
+  border: 1px solid #ede9fe;
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+.gl-manage-meta-empty { color: #9ca3af; background: #f9fafb; border-color: #f3f4f6; font-weight: 500; }
+
+/* Share modal options */
+.gl-share-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.gl-share-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1.5px solid #ede9fe;
+  background: #fff;
+  color: var(--ink, #1a1a2e);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color .15s ease, background .15s ease;
+}
+.gl-share-option:hover { border-color: var(--purple, #7C3AED); background: #faf5ff; }
+.gl-share-option svg { color: var(--purple, #7C3AED); flex-shrink: 0; }
+.gl-share-url-box {
+  font-size: 12px;
+  color: #6b7280;
+  background: #f9fafb;
+  border: 1px solid #f3f4f6;
+  border-radius: 8px;
+  padding: 8px 12px;
+  word-break: break-all;
+}
+
 
 .gl-title {
   font-family: 'Fraunces', Georgia, serif;

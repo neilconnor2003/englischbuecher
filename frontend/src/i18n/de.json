@@ -668,5 +668,12 @@
   "choose_a_list": "Liste auswählen",
   "create_new_list": "Stattdessen eine neue Liste erstellen",
   "choose_existing_list": "Stattdessen eine bestehende Liste wählen",
-  "add": "Hinzufügen"
+  "add": "Hinzufügen",
+  "share_list_text": "Schau dir meine Geschenkliste an: {{title}}",
+  "share_list_text_generic": "Schau dir meine Geschenkliste an",
+  "share_via": "Teilen über...",
+  "occasion_label": "Anlass",
+  "edit_list": "Liste bearbeiten",
+  "edit": "Bearbeiten",
+  "no_occasion_set": "Kein Anlass angegeben"
 }
