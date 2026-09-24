@@ -1,10 +1,11 @@
 // frontend/src/pages/GiftLists/GiftListManage.jsx
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import config from '../../config';
 import { AuthContext } from '../../context/AuthContext';
+import { generateBookUrl } from '../../utils/seoUrl';
 import { ArrowLeft, Gift, Minus, Plus, Search, Share2, Trash2 } from 'lucide-react';
 import BrandModal from '../../components/common/BrandModal';
 import { toast } from 'react-toastify';
@@ -80,7 +81,8 @@ export default function GiftListManage() {
     }
   };
 
-  const changeQty = async (item, delta) => {
+  const changeQty = async (item, delta, e) => {
+    e.preventDefault(); e.stopPropagation();
     const next = Math.max(1, item.quantity_desired + delta);
     setItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity_desired: next } : i));
     try {
@@ -93,7 +95,8 @@ export default function GiftListManage() {
     }
   };
 
-  const removeItem = (item) => {
+  const removeItem = (e, item) => {
+    e.preventDefault(); e.stopPropagation();
     setConfirmDialog({
       message: t('remove_from_list_confirm') || 'Remove this book from the list?',
       onConfirm: async () => {
@@ -152,24 +155,36 @@ export default function GiftListManage() {
             <p>{t('gift_list_no_items') || 'No books added yet — search above to add some.'}</p>
           </div>
         ) : (
-          <div className="gl-items-list">
-            {items.map(it => (
-              <div key={it.id} className="gl-item-row">
-                <img src={it.image} alt="" className="gl-item-img" />
-                <div className="gl-item-info">
-                  <span className="gl-item-title">{it.title_en || it.title_de}</span>
-                  <span className="gl-item-price">€{Number(it.price).toFixed(2)}</span>
+          <div className="gl-tiles-grid">
+            {items.map(it => {
+              const bookUrl = generateBookUrl({
+                id: it.book_id,
+                title_en: it.title_en,
+                title_de: it.title_de,
+                slug: it.slug,
+                isbn13: it.isbn13,
+                isbn10: it.isbn10,
+              });
+              return (
+                <div key={it.id} className="gl-tile">
+                  <button className="gl-tile-remove" onClick={(e) => removeItem(e, it)} title={t('remove') || 'Remove'}>
+                    <Trash2 size={14} />
+                  </button>
+                  <Link to={bookUrl} className="gl-tile-cover-link">
+                    <img src={it.image} alt="" className="gl-tile-cover" />
+                  </Link>
+                  <div className="gl-tile-body">
+                    <Link to={bookUrl} className="gl-tile-title">{it.title_en || it.title_de}</Link>
+                    <span className="gl-tile-price">€{Number(it.price).toFixed(2)}</span>
+                    <div className="gl-tile-qty">
+                      <button onClick={(e) => changeQty(it, -1, e)} disabled={it.quantity_desired <= 1}><Minus size={13} /></button>
+                      <span>{it.quantity_desired}</span>
+                      <button onClick={(e) => changeQty(it, 1, e)}><Plus size={13} /></button>
+                    </div>
+                  </div>
                 </div>
-                <div className="gl-item-qty">
-                  <button onClick={() => changeQty(it, -1)} disabled={it.quantity_desired <= 1}><Minus size={14} /></button>
-                  <span>{it.quantity_desired}</span>
-                  <button onClick={() => changeQty(it, 1)}><Plus size={14} /></button>
-                </div>
-                <button className="gl-item-remove" onClick={() => removeItem(it)}>
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

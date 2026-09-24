@@ -5,15 +5,16 @@ import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import config from '../../config';
 import { AuthContext } from '../../context/AuthContext';
-import { Gift, Plus, Share2, Trash2 } from 'lucide-react';
+import { Gift, Plus, Share2, Trash2, Calendar, ChevronRight } from 'lucide-react';
 import BrandModal, { brandInputStyle, brandLabelStyle } from '../../components/common/BrandModal';
 import { toast } from 'react-toastify';
 import './GiftLists.css';
 
 export default function MyGiftLists() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
+  const isDe = i18n.language === 'de';
 
   const [lists, setLists] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,7 +63,8 @@ export default function MyGiftLists() {
     }
   };
 
-  const handleDelete = (list) => {
+  const handleDelete = (e, list) => {
+    e.preventDefault(); e.stopPropagation();
     setConfirmDialog({
       message: `${t('delete_gift_list_confirm') || 'Delete'} "${list.title}"?`,
       onConfirm: async () => {
@@ -75,46 +77,82 @@ export default function MyGiftLists() {
     });
   };
 
+  const handleShare = (e, list) => {
+    e.preventDefault(); e.stopPropagation();
+    setShareModal(list);
+  };
+
   const shareUrl = (slug) => `${window.location.origin}/g/${slug}`;
+
+  const formatDate = (d) => {
+    if (!d) return null;
+    const date = new Date(d);
+    return date.toLocaleDateString(isDe ? 'de-DE' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
 
   return (
     <div className="gl-page">
       <div className="gl-container">
-        <div className="gl-header-row">
-          <h1 className="gl-title"><Gift size={26} /> {t('my_gift_lists') || 'My Gift Lists'}</h1>
-          <button className="gl-btn-primary" onClick={() => setCreateOpen(true)}>
-            <Plus size={16} /> {t('new_list') || 'New List'}
-          </button>
+        <div className="gl-hero">
+          <Gift size={30} />
+          <h1 className="gl-title">{t('my_gift_lists') || 'My Gift Lists'}</h1>
+          <p className="gl-hero-sub">
+            {isDe
+              ? 'Erstelle Listen für jeden Anlass und teile sie mit Familie und Freunden.'
+              : 'Create a list for any occasion and share it with friends and family.'}
+          </p>
         </div>
 
         {loading ? (
           <div className="gl-loading">{t('loading') || 'Loading...'}</div>
-        ) : lists.length === 0 ? (
-          <div className="gl-empty">
-            <Gift size={40} className="gl-empty-icon" />
-            <p>{t('no_gift_lists') || "You haven't created any gift lists yet."}</p>
-            <button className="gl-btn-primary" onClick={() => setCreateOpen(true)}>
-              <Plus size={16} /> {t('create_first_list') || 'Create your first list'}
-            </button>
-          </div>
         ) : (
           <div className="gl-list-grid">
+            <button className="gl-new-tile" onClick={() => setCreateOpen(true)}>
+              <div className="gl-new-tile-icon"><Plus size={26} /></div>
+              <span>{t('new_list') || 'New List'}</span>
+            </button>
+
             {lists.map(l => (
-              <div key={l.id} className="gl-card">
-                <Link to={`/lists/${l.id}/manage`} className="gl-card-title">{l.title}</Link>
-                {l.occasion && <p className="gl-card-occasion">{l.occasion}</p>}
-                <p className="gl-card-meta">{l.item_count} {t('items') || 'items'}</p>
-                <div className="gl-card-actions">
-                  <button className="gl-btn-ghost" onClick={() => setShareModal(l)}>
-                    <Share2 size={14} /> {t('share') || 'Share'}
-                  </button>
-                  <button className="gl-btn-ghost gl-btn-danger" onClick={() => handleDelete(l)}>
-                    <Trash2 size={14} />
-                  </button>
+              <Link to={`/lists/${l.id}/manage`} key={l.id} className="gl-card">
+                <div className="gl-card-covers">
+                  {l.preview_images && l.preview_images.length > 0 ? (
+                    l.preview_images.map((img, i) => (
+                      <img key={i} src={img} alt="" className="gl-card-cover-img" style={{ zIndex: 3 - i, left: `${i * 18}px` }} />
+                    ))
+                  ) : (
+                    <div className="gl-card-covers-empty"><Gift size={22} /></div>
+                  )}
                 </div>
-              </div>
+
+                <div className="gl-card-body">
+                  <span className="gl-card-title">{l.title}</span>
+                  {l.occasion && <span className="gl-card-occasion">{l.occasion}</span>}
+                  <div className="gl-card-meta-row">
+                    <span className="gl-card-meta">{l.item_count} {t('items') || 'items'}</span>
+                    {l.event_date && (
+                      <span className="gl-card-meta">
+                        <Calendar size={11} /> {formatDate(l.event_date)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="gl-card-actions">
+                  <button className="gl-icon-btn" onClick={(e) => handleShare(e, l)} title={t('share') || 'Share'}>
+                    <Share2 size={15} />
+                  </button>
+                  <button className="gl-icon-btn gl-icon-btn-danger" onClick={(e) => handleDelete(e, l)} title={t('delete') || 'Delete'}>
+                    <Trash2 size={15} />
+                  </button>
+                  <span className="gl-card-chevron"><ChevronRight size={18} /></span>
+                </div>
+              </Link>
             ))}
           </div>
+        )}
+
+        {!loading && lists.length === 0 && (
+          <p className="gl-hint-text">{t('no_gift_lists') || "You haven't created any gift lists yet — click the tile above to start."}</p>
         )}
       </div>
 

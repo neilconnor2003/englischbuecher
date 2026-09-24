@@ -25,6 +25,22 @@ module.exports = (db) => {
         GROUP BY gl.id
         ORDER BY gl.created_at DESC
       `, [req.user.id]);
+
+      // Small cover-preview thumbnails per list, for the overview cards.
+      // A tiny extra query per list — fine here since a personal "my
+      // lists" page is at most a handful of rows.
+      for (const list of lists) {
+        const [previews] = await db.execute(`
+          SELECT b.image
+          FROM gift_list_items gli
+          JOIN books b ON b.id = gli.book_id
+          WHERE gli.gift_list_id = ?
+          ORDER BY gli.added_at DESC
+          LIMIT 3
+        `, [list.id]);
+        list.preview_images = previews.map(p => p.image).filter(Boolean);
+      }
+
       res.json(lists);
     } catch (err) {
       console.error('GET /api/gift-lists error:', err);
