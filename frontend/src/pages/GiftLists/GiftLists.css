@@ -471,6 +471,15 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1; /* absorbs any leftover row height so every footer in a
+              grid row ends at the same point */
+}
+
+/* Pinned to the bottom of the footer via margin-top:auto so the
+   button/badge lines up across a row even when one tile's progress
+   note wraps to a second line and another's doesn't. */
+.gl-shared-tile-action {
+  margin-top: auto;
 }
 
 .gl-progress-bar {

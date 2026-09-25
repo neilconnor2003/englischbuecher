@@ -42,7 +42,8 @@ export default function SharedGiftList() {
 
   const handleAddToCart = async (item) => {
     const remaining = item.quantity_desired - (item.quantity_given || 0);
-    if (remaining <= 0) return;
+    const outOfStock = typeof item.stock === 'number' && item.stock <= 0;
+    if (remaining <= 0 || outOfStock) return;
     setAdding(item.id);
 
     try {
@@ -119,6 +120,7 @@ export default function SharedGiftList() {
               const given = it.quantity_given || 0;
               const remaining = total - given;
               const fullyGiven = remaining <= 0;
+              const outOfStock = typeof it.stock === 'number' && it.stock <= 0;
               const pct = total > 0 ? Math.min(100, Math.round((given / total) * 100)) : 0;
 
               const bookForCard = {
@@ -133,13 +135,13 @@ export default function SharedGiftList() {
                 stock: it.stock,
               };
 
+              // Always a numeric "X of Y given" line — shown even at 0 of N so
+              // buttons line up across every tile in the row regardless of state.
               let progressText;
               if (fullyGiven) {
-                progressText = t('gift_progress_complete') || 'All set — this one is taken care of! 🎉';
-              } else if (given > 0) {
-                progressText = t('gift_progress_partial', { given, total }) || `${given} ${t('of') || 'of'} ${total} ${t('already_given') || 'already given'}`;
+                progressText = t('gift_progress_complete_of', { total }) || `All ${total} given — thank you! 🎉`;
               } else {
-                progressText = t('gift_progress_none') || "No one's claimed this yet — be the first!";
+                progressText = t('gift_progress_partial', { given, total }) || `${given} ${t('of') || 'of'} ${total} ${t('already_given') || 'already given'}`;
               }
 
               return (
@@ -147,26 +149,30 @@ export default function SharedGiftList() {
                   <BookCard book={bookForCard} showActions={false} />
 
                   <div className="gl-shared-tile-footer">
-                    {total > 1 && (
-                      <div className="gl-progress-bar" aria-hidden="true">
-                        <div className="gl-progress-fill" style={{ width: `${pct}%` }} />
-                      </div>
-                    )}
+                    <div className="gl-progress-bar" aria-hidden="true">
+                      <div className="gl-progress-fill" style={{ width: `${pct}%` }} />
+                    </div>
 
                     <p className="gl-progress-note">{progressText}</p>
 
-                    {fullyGiven ? (
-                      <div className="gl-given-badge"><Check size={14} /> {t('already_given_full') || 'Already given'}</div>
-                    ) : (
-                      <button
-                        className="gl-btn-primary gl-shared-add-btn"
-                        disabled={adding === it.id}
-                        onClick={() => handleAddToCart(it)}
-                      >
-                        <ShoppingCart size={15} />
-                        {adding === it.id ? (t('adding') || 'Adding...') : (t('add_to_cart') || 'Add to Cart')}
-                      </button>
-                    )}
+                    <div className="gl-shared-tile-action">
+                      {fullyGiven ? (
+                        <div className="gl-given-badge"><Check size={14} /> {t('already_given_full') || 'Already given'}</div>
+                      ) : outOfStock ? (
+                        <button className="gl-btn-primary gl-shared-add-btn" disabled>
+                          {t('out_of_stock') || 'Out of Stock'}
+                        </button>
+                      ) : (
+                        <button
+                          className="gl-btn-primary gl-shared-add-btn"
+                          disabled={adding === it.id}
+                          onClick={() => handleAddToCart(it)}
+                        >
+                          <ShoppingCart size={15} />
+                          {adding === it.id ? (t('adding') || 'Adding...') : (t('add_to_cart') || 'Add to Cart')}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

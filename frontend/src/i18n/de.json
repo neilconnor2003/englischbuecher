@@ -678,5 +678,6 @@
   "no_occasion_set": "Kein Anlass angegeben",
   "gift_progress_partial": "{{given}} von {{total}} bereits verschenkt",
   "gift_progress_none": "Noch niemand hat sich das gesichert — sei der/die Erste!",
-  "gift_progress_complete": "Erledigt — das ist schon versorgt! 🎉"
+  "gift_progress_complete": "Erledigt — das ist schon versorgt! 🎉",
+  "gift_progress_complete_of": "Alle {{total}} verschenkt — vielen Dank! 🎉"
 }

@@ -54,7 +54,14 @@ function Login() {
 
       if (res.ok && json.success) {
         await checkAuth();
-        window.location.href = redirectTo;
+        // Use in-app navigation (replace, not push) instead of a hard
+        // window.location.href reload. A hard reload still works, but it
+        // stacks an extra full-navigation entry in browser history on top
+        // of whatever page the user came from (e.g. a shared gift list →
+        // cart → login), so "Back" takes several presses to get anywhere
+        // useful. Replacing /login with the destination means one "Back"
+        // press lands exactly where they were before logging in.
+        navigate(redirectTo, { replace: true });
       } else {
         if (json.error?.includes('unverified')) {
           setError(
@@ -104,7 +111,7 @@ function Login() {
         window.removeEventListener('message', handleMessage);
         clearInterval(checkClosed);
         await checkAuth();
-        window.location.href = redirectTo;
+        navigate(redirectTo, { replace: true });
       }
     };
     window.addEventListener('message', handleMessage);
@@ -115,7 +122,7 @@ function Login() {
         window.removeEventListener('message', handleMessage);
         fetch(`${config.API_URL}/api/current-user`, { credentials: 'include' })
           .then(r => r.json())
-          .then(async data => { if (data?.id) { await checkAuth(); window.location.href = redirectTo; } })
+          .then(async data => { if (data?.id) { await checkAuth(); navigate(redirectTo, { replace: true }); } })
           .catch(() => {});
       }
     }, 500);
