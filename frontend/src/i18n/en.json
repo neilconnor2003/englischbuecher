@@ -699,5 +699,8 @@
   "occasion_label": "Occasion",
   "edit_list": "Edit List",
   "edit": "Edit",
-  "no_occasion_set": "No occasion set"
+  "no_occasion_set": "No occasion set",
+  "gift_progress_partial": "{{given}} of {{total}} already given",
+  "gift_progress_none": "No one's claimed this yet — be the first!",
+  "gift_progress_complete": "All set — this one is taken care of! 🎉"
 }

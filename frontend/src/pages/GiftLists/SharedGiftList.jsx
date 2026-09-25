@@ -10,6 +10,7 @@ import { addItem, replaceWithServerCart } from '../../features/cart/cartSlice';
 import { addGiftClaim } from '../../utils/giftClaims';
 import { Gift, Check, ShoppingCart } from 'lucide-react';
 import { toast } from 'react-toastify';
+import BookCard from '../../components/Book/BookCard';
 import './GiftLists.css';
 
 export default function SharedGiftList() {
@@ -114,21 +115,45 @@ export default function SharedGiftList() {
         ) : (
           <div className="gl-shared-grid">
             {items.map(it => {
+              const total = it.quantity_desired || 1;
               const given = it.quantity_given || 0;
-              const remaining = it.quantity_desired - given;
+              const remaining = total - given;
               const fullyGiven = remaining <= 0;
-              return (
-                <div key={it.id} className={`gl-shared-card ${fullyGiven ? 'gl-shared-card--given' : ''}`}>
-                  <img src={it.image} alt="" className="gl-shared-card-img" />
-                  <div className="gl-shared-card-body">
-                    <span className="gl-shared-card-title">{it.title_en || it.title_de}</span>
-                    <span className="gl-shared-card-price">€{Number(it.price).toFixed(2)}</span>
+              const pct = total > 0 ? Math.min(100, Math.round((given / total) * 100)) : 0;
 
-                    {it.quantity_desired > 1 && (
-                      <span className="gl-progress-note">
-                        {given} {t('of') || 'of'} {it.quantity_desired} {t('already_given') || 'already given'}
-                      </span>
+              const bookForCard = {
+                id: it.book_id,
+                title_en: it.title_en,
+                title_de: it.title_de,
+                image: it.image,
+                slug: it.slug,
+                isbn13: it.isbn13,
+                isbn10: it.isbn10,
+                price: it.price,
+                stock: it.stock,
+              };
+
+              let progressText;
+              if (fullyGiven) {
+                progressText = t('gift_progress_complete') || 'All set — this one is taken care of! 🎉';
+              } else if (given > 0) {
+                progressText = t('gift_progress_partial', { given, total }) || `${given} ${t('of') || 'of'} ${total} ${t('already_given') || 'already given'}`;
+              } else {
+                progressText = t('gift_progress_none') || "No one's claimed this yet — be the first!";
+              }
+
+              return (
+                <div key={it.id} className="gl-shared-tile">
+                  <BookCard book={bookForCard} showActions={false} />
+
+                  <div className="gl-shared-tile-footer">
+                    {total > 1 && (
+                      <div className="gl-progress-bar" aria-hidden="true">
+                        <div className="gl-progress-fill" style={{ width: `${pct}%` }} />
+                      </div>
                     )}
+
+                    <p className="gl-progress-note">{progressText}</p>
 
                     {fullyGiven ? (
                       <div className="gl-given-badge"><Check size={14} /> {t('already_given_full') || 'Already given'}</div>
