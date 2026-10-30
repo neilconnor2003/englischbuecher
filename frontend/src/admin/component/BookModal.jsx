@@ -189,7 +189,17 @@ const MultiAuthorPicker = ({ values = [], onChange }) => {
 // -----------------------------------------------------
 const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode = false }) => {
   const { data = { flat: [] } } = useGetCategoriesQuery();
-  const categories = Array.isArray(data.flat) ? data.flat : [];
+  // Tree order (parent, then its children, then theirs...) so indented names
+  // sit under the right parent at any depth.
+  const categories = (() => {
+    const out = [];
+    const walk = (nodes, level) =>
+      [...(nodes || [])]
+        .sort((a, b) => String(a.name_en).localeCompare(String(b.name_en)))
+        .forEach(n => { out.push({ ...n, level }); walk(n.children, level + 1); });
+    walk(Array.isArray(data.hierarchy) ? data.hierarchy : [], 0);
+    return out;
+  })();
   const { data: authorsList = [] } = useGetAuthorsQuery();
 
   const [isbnInput, setIsbnInput] = useState('');
@@ -1037,7 +1047,7 @@ const BookModal = ({ isOpen, onClose, book, onSave, fields = [], forceIsbnMode =
   const enhancedFields = allFields.map(field => ({
     ...field,
     options: field.name === 'category_id'
-      ? categories.map(cat => ({ value: cat.id.toString(), label: cat.name_en }))
+      ? categories.map(cat => ({ value: cat.id.toString(), label: `${'\u2014 '.repeat(cat.level || 0)}${cat.name_en}` }))
       : field.options || [],
   }));
 

@@ -272,3 +272,21 @@
 .arrow-right--open {
   transform: rotate(90deg);
 }
+
+/* ── Third level (and deeper) ─────────────────────────── */
+/* Mobile/drawer: nested accordion sits inside its parent's panel, indented */
+.submenu--mobile .submenu--mobile {
+  margin: 4px 0 6px 10px;
+  background: #f3e8ff;
+}
+.submenu--mobile .submenu--mobile .submenu-item {
+  padding-left: 16px;
+}
+
+/* Desktop: nested flyout opens beside its parent row (the parent wrapper is
+   .dropdown-item-parent, already position:relative), so the base .submenu
+   rules (left:100%, top:0) place it correctly. Keep the arrow at the far
+   right of submenu rows too. */
+.submenu .dropdown-item-parent .submenu-item {
+  width: 100%;
+}
