@@ -1,6 +1,6 @@
 
 // src/components/CategoryMenu/CategoryMenu.jsx
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useGetCategoriesQuery } from '../../admin/features/book/bookApiSlice';
@@ -159,6 +159,19 @@ function CategoryMenu() {
       document.removeEventListener('keydown', onEsc);
     };
   }, [isOpen]);
+
+  // Keep flyouts on screen: if a flyout would run past the right edge of the
+  // window, open it to the LEFT of its parent instead (any depth).
+  useLayoutEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    const flyouts = panel.querySelectorAll('.submenu:not(.submenu--mobile)');
+    flyouts.forEach(el => el.classList.remove('submenu--flip'));
+    flyouts.forEach(el => {            // outer flyouts first, so inner ones see the result
+      const r = el.getBoundingClientRect();
+      if (r.right > window.innerWidth - 8) el.classList.add('submenu--flip');
+    });
+  }, [hoveredPath, isOpen]);
 
   // Hover helpers (desktop only). depth 0 = top-level category.
   const onHoverNode = (id, depth) => {
