@@ -303,6 +303,8 @@ function Books() {
   const categoryOptions = useMemo(
     () => filterOptions.categories.map(cat => ({
       label: i18n.resolvedLanguage === 'de' ? (cat.name_de || cat.name_en) : cat.name_en,
+      // indented text for the dropdown only (sub-categories at any depth)
+      display: `${'\u2014 '.repeat(cat.level || 0)}${i18n.resolvedLanguage === 'de' ? (cat.name_de || cat.name_en) : cat.name_en}`,
       value: String(cat.id)
     })),
     [filterOptions.categories, i18n.resolvedLanguage]
@@ -528,7 +530,7 @@ function Books() {
                     onChange={(e) => updateParams({ category: e.target.value || null })}
                   >
                     <option value="">{t('all_categories')}</option>
-                    {categoryOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    {categoryOptions.map(o => <option key={o.value} value={o.value}>{o.display}</option>)}
                   </select>
                 </div>
               )}

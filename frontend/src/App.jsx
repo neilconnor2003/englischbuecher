@@ -30,6 +30,9 @@ import MyOrdersPage from './pages/MyOrders/MyOrdersPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import ResendVerification from './pages/Auth/ResendVerification';
 import Wishlist from './pages/Wishlist/Wishlist';
+import MyGiftLists from './pages/GiftLists/MyGiftLists';
+import GiftListManage from './pages/GiftLists/GiftListManage';
+import SharedGiftList from './pages/GiftLists/SharedGiftList';
 import AuthComplete from './pages/AuthComplete/AuthComplete';
 
 // Footer pages
@@ -98,6 +101,9 @@ const AppContent = () => {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/resend-verification" element={<ResendVerification />} />
         <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/lists" element={<MyGiftLists />} />
+        <Route path="/lists/:id/manage" element={<GiftListManage />} />
+        <Route path="/g/:slug" element={<SharedGiftList />} />
         <Route path="/books" element={<Books />} />
         <Route path="/request-book" element={<RequestBookPage />} />
         <Route path="/author/:slug" element={<AuthorDetails />} />

@@ -1,6 +1,6 @@
 
 // src/components/CategoryMenu/CategoryMenu.jsx
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useGetCategoriesQuery } from '../../admin/features/book/bookApiSlice';
@@ -27,8 +27,10 @@ function CategoryMenu() {
   const panelRef = useRef(null);
 
   const [isOpen, setIsOpen] = useState(false);
-  const [hoveredId, setHoveredId] = useState(null);
-  const [expandedId, setExpandedId] = useState(null);
+  // Paths of open category ids, one entry per level: [level1Id, level2Id, ...]
+  // (replaces the old single hoveredId/expandedId so menus can nest any depth)
+  const [hoveredPath, setHoveredPath] = useState([]);
+  const [expandedPath, setExpandedPath] = useState([]);
   const [pos, setPos] = useState({ top: 0, left: 0 });
 
   const hoverCloseTimer = useRef(null);
@@ -37,12 +39,11 @@ function CategoryMenu() {
   const roots = useMemo(() => {
     const all = Array.isArray(data.hierarchy) ? data.hierarchy : [];
     const visible = all.filter(c => Number(c.is_visible) === 1);
-    return [...visible]
-      .sort((a, b) => a.id - b.id)
-      .map(root => ({
-        ...root,
-        children: [...(root.children || [])].sort((a, b) => a.id - b.id),
-      }));
+    const sortTree = (nodes) =>
+      [...(nodes || [])]
+        .sort((a, b) => a.id - b.id)
+        .map(n => ({ ...n, children: sortTree(n.children) }));
+    return sortTree(visible);
   }, [data.hierarchy]);
 
   // Navigate and close
@@ -52,8 +53,8 @@ function CategoryMenu() {
     navigate(`/books?${params.toString()}`);
 
     setIsOpen(false);
-    setHoveredId(null);
-    setExpandedId(null);
+    setHoveredPath([]);
+    setExpandedPath([]);
     setAllBooksOpen(false);
   };
 
@@ -65,16 +66,16 @@ function CategoryMenu() {
     navigate(qs ? `/books?${qs}` : '/books');
 
     setIsOpen(false);
-    setHoveredId(null);
-    setExpandedId(null);
+    setHoveredPath([]);
+    setExpandedPath([]);
     setAllBooksOpen(false);
   };
 
   // Close on route change
   useEffect(() => {
     setIsOpen(false);
-    setHoveredId(null);
-    setExpandedId(null);
+    setHoveredPath([]);
+    setExpandedPath([]);
     setAllBooksOpen(false);
   }, [location.pathname, location.search]);
 
@@ -83,12 +84,12 @@ function CategoryMenu() {
 
     if (isOpen) {
       // closing
-      setHoveredId(null);
-      setExpandedId(null);
+      setHoveredPath([]);
+      setExpandedPath([]);
       setAllBooksOpen(true);
     } else {
       // opening
-      setExpandedId(null);
+      setExpandedPath([]);
       setAllBooksOpen(true); // ✅ start with All Books open on mobile
     }
   };
@@ -112,7 +113,7 @@ function CategoryMenu() {
   const startHoverClose = (delay = 140) => {
     if (hoverCloseTimer.current) clearTimeout(hoverCloseTimer.current);
     hoverCloseTimer.current = setTimeout(() => {
-      setHoveredId(null);
+      setHoveredPath([]);
     }, delay);
   };
   const cancelHoverClose = () => {
@@ -138,16 +139,16 @@ function CategoryMenu() {
       const inPanel = panelRef.current?.contains(e.target);
       if (!inTrigger && !inPanel) {
         setIsOpen(false);
-        setHoveredId(null);
-        setExpandedId(null);
+        setHoveredPath([]);
+        setExpandedPath([]);
         setAllBooksOpen(false);
       }
     };
     const onEsc = (e) => {
       if (e.key === 'Escape') {
         setIsOpen(false);
-        setHoveredId(null);
-        setExpandedId(null);
+        setHoveredPath([]);
+        setExpandedPath([]);
         setAllBooksOpen(false);
       }
     };
@@ -159,13 +160,96 @@ function CategoryMenu() {
     };
   }, [isOpen]);
 
-  // Hover helpers (desktop only)
-  const onHoverParent = (id) => {
+  // Keep flyouts on screen: if a flyout would run past the right edge of the
+  // window, open it to the LEFT of its parent instead (any depth).
+  useLayoutEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    const flyouts = panel.querySelectorAll('.submenu:not(.submenu--mobile)');
+    flyouts.forEach(el => el.classList.remove('submenu--flip'));
+    flyouts.forEach(el => {            // outer flyouts first, so inner ones see the result
+      const r = el.getBoundingClientRect();
+      if (r.right > window.innerWidth - 8) el.classList.add('submenu--flip');
+    });
+  }, [hoveredPath, isOpen]);
+
+  // Hover helpers (desktop only). depth 0 = top-level category.
+  const onHoverNode = (id, depth) => {
     if (canHover) {
-      setHoveredId(id);
+      setHoveredPath(prev => [...prev.slice(0, depth), id]);
       if (!isOpen) setIsOpen(true);
     }
   };
+
+  // Mobile accordion: open/close a node at a given depth
+  const toggleExpanded = (id, depth) => {
+    setExpandedPath(prev =>
+      prev[depth] === id ? prev.slice(0, depth) : [...prev.slice(0, depth), id]
+    );
+  };
+
+  const labelOf = (c) => (i18n.language === 'de' ? (c.name_de || c.name_en) : c.name_en);
+
+  // Desktop: flyout list for `parent`, nests to any depth
+  const renderDesktopChildren = (parent, depth) => (
+    <div
+      className="submenu"
+      onMouseEnter={cancelHoverClose}
+      onMouseLeave={() => startHoverClose(140)}
+    >
+      <button type="button" className="submenu-item" onClick={() => goToCategory(parent.id)}>
+        <span className="cat-label">{t('view_all') || 'View all'}</span>
+      </button>
+
+      {parent.children.map(child => {
+        const hasKids = child.children.length > 0;
+        return (
+          <div
+            key={child.id}
+            className="dropdown-item-parent"
+            onMouseEnter={() => { cancelHoverClose(); onHoverNode(child.id, depth + 1); }}
+          >
+            <button type="button" className="submenu-item" onClick={() => goToCategory(child.id)}>
+              <span className="cat-label">{labelOf(child)}</span>
+              {hasKids && <ChevronRight className="arrow-right" aria-hidden />}
+            </button>
+            {hasKids && hoveredPath[depth + 1] === child.id && renderDesktopChildren(child, depth + 1)}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  // Mobile: accordion list for `parent`, nests to any depth
+  const renderMobileChildren = (parent, depth) => (
+    <div className="submenu submenu--mobile">
+      <button type="button" className="submenu-item" onClick={() => goToCategory(parent.id)}>
+        <span className="cat-label">
+          {i18n.language === 'de' ? `Alle ${labelOf(parent)}` : `All ${parent.name_en}`}
+        </span>
+      </button>
+
+      {parent.children.map(child => {
+        const hasKids = child.children.length > 0;
+        const open = expandedPath[depth + 1] === child.id;
+        return (
+          <div key={child.id}>
+            <button
+              type="button"
+              className="submenu-item"
+              onClick={() => (hasKids ? toggleExpanded(child.id, depth + 1) : goToCategory(child.id))}
+            >
+              <span className="cat-label">{labelOf(child)}</span>
+              {hasKids && (
+                <ChevronRight className={`arrow-right ${open ? 'arrow-right--open' : ''}`} aria-hidden />
+              )}
+            </button>
+            {hasKids && open && renderMobileChildren(child, depth + 1)}
+          </div>
+        );
+      })}
+    </div>
+  );
 
   const MenuContent = () => (
     <>
@@ -180,7 +264,7 @@ function CategoryMenu() {
               className="dropdown-item-link all-books-row"
               onClick={() => {
                 setAllBooksOpen(prev => !prev);
-                setExpandedId(null); // collapse any expanded category when toggling
+                setExpandedPath([]); // collapse any expanded category when toggling
               }}
             >
               <span className="cat-label">All Books</span>
@@ -192,13 +276,13 @@ function CategoryMenu() {
           {/* ROOT list: Desktop always; Mobile only when All Books is expanded */}
           {(!isMobile || allBooksOpen) && roots.map(cat => {
             const hasChildren = Array.isArray(cat.children) && cat.children.length > 0;
-            const isExpanded = expandedId === cat.id;
+            const isExpanded = expandedPath[0] === cat.id;
 
             return (
               <div
                 key={cat.id}
                 className="dropdown-item-parent"
-                onMouseEnter={() => { cancelHoverClose(); onHoverParent(cat.id); }}
+                onMouseEnter={() => { cancelHoverClose(); onHoverNode(cat.id, 0); }}
                 onMouseLeave={() => { startHoverClose(140); }}
               >
                 <button
@@ -206,7 +290,7 @@ function CategoryMenu() {
                   className="dropdown-item-link"
                   onClick={() => {
                     if (isMobile && hasChildren) {
-                      setExpandedId(prev => (prev === cat.id ? null : cat.id));
+                      toggleExpanded(cat.id, 0);
                     } else {
                       goToCategory(cat.id);
                     }
@@ -224,57 +308,11 @@ function CategoryMenu() {
                   )}
                 </button>
 
-                {/* Desktop: hover submenu */}
-                {canHover && hoveredId === cat.id && hasChildren && (
-                  <div
-                    className="submenu"
-                    onMouseEnter={cancelHoverClose}
-                    onMouseLeave={() => startHoverClose(140)}
-                  >
-                    <button type="button" className="submenu-item" onClick={() => goToCategory(cat.id)}>
-                      <span className="cat-label">{t('view_all') || 'View all'}</span>
-                    </button>
+                {/* Desktop: hover flyout (nests to any depth) */}
+                {canHover && hoveredPath[0] === cat.id && hasChildren && renderDesktopChildren(cat, 0)}
 
-                    {cat.children.map(child => (
-                      <button
-                        type="button"
-                        key={child.id}
-                        className="submenu-item"
-                        onClick={() => goToCategory(child.id)}
-                      >
-                        <span className="cat-label">
-                          {i18n.language === 'de' ? (child.name_de || child.name_en) : child.name_en}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Mobile: accordion submenu */}
-                {isMobile && isExpanded && hasChildren && (
-                  <div className="submenu submenu--mobile">
-                    <button type="button" className="submenu-item" onClick={() => goToCategory(cat.id)}>
-                      <span className="cat-label">
-                        {i18n.language === 'de'
-                          ? `Alle ${cat.name_de || cat.name_en}`
-                          : `All ${cat.name_en}`}
-                      </span>
-                    </button>
-
-                    {cat.children.map(child => (
-                      <button
-                        type="button"
-                        key={child.id}
-                        className="submenu-item"
-                        onClick={() => goToCategory(child.id)}
-                      >
-                        <span className="cat-label">
-                          {i18n.language === 'de' ? (child.name_de || child.name_en) : child.name_en}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                {/* Mobile: accordion (nests to any depth) */}
+                {isMobile && isExpanded && hasChildren && renderMobileChildren(cat, 0)}
               </div>
             );
           })}

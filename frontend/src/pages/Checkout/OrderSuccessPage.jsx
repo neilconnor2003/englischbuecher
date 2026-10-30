@@ -13,6 +13,7 @@ import axios from 'axios';
 import './OrderSuccessPage.css';
 
 import { trackPurchase } from '../../utils/Analytics';
+import { clearGiftClaims } from '../../utils/giftClaims';
 
 const OrderSuccessPage = () => {
   const { orderId } = useParams();
@@ -31,6 +32,12 @@ const OrderSuccessPage = () => {
         if (!sessionStorage.getItem(firedKey)) {
           trackPurchase(data);
           sessionStorage.setItem(firedKey, '1');
+          // Order genuinely completed — any gift-list claims from this
+          // checkout have already been confirmed server-side (tied to the
+          // order via reservation_id), so the local tracking copy is no
+          // longer needed. Same guard as the GA4 event above, so this only
+          // runs once per real order.
+          clearGiftClaims();
         }
       } catch (err) {
         console.error('Failed to load order:', err);

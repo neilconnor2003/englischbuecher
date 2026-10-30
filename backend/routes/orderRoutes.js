@@ -475,6 +475,83 @@ module.exports = (db, transporter) => {
       }
       // --- End reservation ---
 
+      // --- Reserve gift-list claims for this checkout attempt (if any) ---
+      // Entirely additive: only runs when the client sends a giftClaims
+      // array, which only happens from the shared gift-list "add to cart"
+      // flow. Every other checkout (the overwhelming majority) sends no
+      // such field, so this block is a complete no-op for them. Uses the
+      // SAME reservationId as the stock hold above, so both are grouped,
+      // cleaned up on failure, and confirmed together on success.
+      const giftClaims = Array.isArray(req.body.giftClaims) ? req.body.giftClaims : [];
+      if (giftClaims.length > 0) {
+        const unavailableGifts = [];
+        const giftExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+        const giftConn = await db.getConnection();
+        try {
+          await giftConn.beginTransaction();
+
+          for (const claim of giftClaims) {
+            const itemId = Number(claim.giftListItemId);
+            const qty = Number(claim.quantity) || 0;
+            if (!itemId || qty <= 0) continue;
+
+            const [[item]] = await giftConn.execute(
+              'SELECT id, quantity_desired FROM gift_list_items WHERE id = ? FOR UPDATE',
+              [itemId]
+            );
+            if (!item) {
+              unavailableGifts.push({ giftListItemId: itemId, available: 0 });
+              continue;
+            }
+
+            const [[givenRow]] = await giftConn.execute(
+              `SELECT COALESCE(SUM(quantity), 0) AS given
+               FROM gift_list_reservations
+               WHERE gift_list_item_id = ?
+                 AND (order_id IS NOT NULL OR expires_at > NOW())`,
+              [itemId]
+            );
+            const stillWanted = item.quantity_desired - Number(givenRow.given);
+
+            if (stillWanted < qty) {
+              unavailableGifts.push({ giftListItemId: itemId, available: Math.max(0, stillWanted) });
+            }
+          }
+
+          if (unavailableGifts.length > 0) {
+            await giftConn.rollback();
+            giftConn.release();
+            // Also release the stock hold taken above — we're rejecting
+            // this whole checkout attempt, not just the gift part.
+            await db.execute('DELETE FROM stock_reservations WHERE reservation_id = ?', [reservationId]).catch(() => {});
+            return res.status(409).json({
+              error: 'gift_item_unavailable',
+              items: unavailableGifts,
+            });
+          }
+
+          for (const claim of giftClaims) {
+            const itemId = Number(claim.giftListItemId);
+            const qty = Number(claim.quantity) || 0;
+            if (!itemId || qty <= 0) continue;
+            await giftConn.execute(
+              `INSERT INTO gift_list_reservations (gift_list_item_id, quantity, reservation_id, expires_at)
+               VALUES (?, ?, ?, ?)`,
+              [itemId, qty, reservationId, giftExpiresAt]
+            );
+          }
+
+          await giftConn.commit();
+        } catch (err) {
+          await giftConn.rollback();
+          await db.execute('DELETE FROM stock_reservations WHERE reservation_id = ?', [reservationId]).catch(() => {});
+          throw err;
+        } finally {
+          giftConn.release();
+        }
+      }
+      // --- End gift-list claims ---
+
       let paymentIntent;
       try {
         paymentIntent = await stripe.paymentIntents.create({
@@ -495,6 +572,7 @@ module.exports = (db, transporter) => {
         // Stripe failed — release the stock hold immediately instead of
         // letting it sit for 15 minutes for a payment that will never happen.
         await db.execute('DELETE FROM stock_reservations WHERE reservation_id = ?', [reservationId]).catch(() => {});
+        await db.execute('DELETE FROM gift_list_reservations WHERE reservation_id = ? AND order_id IS NULL', [reservationId]).catch(() => {});
         throw err;
       }
 
@@ -764,6 +842,12 @@ module.exports = (db, transporter) => {
         const reservationId = pi?.metadata?.reservation_id;
         if (reservationId) {
           await conn.execute('DELETE FROM stock_reservations WHERE reservation_id = ?', [reservationId]);
+          // Convert any gift-list holds tied to this checkout into
+          // permanent records — additive, no-op if there were none.
+          await conn.execute(
+            'UPDATE gift_list_reservations SET order_id = ? WHERE reservation_id = ? AND order_id IS NULL',
+            [orderId, reservationId]
+          );
         }
       } catch (_) { }
 
@@ -1164,6 +1248,12 @@ module.exports = (db, transporter) => {
         // if reservationId is null (pre-fix PaymentIntent).
         if (reservationId) {
           await conn.execute('DELETE FROM stock_reservations WHERE reservation_id = ?', [reservationId]);
+          // Convert any gift-list holds tied to this checkout into
+          // permanent records — additive, no-op if there were none.
+          await conn.execute(
+            'UPDATE gift_list_reservations SET order_id = ? WHERE reservation_id = ? AND order_id IS NULL',
+            [orderId, reservationId]
+          );
         }
 
         if (userId) {

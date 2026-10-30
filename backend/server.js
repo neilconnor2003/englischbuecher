@@ -3227,7 +3227,27 @@ ${bookList}`,
       const [publishers] = await db.execute('SELECT DISTINCT publisher FROM books WHERE publisher IS NOT NULL AND publisher != "" ORDER BY publisher');
       const [formats] = await db.execute('SELECT DISTINCT format FROM books WHERE format IS NOT NULL ORDER BY format');
       const [editions] = await db.execute('SELECT DISTINCT edition FROM books WHERE edition IS NOT NULL ORDER BY edition');
-      const [categories] = await db.execute('SELECT id, name_en, name_de FROM categories WHERE is_visible = 1 ORDER BY name_en');
+      const [catRows] = await db.execute('SELECT id, name_en, name_de, parent_id FROM categories WHERE is_visible = 1 ORDER BY name_en');
+      // Return categories in tree order (parent, then its children, then theirs...)
+      // with a `level`, so the Books-page filter can indent them at any depth.
+      // A category whose parent is hidden/missing is treated as top-level.
+      const catIds = new Set(catRows.map(c => Number(c.id)));
+      const kidsOf = {};
+      catRows.forEach(c => {
+        const pid = c.parent_id !== null && catIds.has(Number(c.parent_id)) ? Number(c.parent_id) : 0;
+        (kidsOf[pid] = kidsOf[pid] || []).push(c);
+      });
+      const categories = [];
+      const seen = new Set();
+      const walk = (pid, level) => {
+        (kidsOf[pid] || []).forEach(c => {
+          if (seen.has(Number(c.id))) return; // guards against accidental loops
+          seen.add(Number(c.id));
+          categories.push({ id: c.id, name_en: c.name_en, name_de: c.name_de, level });
+          walk(Number(c.id), level + 1);
+        });
+      };
+      walk(0, 0);
 
       res.json({
         authors: authors.map(r => r.author),
@@ -5946,6 +5966,9 @@ WHERE ci.user_id = ?
 
   const ordersRouter = require('./routes/orderRoutes')(db, transporter);
   app.use('/api/orders', ordersRouter);
+
+  const giftListsRouter = require('./routes/giftListRoutes')(db);
+  app.use('/api/gift-lists', giftListsRouter);
 
   // ✅ DEBUG: list actual registered routes under /api/orders
   app.get('/api/_debug/orders-routes', (req, res) => {

@@ -14,18 +14,18 @@ export default function CategoryMenuDrawer({ onNavigate }) {
   const { data = { hierarchy: [] }, isLoading } = useGetCategoriesQuery();
 
   const [allBooksOpen, setAllBooksOpen] = useState(true);
-  const [expandedId, setExpandedId] = useState(null);
+  // One open id per level: [level1Id, level2Id, ...] so the drawer nests to any depth
+  const [expandedPath, setExpandedPath] = useState([]);
 
-  // ✅ IMPORTANT: roots IS DEFINED HERE
+  // ✅ IMPORTANT: roots IS DEFINED HERE (children sorted at every level)
   const roots = useMemo(() => {
     const all = Array.isArray(data.hierarchy) ? data.hierarchy : [];
     const visible = all.filter(c => Number(c.is_visible) === 1);
-    return [...visible]
-      .sort((a, b) => a.id - b.id)
-      .map(root => ({
-        ...root,
-        children: [...(root.children || [])].sort((a, b) => a.id - b.id),
-      }));
+    const sortTree = (nodes) =>
+      [...(nodes || [])]
+        .sort((a, b) => a.id - b.id)
+        .map(n => ({ ...n, children: sortTree(n.children) }));
+    return sortTree(visible);
   }, [data.hierarchy]);
 
   const closeDrawer = () => onNavigate?.();
@@ -45,6 +45,44 @@ export default function CategoryMenuDrawer({ onNavigate }) {
     closeDrawer();
   };
 
+  const labelOf = (c) => (i18n.language === 'de' ? (c.name_de || c.name_en) : c.name_en);
+
+  const toggleExpanded = (id, depth) => {
+    setExpandedPath(prev =>
+      prev[depth] === id ? prev.slice(0, depth) : [...prev.slice(0, depth), id]
+    );
+  };
+
+  const renderChildren = (parent, depth) => (
+    <div className="submenu submenu--mobile">
+      <button type="button" className="submenu-item" onClick={() => goToCategory(parent.id)}>
+        <span className="cat-label">
+          {i18n.language === 'de' ? `Alle ${labelOf(parent)}` : `All ${parent.name_en}`}
+        </span>
+      </button>
+
+      {parent.children.map(child => {
+        const hasKids = child.children.length > 0;
+        const open = expandedPath[depth + 1] === child.id;
+        return (
+          <div key={child.id}>
+            <button
+              type="button"
+              className="submenu-item"
+              onClick={() => (hasKids ? toggleExpanded(child.id, depth + 1) : goToCategory(child.id))}
+            >
+              <span className="cat-label">{labelOf(child)}</span>
+              {hasKids && (
+                <ChevronRight className={`arrow-right ${open ? 'arrow-right--open' : ''}`} aria-hidden />
+              )}
+            </button>
+            {hasKids && open && renderChildren(child, depth + 1)}
+          </div>
+        );
+      })}
+    </div>
+  );
+
   if (isLoading) return <div className="dropdown-item">Loading...</div>;
   if (!roots.length) return <div className="dropdown-item">No categories</div>;
 
@@ -56,7 +94,7 @@ export default function CategoryMenuDrawer({ onNavigate }) {
         className="dropdown-item-link all-books-row"
         onClick={() => {
           setAllBooksOpen(v => !v);
-          setExpandedId(null);
+          setExpandedPath([]);
         }}
       >
         <span className="cat-label">All Books</span>
@@ -76,7 +114,7 @@ export default function CategoryMenuDrawer({ onNavigate }) {
       {/* Root list */}
       {allBooksOpen && roots.map(cat => {
         const hasChildren = Array.isArray(cat.children) && cat.children.length > 0;
-        const isExpanded = expandedId === cat.id;
+        const isExpanded = expandedPath[0] === cat.id;
 
         return (
           <div key={cat.id} className="dropdown-item-parent">
@@ -85,7 +123,7 @@ export default function CategoryMenuDrawer({ onNavigate }) {
               className="dropdown-item-link"
               onClick={() => {
                 if (hasChildren) {
-                  setExpandedId(prev => (prev === cat.id ? null : cat.id));
+                  toggleExpanded(cat.id, 0);
                 } else {
                   goToCategory(cat.id);
                 }
@@ -102,36 +140,7 @@ export default function CategoryMenuDrawer({ onNavigate }) {
               )}
             </button>
 
-            {hasChildren && isExpanded && (
-              <div className="submenu submenu--mobile">
-                <button
-                  type="button"
-                  className="submenu-item"
-                  onClick={() => goToCategory(cat.id)}
-                >
-                  <span className="cat-label">
-                    {i18n.language === 'de'
-                      ? `Alle ${cat.name_de || cat.name_en}`
-                      : `All ${cat.name_en}`}
-                  </span>
-                </button>
-
-                {cat.children.map(child => (
-                  <button
-                    key={child.id}
-                    type="button"
-                    className="submenu-item"
-                    onClick={() => goToCategory(child.id)}
-                  >
-                    <span className="cat-label">
-                      {i18n.language === 'de'
-                        ? (child.name_de || child.name_en)
-                        : child.name_en}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
+            {hasChildren && isExpanded && renderChildren(cat, 0)}
           </div>
         );
       })}

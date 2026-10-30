@@ -12,7 +12,8 @@ import {
   HeartOutlined,
   UserOutlined,
   SettingOutlined,
-  MenuOutlined
+  MenuOutlined,
+  GiftOutlined
 } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import { AutoComplete, Avatar, Dropdown, Drawer } from 'antd';
@@ -142,6 +143,12 @@ function HeaderAfterLogin() {
       key: 'profile',
       icon: <UserOutlined />,
       label: <Link to="/profile">{t('profile')}</Link>
+    },
+
+    {
+      key: 'gift-lists',
+      icon: <GiftOutlined />,
+      label: <Link to="/lists">{t('my_gift_lists') || 'My Gift Lists'}</Link>
     },
 
     ...(isMobile ? [{
