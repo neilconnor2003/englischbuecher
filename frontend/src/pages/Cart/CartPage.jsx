@@ -29,6 +29,8 @@ import BookCard from '../../components/Book/BookCard';
 import CartShippingSummary from '../../components/Cart/CartShippingSummary';
 import { getDeliveryContext, setDeliveryContext } from '../../utils/deliveryContext';
 import { getDPDShippingPrice } from '../../utils/dpdShipping';
+import { getLastGiftListSlug } from '../../utils/giftClaims';
+import { Gift, ArrowLeft } from 'lucide-react';
 
 
 const CartPage = () => {
@@ -40,6 +42,11 @@ const CartPage = () => {
   const dispatch = useDispatch();
 
   const [weightedItems, setWeightedItems] = useState([]);
+
+  // If this visitor arrived here via a shared gift list, offer a way back
+  // to it — otherwise the shared link itself is the only way back once
+  // they've navigated on to the cart/checkout/login flow.
+  const lastGiftListSlug = getLastGiftListSlug();
 
   const { items, totalItems, totalPrice, merged } = useSelector((state) => state.cart);
 
@@ -564,6 +571,15 @@ const CartPage = () => {
         </div>
       ) : isEmpty ? (
         <div className="cart-container">
+          {lastGiftListSlug && (
+            <button
+              type="button"
+              className="cart-back-to-gift-list"
+              onClick={() => navigate(`/g/${lastGiftListSlug}`)}
+            >
+              <ArrowLeft size={14} /> <Gift size={14} /> {t('back_to_gift_list') || 'Back to gift list'}
+            </button>
+          )}
           <div className="cart-empty">
             <div className="cart-empty__icon">🛒</div>
             <h2 className="cart-empty__title">
@@ -600,6 +616,15 @@ const CartPage = () => {
         </div>
       ) : (
         <div className="cart-container">
+          {lastGiftListSlug && (
+            <button
+              type="button"
+              className="cart-back-to-gift-list"
+              onClick={() => navigate(`/g/${lastGiftListSlug}`)}
+            >
+              <ArrowLeft size={14} /> <Gift size={14} /> {t('back_to_gift_list') || 'Back to gift list'}
+            </button>
+          )}
           <h1 className="cart-title">
             {t("your_cart")} ({totalItems}{" "}
             {totalItems === 1 ? t("item") : t("items")})

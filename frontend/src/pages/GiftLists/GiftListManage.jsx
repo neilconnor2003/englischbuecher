@@ -1,12 +1,12 @@
 // frontend/src/pages/GiftLists/GiftListManage.jsx
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import config from '../../config';
 import { AuthContext } from '../../context/AuthContext';
 import { generateBookUrl } from '../../utils/seoUrl';
-import { ArrowLeft, Gift, Minus, Plus, Search, Share2, Trash2, Pencil, Calendar } from 'lucide-react';
+import { ArrowLeft, Gift, Minus, Plus, Search, Share2, Trash2, Pencil, Calendar, Copy } from 'lucide-react';
 import BrandModal, { brandInputStyle, brandLabelStyle } from '../../components/common/BrandModal';
 import ShareListModal from './ShareListModal';
 import { toast } from 'react-toastify';
@@ -16,6 +16,7 @@ export default function GiftListManage() {
   const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useContext(AuthContext);
 
   const [list, setList] = useState(null);
@@ -41,6 +42,15 @@ export default function GiftListManage() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, id]);
+
+  // Arriving from "create list" with ?share=1 → open the Share dialog once.
+  useEffect(() => {
+    if (searchParams.get('share') === '1' && list) {
+      setShareOpen(true);
+      setSearchParams({}, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [list]);
 
   const load = async () => {
     setLoading(true);
@@ -75,14 +85,16 @@ export default function GiftListManage() {
 
   const addBook = async (book) => {
     try {
-      await axios.post(`${config.API_URL}/api/gift-lists/${id}/items`, {
+      const { data: added } = await axios.post(`${config.API_URL}/api/gift-lists/${id}/items`, {
         book_id: book.id,
         quantity_desired: 1,
       }, { withCredentials: true });
       setSearchTerm('');
       setSearchResults([]);
       load();
-      toast.success(t('added_to_list') || 'Added to list');
+      toast.success(added?.merged
+        ? (t('gift_added_merge') || 'Already on your list — quantity increased')
+        : (t('added_to_list') || 'Added to list'));
     } catch {
       toast.error(t('update_failed') || 'Failed');
     }
@@ -117,6 +129,10 @@ export default function GiftListManage() {
   };
 
   const shareUrl = list ? `${window.location.origin}/g/${list.share_slug}` : '';
+
+  const copyShareUrl = () => {
+    try { navigator.clipboard.writeText(shareUrl); toast.success(t('link_copied') || 'Link copied!'); } catch { }
+  };
 
   const openEditModal = () => {
     setEditTitle(list.title || '');
@@ -153,7 +169,7 @@ export default function GiftListManage() {
           <ArrowLeft size={16} /> {t('back') || 'Back'}
         </button>
 
-        <div className="gl-header-row">
+        <div className="gl-header-row gl-header-card">
           <div>
             <h1 className="gl-title"><Gift size={26} /> {list.title}</h1>
             <div className="gl-manage-meta">
@@ -176,6 +192,12 @@ export default function GiftListManage() {
               <Share2 size={16} /> {t('share') || 'Share'}
             </button>
           </div>
+        </div>
+
+        <div className="gl-sharebar">
+          <span className="gl-sharebar-label"><Share2 size={14} /> {t('gift_share_link_label') || 'Your share link'}</span>
+          <code className="gl-sharebar-url">{shareUrl}</code>
+          <button className="gl-btn-ghost" onClick={copyShareUrl}><Copy size={13} /> {t('copy_link') || 'Copy Link'}</button>
         </div>
 
         <div className="gl-search-box">

@@ -34,6 +34,14 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <HelmetProvider>
       <BrowserRouter>
         <App />
+        {/* react-toastify's toast.success()/toast.error() calls (used across
+            Profile, BookDetails, Checkout, RequestBook, and all 4 gift-list
+            pages) were silently doing nothing — the toast() function was
+            imported and called everywhere, but <ToastContainer/> itself was
+            never actually rendered anywhere in the app, so there was no
+            container to display the toasts. This has been broken site-wide,
+            not just on the gift-list pages. */}
+        <ToastContainer position="top-right" autoClose={3000} newestOnTop />
       </BrowserRouter>
     </HelmetProvider>
   </Provider>

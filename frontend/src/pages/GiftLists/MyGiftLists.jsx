@@ -8,6 +8,7 @@ import { AuthContext } from '../../context/AuthContext';
 import { Gift, Plus, Share2, Trash2, Calendar, ChevronRight } from 'lucide-react';
 import BrandModal, { brandInputStyle, brandLabelStyle } from '../../components/common/BrandModal';
 import ShareListModal from './ShareListModal';
+import GiftListTabs from './GiftListTabs';
 import { toast } from 'react-toastify';
 import './GiftLists.css';
 
@@ -49,14 +50,20 @@ export default function MyGiftLists() {
     if (!title.trim()) return;
     setCreating(true);
     try {
-      await axios.post(`${config.API_URL}/api/gift-lists`, {
+      const { data: created } = await axios.post(`${config.API_URL}/api/gift-lists`, {
         title: title.trim(),
         occasion: occasion.trim() || null,
         event_date: eventDate || null,
       }, { withCredentials: true });
       setCreateOpen(false);
       setTitle(''); setOccasion(''); setEventDate('');
-      load();
+      // Straight into the new list with the Share dialog open — that is
+      // the whole point of creating one.
+      if (created?.id) {
+        navigate(`/lists/${created.id}/manage?share=1`);
+      } else {
+        load();
+      }
     } catch (err) {
       toast.error(t('gift_list_create_failed') || 'Could not create list');
     } finally {
@@ -94,15 +101,17 @@ export default function MyGiftLists() {
   return (
     <div className="gl-page">
       <div className="gl-container">
-        <div className="gl-hero">
-          <Gift size={30} />
-          <h1 className="gl-title">{t('my_gift_lists') || 'My Gift Lists'}</h1>
-          <p className="gl-hero-sub">
+        <div className="gl-banner">
+          <div className="gl-banner-icon"><Gift size={26} /></div>
+          <h1 className="gl-banner-title">{t('my_gift_lists') || 'My Gift Lists'}</h1>
+          <p className="gl-banner-sub">
             {isDe
               ? 'Erstelle Listen für jeden Anlass und teile sie mit Familie und Freunden.'
               : 'Create a list for any occasion and share it with friends and family.'}
           </p>
         </div>
+
+        <GiftListTabs />
 
         {loading ? (
           <div className="gl-loading">{t('loading') || 'Loading...'}</div>

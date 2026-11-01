@@ -525,3 +525,215 @@
   .gl-title { font-size: 1.4rem; }
   .gl-tile-cover { height: 150px; }
 }
+
+/* ═════════════════════════════════════════════════════════════════
+   v2 redesign — shared banner, tabs, share bar, "gave from" cards.
+   Added after the original rules so it refines rather than replaces.
+   ═════════════════════════════════════════════════════════════════ */
+
+.gl-page {
+  background:
+    radial-gradient(900px 340px at 50% -80px, rgba(124,58,237,.10), transparent 70%),
+    var(--fog, #F9FAFB);
+}
+
+/* Dark-purple banner — same palette as the brand emails. */
+.gl-banner {
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  color: #fff;
+  background: linear-gradient(135deg, #1f1633 0%, #3b1d6e 100%);
+  border-radius: 22px;
+  padding: 34px 24px 30px;
+  margin-bottom: 18px;
+  box-shadow: 0 18px 40px rgba(31,22,51,.22);
+}
+.gl-banner::after {
+  content: '';
+  position: absolute;
+  right: -60px; top: -70px;
+  width: 220px; height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(196,181,253,.28), transparent 70%);
+  pointer-events: none;
+}
+.gl-banner-icon {
+  width: 52px; height: 52px;
+  margin: 0 auto 12px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.12);
+  display: flex; align-items: center; justify-content: center;
+  color: #ddd6fe;
+}
+.gl-banner-title {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 900;
+  font-style: italic;
+  font-size: clamp(1.5rem, 4vw, 2.1rem);
+  line-height: 1.15;
+  margin: 0;
+  color: #fff;
+}
+.gl-banner-sub { margin: 8px auto 0; max-width: 460px; font-size: 14px; color: #c4b5fd; }
+.gl-banner-chips { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.gl-banner-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12.5px; font-weight: 600; color: #ede9fe;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+.gl-banner-progress { max-width: 360px; margin: 18px auto 0; }
+.gl-banner-progress-bar { height: 8px; border-radius: 999px; background: rgba(255,255,255,.16); overflow: hidden; }
+.gl-banner-progress-bar > div {
+  height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, #a78bfa, #f0abfc);
+  transition: width .5s ease;
+}
+.gl-banner-progress span { display: block; margin-top: 8px; font-size: 12.5px; font-weight: 600; color: #ddd6fe; }
+.gl-banner .gl-owner-notice {
+  background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.18);
+  color: #ede9fe;
+}
+
+/* Tabs (My lists | Lists I gave from) */
+.gl-tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  margin: 0 auto 22px;
+  background: #fff;
+  border: 1px solid #ede9fe;
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(26,15,46,.05);
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.gl-tab {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px; font-weight: 700;
+  color: #6b7280;
+  text-decoration: none;
+  transition: background .15s ease, color .15s ease;
+  white-space: nowrap;
+}
+.gl-tab:hover { color: var(--purple, #7C3AED); }
+.gl-tab.is-active {
+  color: #fff;
+  background: linear-gradient(135deg, var(--purple, #7C3AED), var(--purple-dark, #5B21B6));
+  box-shadow: 0 6px 16px rgba(124,58,237,.3);
+}
+
+/* Soft notice strip */
+.gl-note {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  border-radius: 12px;
+  padding: 11px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Manage page header as a card + share bar */
+.gl-header-card {
+  background: #fff;
+  border: 1px solid #ede9fe;
+  border-radius: 18px;
+  padding: 18px 20px;
+  box-shadow: 0 6px 20px rgba(26,15,46,.05);
+  align-items: center;
+}
+.gl-sharebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: #faf5ff;
+  border: 1px dashed #d8b4fe;
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin-bottom: 18px;
+}
+.gl-sharebar-label {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12.5px; font-weight: 700; color: var(--purple, #7C3AED);
+}
+.gl-sharebar-url {
+  flex: 1; min-width: 0;
+  font-size: 12px; color: #6b7280;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* "In your cart" state on the visitor tile */
+.gl-incart-badge {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 12.5px; font-weight: 700;
+  color: var(--purple, #7C3AED);
+  background: #faf5ff; border: 1px solid #ddd6fe;
+  border-radius: 10px; padding: 9px 12px;
+  text-decoration: none;
+}
+.gl-incart-badge:hover { background: #ede9fe; }
+
+/* "Lists I gave from" */
+.gl-given-stack { display: flex; flex-direction: column; gap: 16px; }
+.gl-given-card {
+  background: #fff;
+  border: 1px solid #ede9fe;
+  border-radius: 18px;
+  padding: 18px 20px 8px;
+  box-shadow: 0 6px 20px rgba(26,15,46,.05);
+}
+.gl-given-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 12px; flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f3f0ff;
+}
+.gl-given-title {
+  margin: 0 0 6px;
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 900; font-style: italic;
+  font-size: 1.2rem; color: var(--ink, #1a1a2e);
+}
+.gl-given-gone { font-size: 12.5px; color: #9ca3af; font-style: italic; }
+.gl-given-items { list-style: none; margin: 0; padding: 0; }
+.gl-given-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f9fafb;
+}
+.gl-given-item:last-child { border-bottom: none; }
+.gl-given-cover { width: 40px; height: 56px; object-fit: cover; border-radius: 4px 7px 7px 4px; box-shadow: 0 4px 10px rgba(0,0,0,.18); flex-shrink: 0; }
+.gl-given-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.gl-given-book {
+  font-size: 13.5px; font-weight: 600; color: var(--ink, #1a1a2e); text-decoration: none;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.gl-given-book:hover { color: var(--purple, #7C3AED); }
+.gl-given-sub { font-size: 12px; color: #9ca3af; }
+.gl-given-order {
+  font-size: 12px; font-weight: 700; color: var(--purple, #7C3AED);
+  background: #faf5ff; border: 1px solid #ede9fe; border-radius: 999px;
+  padding: 4px 10px; text-decoration: none; flex-shrink: 0;
+}
+.gl-given-order:hover { background: #ede9fe; }
+
+@media (max-width: 600px) {
+  .gl-banner { padding: 26px 16px 24px; border-radius: 18px; }
+  .gl-tabs { max-width: 100%; }
+  .gl-tab { padding: 8px 12px; font-size: 12.5px; }
+  .gl-header-card { padding: 14px; }
+  .gl-given-card { padding: 14px 14px 4px; }
+}

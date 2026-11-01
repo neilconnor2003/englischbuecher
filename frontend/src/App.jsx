@@ -33,6 +33,7 @@ import Wishlist from './pages/Wishlist/Wishlist';
 import MyGiftLists from './pages/GiftLists/MyGiftLists';
 import GiftListManage from './pages/GiftLists/GiftListManage';
 import SharedGiftList from './pages/GiftLists/SharedGiftList';
+import GivenGiftLists from './pages/GiftLists/GivenGiftLists';
 import AuthComplete from './pages/AuthComplete/AuthComplete';
 
 // Footer pages
@@ -102,6 +103,7 @@ const AppContent = () => {
         <Route path="/resend-verification" element={<ResendVerification />} />
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/lists" element={<MyGiftLists />} />
+        <Route path="/lists/given" element={<GivenGiftLists />} />
         <Route path="/lists/:id/manage" element={<GiftListManage />} />
         <Route path="/g/:slug" element={<SharedGiftList />} />
         <Route path="/books" element={<Books />} />

@@ -165,6 +165,138 @@ async function sendAdminOrderNotification({ transporter, db, order, user, orderI
 }
 
 
+// ── Gift-list emails ───────────────────────────────────────────────────
+// Sent once an order that contains gift-list items is created:
+//   • the list OWNER gets "someone gave a gift" (never who, never what —
+//     the surprise stays intact), one email per list per order
+//   • the GIVER gets a thank-you confirmation naming the list and books
+// Best-effort and fire-and-forget: never throws, never blocks the order.
+// Every email is written to sent_emails (types GiftListOwnerNotice /
+// GiftListGiverConfirmation) exactly like your other emails.
+const escHtml = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+));
+
+async function sendGiftListEmails({ transporter, db, orderId }) {
+  try {
+    const [rows] = await db.execute(`
+      SELECT glr.id AS res_id, glr.quantity,
+             gl.id AS list_id, gl.title AS list_title, gl.share_slug, gl.user_id AS owner_id,
+             b.title_en, b.title_de,
+             o.user_id AS giver_id
+      FROM gift_list_reservations glr
+      JOIN gift_list_items gli ON gli.id = glr.gift_list_item_id
+      JOIN gift_lists gl ON gl.id = gli.gift_list_id
+      JOIN books b ON b.id = gli.book_id
+      JOIN orders o ON o.id = glr.order_id
+      WHERE glr.order_id = ? AND glr.notified_at IS NULL
+    `, [orderId]);
+    if (!rows.length) return;
+
+    // Claim these rows first so a repeated call can't double-send.
+    await db.execute(
+      'UPDATE gift_list_reservations SET notified_at = NOW() WHERE order_id = ? AND notified_at IS NULL',
+      [orderId]
+    );
+
+    const frontend = process.env.FRONTEND_URL || 'https://englischbuecher.de';
+    const fromAddress = `"EnglischBücher" <${process.env.SMTP_USER}>`;
+
+    const userIds = [...new Set(rows.flatMap(r => [r.owner_id, r.giver_id]).filter(Boolean))];
+    const users = {};
+    if (userIds.length) {
+      const [urows] = await db.query(
+        `SELECT id, email, first_name, language FROM users WHERE id IN (${userIds.map(() => '?').join(',')})`,
+        userIds
+      );
+      urows.forEach(u => { users[u.id] = u; });
+    }
+
+    const wrap = (inner, ctaHref, ctaLabel) => `
+      <div style="font-family:-apple-system,'Segoe UI',sans-serif;max-width:560px;margin:0 auto;">
+        <div style="background:linear-gradient(135deg,#1f1633,#3b1d6e);padding:28px 32px;border-radius:12px 12px 0 0;">
+          <div style="color:#c4b5fd;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">EnglischBücher</div>
+        </div>
+        <div style="padding:26px 32px;border:1px solid #ede9fe;border-top:none;border-radius:0 0 12px 12px;color:#2d2540;font-size:15px;line-height:1.55;">
+          ${inner}
+          <div style="text-align:center;margin-top:26px;">
+            <a href="${ctaHref}" style="display:inline-block;background:#7C3AED;color:#fff;padding:12px 26px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">${ctaLabel}</a>
+          </div>
+        </div>
+      </div>`;
+
+    const send = async ({ to, subject, html, type }) => {
+      try {
+        await transporter.sendMail({ from: fromAddress, to, subject, html });
+        await db.execute(
+          `INSERT INTO sent_emails (to_email, from_email, subject, html, status, type, created_at)
+           VALUES (?, ?, ?, ?, 'sent', ?, NOW())`,
+          [to, fromAddress, subject, html, type]
+        ).catch(() => {});
+      } catch (err) {
+        console.error(`[sendGiftListEmails] ${type} failed:`, err.message);
+        await db.execute(
+          `INSERT INTO sent_emails (to_email, from_email, subject, html, status, error, type, created_at)
+           VALUES (?, ?, ?, ?, 'failed', ?, ?, NOW())`,
+          [to || null, fromAddress, subject || null, html || null, err.message, type]
+        ).catch(() => {});
+      }
+    };
+
+    // ── Owner emails: one per list ──
+    const byList = {};
+    rows.forEach(r => { (byList[r.list_id] = byList[r.list_id] || []).push(r); });
+    for (const listId of Object.keys(byList)) {
+      const group = byList[listId];
+      const first = group[0];
+      if (first.owner_id === first.giver_id) continue; // owner bought from own list
+      const owner = users[first.owner_id];
+      if (!owner || !owner.email) continue;
+      const de = (owner.language || 'de') === 'de';
+      const name = escHtml(owner.first_name || '');
+      const title = escHtml(first.list_title);
+      const subject = de
+        ? `🎁 Jemand hat etwas aus deiner Liste „${first.list_title}“ geschenkt`
+        : `🎁 Someone gave a gift from your list “${first.list_title}”`;
+      const html = wrap(de
+        ? `<h2 style="margin:0 0 12px;color:#4c1d95;">Gute Nachrichten${name ? ', ' + name : ''}!</h2>
+           <p>Jemand hat gerade ein Geschenk aus deiner Geschenkliste <strong>„${title}“</strong> gekauft.</p>
+           <p style="color:#6b5f85;">Damit die Überraschung bleibt, verraten wir weder wer noch was.</p>`
+        : `<h2 style="margin:0 0 12px;color:#4c1d95;">Good news${name ? ', ' + name : ''}!</h2>
+           <p>Someone just gave a gift from your gift list <strong>“${title}”</strong>.</p>
+           <p style="color:#6b5f85;">To keep it a surprise, we won't tell you who or what.</p>`,
+        `${frontend}/lists`, de ? 'Meine Geschenklisten' : 'My gift lists');
+      await send({ to: owner.email, subject, html, type: 'GiftListOwnerNotice' });
+    }
+
+    // ── Giver confirmation: one per order ──
+    const giver = users[rows[0].giver_id];
+    if (giver && giver.email) {
+      const de = (giver.language || 'de') === 'de';
+      const lines = rows.map(r => {
+        const bt = escHtml((de ? (r.title_de || r.title_en) : (r.title_en || r.title_de)) || '');
+        return `<li style="margin:4px 0;">${r.quantity} × ${bt} <span style="color:#6b5f85;">— ${escHtml(r.list_title)}</span></li>`;
+      }).join('');
+      const slug = rows[0].share_slug;
+      const subject = de ? 'Danke für dein Geschenk 🎁' : 'Thank you for your gift 🎁';
+      const html = wrap(de
+        ? `<h2 style="margin:0 0 12px;color:#4c1d95;">Vielen Dank${giver.first_name ? ', ' + escHtml(giver.first_name) : ''}!</h2>
+           <p>Dein Geschenk wurde auf der Geschenkliste vermerkt, damit niemand dasselbe doppelt kauft:</p>
+           <ul style="padding-left:20px;">${lines}</ul>
+           <p style="color:#6b5f85;">Die Rechnung zu Bestellung #${orderId} bekommst du separat.</p>`
+        : `<h2 style="margin:0 0 12px;color:#4c1d95;">Thank you${giver.first_name ? ', ' + escHtml(giver.first_name) : ''}!</h2>
+           <p>Your gift has been marked on the list, so nobody buys the same thing twice:</p>
+           <ul style="padding-left:20px;">${lines}</ul>
+           <p style="color:#6b5f85;">Your invoice for order #${orderId} follows separately.</p>`,
+        `${frontend}/g/${slug}`, de ? 'Zur Geschenkliste' : 'Back to the gift list');
+      await send({ to: giver.email, subject, html, type: 'GiftListGiverConfirmation' });
+    }
+  } catch (err) {
+    console.error('[sendGiftListEmails] failed:', err.message);
+  }
+}
+
+
 module.exports = (db, transporter) => {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -496,13 +628,26 @@ module.exports = (db, transporter) => {
             if (!itemId || qty <= 0) continue;
 
             const [[item]] = await giftConn.execute(
-              'SELECT id, quantity_desired FROM gift_list_items WHERE id = ? FOR UPDATE',
+              `SELECT gli.id, gli.quantity_desired
+               FROM gift_list_items gli
+               JOIN gift_lists gl ON gl.id = gli.gift_list_id
+               WHERE gli.id = ? AND gli.removed_at IS NULL AND gl.deleted_at IS NULL
+               FOR UPDATE`,
               [itemId]
             );
             if (!item) {
               unavailableGifts.push({ giftListItemId: itemId, available: 0 });
               continue;
             }
+
+            // A buyer who reloads checkout / changes shipping creates a new
+            // hold each time; drop THEIR OWN earlier unfinished holds for
+            // this item first so they never block themselves.
+            await giftConn.execute(
+              `DELETE FROM gift_list_reservations
+               WHERE gift_list_item_id = ? AND user_id = ? AND order_id IS NULL`,
+              [itemId, req.user.id]
+            );
 
             const [[givenRow]] = await giftConn.execute(
               `SELECT COALESCE(SUM(quantity), 0) AS given
@@ -535,9 +680,9 @@ module.exports = (db, transporter) => {
             const qty = Number(claim.quantity) || 0;
             if (!itemId || qty <= 0) continue;
             await giftConn.execute(
-              `INSERT INTO gift_list_reservations (gift_list_item_id, quantity, reservation_id, expires_at)
-               VALUES (?, ?, ?, ?)`,
-              [itemId, qty, reservationId, giftExpiresAt]
+              `INSERT INTO gift_list_reservations (gift_list_item_id, quantity, reservation_id, expires_at, user_id)
+               VALUES (?, ?, ?, ?, ?)`,
+              [itemId, qty, reservationId, giftExpiresAt, req.user.id]
             );
           }
 
@@ -986,6 +1131,10 @@ module.exports = (db, transporter) => {
       // 8) Notify the shop owner — fire and forget, never blocks the response
       sendAdminOrderNotification({ transporter, db, order: fullOrder, user: orderUser, orderId });
 
+      // Gift-list emails (owner "someone gave a gift" + giver thank-you) —
+      // no-op unless this order contained gift-list items.
+      sendGiftListEmails({ transporter, db, orderId });
+
       return res.status(201).json({
         success: true,
         orderId,
@@ -1333,6 +1482,9 @@ module.exports = (db, transporter) => {
           user: finalizeUser,
           orderId,
         });
+
+        // Gift-list emails — no-op unless this order contained gift-list items.
+        sendGiftListEmails({ transporter, db, orderId });
 
         return res.status(201).json({ success: true, orderId });
       } catch (err) {

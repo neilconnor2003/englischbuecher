@@ -703,5 +703,22 @@
   "gift_progress_partial": "{{given}} of {{total}} already given",
   "gift_progress_none": "No one's claimed this yet — be the first!",
   "gift_progress_complete": "All set — this one is taken care of! 🎉",
-  "gift_progress_complete_of": "All {{total}} given — thank you! 🎉"
+  "gift_progress_complete_of": "All {{total}} given — thank you! 🎉",
+  "back_to_gift_list": "Back to gift list",
+  "stripe_load_failed": "The payment form could not be loaded. Please disable ad/tracking blockers for this site or try another browser, then reload.",
+  "gift_tab_my_lists": "My lists",
+  "gift_tab_given": "Lists I gave from",
+  "gift_given_title": "Lists I gave from",
+  "gift_given_sub": "Every gift you bought from someone else's list — with a quick way back to each one.",
+  "gift_given_empty": "You haven't given from any gift list yet. When you buy a gift from a shared list, it shows up here.",
+  "gift_given_open_list": "Open list",
+  "gift_given_unavailable": "This list is no longer available",
+  "gift_given_on": "Given on {{date}}",
+  "gift_you_gave": "You gave this",
+  "gift_in_cart": "In your cart",
+  "gift_view_cart": "View cart",
+  "gift_overall_progress": "{{given}} of {{total}} gifts given",
+  "gift_event_passed": "This event has already taken place — a belated gift is still very welcome!",
+  "gift_added_merge": "Already on your list — quantity increased",
+  "gift_share_link_label": "Your share link"
 }

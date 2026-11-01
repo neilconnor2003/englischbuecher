@@ -971,3 +971,22 @@
   color: #1565c0;
   font-weight: 500;
 }
+/* Shown when the visitor arrived via a shared gift list, so they don't
+   need the original link again just to get back to it. */
+.cart-back-to-gift-list {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #faf5ff;
+  border: 1px solid #ede9fe;
+  color: #7C3AED;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+.cart-back-to-gift-list:hover {
+  background: #ede9fe;
+}
